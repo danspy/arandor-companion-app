@@ -44,15 +44,15 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
       <h2 class="text-2xl font-semibold mb-4 text-primary-600">Party Members</h2>
       <div class="space-y-3">
         {characters.map(char => (
-          <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+          <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition cursor-pointer">
             <div>
-              <h3 class="font-semibold">{char.name}</h3>
+              <h3 class="font-semibold text-primary-700 hover:text-primary-900">{char.name}</h3>
               <p class="text-sm text-gray-600">{char.race} {char.class} - Level {char.level}</p>
             </div>
             <div class="text-right">
               <span class="text-sm text-gray-500">{char.player}</span>
             </div>
-          </div>
+          </a>
         ))}
       </div>
       <a href="/characters" class="block mt-4 text-primary-600 hover:text-primary-800 font-medium">
