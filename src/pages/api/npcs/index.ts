@@ -35,6 +35,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       description: body.description,
       relationship: body.relationship || 'neutral',
       notes: body.notes,
+      avatarUrl: body.avatarUrl,
       createdAt: now,
       updatedAt: now,
     });

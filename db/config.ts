@@ -66,6 +66,7 @@ const NPC = defineTable({
     description: column.text(),
     relationship: column.text(), // 'ally' | 'neutral' | 'enemy'
     notes: column.text({ optional: true }),
+    avatarUrl: column.text({ optional: true }),
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
