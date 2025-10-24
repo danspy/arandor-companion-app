@@ -224,10 +224,12 @@ if (questIds.length > 0) {
         if (response.ok) {
           window.location.href = '/diary';
         } else {
-          alert('Failed to delete entry. Please try again.');
+          const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+          alert(`Failed to delete entry: ${error.error || response.statusText}`);
         }
       } catch (error) {
-        alert('An error occurred. Please try again.');
+        console.error('Delete error:', error);
+        alert('An error occurred while deleting the entry. Please check your connection and try again.');
       }
     }
   });
