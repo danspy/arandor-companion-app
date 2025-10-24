@@ -135,6 +135,12 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <form id="characterForm" class="space-y-4">
         <input type="hidden" id="characterId" name="id">
         
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800">
+            💡 <strong>Tip:</strong> You can either fill out the form manually OR use the D&D Beyond Auto-fill feature. Just provide the D&D Beyond URL and click "Auto-fill" to populate the fields automatically.
+          </p>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -142,7 +148,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="name" 
               name="name" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -153,7 +158,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="player" 
               name="player" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -166,7 +170,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="race" 
               name="race" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -177,7 +180,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="class" 
               name="class" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -188,7 +190,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="number" 
               id="level" 
               name="level" 
-              required 
               min="1"
               max="20"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -357,6 +358,19 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     
     const formData = new FormData(form);
     
+    // Validate that required fields are filled
+    const name = formData.get('name') as string;
+    const player = formData.get('player') as string;
+    const race = formData.get('race') as string;
+    const className = formData.get('class') as string;
+    const level = formData.get('level') as string;
+    
+    // Check if required fields are empty
+    if (!name || !player || !race || !className || !level) {
+      alert('Please fill out all required fields (Name, Player, Race, Class, Level) or use the D&D Beyond Auto-fill feature.');
+      return;
+    }
+    
     const stats = {
       strength: parseInt(formData.get('strength') as string) || 10,
       dexterity: parseInt(formData.get('dexterity') as string) || 10,
@@ -367,11 +381,11 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     };
     
     const data = {
-      name: formData.get('name'),
-      player: formData.get('player'),
-      race: formData.get('race'),
-      class: formData.get('class'),
-      level: parseInt(formData.get('level') as string),
+      name,
+      player,
+      race,
+      class: className,
+      level: parseInt(level),
       avatarUrl: formData.get('avatarUrl') || undefined,
       dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
       stats,
