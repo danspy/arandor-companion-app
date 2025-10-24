@@ -92,7 +92,7 @@ const latestEntries = diaryEntries.slice().reverse().slice(0, 3);
         <div class="text-sm text-gray-600">Party Members</div>
       </div>
       <div class="text-center p-4 bg-amber-50 rounded">
-        <div class="text-3xl font-bold text-amber-600">{characters.reduce((sum, c) => sum + c.level, 0) / characters.length}</div>
+        <div class="text-3xl font-bold text-amber-600">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
         <div class="text-sm text-gray-600">Average Level</div>
       </div>
     </div>
