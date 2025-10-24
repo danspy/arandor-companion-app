@@ -22,8 +22,24 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <nav class="bg-primary text-white shadow-lg">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <a href="/" class="text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
-          <div class="flex gap-6 items-center">
+          <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
+          
+          <!-- Mobile menu button -->
+          <button 
+            id="mobileMenuBtn" 
+            class="lg:hidden text-white hover:text-secondary-200 transition p-2"
+            aria-label="Toggle menu"
+          >
+            <svg id="menuIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+          
+          <!-- Desktop menu -->
+          <div class="hidden lg:flex gap-6 items-center">
             <a href="/" class="hover:text-secondary-200 transition">Dashboard</a>
             <a href="/diary" class="hover:text-secondary-200 transition">Diary</a>
             <a href="/characters" class="hover:text-secondary-200 transition">Characters</a>
@@ -34,6 +50,30 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               <button 
                 id="logoutBtn"
                 class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition"
+              >
+                Logout
+              </button>
+            ) : (
+              <a href="/login" class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition">
+                Login
+              </a>
+            )}
+          </div>
+        </div>
+        
+        <!-- Mobile menu -->
+        <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
+          <div class="flex flex-col gap-3">
+            <a href="/" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Dashboard</a>
+            <a href="/diary" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Diary</a>
+            <a href="/characters" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Characters</a>
+            <a href="/npcs" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">NPCs</a>
+            <a href="/locations" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Locations</a>
+            <a href="/quests" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Quests</a>
+            {isLoggedIn ? (
+              <button 
+                id="logoutBtnMobile"
+                class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition text-left"
               >
                 Logout
               </button>
@@ -58,8 +98,20 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     </footer>
     
     <script>
-      const logoutBtn = document.getElementById('logoutBtn');
-      logoutBtn?.addEventListener('click', async () => {
+      // Mobile menu toggle
+      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+      const mobileMenu = document.getElementById('mobileMenu');
+      const menuIcon = document.getElementById('menuIcon');
+      const closeIcon = document.getElementById('closeIcon');
+      
+      mobileMenuBtn?.addEventListener('click', () => {
+        mobileMenu?.classList.toggle('hidden');
+        menuIcon?.classList.toggle('hidden');
+        closeIcon?.classList.toggle('hidden');
+      });
+      
+      // Logout handlers
+      const handleLogout = async () => {
         try {
           const response = await fetch('/api/auth/logout', {
             method: 'POST',
@@ -71,7 +123,13 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         } catch (error) {
           console.error('Logout failed:', error);
         }
-      });
+      };
+      
+      const logoutBtn = document.getElementById('logoutBtn');
+      const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+      
+      logoutBtn?.addEventListener('click', handleLogout);
+      logoutBtnMobile?.addEventListener('click', handleLogout);
     </script>
   </body>
 </html>
