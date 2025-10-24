@@ -61,13 +61,22 @@ npm run preview
 ## Project Structure
 
 ```
-/
+./
 ├── public/              # Static assets
+├── db/                  # Database configuration
+│   ├── config.ts        # Astro DB schema definitions
+│   └── seed.ts          # Database seeding script
 ├── src/
 │   ├── components/      # Reusable components (future)
-│   ├── data/           # Mock data and data models
+│   ├── data/           # Mock data (deprecated, using DB now)
 │   ├── layouts/        # Page layouts
 │   ├── pages/          # Route pages
+│   │   └── api/        # REST API endpoints
+│   │       ├── diary/      # Diary entry endpoints
+│   │       ├── quests/     # Quest endpoints
+│   │       ├── characters/ # Character endpoints
+│   │       ├── npcs/       # NPC endpoints
+│   │       └── locations/  # Location endpoints
 │   ├── styles/         # Global CSS
 │   └── types.ts        # TypeScript type definitions
 ├── astro.config.mjs    # Astro configuration
@@ -77,10 +86,41 @@ npm run preview
 
 ## Data Management
 
-Currently, the app uses mock data stored in `src/data/mockData.ts`. Future enhancements will include:
-- Local storage persistence
-- Database integration
-- D&D Beyond API integration for character imports
+The app uses **Astro DB** for persistent data storage with a local SQLite database in development. All content is fully editable through the web interface.
+
+### Features
+
+✅ **Full CRUD Operations** - Create, read, update, and delete all content types
+✅ **Persistent Database** - Astro DB with SQLite for local development
+✅ **RESTful API** - Complete API endpoints for all entities
+✅ **Interactive Forms** - Modal-based forms for adding and editing content
+✅ **Real-time Updates** - Changes are immediately reflected in the UI
+
+### Managing Content
+
+All content can be managed directly from the web interface:
+
+1. **Dashboard** - View overview of your campaign
+2. **Adventure Diary** - Add/edit/delete session notes with tags
+3. **Quests** - Track active, completed, and failed quests
+4. **Characters** - Manage party members with full stats
+5. **NPCs** - Organize non-player characters by relationship
+6. **Locations** - Catalog visited and unexplored places
+
+### API Endpoints
+
+The following REST API endpoints are available:
+
+- `GET/POST /api/diary` - Diary entries
+- `GET/PUT/DELETE /api/diary/[id]` - Single diary entry
+- `GET/POST /api/quests` - Quests
+- `GET/PUT/DELETE /api/quests/[id]` - Single quest
+- `GET/POST /api/characters` - Characters
+- `GET/PUT/DELETE /api/characters/[id]` - Single character
+- `GET/POST /api/npcs` - NPCs
+- `GET/PUT/DELETE /api/npcs/[id]` - Single NPC
+- `GET/POST /api/locations` - Locations
+- `GET/PUT/DELETE /api/locations/[id]` - Single location
 
 ## Customization
 
@@ -97,19 +137,10 @@ colors: {
 }
 ```
 
-### Adding New Data
-
-Add entries to the arrays in `src/data/mockData.ts`:
-- `diaryEntries` - Adventure log entries
-- `quests` - Campaign quests
-- `characters` - Player characters
-- `npcs` - Non-player characters
-- `locations` - World locations
-
 ## Future Enhancements
 
-- [ ] Full CRUD operations via forms
-- [ ] Data persistence (localStorage/database)
+- [x] Full CRUD operations via forms
+- [x] Data persistence with database
 - [ ] D&D Beyond API integration
 - [ ] Character import/export
 - [ ] Search and filtering
