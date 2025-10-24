@@ -50,11 +50,11 @@ const failedQuests = quests.filter(q => q.status === 'failed');
     <div class="space-y-4">
       {activeQuests.map(quest => (
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-          <div class="flex justify-between items-start">
+          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
             <div class="flex-1">
-              <div class="flex items-center gap-3 mb-2">
-                <h3 class="text-xl font-bold text-gray-900">{quest.title}</h3>
-                <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+              <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                <h3 class="text-lg sm:text-xl font-bold text-gray-900">{quest.title}</h3>
+                <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
                   quest.priority === 'high' ? 'bg-red-100 text-red-700' :
                   quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700' :
                   'bg-green-100 text-green-700'
@@ -62,10 +62,10 @@ const failedQuests = quests.filter(q => q.status === 'failed');
                   {quest.priority} priority
                 </span>
               </div>
-              <p class="text-gray-700">{quest.description}</p>
+              <p class="text-gray-700 text-sm sm:text-base">{quest.description}</p>
             </div>
             {isLoggedIn && (
-              <div class="flex gap-2 ml-4">
+              <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
                 <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
                   Complete
                 </button>
@@ -111,9 +111,9 @@ const failedQuests = quests.filter(q => q.status === 'failed');
   )}
 
   <!-- Modal for Add/Edit Quest -->
-  <div id="questModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-    <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-primary-700">New Quest</h2>
+  <div id="questModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700">New Quest</h2>
       <form id="questForm" class="space-y-4">
         <input type="hidden" id="questId" name="id">
         
@@ -139,7 +139,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
           ></textarea>
         </div>
         
-        <div class="grid grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
             <select 
