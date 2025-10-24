@@ -8,6 +8,11 @@ const DiaryEntry = defineTable({
     content: column.text(),
     session: column.number(),
     tags: column.json(),
+    coverImageUrl: column.text({ optional: true }),
+    npcIds: column.json({ default: [] }),
+    locationIds: column.json({ default: [] }),
+    characterIds: column.json({ default: [] }),
+    questIds: column.json({ default: [] }),
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
