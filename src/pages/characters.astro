@@ -5,6 +5,9 @@ import { isAuthenticated } from '../lib/auth';
 
 const characters = await db.select().from(Character);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+
+// Get the edit parameter from URL if present
+const editCharacterId = Astro.url.searchParams.get('edit');
 ---
 
 <Layout title="Player Characters">
@@ -23,14 +26,26 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
       <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-        <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-24 flex items-center justify-center">
-          <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl">
-            {character.name.charAt(0)}
+        <a href={`/characters/${character.id}`} class="block">
+          <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-24 flex items-center justify-center">
+            {character.avatarUrl ? (
+              <img 
+                src={character.avatarUrl} 
+                alt={character.name}
+                class="w-16 h-16 rounded-full object-cover border-2 border-white"
+              />
+            ) : (
+              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl">
+                {character.name.charAt(0)}
+              </div>
+            )}
           </div>
-        </div>
+        </a>
         
         <div class="p-6">
-          <h2 class="text-2xl font-bold text-gray-900 mb-2">{character.name}</h2>
+          <a href={`/characters/${character.id}`} class="block hover:text-primary-700 transition">
+            <h2 class="text-2xl font-bold text-gray-900 mb-2">{character.name}</h2>
+          </a>
           <p class="text-gray-600 mb-4">{character.race} {character.class}</p>
           
           <div class="grid grid-cols-2 gap-3 mb-4">
@@ -76,8 +91,15 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
             </div>
           )}
 
+          <a 
+            href={`/characters/${character.id}`}
+            class="block mt-4 text-center bg-accent-100 text-accent-700 px-4 py-2 rounded hover:bg-accent-200 transition font-medium"
+          >
+            View Details →
+          </a>
+
           {isLoggedIn && (
-            <div class="mt-4 flex gap-2">
+            <div class="mt-2 flex gap-2">
               <button class="edit-character flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition" data-id={character.id}>
                 Edit
               </button>
@@ -116,6 +138,12 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <form id="characterForm" class="space-y-4">
         <input type="hidden" id="characterId" name="id">
         
+        <div class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <p class="text-sm text-blue-800">
+            💡 <strong>Tip:</strong> You can either fill out the form manually OR use the D&D Beyond Auto-fill feature. Just provide the D&D Beyond URL and click "Auto-fill" to populate the fields automatically.
+          </p>
+        </div>
+
         <div class="grid grid-cols-2 gap-4">
           <div>
             <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -123,7 +151,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="name" 
               name="name" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -134,7 +161,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="player" 
               name="player" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -147,7 +173,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="race" 
               name="race" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -158,7 +183,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="text" 
               id="class" 
               name="class" 
-              required 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
@@ -169,7 +193,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="number" 
               id="level" 
               name="level" 
-              required 
               min="1"
               max="20"
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
@@ -190,14 +213,27 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           
           <div>
             <label for="dndbeyondUrl" class="block text-sm font-medium text-gray-700 mb-1">D&D Beyond URL (optional)</label>
-            <input 
-              type="url" 
-              id="dndbeyondUrl" 
-              name="dndbeyondUrl" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            >
+            <div class="flex gap-2">
+              <input 
+                type="url" 
+                id="dndbeyondUrl" 
+                name="dndbeyondUrl" 
+                class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                placeholder="https://www.dndbeyond.com/characters/..."
+              >
+              <button 
+                type="button"
+                id="fetchFromDndBeyond"
+                class="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 transition whitespace-nowrap"
+                title="Fetch character data from D&D Beyond"
+              >
+                Auto-fill
+              </button>
+            </div>
           </div>
         </div>
+        
+        <div id="fetchStatus" class="hidden p-3 rounded-lg mb-2"></div>
         
         <div>
           <h3 class="font-semibold mb-2">Ability Scores</h3>
@@ -271,6 +307,96 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           </div>
         </div>
         
+        <div>
+          <h3 class="font-semibold mb-2">Additional Details (Optional)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label for="background" class="block text-sm font-medium text-gray-700 mb-1">Background</label>
+              <input 
+                type="text" 
+                id="background" 
+                name="background" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="alignment" class="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+              <input 
+                type="text" 
+                id="alignment" 
+                name="alignment" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <input 
+                type="text" 
+                id="gender" 
+                name="gender" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+              <input 
+                type="number" 
+                id="age" 
+                name="age" 
+                min="1"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="height" class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+              <input 
+                type="text" 
+                id="height" 
+                name="height" 
+                placeholder="e.g., 5'11&quot;"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (lbs)</label>
+              <input 
+                type="number" 
+                id="weight" 
+                name="weight" 
+                min="1"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="eyes" class="block text-sm font-medium text-gray-700 mb-1">Eye Color</label>
+              <input 
+                type="text" 
+                id="eyes" 
+                name="eyes" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="skin" class="block text-sm font-medium text-gray-700 mb-1">Skin Color</label>
+              <input 
+                type="text" 
+                id="skin" 
+                name="skin" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="hair" class="block text-sm font-medium text-gray-700 mb-1">Hair Color</label>
+              <input 
+                type="text" 
+                id="hair" 
+                name="hair" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+          </div>
+        </div>
+        
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
@@ -325,6 +451,19 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     
     const formData = new FormData(form);
     
+    // Validate that required fields are filled
+    const name = formData.get('name') as string;
+    const player = formData.get('player') as string;
+    const race = formData.get('race') as string;
+    const className = formData.get('class') as string;
+    const level = formData.get('level') as string;
+    
+    // Check if required fields are empty
+    if (!name || !player || !race || !className || !level) {
+      alert('Please fill out all required fields (Name, Player, Race, Class, Level) or use the D&D Beyond Auto-fill feature.');
+      return;
+    }
+    
     const stats = {
       strength: parseInt(formData.get('strength') as string) || 10,
       dexterity: parseInt(formData.get('dexterity') as string) || 10,
@@ -335,14 +474,24 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     };
     
     const data = {
-      name: formData.get('name'),
-      player: formData.get('player'),
-      race: formData.get('race'),
-      class: formData.get('class'),
-      level: parseInt(formData.get('level') as string),
+      name,
+      player,
+      race,
+      class: className,
+      level: parseInt(level),
       avatarUrl: formData.get('avatarUrl') || undefined,
       dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
       stats,
+      // Additional character details
+      background: formData.get('background') || undefined,
+      alignment: formData.get('alignment') || undefined,
+      gender: formData.get('gender') || undefined,
+      age: formData.get('age') ? parseInt(formData.get('age') as string) : undefined,
+      height: formData.get('height') || undefined,
+      weight: formData.get('weight') ? parseInt(formData.get('weight') as string) : undefined,
+      eyes: formData.get('eyes') || undefined,
+      skin: formData.get('skin') || undefined,
+      hair: formData.get('hair') || undefined,
     };
 
     try {
@@ -395,6 +544,17 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
         }
         
+        // Load additional character details
+        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
+        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
+        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
+        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
+        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
+        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
+        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
+        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
+        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
+        
         if (modalTitle) modalTitle.textContent = 'Edit Character';
         modal?.classList.remove('hidden');
       } catch (error) {
@@ -424,5 +584,137 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       }
     }
   });
-</script>
+
+  // Fetch character data from D&D Beyond
+  const fetchButton = document.getElementById('fetchFromDndBeyond');
+  const fetchStatus = document.getElementById('fetchStatus');
+  
+  fetchButton?.addEventListener('click', async () => {
+    const urlInput = document.getElementById('dndbeyondUrl') as HTMLInputElement;
+    const url = urlInput.value.trim();
+    
+    if (!url) {
+      alert('Please enter a D&D Beyond character URL first.');
+      return;
+    }
+    
+    // Show loading status
+    if (fetchStatus) {
+      fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
+      fetchStatus.className = 'p-3 rounded-lg mb-2 bg-blue-100 text-blue-800';
+      fetchStatus.classList.remove('hidden');
+    }
+    
+    try {
+      const response = await fetch('/api/characters/dndbeyond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url }),
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        
+        // Fill in the form fields
+        if (data.name) (document.getElementById('name') as HTMLInputElement).value = data.name;
+        if (data.race) (document.getElementById('race') as HTMLInputElement).value = data.race;
+        if (data.class) (document.getElementById('class') as HTMLInputElement).value = data.class;
+        if (data.level) (document.getElementById('level') as HTMLInputElement).value = data.level;
+        if (data.avatarUrl) (document.getElementById('avatarUrl') as HTMLInputElement).value = data.avatarUrl;
+        
+        if (data.stats) {
+          if (data.stats.strength) (document.getElementById('strength') as HTMLInputElement).value = data.stats.strength;
+          if (data.stats.dexterity) (document.getElementById('dexterity') as HTMLInputElement).value = data.stats.dexterity;
+          if (data.stats.constitution) (document.getElementById('constitution') as HTMLInputElement).value = data.stats.constitution;
+          if (data.stats.intelligence) (document.getElementById('intelligence') as HTMLInputElement).value = data.stats.intelligence;
+          if (data.stats.wisdom) (document.getElementById('wisdom') as HTMLInputElement).value = data.stats.wisdom;
+          if (data.stats.charisma) (document.getElementById('charisma') as HTMLInputElement).value = data.stats.charisma;
+        }
+        
+        // Fill in additional character details
+        if (data.background) (document.getElementById('background') as HTMLInputElement).value = data.background;
+        if (data.alignment) (document.getElementById('alignment') as HTMLInputElement).value = data.alignment;
+        if (data.gender) (document.getElementById('gender') as HTMLInputElement).value = data.gender;
+        if (data.age) (document.getElementById('age') as HTMLInputElement).value = data.age;
+        if (data.height) (document.getElementById('height') as HTMLInputElement).value = data.height;
+        if (data.weight) (document.getElementById('weight') as HTMLInputElement).value = data.weight;
+        if (data.eyes) (document.getElementById('eyes') as HTMLInputElement).value = data.eyes;
+        if (data.skin) (document.getElementById('skin') as HTMLInputElement).value = data.skin;
+        if (data.hair) (document.getElementById('hair') as HTMLInputElement).value = data.hair;
+        
+        // Show success status
+        if (fetchStatus) {
+          fetchStatus.textContent = '✓ Character data fetched successfully!';
+          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-green-100 text-green-800';
+        }
+      } else {
+        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+        if (fetchStatus) {
+          fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
+          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+        }
+      }
+    } catch (error) {
+      console.error('Fetch error:', error);
+      if (fetchStatus) {
+        fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
+        fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+      }
+    }
+  });
+
+  // Check for edit parameter on page load and open modal if present
+  (async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      try {
+        const response = await fetch(`/api/characters/${editId}`);
+        if (!response.ok) {
+          throw new Error('Character not found');
+        }
+        
+        const character = await response.json();
+        
+        editingId = editId;
+        (document.getElementById('name') as HTMLInputElement).value = character.name;
+        (document.getElementById('player') as HTMLInputElement).value = character.player;
+        (document.getElementById('race') as HTMLInputElement).value = character.race;
+        (document.getElementById('class') as HTMLInputElement).value = character.class;
+        (document.getElementById('level') as HTMLInputElement).value = character.level;
+        (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
+        (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+        
+        if (character.stats) {
+          (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
+          (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
+          (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
+          (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
+          (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
+          (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+        }
+        
+        // Load additional character details
+        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
+        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
+        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
+        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
+        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
+        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
+        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
+        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
+        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
+        
+        modalTitle.textContent = 'Edit Character';
+        modal.classList.remove('hidden');
+        
+        // Clear the URL parameter so refreshing doesn't re-open the modal
+        window.history.replaceState({}, '', '/characters');
+      } catch (error) {
+        console.error('Failed to load character for editing:', error);
+        alert('Failed to load character. Please try again.');
+      }
+    }
+  })();
 </script>
