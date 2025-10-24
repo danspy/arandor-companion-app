@@ -1,4 +1,5 @@
-import { db, DiaryEntry, Quest, Character, NPC, Location } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, NPC, Location, User } from 'astro:db';
+import { hashPassword } from '../src/lib/auth';
 
 export default async function seed() {
   // Seed Diary Entries
@@ -138,6 +139,16 @@ export default async function seed() {
       notes: 'Found goblin presence and a mysterious amulet',
       createdAt: new Date(),
       updatedAt: new Date(),
+    }
+  ]);
+
+  // Seed Admin User (username: admin, password: admin)
+  await db.insert(User).values([
+    {
+      id: '1',
+      username: 'admin',
+      passwordHash: await hashPassword('admin'),
+      createdAt: new Date(),
     }
   ]);
 

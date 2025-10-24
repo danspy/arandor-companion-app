@@ -1,11 +1,13 @@
 ---
 import '../styles/global.css';
+import { isAuthenticated } from '../lib/auth';
 
 interface Props {
   title: string;
 }
 
 const { title } = Astro.props;
+const isLoggedIn = isAuthenticated(Astro.cookies);
 ---
 
 <!doctype html>
@@ -21,13 +23,25 @@ const { title } = Astro.props;
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <a href="/" class="text-2xl font-bold">Arandor Companion</a>
-          <div class="flex gap-6">
+          <div class="flex gap-6 items-center">
             <a href="/" class="hover:text-purple-200 transition">Dashboard</a>
             <a href="/diary" class="hover:text-purple-200 transition">Diary</a>
             <a href="/characters" class="hover:text-purple-200 transition">Characters</a>
             <a href="/npcs" class="hover:text-purple-200 transition">NPCs</a>
             <a href="/locations" class="hover:text-purple-200 transition">Locations</a>
             <a href="/quests" class="hover:text-purple-200 transition">Quests</a>
+            {isLoggedIn ? (
+              <button 
+                id="logoutBtn"
+                class="bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded transition"
+              >
+                Logout
+              </button>
+            ) : (
+              <a href="/login" class="bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded transition">
+                Login
+              </a>
+            )}
           </div>
         </div>
       </div>
@@ -42,5 +56,22 @@ const { title } = Astro.props;
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>
     </footer>
+    
+    <script>
+      const logoutBtn = document.getElementById('logoutBtn');
+      logoutBtn?.addEventListener('click', async () => {
+        try {
+          const response = await fetch('/api/auth/logout', {
+            method: 'POST',
+          });
+          
+          if (response.ok) {
+            window.location.href = '/';
+          }
+        } catch (error) {
+          console.error('Logout failed:', error);
+        }
+      });
+    </script>
   </body>
 </html>

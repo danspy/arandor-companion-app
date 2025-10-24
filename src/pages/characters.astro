@@ -1,19 +1,23 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, Character } from 'astro:db';
+import { isAuthenticated } from '../lib/auth';
 
 const characters = await db.select().from(Character);
+const isLoggedIn = isAuthenticated(Astro.cookies);
 ---
 
 <Layout title="Player Characters">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-4xl font-bold text-purple-700">Player Characters</h1>
-    <button 
-      id="addCharacter"
-      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
-    >
-      + Add Character
-    </button>
+    {isLoggedIn && (
+      <button 
+        id="addCharacter"
+        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+      >
+        + Add Character
+      </button>
+    )}
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -72,14 +76,16 @@ const characters = await db.select().from(Character);
             </div>
           )}
 
-          <div class="mt-4 flex gap-2">
-            <button class="edit-character flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={character.id}>
-              Edit
-            </button>
-            <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition" data-id={character.id}>
-              Delete
-            </button>
-          </div>
+          {isLoggedIn && (
+            <div class="mt-4 flex gap-2">
+              <button class="edit-character flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={character.id}>
+                Edit
+              </button>
+              <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition" data-id={character.id}>
+                Delete
+              </button>
+            </div>
+          )}
 
           {character.dndbeyondUrl && (
             <a 

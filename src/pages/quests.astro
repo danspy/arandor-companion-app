@@ -1,8 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, Quest } from 'astro:db';
+import { isAuthenticated } from '../lib/auth';
 
 const quests = await db.select().from(Quest);
+const isLoggedIn = isAuthenticated(Astro.cookies);
 
 const activeQuests = quests.filter(q => q.status === 'active');
 const completedQuests = quests.filter(q => q.status === 'completed');
@@ -12,12 +14,14 @@ const failedQuests = quests.filter(q => q.status === 'failed');
 <Layout title="Quests">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-4xl font-bold text-purple-700">Quests</h1>
-    <button 
-      id="addQuest"
-      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
-    >
-      + Add Quest
-    </button>
+    {isLoggedIn && (
+      <button 
+        id="addQuest"
+        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+      >
+        + Add Quest
+      </button>
+    )}
   </div>
 
   <!-- Stats -->
@@ -60,17 +64,19 @@ const failedQuests = quests.filter(q => q.status === 'failed');
               </div>
               <p class="text-gray-700">{quest.description}</p>
             </div>
-            <div class="flex gap-2 ml-4">
-              <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
-                Complete
-              </button>
-              <button class="edit-quest px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm" data-id={quest.id}>
-                Edit
-              </button>
-              <button class="delete-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
-                Delete
-              </button>
-            </div>
+            {isLoggedIn && (
+              <div class="flex gap-2 ml-4">
+                <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
+                  Complete
+                </button>
+                <button class="edit-quest px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm" data-id={quest.id}>
+                  Edit
+                </button>
+                <button class="delete-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
+                  Delete
+                </button>
+              </div>
+            )}
           </div>
         </div>
       ))}
