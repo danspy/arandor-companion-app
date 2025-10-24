@@ -5,6 +5,9 @@ import { isAuthenticated } from '../lib/auth';
 
 const characters = await db.select().from(Character);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+
+// Get the edit parameter from URL if present
+const editCharacterId = Astro.url.searchParams.get('edit');
 ---
 
 <Layout title="Player Characters">
@@ -537,4 +540,48 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       }
     }
   });
+
+  // Check for edit parameter on page load and open modal if present
+  (async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      try {
+        const response = await fetch(`/api/characters/${editId}`);
+        if (!response.ok) {
+          throw new Error('Character not found');
+        }
+        
+        const character = await response.json();
+        
+        editingId = editId;
+        (document.getElementById('name') as HTMLInputElement).value = character.name;
+        (document.getElementById('player') as HTMLInputElement).value = character.player;
+        (document.getElementById('race') as HTMLInputElement).value = character.race;
+        (document.getElementById('class') as HTMLInputElement).value = character.class;
+        (document.getElementById('level') as HTMLInputElement).value = character.level;
+        (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
+        (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+        
+        if (character.stats) {
+          (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
+          (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
+          (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
+          (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
+          (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
+          (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+        }
+        
+        modalTitle.textContent = 'Edit Character';
+        modal.classList.remove('hidden');
+        
+        // Clear the URL parameter so refreshing doesn't re-open the modal
+        window.history.replaceState({}, '', '/characters');
+      } catch (error) {
+        console.error('Failed to load character for editing:', error);
+        alert('Failed to load character. Please try again.');
+      }
+    }
+  })();
 </script>
