@@ -126,16 +126,29 @@ The following REST API endpoints are available:
 
 ### Colors
 
-Edit `tailwind.config.mjs` to customize the color scheme:
+The app uses a D&D/fantasy-themed color scheme inspired by [arandor.info](https://arandor.info/) (a D&D campaign resource):
+
 ```javascript
 colors: {
   primary: {
-    DEFAULT: '#8b5cf6',
-    dark: '#7c3aed',
+    DEFAULT: '#8b4545', // Burgundy/Maroon
+    dark: '#5f2f2f',
+    // Full palette: 50, 100, 200, ..., 900, 950
   },
-  // ... more colors
+  secondary: {
+    DEFAULT: '#d97706', // Gold/Amber
+    dark: '#92400e',
+    // Full palette: 50, 100, 200, ..., 900, 950
+  },
+  accent: {
+    DEFAULT: '#475569', // Slate
+    dark: '#1e293b',
+    // Full palette: 50, 100, 200, ..., 900, 950
+  },
 }
 ```
+
+Each color includes a complete range of shades (50-950) following Tailwind's color system conventions. Edit `tailwind.config.mjs` to customize the color scheme further.
 
 ## Future Enhancements
 

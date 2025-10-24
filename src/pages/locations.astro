@@ -12,11 +12,11 @@ const unvisitedLocations = locations.filter(l => !l.visited);
 
 <Layout title="Locations">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-purple-700">Locations</h1>
+    <h1 class="text-4xl font-bold text-primary-700">Locations</h1>
     {isLoggedIn && (
       <button 
         id="addLocation"
-        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
       >
         + Add Location
       </button>
@@ -26,7 +26,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
     <div class="bg-white rounded-lg shadow-md p-6 text-center">
-      <div class="text-3xl font-bold text-purple-600">{locations.length}</div>
+      <div class="text-3xl font-bold text-primary-600">{locations.length}</div>
       <div class="text-gray-600">Total Locations</div>
     </div>
     <div class="bg-white rounded-lg shadow-md p-6 text-center">
@@ -44,7 +44,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
       <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
         <div class={`h-2 ${
           location.type === 'city' ? 'bg-blue-500' :
-          location.type === 'dungeon' ? 'bg-purple-500' :
+          location.type === 'dungeon' ? 'bg-primary-500' :
           location.type === 'wilderness' ? 'bg-green-500' :
           location.type === 'building' ? 'bg-amber-500' :
           'bg-gray-500'
@@ -63,7 +63,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
           <div class="flex gap-2 mb-3">
             <span class={`px-2 py-1 rounded text-xs font-medium ${
               location.type === 'city' ? 'bg-blue-100 text-blue-700' :
-              location.type === 'dungeon' ? 'bg-purple-100 text-purple-700' :
+              location.type === 'dungeon' ? 'bg-primary-100 text-primary-700' :
               location.type === 'wilderness' ? 'bg-green-100 text-green-700' :
               location.type === 'building' ? 'bg-amber-100 text-amber-700' :
               'bg-gray-100 text-gray-700'
@@ -87,7 +87,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
 
           {isLoggedIn && (
             <div class="flex gap-2">
-              <button class="edit-location flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition text-sm" data-id={location.id}>
+              <button class="edit-location flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition text-sm" data-id={location.id}>
                 Edit
               </button>
               <button class="delete-location px-3 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition text-sm" data-id={location.id}>
@@ -109,7 +109,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
   <!-- Modal for Add/Edit Location -->
   <div id="locationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-purple-700">New Location</h2>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-primary-700">New Location</h2>
       <form id="locationForm" class="space-y-4">
         <input type="hidden" id="locationId" name="id">
         
@@ -120,7 +120,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
             id="name" 
             name="name" 
             required 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
         </div>
         
@@ -131,7 +131,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               id="type" 
               name="type" 
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="city">City</option>
               <option value="dungeon">Dungeon</option>
@@ -147,7 +147,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               type="text" 
               id="region" 
               name="region" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -159,7 +159,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
             name="description" 
             required 
             rows="3"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
         </div>
         
@@ -169,7 +169,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
             id="notes" 
             name="notes" 
             rows="2"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
         </div>
         
@@ -179,7 +179,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               type="checkbox" 
               id="visited" 
               name="visited"
-              class="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             >
             <span class="ml-2 text-sm text-gray-700">Mark as visited</span>
           </label>
@@ -188,7 +188,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
           >
             Save Location
           </button>
