@@ -1,0 +1,100 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { diaryEntries, quests, characters } from '../data/mockData';
+
+const activeQuests = quests.filter(q => q.status === 'active');
+const latestEntries = diaryEntries.slice().reverse().slice(0, 3);
+---
+
+<Layout title="Dashboard">
+  <h1 class="text-4xl font-bold mb-8 text-purple-700">Dashboard</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+    <!-- Active Quests Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-4 text-purple-600">Active Quests</h2>
+      <div class="space-y-3">
+        {activeQuests.map(quest => (
+          <div class="border-l-4 border-purple-500 pl-4 py-2">
+            <h3 class="font-semibold">{quest.title}</h3>
+            <p class="text-sm text-gray-600">{quest.description}</p>
+            <span class={`inline-block px-2 py-1 text-xs rounded mt-2 ${
+              quest.priority === 'high' ? 'bg-red-100 text-red-700' :
+              quest.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+              'bg-green-100 text-green-700'
+            }`}>
+              {quest.priority}
+            </span>
+          </div>
+        ))}
+      </div>
+      <a href="/quests" class="block mt-4 text-purple-600 hover:text-purple-800 font-medium">
+        View all quests →
+      </a>
+    </div>
+
+    <!-- Party Members Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-4 text-purple-600">Party Members</h2>
+      <div class="space-y-3">
+        {characters.map(char => (
+          <div class="flex items-center justify-between p-3 bg-gray-50 rounded">
+            <div>
+              <h3 class="font-semibold">{char.name}</h3>
+              <p class="text-sm text-gray-600">{char.race} {char.class} - Level {char.level}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-sm text-gray-500">{char.player}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+      <a href="/characters" class="block mt-4 text-purple-600 hover:text-purple-800 font-medium">
+        View all characters →
+      </a>
+    </div>
+
+    <!-- Latest Diary Entries Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h2 class="text-2xl font-semibold mb-4 text-purple-600">Latest Entries</h2>
+      <div class="space-y-3">
+        {latestEntries.map(entry => (
+          <div class="border-b pb-3 last:border-b-0">
+            <div class="flex justify-between items-start mb-1">
+              <h3 class="font-semibold">{entry.title}</h3>
+              <span class="text-xs text-gray-500">Session {entry.session}</span>
+            </div>
+            <p class="text-sm text-gray-600 line-clamp-2">{entry.content}</p>
+            <p class="text-xs text-gray-400 mt-1">{entry.date}</p>
+          </div>
+        ))}
+      </div>
+      <a href="/diary" class="block mt-4 text-purple-600 hover:text-purple-800 font-medium">
+        View all entries →
+      </a>
+    </div>
+  </div>
+
+  <!-- Session Progress -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-2xl font-semibold mb-4 text-purple-600">Campaign Progress</h2>
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="text-center p-4 bg-purple-50 rounded">
+        <div class="text-3xl font-bold text-purple-600">{diaryEntries.length}</div>
+        <div class="text-sm text-gray-600">Sessions Played</div>
+      </div>
+      <div class="text-center p-4 bg-blue-50 rounded">
+        <div class="text-3xl font-bold text-blue-600">{quests.length}</div>
+        <div class="text-sm text-gray-600">Total Quests</div>
+      </div>
+      <div class="text-center p-4 bg-green-50 rounded">
+        <div class="text-3xl font-bold text-green-600">{characters.length}</div>
+        <div class="text-sm text-gray-600">Party Members</div>
+      </div>
+      <div class="text-center p-4 bg-amber-50 rounded">
+        <div class="text-3xl font-bold text-amber-600">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
+        <div class="text-sm text-gray-600">Average Level</div>
+      </div>
+    </div>
+  </div>
+</Layout>

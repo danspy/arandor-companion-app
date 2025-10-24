@@ -1,0 +1,97 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { npcs } from '../data/mockData';
+
+const alliedNPCs = npcs.filter(n => n.relationship === 'ally');
+const neutralNPCs = npcs.filter(n => n.relationship === 'neutral');
+const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
+---
+
+<Layout title="NPCs">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold text-purple-700">Non-Player Characters</h1>
+    <button 
+      id="addNPC"
+      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+    >
+      + Add NPC
+    </button>
+  </div>
+
+  <!-- Filter tabs -->
+  <div class="flex gap-4 mb-6 border-b">
+    <button class="px-4 py-2 border-b-2 border-purple-600 text-purple-600 font-semibold">
+      All ({npcs.length})
+    </button>
+    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+      Allies ({alliedNPCs.length})
+    </button>
+    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+      Neutral ({neutralNPCs.length})
+    </button>
+    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+      Enemies ({enemyNPCs.length})
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {npcs.map(npc => (
+      <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-2xl font-bold text-gray-900">{npc.name}</h2>
+            <p class="text-gray-600">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
+          </div>
+          <span class={`px-3 py-1 rounded-full text-sm font-medium ${
+            npc.relationship === 'ally' ? 'bg-green-100 text-green-700' :
+            npc.relationship === 'enemy' ? 'bg-red-100 text-red-700' :
+            'bg-gray-100 text-gray-700'
+          }`}>
+            {npc.relationship}
+          </span>
+        </div>
+
+        <div class="mb-4">
+          <p class="text-gray-700">{npc.description}</p>
+        </div>
+
+        {npc.location && (
+          <div class="mb-3">
+            <span class="text-sm text-gray-500">📍 Location: </span>
+            <span class="text-sm font-medium">{npc.location}</span>
+          </div>
+        )}
+
+        {npc.notes && (
+          <div class="bg-amber-50 border-l-4 border-amber-500 p-3 mb-3">
+            <p class="text-sm text-amber-900"><strong>Notes:</strong> {npc.notes}</p>
+          </div>
+        )}
+
+        <div class="flex gap-2 mt-4">
+          <button class="flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+            View Details
+          </button>
+          <button class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition">
+            Edit
+          </button>
+          <button class="px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition">
+            Delete
+          </button>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {npcs.length === 0 && (
+    <div class="text-center py-16 bg-white rounded-lg shadow-md">
+      <p class="text-gray-500 text-lg">No NPCs yet. Start adding characters you've encountered!</p>
+    </div>
+  )}
+</Layout>
+
+<script>
+  document.getElementById('addNPC')?.addEventListener('click', () => {
+    alert('NPC creation form would open here.');
+  });
+</script>

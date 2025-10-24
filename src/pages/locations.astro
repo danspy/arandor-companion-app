@@ -1,0 +1,106 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { locations } from '../data/mockData';
+
+const visitedLocations = locations.filter(l => l.visited);
+const unvisitedLocations = locations.filter(l => !l.visited);
+---
+
+<Layout title="Locations">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold text-purple-700">Locations</h1>
+    <button 
+      id="addLocation"
+      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+    >
+      + Add Location
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-purple-600">{locations.length}</div>
+      <div class="text-gray-600">Total Locations</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-green-600">{visitedLocations.length}</div>
+      <div class="text-gray-600">Visited</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-gray-600">{unvisitedLocations.length}</div>
+      <div class="text-gray-600">To Explore</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {locations.map(location => (
+      <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+        <div class={`h-2 ${
+          location.type === 'city' ? 'bg-blue-500' :
+          location.type === 'dungeon' ? 'bg-purple-500' :
+          location.type === 'wilderness' ? 'bg-green-500' :
+          location.type === 'building' ? 'bg-amber-500' :
+          'bg-gray-500'
+        }`}></div>
+        
+        <div class="p-6">
+          <div class="flex justify-between items-start mb-3">
+            <h2 class="text-xl font-bold text-gray-900">{location.name}</h2>
+            {location.visited && (
+              <span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-medium">
+                ✓ Visited
+              </span>
+            )}
+          </div>
+
+          <div class="flex gap-2 mb-3">
+            <span class={`px-2 py-1 rounded text-xs font-medium ${
+              location.type === 'city' ? 'bg-blue-100 text-blue-700' :
+              location.type === 'dungeon' ? 'bg-purple-100 text-purple-700' :
+              location.type === 'wilderness' ? 'bg-green-100 text-green-700' :
+              location.type === 'building' ? 'bg-amber-100 text-amber-700' :
+              'bg-gray-100 text-gray-700'
+            }`}>
+              {location.type}
+            </span>
+            {location.region && (
+              <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded text-xs">
+                {location.region}
+              </span>
+            )}
+          </div>
+
+          <p class="text-gray-700 mb-4">{location.description}</p>
+
+          {location.notes && (
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-3 mb-4">
+              <p class="text-sm text-blue-900"><strong>Notes:</strong> {location.notes}</p>
+            </div>
+          )}
+
+          <div class="flex gap-2">
+            <button class="flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition text-sm">
+              View Details
+            </button>
+            <button class="px-3 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm">
+              Edit
+            </button>
+          </div>
+        </div>
+      </div>
+    ))}
+  </div>
+
+  {locations.length === 0 && (
+    <div class="text-center py-16 bg-white rounded-lg shadow-md">
+      <p class="text-gray-500 text-lg">No locations yet. Start mapping your world!</p>
+    </div>
+  )}
+</Layout>
+
+<script>
+  document.getElementById('addLocation')?.addEventListener('click', () => {
+    alert('Location creation form would open here.');
+  });
+</script>
