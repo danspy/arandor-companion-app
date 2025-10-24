@@ -5,6 +5,11 @@ export interface DiaryEntry {
   content: string;
   session: number;
   tags: string[];
+  coverImageUrl?: string;
+  npcIds: string[];
+  locationIds: string[];
+  characterIds: string[];
+  questIds: string[];
 }
 
 export interface Quest {

@@ -1,10 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, DiaryEntry } from 'astro:db';
+import { db, DiaryEntry, NPC, Location, Character, Quest } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const diaryEntries = await db.select().from(DiaryEntry);
+const npcs = await db.select().from(NPC);
+const locations = await db.select().from(Location);
+const characters = await db.select().from(Character);
+const quests = await db.select().from(Quest);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const editId = Astro.url.searchParams.get('edit');
 
 const sortedEntries = diaryEntries.slice().sort((a, b) => 
   new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -27,9 +32,20 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
   <div id="entriesList" class="space-y-6">
     {sortedEntries.map(entry => (
       <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition" data-entry-id={entry.id}>
+        {entry.coverImageUrl && (
+          <div class="mb-4 rounded-lg overflow-hidden">
+            <img 
+              src={entry.coverImageUrl} 
+              alt={entry.title}
+              class="w-full h-48 object-cover"
+            />
+          </div>
+        )}
         <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="text-2xl font-semibold text-gray-900">{entry.title}</h2>
+          <div class="flex-1">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 hover:text-primary-900 transition">
+              {entry.title}
+            </a>
             <div class="flex gap-4 text-sm text-gray-500 mt-1">
               <span>📅 {entry.date}</span>
               <span>🎲 Session {entry.session}</span>
@@ -44,16 +60,20 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
         </div>
         
         <div class="prose max-w-none mb-4">
-          <p class="text-gray-700">{entry.content}</p>
+          <p class="text-gray-700 line-clamp-3">{entry.content}</p>
         </div>
         
-        <div class="flex gap-2 flex-wrap">
+        <div class="flex gap-2 flex-wrap mb-4">
           {Array.isArray(entry.tags) && entry.tags.map((tag: string) => (
             <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm">
               #{tag}
             </span>
           ))}
         </div>
+
+        <a href={`/diary/${entry.id}`} class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+          Read more →
+        </a>
       </article>
     ))}
   </div>
@@ -113,9 +133,40 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
             id="content" 
             name="content" 
             required 
-            rows="6"
+            rows="10"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+          <div class="space-y-3">
+            <div>
+              <label for="coverImageFile" class="block text-xs text-gray-600 mb-1">Upload Image (max 5MB)</label>
+              <input 
+                type="file" 
+                id="coverImageFile" 
+                name="coverImageFile" 
+                accept="image/*"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div class="text-center text-sm text-gray-500">— OR —</div>
+            <div>
+              <label for="coverImageUrl" class="block text-xs text-gray-600 mb-1">Image URL</label>
+              <input 
+                type="text" 
+                id="coverImageUrl" 
+                name="coverImageUrl" 
+                placeholder="https://example.com/image.jpg"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+              <p class="text-xs text-gray-500 mt-1">External URL or uploaded image path</p>
+            </div>
+          </div>
+          <div id="imagePreview" class="mt-3 hidden">
+            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
+          </div>
         </div>
         
         <div>
@@ -127,6 +178,74 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
             placeholder="combat, discovery, ruins"
             class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="npcs" class="block text-sm font-medium text-gray-700 mb-1">NPCs Met</label>
+            <select 
+              id="npcs" 
+              name="npcs" 
+              multiple 
+              size="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              {npcs.map(npc => (
+                <option value={npc.id}>{npc.name}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+          </div>
+
+          <div>
+            <label for="locations" class="block text-sm font-medium text-gray-700 mb-1">Locations Visited</label>
+            <select 
+              id="locations" 
+              name="locations" 
+              multiple 
+              size="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              {locations.map(location => (
+                <option value={location.id}>{location.name}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="characters" class="block text-sm font-medium text-gray-700 mb-1">Party Members</label>
+            <select 
+              id="characters" 
+              name="characters" 
+              multiple 
+              size="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              {characters.map(character => (
+                <option value={character.id}>{character.name}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+          </div>
+
+          <div>
+            <label for="quests" class="block text-sm font-medium text-gray-700 mb-1">Related Quests</label>
+            <select 
+              id="quests" 
+              name="quests" 
+              multiple 
+              size="4"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+              {quests.map(quest => (
+                <option value={quest.id}>{quest.title}</option>
+              ))}
+            </select>
+            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+          </div>
         </div>
         
         <div class="flex gap-4 pt-4">
@@ -155,8 +274,46 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
   const modalTitle = document.getElementById('modalTitle');
   const addButton = document.getElementById('addEntry');
   const cancelButton = document.getElementById('cancelModal');
+  const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
+  const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
+  const imagePreview = document.getElementById('imagePreview');
+  const previewImg = document.getElementById('previewImg') as HTMLImageElement;
 
   let editingId: string | null = null;
+
+  // Handle image file selection and preview
+  fileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (previewImg && imagePreview) {
+          previewImg.src = e.target?.result as string;
+          imagePreview.classList.remove('hidden');
+        }
+        // Clear URL input when file is selected
+        if (urlInput) urlInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      imagePreview?.classList.add('hidden');
+    }
+  });
+
+  // Handle URL input and preview
+  urlInput?.addEventListener('input', (e) => {
+    const url = (e.target as HTMLInputElement).value;
+    if (url) {
+      if (previewImg && imagePreview) {
+        previewImg.src = url;
+        imagePreview.classList.remove('hidden');
+      }
+      // Clear file input when URL is entered
+      if (fileInput) fileInput.value = '';
+    } else {
+      imagePreview?.classList.add('hidden');
+    }
+  });
 
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
@@ -164,6 +321,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
     form.reset();
     document.getElementById('entryId')?.setAttribute('value', '');
     if (modalTitle) modalTitle.textContent = 'New Diary Entry';
+    imagePreview?.classList.add('hidden');
     
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
@@ -191,12 +349,57 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
     const formData = new FormData(form);
     const tags = (formData.get('tags') as string).split(',').map(t => t.trim()).filter(t => t);
     
+    // Get selected values from multi-select fields
+    const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
+    const locationsSelect = document.getElementById('locations') as HTMLSelectElement;
+    const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
+    const questsSelect = document.getElementById('quests') as HTMLSelectElement;
+    
+    const npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
+    const locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
+    const characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
+    const questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
+    
+    // Handle image upload if file is selected
+    let coverImageUrl = formData.get('coverImageUrl') as string || null;
+    const imageFile = formData.get('coverImageFile') as File;
+    
+    if (imageFile && imageFile.size > 0) {
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          coverImageUrl = uploadData.url;
+        } else {
+          const error = await uploadResponse.json();
+          alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload image. Please try again.');
+        return;
+      }
+    }
+    
     const data = {
       title: formData.get('title'),
       date: formData.get('date'),
       session: parseInt(formData.get('session') as string),
       content: formData.get('content'),
       tags,
+      coverImageUrl,
+      npcIds,
+      locationIds,
+      characterIds,
+      questIds,
     };
 
     try {
@@ -237,6 +440,49 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
         (document.getElementById('session') as HTMLInputElement).value = entry.session;
         (document.getElementById('content') as HTMLTextAreaElement).value = entry.content;
         (document.getElementById('tags') as HTMLInputElement).value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+        (document.getElementById('coverImageUrl') as HTMLInputElement).value = entry.coverImageUrl || '';
+        
+        // Show image preview if there's a cover image
+        if (entry.coverImageUrl && imagePreview && previewImg) {
+          previewImg.src = entry.coverImageUrl;
+          imagePreview.classList.remove('hidden');
+        } else {
+          imagePreview?.classList.add('hidden');
+        }
+        
+        // Clear file input
+        if (fileInput) fileInput.value = '';
+        
+        // Set selected values for multi-select fields
+        const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
+        const locationsSelect = document.getElementById('locations') as HTMLSelectElement;
+        const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
+        const questsSelect = document.getElementById('quests') as HTMLSelectElement;
+        
+        // Clear previous selections
+        Array.from(npcsSelect.options).forEach(option => option.selected = false);
+        Array.from(locationsSelect.options).forEach(option => option.selected = false);
+        Array.from(charactersSelect.options).forEach(option => option.selected = false);
+        Array.from(questsSelect.options).forEach(option => option.selected = false);
+        
+        // Set new selections
+        const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
+        const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+        const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
+        const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
+        
+        Array.from(npcsSelect.options).forEach(option => {
+          if (npcIds.includes(option.value)) option.selected = true;
+        });
+        Array.from(locationsSelect.options).forEach(option => {
+          if (locationIds.includes(option.value)) option.selected = true;
+        });
+        Array.from(charactersSelect.options).forEach(option => {
+          if (characterIds.includes(option.value)) option.selected = true;
+        });
+        Array.from(questsSelect.options).forEach(option => {
+          if (questIds.includes(option.value)) option.selected = true;
+        });
         
         if (modalTitle) modalTitle.textContent = 'Edit Diary Entry';
         modal?.classList.remove('hidden');
@@ -267,4 +513,18 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
       }
     }
   });
+
+  // Check if we should auto-open modal for editing
+  const urlParams = new URLSearchParams(window.location.search);
+  const editIdFromUrl = urlParams.get('edit');
+  
+  if (editIdFromUrl) {
+    // Find and click the edit button for this entry
+    const editButton = document.querySelector(`button.edit-entry[data-id="${editIdFromUrl}"]`);
+    if (editButton) {
+      (editButton as HTMLElement).click();
+      // Remove the query parameter from URL
+      window.history.replaceState({}, '', '/diary');
+    }
+  }
 </script>

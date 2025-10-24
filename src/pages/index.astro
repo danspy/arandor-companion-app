@@ -65,14 +65,14 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
       <h2 class="text-2xl font-semibold mb-4 text-primary-600">Latest Entries</h2>
       <div class="space-y-3">
         {latestEntries.map(entry => (
-          <div class="border-b pb-3 last:border-b-0">
+          <a href={`/diary/${entry.id}`} class="block border-b pb-3 last:border-b-0 hover:bg-gray-50 rounded px-2 -mx-2 transition">
             <div class="flex justify-between items-start mb-1">
-              <h3 class="font-semibold">{entry.title}</h3>
+              <h3 class="font-semibold text-primary-700 hover:text-primary-900">{entry.title}</h3>
               <span class="text-xs text-gray-500">Session {entry.session}</span>
             </div>
             <p class="text-sm text-gray-600 line-clamp-2">{entry.content}</p>
             <p class="text-xs text-gray-400 mt-1">{entry.date}</p>
-          </div>
+          </a>
         ))}
       </div>
       <a href="/diary" class="block mt-4 text-primary-600 hover:text-primary-800 font-medium">

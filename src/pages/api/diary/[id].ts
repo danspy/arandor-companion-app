@@ -40,6 +40,11 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         content: body.content,
         session: body.session,
         tags: body.tags,
+        coverImageUrl: body.coverImageUrl || null,
+        npcIds: body.npcIds || [],
+        locationIds: body.locationIds || [],
+        characterIds: body.characterIds || [],
+        questIds: body.questIds || [],
         updatedAt: now,
       })
       .where(eq(DiaryEntry.id, params.id!));
