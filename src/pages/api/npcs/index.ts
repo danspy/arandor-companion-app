@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, NPC, eq } from 'astro:db';
+import { requireAuth } from '../../../lib/middleware';
 
 export const GET: APIRoute = async () => {
   try {
@@ -16,7 +17,10 @@ export const GET: APIRoute = async () => {
   }
 };
 
-export const POST: APIRoute = async ({ request }) => {
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const authError = requireAuth(cookies);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const id = crypto.randomUUID();

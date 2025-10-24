@@ -1,8 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, NPC } from 'astro:db';
+import { isAuthenticated } from '../lib/auth';
 
 const npcs = await db.select().from(NPC);
+const isLoggedIn = isAuthenticated(Astro.cookies);
 
 const alliedNPCs = npcs.filter(n => n.relationship === 'ally');
 const neutralNPCs = npcs.filter(n => n.relationship === 'neutral');
@@ -12,12 +14,14 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 <Layout title="NPCs">
   <div class="flex justify-between items-center mb-8">
     <h1 class="text-4xl font-bold text-purple-700">Non-Player Characters</h1>
-    <button 
-      id="addNPC"
-      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
-    >
-      + Add NPC
-    </button>
+    {isLoggedIn && (
+      <button 
+        id="addNPC"
+        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+      >
+        + Add NPC
+      </button>
+    )}
   </div>
 
   <!-- Filter tabs -->
@@ -70,14 +74,16 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
           </div>
         )}
 
-        <div class="flex gap-2 mt-4">
-          <button class="edit-npc flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={npc.id}>
-            Edit
-          </button>
-          <button class="delete-npc px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition" data-id={npc.id}>
-            Delete
-          </button>
-        </div>
+        {isLoggedIn && (
+          <div class="flex gap-2 mt-4">
+            <button class="edit-npc flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={npc.id}>
+              Edit
+            </button>
+            <button class="delete-npc px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition" data-id={npc.id}>
+              Delete
+            </button>
+          </div>
+        )}
       </div>
     ))}
   </div>

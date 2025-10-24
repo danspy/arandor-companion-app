@@ -70,6 +70,15 @@ const Location = defineTable({
   }
 });
 
+const User = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    username: column.text({ unique: true }),
+    passwordHash: column.text(),
+    createdAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -77,5 +86,6 @@ export default defineDb({
     Character,
     NPC,
     Location,
+    User,
   }
 });

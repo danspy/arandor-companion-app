@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, Location, eq } from 'astro:db';
+import { requireAuth } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
@@ -24,7 +25,10 @@ export const GET: APIRoute = async ({ params }) => {
   }
 };
 
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async ({ params, request, cookies }) => {
+  const authError = requireAuth(cookies);
+  if (authError) return authError;
+
   try {
     const body = await request.json();
     const now = new Date();
@@ -55,7 +59,10 @@ export const PUT: APIRoute = async ({ params, request }) => {
   }
 };
 
-export const DELETE: APIRoute = async ({ params }) => {
+export const DELETE: APIRoute = async ({ params, cookies }) => {
+  const authError = requireAuth(cookies);
+  if (authError) return authError;
+
   try {
     await db.delete(Location).where(eq(Location.id, params.id!));
     
