@@ -13,11 +13,11 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 
 <Layout title="NPCs">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-purple-700">Non-Player Characters</h1>
+    <h1 class="text-4xl font-bold text-primary-700">Non-Player Characters</h1>
     {isLoggedIn && (
       <button 
         id="addNPC"
-        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
       >
         + Add NPC
       </button>
@@ -26,16 +26,16 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 
   <!-- Filter tabs -->
   <div class="flex gap-4 mb-6 border-b">
-    <button class="px-4 py-2 border-b-2 border-purple-600 text-purple-600 font-semibold">
+    <button class="px-4 py-2 border-b-2 border-primary-600 text-primary-600 font-semibold">
       All ({npcs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
       Allies ({alliedNPCs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
       Neutral ({neutralNPCs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-purple-600">
+    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
       Enemies ({enemyNPCs.length})
     </button>
   </div>
@@ -76,7 +76,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 
         {isLoggedIn && (
           <div class="flex gap-2 mt-4">
-            <button class="edit-npc flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={npc.id}>
+            <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition" data-id={npc.id}>
               Edit
             </button>
             <button class="delete-npc px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition" data-id={npc.id}>
@@ -97,7 +97,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
   <!-- Modal for Add/Edit NPC -->
   <div id="npcModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-purple-700">New NPC</h2>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-primary-700">New NPC</h2>
       <form id="npcForm" class="space-y-4">
         <input type="hidden" id="npcId" name="id">
         
@@ -109,7 +109,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
               id="name" 
               name="name" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -120,7 +120,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
               id="race" 
               name="race" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -132,7 +132,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
               type="text" 
               id="occupation" 
               name="occupation" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -142,7 +142,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
               type="text" 
               id="location" 
               name="location" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -153,7 +153,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
             id="relationship" 
             name="relationship" 
             required
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
             <option value="ally">Ally</option>
             <option value="neutral" selected>Neutral</option>
@@ -168,7 +168,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
             name="description" 
             required 
             rows="3"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
         </div>
         
@@ -178,14 +178,14 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
             id="notes" 
             name="notes" 
             rows="2"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
         </div>
         
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
           >
             Save NPC
           </button>

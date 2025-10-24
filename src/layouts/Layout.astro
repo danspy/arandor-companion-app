@@ -19,26 +19,26 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <title>{title} - Arandor Companion</title>
   </head>
   <body>
-    <nav class="bg-purple-600 text-white shadow-lg">
+    <nav class="bg-primary text-white shadow-lg">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
-          <a href="/" class="text-2xl font-bold">Arandor Companion</a>
+          <a href="/" class="text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
           <div class="flex gap-6 items-center">
-            <a href="/" class="hover:text-purple-200 transition">Dashboard</a>
-            <a href="/diary" class="hover:text-purple-200 transition">Diary</a>
-            <a href="/characters" class="hover:text-purple-200 transition">Characters</a>
-            <a href="/npcs" class="hover:text-purple-200 transition">NPCs</a>
-            <a href="/locations" class="hover:text-purple-200 transition">Locations</a>
-            <a href="/quests" class="hover:text-purple-200 transition">Quests</a>
+            <a href="/" class="hover:text-secondary-200 transition">Dashboard</a>
+            <a href="/diary" class="hover:text-secondary-200 transition">Diary</a>
+            <a href="/characters" class="hover:text-secondary-200 transition">Characters</a>
+            <a href="/npcs" class="hover:text-secondary-200 transition">NPCs</a>
+            <a href="/locations" class="hover:text-secondary-200 transition">Locations</a>
+            <a href="/quests" class="hover:text-secondary-200 transition">Quests</a>
             {isLoggedIn ? (
               <button 
                 id="logoutBtn"
-                class="bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded transition"
+                class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition"
               >
                 Logout
               </button>
             ) : (
-              <a href="/login" class="bg-purple-800 hover:bg-purple-900 px-4 py-2 rounded transition">
+              <a href="/login" class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition">
                 Login
               </a>
             )}
@@ -51,7 +51,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <slot />
     </main>
     
-    <footer class="bg-gray-800 text-white mt-16 py-8">
+    <footer class="bg-accent-900 text-white mt-16 py-8">
       <div class="container mx-auto px-4 text-center">
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>

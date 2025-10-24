@@ -9,11 +9,11 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
 <Layout title="Player Characters">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-purple-700">Player Characters</h1>
+    <h1 class="text-4xl font-bold text-primary-700">Player Characters</h1>
     {isLoggedIn && (
       <button 
         id="addCharacter"
-        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
       >
         + Add Character
       </button>
@@ -23,7 +23,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
       <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
-        <div class="bg-gradient-to-r from-purple-600 to-pink-600 h-24 flex items-center justify-center">
+        <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-24 flex items-center justify-center">
           <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl">
             {character.name.charAt(0)}
           </div>
@@ -34,13 +34,13 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           <p class="text-gray-600 mb-4">{character.race} {character.class}</p>
           
           <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-purple-50 p-3 rounded">
+            <div class="bg-primary-50 p-3 rounded">
               <div class="text-sm text-gray-600">Level</div>
-              <div class="text-xl font-bold text-purple-700">{character.level}</div>
+              <div class="text-xl font-bold text-primary-700">{character.level}</div>
             </div>
-            <div class="bg-purple-50 p-3 rounded">
+            <div class="bg-primary-50 p-3 rounded">
               <div class="text-sm text-gray-600">Player</div>
-              <div class="text-lg font-semibold text-purple-700">{character.player}</div>
+              <div class="text-lg font-semibold text-primary-700">{character.player}</div>
             </div>
           </div>
 
@@ -78,7 +78,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
           {isLoggedIn && (
             <div class="mt-4 flex gap-2">
-              <button class="edit-character flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={character.id}>
+              <button class="edit-character flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition" data-id={character.id}>
                 Edit
               </button>
               <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition" data-id={character.id}>
@@ -91,7 +91,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
             <a 
               href={character.dndbeyondUrl}
               target="_blank"
-              class="block mt-2 text-center text-sm text-purple-600 hover:text-purple-800"
+              class="block mt-2 text-center text-sm text-primary-600 hover:text-primary-800"
             >
               View on D&D Beyond →
             </a>
@@ -112,7 +112,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
   <!-- Modal for Add/Edit Character -->
   <div id="characterModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-purple-700">New Character</h2>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-primary-700">New Character</h2>
       <form id="characterForm" class="space-y-4">
         <input type="hidden" id="characterId" name="id">
         
@@ -124,7 +124,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               id="name" 
               name="name" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -135,7 +135,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               id="player" 
               name="player" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -148,7 +148,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               id="race" 
               name="race" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -159,7 +159,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               id="class" 
               name="class" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -172,7 +172,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               required 
               min="1"
               max="20"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -184,7 +184,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="url" 
               id="avatarUrl" 
               name="avatarUrl" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
           
@@ -194,7 +194,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               type="url" 
               id="dndbeyondUrl" 
               name="dndbeyondUrl" 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
           </div>
         </div>
@@ -210,7 +210,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="strength" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
             <div>
@@ -221,7 +221,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="dexterity" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
             <div>
@@ -232,7 +232,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="constitution" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
             <div>
@@ -243,7 +243,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="intelligence" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
             <div>
@@ -254,7 +254,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="wisdom" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
             <div>
@@ -265,7 +265,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
                 name="charisma" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
             </div>
           </div>
@@ -274,7 +274,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
           >
             Save Character
           </button>

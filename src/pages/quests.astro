@@ -13,11 +13,11 @@ const failedQuests = quests.filter(q => q.status === 'failed');
 
 <Layout title="Quests">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-purple-700">Quests</h1>
+    <h1 class="text-4xl font-bold text-primary-700">Quests</h1>
     {isLoggedIn && (
       <button 
         id="addQuest"
-        class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
       >
         + Add Quest
       </button>
@@ -27,11 +27,11 @@ const failedQuests = quests.filter(q => q.status === 'failed');
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-white rounded-lg shadow-md p-6 text-center">
-      <div class="text-3xl font-bold text-purple-600">{quests.length}</div>
+      <div class="text-3xl font-bold text-primary-600">{quests.length}</div>
       <div class="text-gray-600">Total Quests</div>
     </div>
     <div class="bg-white rounded-lg shadow-md p-6 text-center">
-      <div class="text-3xl font-bold text-blue-600">{activeQuests.length}</div>
+      <div class="text-3xl font-bold text-accent-600">{activeQuests.length}</div>
       <div class="text-gray-600">Active</div>
     </div>
     <div class="bg-white rounded-lg shadow-md p-6 text-center">
@@ -56,7 +56,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
                 <h3 class="text-xl font-bold text-gray-900">{quest.title}</h3>
                 <span class={`px-3 py-1 rounded-full text-xs font-medium ${
                   quest.priority === 'high' ? 'bg-red-100 text-red-700' :
-                  quest.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                  quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700' :
                   'bg-green-100 text-green-700'
                 }`}>
                   {quest.priority} priority
@@ -113,7 +113,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
   <!-- Modal for Add/Edit Quest -->
   <div id="questModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
     <div class="bg-white rounded-lg p-8 max-w-2xl w-full mx-4">
-      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-purple-700">New Quest</h2>
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-primary-700">New Quest</h2>
       <form id="questForm" class="space-y-4">
         <input type="hidden" id="questId" name="id">
         
@@ -124,7 +124,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
             id="title" 
             name="title" 
             required 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           >
         </div>
         
@@ -135,7 +135,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
             name="description" 
             required 
             rows="4"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
           ></textarea>
         </div>
         
@@ -146,7 +146,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
               id="priority" 
               name="priority" 
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="low">Low</option>
               <option value="medium" selected>Medium</option>
@@ -160,7 +160,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
               id="status" 
               name="status" 
               required
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
               <option value="active" selected>Active</option>
               <option value="completed">Completed</option>
@@ -172,7 +172,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
           >
             Save Quest
           </button>
