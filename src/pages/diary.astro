@@ -9,6 +9,7 @@ const locations = await db.select().from(Location);
 const characters = await db.select().from(Character);
 const quests = await db.select().from(Quest);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const editId = Astro.url.searchParams.get('edit');
 
 const sortedEntries = diaryEntries.slice().sort((a, b) => 
   new Date(b.date).getTime() - new Date(a.date).getTime()
@@ -413,4 +414,18 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
       }
     }
   });
+
+  // Check if we should auto-open modal for editing
+  const urlParams = new URLSearchParams(window.location.search);
+  const editIdFromUrl = urlParams.get('edit');
+  
+  if (editIdFromUrl) {
+    // Find and click the edit button for this entry
+    const editButton = document.querySelector(`button.edit-entry[data-id="${editIdFromUrl}"]`);
+    if (editButton) {
+      (editButton as HTMLElement).click();
+      // Remove the query parameter from URL
+      window.history.replaceState({}, '', '/diary');
+    }
+  }
 </script>

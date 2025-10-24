@@ -55,9 +55,13 @@ if (questIds.length > 0) {
       </a>
       {isLoggedIn && (
         <div class="flex gap-2">
-          <a href={`/diary?edit=${entry.id}`} class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition">
+          <button 
+            id="editEntry"
+            data-id={entry.id}
+            class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 transition"
+          >
             Edit
-          </a>
+          </button>
           <button 
             id="deleteEntry"
             data-id={entry.id}
@@ -210,6 +214,15 @@ if (questIds.length > 0) {
 
 <script>
   const deleteBtn = document.getElementById('deleteEntry');
+  const editBtn = document.getElementById('editEntry');
+  
+  // Handle edit button click
+  editBtn?.addEventListener('click', () => {
+    const id = editBtn.getAttribute('data-id');
+    if (id) {
+      window.location.href = `/diary?edit=${id}`;
+    }
+  });
   
   deleteBtn?.addEventListener('click', async () => {
     const id = deleteBtn.getAttribute('data-id');
