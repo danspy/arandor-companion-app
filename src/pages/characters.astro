@@ -1,0 +1,109 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { characters } from '../data/mockData';
+---
+
+<Layout title="Player Characters">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold text-purple-700">Player Characters</h1>
+    <button 
+      id="addCharacter"
+      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+    >
+      + Add Character
+    </button>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {characters.map(character => (
+      <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition">
+        <div class="bg-gradient-to-r from-purple-600 to-pink-600 h-24 flex items-center justify-center">
+          <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl">
+            {character.name.charAt(0)}
+          </div>
+        </div>
+        
+        <div class="p-6">
+          <h2 class="text-2xl font-bold text-gray-900 mb-2">{character.name}</h2>
+          <p class="text-gray-600 mb-4">{character.race} {character.class}</p>
+          
+          <div class="grid grid-cols-2 gap-3 mb-4">
+            <div class="bg-purple-50 p-3 rounded">
+              <div class="text-sm text-gray-600">Level</div>
+              <div class="text-xl font-bold text-purple-700">{character.level}</div>
+            </div>
+            <div class="bg-purple-50 p-3 rounded">
+              <div class="text-sm text-gray-600">Player</div>
+              <div class="text-lg font-semibold text-purple-700">{character.player}</div>
+            </div>
+          </div>
+
+          {character.stats && (
+            <div class="border-t pt-4">
+              <h3 class="font-semibold mb-3">Ability Scores</h3>
+              <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">STR</div>
+                  <div class="font-bold">{character.stats.strength}</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">DEX</div>
+                  <div class="font-bold">{character.stats.dexterity}</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">CON</div>
+                  <div class="font-bold">{character.stats.constitution}</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">INT</div>
+                  <div class="font-bold">{character.stats.intelligence}</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">WIS</div>
+                  <div class="font-bold">{character.stats.wisdom}</div>
+                </div>
+                <div class="bg-gray-50 p-2 rounded">
+                  <div class="text-xs text-gray-500">CHA</div>
+                  <div class="font-bold">{character.stats.charisma}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div class="mt-4 flex gap-2">
+            <button class="flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+              View Details
+            </button>
+            <button class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition">
+              Edit
+            </button>
+          </div>
+
+          {character.dndbeyondUrl && (
+            <a 
+              href={character.dndbeyondUrl}
+              target="_blank"
+              class="block mt-2 text-center text-sm text-purple-600 hover:text-purple-800"
+            >
+              View on D&D Beyond →
+            </a>
+          )}
+        </div>
+      </div>
+    ))}
+  </div>
+
+  <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+    <h3 class="font-semibold text-blue-900 mb-2">💡 D&D Beyond Integration</h3>
+    <p class="text-sm text-blue-800">
+      You can import character data from D&D Beyond by providing the character URL or using the API endpoint.
+      This feature allows automatic synchronization of character stats, levels, and equipment.
+    </p>
+  </div>
+</Layout>
+
+<script>
+  document.getElementById('addCharacter')?.addEventListener('click', () => {
+    alert('Character creation form would open here. You could add a character manually or import from D&D Beyond.');
+  });
+</script>

@@ -1,0 +1,45 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{title} - Arandor Companion</title>
+  </head>
+  <body>
+    <nav class="bg-purple-600 text-white shadow-lg">
+      <div class="container mx-auto px-4 py-4">
+        <div class="flex items-center justify-between">
+          <a href="/" class="text-2xl font-bold">Arandor Companion</a>
+          <div class="flex gap-6">
+            <a href="/" class="hover:text-purple-200 transition">Dashboard</a>
+            <a href="/diary" class="hover:text-purple-200 transition">Diary</a>
+            <a href="/characters" class="hover:text-purple-200 transition">Characters</a>
+            <a href="/npcs" class="hover:text-purple-200 transition">NPCs</a>
+            <a href="/locations" class="hover:text-purple-200 transition">Locations</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <main class="container mx-auto px-4 py-8">
+      <slot />
+    </main>
+    
+    <footer class="bg-gray-800 text-white mt-16 py-8">
+      <div class="container mx-auto px-4 text-center">
+        <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
+      </div>
+    </footer>
+  </body>
+</html>

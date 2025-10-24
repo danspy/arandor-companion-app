@@ -1,0 +1,107 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { quests } from '../data/mockData';
+
+const activeQuests = quests.filter(q => q.status === 'active');
+const completedQuests = quests.filter(q => q.status === 'completed');
+const failedQuests = quests.filter(q => q.status === 'failed');
+---
+
+<Layout title="Quests">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold text-purple-700">Quests</h1>
+    <button 
+      id="addQuest"
+      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+    >
+      + Add Quest
+    </button>
+  </div>
+
+  <!-- Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-purple-600">{quests.length}</div>
+      <div class="text-gray-600">Total Quests</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-blue-600">{activeQuests.length}</div>
+      <div class="text-gray-600">Active</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-green-600">{completedQuests.length}</div>
+      <div class="text-gray-600">Completed</div>
+    </div>
+    <div class="bg-white rounded-lg shadow-md p-6 text-center">
+      <div class="text-3xl font-bold text-red-600">{failedQuests.length}</div>
+      <div class="text-gray-600">Failed</div>
+    </div>
+  </div>
+
+  <!-- Active Quests -->
+  <section class="mb-8">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">Active Quests</h2>
+    <div class="space-y-4">
+      {activeQuests.map(quest => (
+        <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+          <div class="flex justify-between items-start">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="text-xl font-bold text-gray-900">{quest.title}</h3>
+                <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+                  quest.priority === 'high' ? 'bg-red-100 text-red-700' :
+                  quest.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                  'bg-green-100 text-green-700'
+                }`}>
+                  {quest.priority} priority
+                </span>
+              </div>
+              <p class="text-gray-700">{quest.description}</p>
+            </div>
+            <div class="flex gap-2 ml-4">
+              <button class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm">
+                Complete
+              </button>
+              <button class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm">
+                Edit
+              </button>
+            </div>
+          </div>
+        </div>
+      ))}
+      {activeQuests.length === 0 && (
+        <div class="text-center py-8 bg-white rounded-lg shadow-md">
+          <p class="text-gray-500">No active quests</p>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <!-- Completed Quests -->
+  {completedQuests.length > 0 && (
+    <section>
+      <h2 class="text-2xl font-bold text-gray-900 mb-4">Completed Quests</h2>
+      <div class="space-y-4">
+        {completedQuests.map(quest => (
+          <div class="bg-green-50 rounded-lg shadow p-6 opacity-75">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-gray-900">{quest.title}</h3>
+                <p class="text-gray-700">{quest.description}</p>
+              </div>
+              <span class="bg-green-600 text-white px-3 py-1 rounded text-sm">
+                ✓ Completed
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+</Layout>
+
+<script>
+  document.getElementById('addQuest')?.addEventListener('click', () => {
+    alert('Quest creation form would open here.');
+  });
+</script>

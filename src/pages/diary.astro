@@ -1,0 +1,64 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { diaryEntries } from '../data/mockData';
+
+const sortedEntries = diaryEntries.slice().sort((a, b) => 
+  new Date(b.date).getTime() - new Date(a.date).getTime()
+);
+---
+
+<Layout title="Adventure Diary">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-4xl font-bold text-purple-700">Adventure Diary</h1>
+    <button 
+      id="addEntry"
+      class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+    >
+      + New Entry
+    </button>
+  </div>
+
+  <div class="space-y-6">
+    {sortedEntries.map(entry => (
+      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+        <div class="flex justify-between items-start mb-4">
+          <div>
+            <h2 class="text-2xl font-semibold text-gray-900">{entry.title}</h2>
+            <div class="flex gap-4 text-sm text-gray-500 mt-1">
+              <span>📅 {entry.date}</span>
+              <span>🎲 Session {entry.session}</span>
+            </div>
+          </div>
+          <div class="flex gap-2">
+            <button class="text-purple-600 hover:text-purple-800 px-3 py-1 rounded">Edit</button>
+            <button class="text-red-600 hover:text-red-800 px-3 py-1 rounded">Delete</button>
+          </div>
+        </div>
+        
+        <div class="prose max-w-none mb-4">
+          <p class="text-gray-700">{entry.content}</p>
+        </div>
+        
+        <div class="flex gap-2 flex-wrap">
+          {entry.tags.map(tag => (
+            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+              #{tag}
+            </span>
+          ))}
+        </div>
+      </article>
+    ))}
+  </div>
+
+  {sortedEntries.length === 0 && (
+    <div class="text-center py-16 bg-white rounded-lg shadow-md">
+      <p class="text-gray-500 text-lg">No diary entries yet. Start documenting your adventures!</p>
+    </div>
+  )}
+</Layout>
+
+<script>
+  document.getElementById('addEntry')?.addEventListener('click', () => {
+    alert('Entry editor would open here. This would be a modal form to add new diary entries.');
+  });
+</script>
