@@ -180,33 +180,37 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
   const editBtn = document.getElementById('editCharacter');
   
   // Handle edit button click
-  editBtn?.addEventListener('click', () => {
-    const id = editBtn.getAttribute('data-id');
-    if (id) {
-      window.location.href = `/characters?edit=${id}`;
-    }
-  });
-  
-  deleteBtn?.addEventListener('click', async () => {
-    const id = deleteBtn.getAttribute('data-id');
-    if (!id) return;
-    
-    if (confirm('Are you sure you want to delete this character?')) {
-      try {
-        const response = await fetch(`/api/characters/${id}`, {
-          method: 'DELETE',
-        });
-        
-        if (response.ok) {
-          window.location.href = '/characters';
-        } else {
-          const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-          alert(`Failed to delete character: ${error.error || response.statusText}`);
-        }
-      } catch (error) {
-        console.error('Delete error:', error);
-        alert('An error occurred while deleting the character. Please check your connection and try again.');
+  if (editBtn) {
+    editBtn.addEventListener('click', () => {
+      const id = editBtn.getAttribute('data-id');
+      if (id) {
+        window.location.href = `/characters?edit=${id}`;
       }
-    }
-  });
+    });
+  }
+  
+  if (deleteBtn) {
+    deleteBtn.addEventListener('click', async () => {
+      const id = deleteBtn.getAttribute('data-id');
+      if (!id) return;
+      
+      if (confirm('Are you sure you want to delete this character?')) {
+        try {
+          const response = await fetch(`/api/characters/${id}`, {
+            method: 'DELETE',
+          });
+          
+          if (response.ok) {
+            window.location.href = '/characters';
+          } else {
+            const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+            alert(`Failed to delete character: ${error.error || response.statusText}`);
+          }
+        } catch (error) {
+          console.error('Delete error:', error);
+          alert('An error occurred while deleting the character. Please check your connection and try again.');
+        }
+      }
+    });
+  }
 </script>

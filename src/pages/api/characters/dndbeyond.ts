@@ -21,7 +21,7 @@ interface DnDBeyondCharacterData {
  * Parse D&D Beyond character data from the public character sheet.
  * This is a simplified implementation that extracts basic information.
  * Note: D&D Beyond doesn't have an official public API, so we're using
- * web scraping as a fallback. This may break if they change their site structure.
+ * their internal JSON endpoint. This may break if they change their site structure.
  */
 async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterData> {
   try {
@@ -33,9 +33,11 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
 
     const characterId = characterIdMatch[1];
     
-    // Try to fetch the character data from D&D Beyond's JSON endpoint
-    // This endpoint is used by their own site and is publicly accessible for public characters
-    const jsonUrl = `https://character-service.dndbeyond.com/character/v5/character/${characterId}`;
+    // D&D Beyond's character service endpoint
+    // Note: This is their internal API endpoint used by their own site.
+    // Version may change in the future (currently v5). Monitor for updates.
+    const API_VERSION = 'v5';
+    const jsonUrl = `https://character-service.dndbeyond.com/character/${API_VERSION}/character/${characterId}`;
     
     const response = await fetch(jsonUrl, {
       headers: {
