@@ -108,6 +108,69 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       </div>
     </article>
 
+    <!-- Character Details Section -->
+    {(character.background || character.alignment || character.gender || character.age || character.height || character.weight || character.eyes || character.skin || character.hair) && (
+      <div class="bg-white rounded-lg shadow-md p-8 mb-6">
+        <h2 class="text-2xl font-bold text-primary-700 mb-6">Character Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {character.background && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Background</div>
+              <div class="text-lg text-gray-900">{character.background}</div>
+            </div>
+          )}
+          {character.alignment && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Alignment</div>
+              <div class="text-lg text-gray-900">{character.alignment}</div>
+            </div>
+          )}
+          {character.gender && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Gender</div>
+              <div class="text-lg text-gray-900">{character.gender}</div>
+            </div>
+          )}
+          {character.age && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Age</div>
+              <div class="text-lg text-gray-900">{character.age} years</div>
+            </div>
+          )}
+          {character.height && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Height</div>
+              <div class="text-lg text-gray-900">{character.height}</div>
+            </div>
+          )}
+          {character.weight && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Weight</div>
+              <div class="text-lg text-gray-900">{character.weight} lbs</div>
+            </div>
+          )}
+          {character.eyes && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Eyes</div>
+              <div class="text-lg text-gray-900">{character.eyes}</div>
+            </div>
+          )}
+          {character.skin && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Skin</div>
+              <div class="text-lg text-gray-900">{character.skin}</div>
+            </div>
+          )}
+          {character.hair && (
+            <div>
+              <div class="text-sm text-gray-600 mb-1 font-semibold">Hair</div>
+              <div class="text-lg text-gray-900">{character.hair}</div>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+
     <!-- Ability Scores -->
     {character.stats && (
       <div class="bg-white rounded-lg shadow-md p-8 mb-6">

@@ -307,6 +307,96 @@ const editCharacterId = Astro.url.searchParams.get('edit');
           </div>
         </div>
         
+        <div>
+          <h3 class="font-semibold mb-2">Additional Details (Optional)</h3>
+          <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div>
+              <label for="background" class="block text-sm font-medium text-gray-700 mb-1">Background</label>
+              <input 
+                type="text" 
+                id="background" 
+                name="background" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="alignment" class="block text-sm font-medium text-gray-700 mb-1">Alignment</label>
+              <input 
+                type="text" 
+                id="alignment" 
+                name="alignment" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="gender" class="block text-sm font-medium text-gray-700 mb-1">Gender</label>
+              <input 
+                type="text" 
+                id="gender" 
+                name="gender" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="age" class="block text-sm font-medium text-gray-700 mb-1">Age</label>
+              <input 
+                type="number" 
+                id="age" 
+                name="age" 
+                min="1"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="height" class="block text-sm font-medium text-gray-700 mb-1">Height</label>
+              <input 
+                type="text" 
+                id="height" 
+                name="height" 
+                placeholder="e.g., 5'11&quot;"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="weight" class="block text-sm font-medium text-gray-700 mb-1">Weight (lbs)</label>
+              <input 
+                type="number" 
+                id="weight" 
+                name="weight" 
+                min="1"
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="eyes" class="block text-sm font-medium text-gray-700 mb-1">Eye Color</label>
+              <input 
+                type="text" 
+                id="eyes" 
+                name="eyes" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="skin" class="block text-sm font-medium text-gray-700 mb-1">Skin Color</label>
+              <input 
+                type="text" 
+                id="skin" 
+                name="skin" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="hair" class="block text-sm font-medium text-gray-700 mb-1">Hair Color</label>
+              <input 
+                type="text" 
+                id="hair" 
+                name="hair" 
+                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+            </div>
+          </div>
+        </div>
+        
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
@@ -392,6 +482,16 @@ const editCharacterId = Astro.url.searchParams.get('edit');
       avatarUrl: formData.get('avatarUrl') || undefined,
       dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
       stats,
+      // Additional character details
+      background: formData.get('background') || undefined,
+      alignment: formData.get('alignment') || undefined,
+      gender: formData.get('gender') || undefined,
+      age: formData.get('age') ? parseInt(formData.get('age') as string) : undefined,
+      height: formData.get('height') || undefined,
+      weight: formData.get('weight') ? parseInt(formData.get('weight') as string) : undefined,
+      eyes: formData.get('eyes') || undefined,
+      skin: formData.get('skin') || undefined,
+      hair: formData.get('hair') || undefined,
     };
 
     try {
@@ -443,6 +543,17 @@ const editCharacterId = Astro.url.searchParams.get('edit');
           (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
           (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
         }
+        
+        // Load additional character details
+        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
+        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
+        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
+        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
+        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
+        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
+        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
+        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
+        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Character';
         modal?.classList.remove('hidden');
@@ -520,6 +631,17 @@ const editCharacterId = Astro.url.searchParams.get('edit');
           if (data.stats.charisma) (document.getElementById('charisma') as HTMLInputElement).value = data.stats.charisma;
         }
         
+        // Fill in additional character details
+        if (data.background) (document.getElementById('background') as HTMLInputElement).value = data.background;
+        if (data.alignment) (document.getElementById('alignment') as HTMLInputElement).value = data.alignment;
+        if (data.gender) (document.getElementById('gender') as HTMLInputElement).value = data.gender;
+        if (data.age) (document.getElementById('age') as HTMLInputElement).value = data.age;
+        if (data.height) (document.getElementById('height') as HTMLInputElement).value = data.height;
+        if (data.weight) (document.getElementById('weight') as HTMLInputElement).value = data.weight;
+        if (data.eyes) (document.getElementById('eyes') as HTMLInputElement).value = data.eyes;
+        if (data.skin) (document.getElementById('skin') as HTMLInputElement).value = data.skin;
+        if (data.hair) (document.getElementById('hair') as HTMLInputElement).value = data.hair;
+        
         // Show success status
         if (fetchStatus) {
           fetchStatus.textContent = '✓ Character data fetched successfully!';
@@ -572,6 +694,17 @@ const editCharacterId = Astro.url.searchParams.get('edit');
           (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
           (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
         }
+        
+        // Load additional character details
+        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
+        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
+        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
+        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
+        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
+        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
+        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
+        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
+        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
         
         modalTitle.textContent = 'Edit Character';
         modal.classList.remove('hidden');

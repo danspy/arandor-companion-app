@@ -36,6 +36,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       avatarUrl: body.avatarUrl,
       dndbeyondUrl: body.dndbeyondUrl,
       stats: body.stats,
+      // Additional character details
+      gender: body.gender,
+      alignment: body.alignment,
+      background: body.background,
+      age: body.age,
+      height: body.height,
+      weight: body.weight,
+      eyes: body.eyes,
+      skin: body.skin,
+      hair: body.hair,
       createdAt: now,
       updatedAt: now,
     });

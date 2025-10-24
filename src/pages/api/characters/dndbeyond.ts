@@ -7,6 +7,15 @@ interface DnDBeyondCharacterData {
   class?: string;
   level?: number;
   avatarUrl?: string;
+  gender?: string;
+  alignment?: string;
+  background?: string;
+  age?: number;
+  height?: string;
+  weight?: number;
+  eyes?: string;
+  skin?: string;
+  hair?: string;
   stats?: {
     strength?: number;
     dexterity?: number;
@@ -15,6 +24,24 @@ interface DnDBeyondCharacterData {
     wisdom?: number;
     charisma?: number;
   };
+}
+
+/**
+ * Convert D&D Beyond alignment ID to alignment name
+ */
+function getAlignmentName(alignmentId: number): string {
+  const alignments: { [key: number]: string } = {
+    1: 'Lawful Good',
+    2: 'Neutral Good',
+    3: 'Chaotic Good',
+    4: 'Lawful Neutral',
+    5: 'True Neutral',
+    6: 'Chaotic Neutral',
+    7: 'Lawful Evil',
+    8: 'Neutral Evil',
+    9: 'Chaotic Evil',
+  };
+  return alignments[alignmentId] || 'Unknown';
 }
 
 /**
@@ -61,6 +88,15 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       level: data.data?.classes?.reduce((total: number, cls: any) => total + (cls.level || 0), 0) || undefined,
       class: data.data?.classes?.map((cls: any) => cls.definition?.name || cls.name).join(' / ') || undefined,
       avatarUrl: data.data?.decorations?.avatarUrl || data.data?.avatarUrl || undefined,
+      gender: data.data?.gender || undefined,
+      alignment: data.data?.alignmentId ? getAlignmentName(data.data.alignmentId) : undefined,
+      background: data.data?.background?.definition?.name || data.data?.background?.name || undefined,
+      age: data.data?.age || undefined,
+      height: data.data?.height || undefined,
+      weight: data.data?.weight || undefined,
+      eyes: data.data?.eyes || undefined,
+      skin: data.data?.skin || undefined,
+      hair: data.data?.hair || undefined,
     };
 
     // Extract ability scores

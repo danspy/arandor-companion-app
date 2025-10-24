@@ -41,6 +41,16 @@ const Character = defineTable({
     avatarUrl: column.text({ optional: true }),
     dndbeyondUrl: column.text({ optional: true }),
     stats: column.json({ optional: true }),
+    // Additional character details
+    gender: column.text({ optional: true }),
+    alignment: column.text({ optional: true }),
+    background: column.text({ optional: true }),
+    age: column.number({ optional: true }),
+    height: column.text({ optional: true }),
+    weight: column.number({ optional: true }),
+    eyes: column.text({ optional: true }),
+    skin: column.text({ optional: true }),
+    hair: column.text({ optional: true }),
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
