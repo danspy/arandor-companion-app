@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requireAuth } from '../../lib/middleware';
-import { writeFile } from 'node:fs/promises';
+import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import crypto from 'node:crypto';
 
@@ -44,8 +44,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Get file buffer
     const buffer = Buffer.from(await file.arrayBuffer());
     
-    // Save to public/uploads directory
+    // Ensure upload directory exists
     const uploadDir = join(process.cwd(), 'public', 'uploads');
+    await mkdir(uploadDir, { recursive: true });
+    
+    // Save to public/uploads directory
     const filepath = join(uploadDir, filename);
     
     await writeFile(filepath, buffer);
