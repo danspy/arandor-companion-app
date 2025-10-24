@@ -1,6 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { characters } from '../data/mockData';
+import { db, Character } from 'astro:db';
+
+const characters = await db.select().from(Character);
 ---
 
 <Layout title="Player Characters">
@@ -71,11 +73,11 @@ import { characters } from '../data/mockData';
           )}
 
           <div class="mt-4 flex gap-2">
-            <button class="flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
-              View Details
-            </button>
-            <button class="px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition">
+            <button class="edit-character flex-1 bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition" data-id={character.id}>
               Edit
+            </button>
+            <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition" data-id={character.id}>
+              Delete
             </button>
           </div>
 
@@ -100,10 +102,321 @@ import { characters } from '../data/mockData';
       This feature allows automatic synchronization of character stats, levels, and equipment.
     </p>
   </div>
+
+  <!-- Modal for Add/Edit Character -->
+  <div id="characterModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg p-8 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <h2 id="modalTitle" class="text-2xl font-bold mb-6 text-purple-700">New Character</h2>
+      <form id="characterForm" class="space-y-4">
+        <input type="hidden" id="characterId" name="id">
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="name" class="block text-sm font-medium text-gray-700 mb-1">Name</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              required 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+          
+          <div>
+            <label for="player" class="block text-sm font-medium text-gray-700 mb-1">Player</label>
+            <input 
+              type="text" 
+              id="player" 
+              name="player" 
+              required 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4">
+          <div>
+            <label for="race" class="block text-sm font-medium text-gray-700 mb-1">Race</label>
+            <input 
+              type="text" 
+              id="race" 
+              name="race" 
+              required 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+          
+          <div>
+            <label for="class" class="block text-sm font-medium text-gray-700 mb-1">Class</label>
+            <input 
+              type="text" 
+              id="class" 
+              name="class" 
+              required 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+          
+          <div>
+            <label for="level" class="block text-sm font-medium text-gray-700 mb-1">Level</label>
+            <input 
+              type="number" 
+              id="level" 
+              name="level" 
+              required 
+              min="1"
+              max="20"
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+        </div>
+        
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="avatarUrl" class="block text-sm font-medium text-gray-700 mb-1">Avatar URL (optional)</label>
+            <input 
+              type="url" 
+              id="avatarUrl" 
+              name="avatarUrl" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+          
+          <div>
+            <label for="dndbeyondUrl" class="block text-sm font-medium text-gray-700 mb-1">D&D Beyond URL (optional)</label>
+            <input 
+              type="url" 
+              id="dndbeyondUrl" 
+              name="dndbeyondUrl" 
+              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            >
+          </div>
+        </div>
+        
+        <div>
+          <h3 class="font-semibold mb-2">Ability Scores</h3>
+          <div class="grid grid-cols-6 gap-2">
+            <div>
+              <label for="strength" class="block text-xs text-gray-600 mb-1">STR</label>
+              <input 
+                type="number" 
+                id="strength" 
+                name="strength" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="dexterity" class="block text-xs text-gray-600 mb-1">DEX</label>
+              <input 
+                type="number" 
+                id="dexterity" 
+                name="dexterity" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="constitution" class="block text-xs text-gray-600 mb-1">CON</label>
+              <input 
+                type="number" 
+                id="constitution" 
+                name="constitution" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="intelligence" class="block text-xs text-gray-600 mb-1">INT</label>
+              <input 
+                type="number" 
+                id="intelligence" 
+                name="intelligence" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="wisdom" class="block text-xs text-gray-600 mb-1">WIS</label>
+              <input 
+                type="number" 
+                id="wisdom" 
+                name="wisdom" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+            <div>
+              <label for="charisma" class="block text-xs text-gray-600 mb-1">CHA</label>
+              <input 
+                type="number" 
+                id="charisma" 
+                name="charisma" 
+                min="1"
+                max="30"
+                class="w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              >
+            </div>
+          </div>
+        </div>
+        
+        <div class="flex gap-4 pt-4">
+          <button 
+            type="submit" 
+            class="flex-1 bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition"
+          >
+            Save Character
+          </button>
+          <button 
+            type="button" 
+            id="cancelModal"
+            class="flex-1 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 </Layout>
 
 <script>
-  document.getElementById('addCharacter')?.addEventListener('click', () => {
-    alert('Character creation form would open here. You could add a character manually or import from D&D Beyond.');
+  const modal = document.getElementById('characterModal');
+  const form = document.getElementById('characterForm') as HTMLFormElement;
+  const modalTitle = document.getElementById('modalTitle');
+  const addButton = document.getElementById('addCharacter');
+  const cancelButton = document.getElementById('cancelModal');
+
+  let editingId: string | null = null;
+
+  // Open modal for new character
+  addButton?.addEventListener('click', () => {
+    editingId = null;
+    form.reset();
+    if (modalTitle) modalTitle.textContent = 'New Character';
+    modal?.classList.remove('hidden');
   });
+
+  // Close modal
+  cancelButton?.addEventListener('click', () => {
+    modal?.classList.add('hidden');
+  });
+
+  modal?.addEventListener('click', (e) => {
+    if (e.target === modal) {
+      modal.classList.add('hidden');
+    }
+  });
+
+  // Handle form submission
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(form);
+    
+    const stats = {
+      strength: parseInt(formData.get('strength') as string) || 10,
+      dexterity: parseInt(formData.get('dexterity') as string) || 10,
+      constitution: parseInt(formData.get('constitution') as string) || 10,
+      intelligence: parseInt(formData.get('intelligence') as string) || 10,
+      wisdom: parseInt(formData.get('wisdom') as string) || 10,
+      charisma: parseInt(formData.get('charisma') as string) || 10,
+    };
+    
+    const data = {
+      name: formData.get('name'),
+      player: formData.get('player'),
+      race: formData.get('race'),
+      class: formData.get('class'),
+      level: parseInt(formData.get('level') as string),
+      avatarUrl: formData.get('avatarUrl') || undefined,
+      dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
+      stats,
+    };
+
+    try {
+      const url = editingId ? `/api/characters/${editingId}` : '/api/characters';
+      const method = editingId ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+
+      if (response.ok) {
+        window.location.reload();
+      } else {
+        alert('Failed to save character. Please try again.');
+      }
+    } catch (error) {
+      alert('An error occurred. Please try again.');
+    }
+  });
+
+  // Edit character
+  document.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+    
+    if (target.classList.contains('edit-character')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/characters/${id}`);
+        const character = await response.json();
+        
+        editingId = id;
+        (document.getElementById('name') as HTMLInputElement).value = character.name;
+        (document.getElementById('player') as HTMLInputElement).value = character.player;
+        (document.getElementById('race') as HTMLInputElement).value = character.race;
+        (document.getElementById('class') as HTMLInputElement).value = character.class;
+        (document.getElementById('level') as HTMLInputElement).value = character.level;
+        (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
+        (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+        
+        if (character.stats) {
+          (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
+          (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
+          (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
+          (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
+          (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
+          (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+        }
+        
+        if (modalTitle) modalTitle.textContent = 'Edit Character';
+        modal?.classList.remove('hidden');
+      } catch (error) {
+        alert('Failed to load character. Please try again.');
+      }
+    }
+    
+    // Delete character
+    if (target.classList.contains('delete-character')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      if (confirm('Are you sure you want to delete this character?')) {
+        try {
+          const response = await fetch(`/api/characters/${id}`, {
+            method: 'DELETE',
+          });
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to delete character. Please try again.');
+          }
+        } catch (error) {
+          alert('An error occurred. Please try again.');
+        }
+      }
+    }
+  });
+</script>
 </script>

@@ -17,6 +17,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@astrojs/db": "^0.18.1",
+    "@astrojs/node": "^9.5.0",
     "astro": "^5.15.1"
   },
   "devDependencies": {

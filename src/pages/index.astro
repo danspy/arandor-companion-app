@@ -1,9 +1,15 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { diaryEntries, quests, characters } from '../data/mockData';
+import { db, DiaryEntry, Quest, Character } from 'astro:db';
+
+const diaryEntries = await db.select().from(DiaryEntry);
+const quests = await db.select().from(Quest);
+const characters = await db.select().from(Character);
 
 const activeQuests = quests.filter(q => q.status === 'active');
-const latestEntries = diaryEntries.slice().reverse().slice(0, 3);
+const latestEntries = diaryEntries.slice().sort((a, b) => 
+  new Date(b.date).getTime() - new Date(a.date).getTime()
+).slice(0, 3);
 ---
 
 <Layout title="Dashboard">
