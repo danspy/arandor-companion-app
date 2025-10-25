@@ -34,43 +34,53 @@ diaryEntries.forEach(entry => {
 
 <Layout title="Interactive Map">
   <div class="mb-8">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Interactive Map</h1>
-      {isLoggedIn && (
-        <div class="flex gap-2">
-          <button 
-            id="toggleEditMode"
-            class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
-          >
-            <span id="editModeText">Enable Edit Mode</span>
-          </button>
-          <button 
-            id="uploadMapBtn"
-            class="bg-secondary-600 text-white px-6 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition"
-          >
-            Upload Custom Map
-          </button>
-        </div>
-      )}
+    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-4">
+      <h1 class="text-3xl sm:text-4xl font-bold text-primary-700 dark:text-primary-400">Interactive Map</h1>
+      <div class="flex flex-wrap gap-2">
+        <button 
+          id="toggleFullWidth"
+          class="bg-accent-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm sm:text-base"
+          title="Toggle fullwidth map"
+        >
+          <span id="fullWidthText">Expand Map</span>
+        </button>
+        {isLoggedIn && (
+          <>
+            <button 
+              id="toggleEditMode"
+              class="bg-primary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm sm:text-base"
+            >
+              <span id="editModeText">Enable Edit Mode</span>
+            </button>
+            <button 
+              id="uploadMapBtn"
+              class="bg-secondary-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition text-sm sm:text-base"
+            >
+              Upload Custom Map
+            </button>
+          </>
+        )}
+      </div>
     </div>
-    <p class="text-gray-600 dark:text-gray-400">
+    <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
       {isLoggedIn 
-        ? 'Click on location pins to view details. Enable Edit Mode to drag pins or adjust coordinates manually.'
-        : 'Click on location pins to view details about NPCs and diary entries for each location.'
+        ? 'Click on location pins to view details. Enable Edit Mode to drag pins or adjust coordinates manually. Use pinch to zoom and drag to pan on touch devices.'
+        : 'Click on location pins to view details about NPCs and diary entries for each location. Use pinch to zoom and drag to pan on touch devices.'
       }
     </p>
   </div>
 
   <!-- Map and Details Container -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Map Column (2/3 width) -->
-    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <div id="mapDetailsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Map Column (2/3 width on desktop, fullwidth when toggled) -->
+    <div id="mapColumn" class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 sm:p-6">
+      <div class="mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-2 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
+          <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
           </svg>
-          <span>Use mouse wheel to zoom, click and drag to pan the map</span>
+          <span class="hidden sm:inline">Use mouse wheel to zoom, click and drag to pan the map</span>
+          <span class="sm:hidden">Pinch to zoom, drag to pan</span>
         </div>
         <!-- Zoom controls -->
         <div class="flex gap-2">
@@ -90,7 +100,7 @@ diaryEntries.forEach(entry => {
         </div>
       </div>
       <!-- Map viewport with clipping -->
-      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px;">
+      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden touch-none" style="height: 500px;" id="mapViewport">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
           <div id="mapContainer" class="absolute" style="min-width: 1200px; min-height: 1200px; transform-origin: 0 0;">
@@ -112,7 +122,7 @@ diaryEntries.forEach(entry => {
       </div>
 
       <!-- Legend -->
-      <div class="mt-6 flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-200">
+      <div class="mt-4 sm:mt-6 flex flex-wrap gap-3 sm:gap-4 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
         <div class="flex items-center gap-2">
           <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
           <span>City</span>
@@ -222,6 +232,7 @@ diaryEntries.forEach(entry => {
   let selectedLocationId = null;
   let draggedPin = null;
   let currentMapImage = null;
+  let isFullWidth = false;
   
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
@@ -233,6 +244,12 @@ diaryEntries.forEach(entry => {
   let isPanning = false;
   let startPanX = 0;
   let startPanY = 0;
+
+  // Touch state for pinch zoom
+  let touchStartDistance = 0;
+  let touchStartScale = 1;
+  let touchStartTranslateX = 0;
+  let touchStartTranslateY = 0;
 
   const mapWrapper = document.getElementById('mapWrapper');
   const mapContainer = document.getElementById('mapContainer');
@@ -247,6 +264,11 @@ diaryEntries.forEach(entry => {
   const zoomInBtn = document.getElementById('zoomIn');
   const zoomOutBtn = document.getElementById('zoomOut');
   const resetZoomBtn = document.getElementById('resetZoom');
+  const toggleFullWidthBtn = document.getElementById('toggleFullWidth');
+  const fullWidthText = document.getElementById('fullWidthText');
+  const mapDetailsContainer = document.getElementById('mapDetailsContainer');
+  const mapColumn = document.getElementById('mapColumn');
+  const mapViewport = document.getElementById('mapViewport');
 
   // Get color for location type
   function getLocationColor(type) {
@@ -679,6 +701,74 @@ diaryEntries.forEach(entry => {
   function updateTransform() {
     mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
   }
+
+  // Toggle fullwidth mode
+  toggleFullWidthBtn?.addEventListener('click', () => {
+    isFullWidth = !isFullWidth;
+    
+    if (isFullWidth) {
+      // Expand map to fullwidth
+      mapDetailsContainer.classList.remove('lg:grid-cols-3');
+      mapDetailsContainer.classList.add('grid-cols-1');
+      mapColumn.classList.remove('lg:col-span-2');
+      mapColumn.classList.add('col-span-1');
+      locationDetails.classList.remove('lg:block');
+      locationDetails.classList.add('lg:hidden');
+      fullWidthText.textContent = 'Collapse Map';
+      
+      // Increase map height for fullwidth
+      mapViewport.style.height = '700px';
+      
+      // Store preference
+      try {
+        localStorage.setItem('mapFullWidth', 'true');
+      } catch (e) {
+        console.warn('Failed to save fullwidth preference:', e);
+      }
+    } else {
+      // Restore normal layout
+      mapDetailsContainer.classList.add('lg:grid-cols-3');
+      mapDetailsContainer.classList.remove('grid-cols-1');
+      mapColumn.classList.add('lg:col-span-2');
+      mapColumn.classList.remove('col-span-1');
+      locationDetails.classList.add('lg:block');
+      locationDetails.classList.remove('lg:hidden');
+      fullWidthText.textContent = 'Expand Map';
+      
+      // Restore map height
+      mapViewport.style.height = '500px';
+      
+      // Store preference
+      try {
+        localStorage.setItem('mapFullWidth', 'false');
+      } catch (e) {
+        console.warn('Failed to save fullwidth preference:', e);
+      }
+    }
+  });
+
+  // Load fullwidth preference
+  try {
+    const savedFullWidth = localStorage.getItem('mapFullWidth');
+    if (savedFullWidth === 'true') {
+      toggleFullWidthBtn?.click();
+    }
+  } catch (e) {
+    console.warn('Failed to load fullwidth preference:', e);
+  }
+
+  // On mobile/tablet, always show map and sidebar in column layout
+  function updateMobileLayout() {
+    const isMobile = window.innerWidth < 1024; // lg breakpoint
+    if (isMobile) {
+      mapDetailsContainer?.classList.add('mobile-fullwidth');
+    } else {
+      mapDetailsContainer?.classList.remove('mobile-fullwidth');
+    }
+  }
+  
+  updateMobileLayout();
+  window.addEventListener('resize', updateMobileLayout);
   
   // Zoom button controls
   zoomInBtn?.addEventListener('click', () => {
@@ -735,6 +825,97 @@ diaryEntries.forEach(entry => {
     
     scale = newScale;
     updateTransform();
+  });
+
+  // Touch support for pinch zoom and pan
+  let touches = [];
+  
+  function getTouchDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  function getTouchCenter(touch1, touch2) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  }
+
+  mapWrapper?.addEventListener('touchstart', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length === 2) {
+      // Start pinch zoom
+      e.preventDefault();
+      touchStartDistance = getTouchDistance(touches[0], touches[1]);
+      touchStartScale = scale;
+      
+      const rect = mapWrapper.getBoundingClientRect();
+      const center = getTouchCenter(touches[0], touches[1]);
+      const centerX = center.x - rect.left;
+      const centerY = center.y - rect.top;
+      
+      touchStartTranslateX = translateX;
+      touchStartTranslateY = translateY;
+    } else if (touches.length === 1) {
+      // Start pan
+      const rect = mapWrapper.getBoundingClientRect();
+      isPanning = true;
+      startPanX = touches[0].clientX - translateX;
+      startPanY = touches[0].clientY - translateY;
+    }
+  }, { passive: false });
+
+  mapWrapper?.addEventListener('touchmove', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length === 2) {
+      // Pinch zoom
+      e.preventDefault();
+      const currentDistance = getTouchDistance(touches[0], touches[1]);
+      const distanceRatio = currentDistance / touchStartDistance;
+      
+      const newScale = Math.min(Math.max(0.3, touchStartScale * distanceRatio), 3);
+      
+      const rect = mapWrapper.getBoundingClientRect();
+      const center = getTouchCenter(touches[0], touches[1]);
+      const centerX = center.x - rect.left;
+      const centerY = center.y - rect.top;
+      
+      // Adjust translation to zoom towards center of pinch
+      const scaleChange = newScale / touchStartScale;
+      translateX = centerX - (centerX - touchStartTranslateX) * scaleChange;
+      translateY = centerY - (centerY - touchStartTranslateY) * scaleChange;
+      
+      scale = newScale;
+      updateTransform();
+    } else if (touches.length === 1 && isPanning) {
+      // Pan with single finger
+      e.preventDefault();
+      translateX = touches[0].clientX - startPanX;
+      translateY = touches[0].clientY - startPanY;
+      updateTransform();
+    }
+  }, { passive: false });
+
+  mapWrapper?.addEventListener('touchend', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length < 2) {
+      touchStartDistance = 0;
+    }
+    
+    if (touches.length === 0) {
+      isPanning = false;
+    }
+  });
+
+  mapWrapper?.addEventListener('touchcancel', (e) => {
+    touches = [];
+    touchStartDistance = 0;
+    isPanning = false;
   });
 
   // Pan with mouse drag
@@ -828,6 +1009,45 @@ diaryEntries.forEach(entry => {
   
   #mapWrapper {
     position: relative;
+  }
+
+  /* Mobile/Tablet improvements */
+  @media (max-width: 1023px) {
+    /* Fullwidth layout for mobile/tablet by default */
+    #mapDetailsContainer.mobile-fullwidth #locationDetails {
+      display: block !important;
+      margin-top: 1.5rem;
+    }
+  }
+
+  /* Make pins slightly larger on touch devices for better tap targets */
+  @media (hover: none) and (pointer: coarse) {
+    .location-pin .pin-circle {
+      width: 2rem;
+      height: 2rem;
+    }
+    
+    .location-pin:active {
+      transform: translate(-50%, -100%) scale(1.2);
+    }
+  }
+
+  /* Improve map viewport height on mobile */
+  @media (max-width: 640px) {
+    #mapViewport {
+      height: 400px !important;
+    }
+    
+    #mapViewport.fullwidth {
+      height: 500px !important;
+    }
+  }
+
+  /* Improve sidebar on mobile when showing below map */
+  @media (max-width: 1023px) {
+    #locationDetails {
+      max-height: none !important;
+    }
   }
 </style>
 </Layout>
