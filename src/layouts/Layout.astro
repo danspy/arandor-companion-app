@@ -20,8 +20,13 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <script is:inline>
       // Initialize dark mode before page renders to avoid flash
       const getThemePreference = () => {
-        const stored = localStorage.getItem('theme');
-        if (stored) return stored;
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored) return stored;
+        } catch (e) {
+          // localStorage might not be available in private browsing mode
+          console.warn('localStorage not available:', e);
+        }
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
       };
       
@@ -150,10 +155,18 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         
         if (isDark) {
           html.classList.remove('dark');
-          localStorage.setItem('theme', 'light');
+          try {
+            localStorage.setItem('theme', 'light');
+          } catch (e) {
+            console.warn('Failed to save theme preference:', e);
+          }
         } else {
           html.classList.add('dark');
-          localStorage.setItem('theme', 'dark');
+          try {
+            localStorage.setItem('theme', 'dark');
+          } catch (e) {
+            console.warn('Failed to save theme preference:', e);
+          }
         }
       };
       
