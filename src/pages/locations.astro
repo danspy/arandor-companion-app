@@ -192,8 +192,50 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               name="visited"
               class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
             >
-            <span class="ml-2 text-sm text-gray-700">Mark as visited</span>
+            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Mark as visited</span>
           </label>
+        </div>
+        
+        <div>
+          <label class="flex items-center">
+            <input 
+              type="checkbox" 
+              id="visibleOnMap" 
+              name="visibleOnMap"
+              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+            >
+            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Show pin on map</span>
+          </label>
+          <p class="text-xs text-gray-500 dark:text-gray-400 ml-6 mt-1">Uncheck to hide this location pin on the map (can be enabled later in edit mode)</p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label for="mapX" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Map X Coordinate (optional)</label>
+            <input 
+              type="number" 
+              id="mapX" 
+              name="mapX" 
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="0-100"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+          </div>
+          <div>
+            <label for="mapY" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Map Y Coordinate (optional)</label>
+            <input 
+              type="number" 
+              id="mapY" 
+              name="mapY" 
+              min="0"
+              max="100"
+              step="0.1"
+              placeholder="0-100"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            >
+          </div>
         </div>
         
         <div class="flex gap-4 pt-4">
@@ -249,6 +291,9 @@ const unvisitedLocations = locations.filter(l => !l.visited);
     e.preventDefault();
     
     const formData = new FormData(form);
+    const mapX = formData.get('mapX');
+    const mapY = formData.get('mapY');
+    
     const data = {
       name: formData.get('name'),
       type: formData.get('type'),
@@ -256,6 +301,9 @@ const unvisitedLocations = locations.filter(l => !l.visited);
       description: formData.get('description'),
       notes: formData.get('notes') || undefined,
       visited: formData.get('visited') === 'on',
+      visibleOnMap: formData.get('visibleOnMap') === 'on',
+      mapX: mapX ? parseFloat(mapX as string) : undefined,
+      mapY: mapY ? parseFloat(mapY as string) : undefined,
     };
 
     try {
@@ -297,6 +345,9 @@ const unvisitedLocations = locations.filter(l => !l.visited);
         (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
         (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
+        (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
+        (document.getElementById('mapX') as HTMLInputElement).value = location.mapX || '';
+        (document.getElementById('mapY') as HTMLInputElement).value = location.mapY || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
@@ -349,6 +400,9 @@ const unvisitedLocations = locations.filter(l => !l.visited);
         (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
         (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
+        (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
+        (document.getElementById('mapX') as HTMLInputElement).value = location.mapX || '';
+        (document.getElementById('mapY') as HTMLInputElement).value = location.mapY || '';
         
         modalTitle.textContent = 'Edit Location';
         modal.classList.remove('hidden');

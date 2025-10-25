@@ -58,4 +58,7 @@ export interface Location {
   region?: string;
   visited: boolean;
   notes?: string;
+  mapX?: number;
+  mapY?: number;
+  visibleOnMap?: boolean;
 }

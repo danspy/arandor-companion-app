@@ -126,6 +126,9 @@ export default async function seed() {
       region: 'Sword Coast',
       visited: true,
       notes: 'Our current base of operations',
+      mapX: 30,
+      mapY: 36,
+      visibleOnMap: true, // Make visible for demo
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -137,6 +140,9 @@ export default async function seed() {
       region: 'Waterdeep Undermountain',
       visited: true,
       notes: 'Found goblin presence and a mysterious amulet',
+      mapX: 28,
+      mapY: 42,
+      visibleOnMap: true, // Make visible for demo
       createdAt: new Date(),
       updatedAt: new Date(),
     }

@@ -1,0 +1,833 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { db, Location, NPC, DiaryEntry } from 'astro:db';
+import { isAuthenticated } from '../lib/auth';
+
+const locations = await db.select().from(Location);
+const npcs = await db.select().from(NPC);
+const diaryEntries = await db.select().from(DiaryEntry);
+const isLoggedIn = isAuthenticated(Astro.cookies);
+
+// Create a map of location IDs to NPCs
+const locationNPCs = new Map<string, typeof npcs>();
+npcs.forEach(npc => {
+  if (npc.locationId) {
+    if (!locationNPCs.has(npc.locationId)) {
+      locationNPCs.set(npc.locationId, []);
+    }
+    locationNPCs.get(npc.locationId)!.push(npc);
+  }
+});
+
+// Create a map of location IDs to diary entries
+const locationDiaryEntries = new Map<string, typeof diaryEntries>();
+diaryEntries.forEach(entry => {
+  const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+  locationIds.forEach((locId: string) => {
+    if (!locationDiaryEntries.has(locId)) {
+      locationDiaryEntries.set(locId, []);
+    }
+    locationDiaryEntries.get(locId)!.push(entry);
+  });
+});
+---
+
+<Layout title="Interactive Map">
+  <div class="mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h1 class="text-4xl font-bold text-primary-700">Interactive Map</h1>
+      {isLoggedIn && (
+        <div class="flex gap-2">
+          <button 
+            id="toggleEditMode"
+            class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+          >
+            <span id="editModeText">Enable Edit Mode</span>
+          </button>
+          <button 
+            id="uploadMapBtn"
+            class="bg-secondary-600 text-white px-6 py-2 rounded-lg hover:bg-secondary-700 transition"
+          >
+            Upload Custom Map
+          </button>
+        </div>
+      )}
+    </div>
+    <p class="text-gray-600">
+      {isLoggedIn 
+        ? 'Click on location pins to view details. Enable Edit Mode to drag pins or adjust coordinates manually.'
+        : 'Click on location pins to view details about NPCs and diary entries for each location.'
+      }
+    </p>
+  </div>
+
+  <!-- Map and Details Container -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Map Column (2/3 width) -->
+    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div class="mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>Use mouse wheel to zoom, click and drag to pan the map</span>
+        </div>
+        <!-- Zoom controls -->
+        <div class="flex gap-2">
+          <button id="zoomIn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom In">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+            </svg>
+          </button>
+          <button id="zoomOut" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom Out">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+            </svg>
+          </button>
+          <button id="resetZoom" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded transition text-sm" title="Reset View">
+            Reset
+          </button>
+        </div>
+      </div>
+      <!-- Map viewport with clipping -->
+      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px;">
+        <!-- Draggable map container -->
+        <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
+          <div id="mapContainer" class="absolute" style="min-width: 1200px; min-height: 1200px; transform-origin: 0 0;">
+            <!-- Placeholder map background -->
+            <div id="mapBackground" class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+              <div class="text-center">
+                <svg class="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                </svg>
+                <p class="text-lg font-medium">Upload a custom map image to get started</p>
+                <p class="text-sm mt-2">or use the placeholder fantasy map</p>
+              </div>
+            </div>
+
+            <!-- Location pins will be added here by JavaScript -->
+            <div id="locationPins"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend -->
+      <div class="mt-6 flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-200">
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+          <span>City</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-primary-500 rounded-full"></div>
+          <span>Dungeon</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+          <span>Wilderness</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-amber-500 rounded-full"></div>
+          <span>Building</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="w-4 h-4 bg-gray-500 rounded-full"></div>
+          <span>Other</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Details Panel (1/3 width, on the right) -->
+    <div id="locationDetails" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 lg:block" style="height: fit-content; max-height: 800px; overflow-y: auto;">
+      <div id="locationDetailsPlaceholder" class="text-center text-gray-400 dark:text-gray-500 py-12">
+        <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        <p class="text-sm">Click on a location pin to view details</p>
+      </div>
+      <div id="locationDetailsContent" class="hidden">
+        <h2 id="detailsLocationName" class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4"></h2>
+        <div id="detailsContent"></div>
+        
+        {isLoggedIn && (
+          <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">X Position (%)</label>
+                <input 
+                  type="number" 
+                  id="coordX" 
+                  min="0" 
+                  max="100" 
+                  step="0.1"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Y Position (%)</label>
+                <input 
+                  type="number" 
+                  id="coordY" 
+                  min="0" 
+                  max="100" 
+                  step="0.1"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <button 
+              id="saveCoordinates"
+              class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            >
+              Save Coordinates
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Map Modal -->
+  <div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full">
+      <h2 class="text-2xl font-bold mb-4 text-primary-700">Upload Custom Map</h2>
+      <p class="text-gray-600 mb-4">Upload an image file to use as your custom map background.</p>
+      <input 
+        type="file" 
+        id="mapImageInput" 
+        accept="image/*"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg mb-4"
+      />
+      <div class="flex gap-4">
+        <button 
+          id="confirmUpload"
+          class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+        >
+          Upload
+        </button>
+        <button 
+          id="cancelUpload"
+          class="flex-1 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ locations, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), isLoggedIn }}>
+  let editMode = false;
+  let selectedLocationId = null;
+  let draggedPin = null;
+  let currentMapImage = null;
+  
+  // Debounce time to prevent click event immediately after drag
+  const DRAG_CLICK_DEBOUNCE_MS = 100;
+  
+  // Zoom and pan state with default scale
+  let scale = 0.5; // Start at 50% zoom to show more of the map
+  let translateX = 0;
+  let translateY = 0;
+  let isPanning = false;
+  let startPanX = 0;
+  let startPanY = 0;
+
+  const mapWrapper = document.getElementById('mapWrapper');
+  const mapContainer = document.getElementById('mapContainer');
+  const mapBackground = document.getElementById('mapBackground');
+  const locationPins = document.getElementById('locationPins');
+  const locationDetails = document.getElementById('locationDetails');
+  const toggleEditModeBtn = document.getElementById('toggleEditMode');
+  const editModeText = document.getElementById('editModeText');
+  const uploadMapBtn = document.getElementById('uploadMapBtn');
+  const uploadModal = document.getElementById('uploadModal');
+  const coordinateEditor = document.getElementById('coordinateEditor');
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomOutBtn = document.getElementById('zoomOut');
+  const resetZoomBtn = document.getElementById('resetZoom');
+
+  // Get color for location type
+  function getLocationColor(type) {
+    switch(type) {
+      case 'city': return 'bg-blue-500';
+      case 'dungeon': return 'bg-primary-500';
+      case 'wilderness': return 'bg-green-500';
+      case 'building': return 'bg-amber-500';
+      default: return 'bg-gray-500';
+    }
+  }
+
+  // Create pin element
+  function createPin(location) {
+    const pin = document.createElement('div');
+    pin.className = `location-pin absolute cursor-pointer transition-all`;
+    pin.dataset.locationId = location.id;
+    
+    // Position pin - using left/top with transform to center on point
+    pin.style.left = `${location.mapX || 50}%`;
+    pin.style.top = `${location.mapY || 50}%`;
+    pin.style.transform = 'translate(-50%, -100%)'; // Center horizontally, bottom of pin at coordinate
+    
+    // Hide pin if visibleOnMap is false
+    if (location.visibleOnMap === false) {
+      pin.style.opacity = '0.3';
+      pin.style.pointerEvents = 'none';
+      pin.dataset.hidden = 'true';
+    }
+
+    const color = getLocationColor(location.type);
+    
+    // Build tooltip content
+    const npcs = locationNPCs[location.id] || [];
+    const entries = locationDiaryEntries[location.id] || [];
+    
+    let tooltipContent = `<div class="font-semibold mb-1"><a href="/locations/${location.id}" class="hover:underline">${location.name}</a></div>`;
+    
+    if (npcs.length > 0) {
+      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1">`;
+      tooltipContent += `<div class="font-medium">NPCs:</div>`;
+      npcs.slice(0, 3).forEach(npc => {
+        tooltipContent += `<a href="/npcs/${npc.id}" class="block hover:underline text-blue-600 dark:text-blue-400">• ${npc.name}</a>`;
+      });
+      if (npcs.length > 3) {
+        tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${npcs.length - 3} more</div>`;
+      }
+      tooltipContent += `</div>`;
+    }
+    
+    if (entries.length > 0) {
+      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1">`;
+      tooltipContent += `<div class="font-medium">Diary:</div>`;
+      entries.slice(0, 2).forEach(entry => {
+        tooltipContent += `<a href="/diary/${entry.id}" class="block hover:underline text-amber-600 dark:text-amber-400">• ${entry.title}</a>`;
+      });
+      if (entries.length > 2) {
+        tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${entries.length - 2} more</div>`;
+      }
+      tooltipContent += `</div>`;
+    }
+    
+    pin.innerHTML = `
+      <div class="pin-wrapper relative">
+        <div class="pin-circle ${color} w-7 h-7 rounded-full border-3 border-white shadow-lg transition-all"></div>
+        <div class="pin-tip absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
+      </div>
+    `;
+    
+    // Create separate tooltip element that can overflow
+    const tooltip = document.createElement('div');
+    tooltip.className = 'pin-tooltip fixed bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity';
+    tooltip.style.cssText = 'min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999; pointer-events: none;';
+    tooltip.innerHTML = tooltipContent;
+    document.body.appendChild(tooltip);
+    
+    let hideTooltipTimeout;
+    
+    // Position tooltip on hover
+    pin.addEventListener('mouseenter', (e) => {
+      clearTimeout(hideTooltipTimeout);
+      const rect = pin.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width / 2}px`;
+      tooltip.style.top = `${rect.top - 8}px`;
+      tooltip.style.transform = 'translate(-50%, -100%)';
+      tooltip.style.opacity = '1';
+      tooltip.style.pointerEvents = 'auto';
+    });
+    
+    pin.addEventListener('mouseleave', () => {
+      // Delay hiding to allow moving mouse to tooltip
+      hideTooltipTimeout = setTimeout(() => {
+        tooltip.style.opacity = '0';
+        tooltip.style.pointerEvents = 'none';
+      }, 100);
+    });
+    
+    // Keep tooltip visible when hovering over it
+    tooltip.addEventListener('mouseenter', () => {
+      clearTimeout(hideTooltipTimeout);
+      tooltip.style.opacity = '1';
+      tooltip.style.pointerEvents = 'auto';
+    });
+    
+    tooltip.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = '0';
+      tooltip.style.pointerEvents = 'none';
+    });
+
+    // Click to view details (works in both normal and edit mode)
+    pin.addEventListener('click', (e) => {
+      // Only show details if we didn't just finish a drag
+      if (!draggedPin || !editMode) {
+        // Remove active class from all pins
+        document.querySelectorAll('.location-pin').forEach(p => {
+          p.classList.remove('pin-active');
+        });
+        // Add active class to clicked pin
+        pin.classList.add('pin-active');
+        showLocationDetails(location);
+      }
+    });
+
+    // Drag functionality in edit mode
+    if (isLoggedIn) {
+      pin.addEventListener('mousedown', (e) => {
+        if (editMode && location.visibleOnMap !== false) {
+          e.preventDefault();
+          draggedPin = { element: pin, location: location };
+          pin.style.zIndex = '1000';
+        }
+      });
+    }
+
+    return pin;
+  }
+
+  // Render all pins
+  function renderPins() {
+    locationPins.innerHTML = '';
+    locations.forEach(location => {
+      locationPins.appendChild(createPin(location));
+    });
+  }
+
+  // Show location details
+  function showLocationDetails(location) {
+    selectedLocationId = location.id;
+    
+    const detailsPanel = document.getElementById('locationDetails');
+    const detailsPlaceholder = document.getElementById('locationDetailsPlaceholder');
+    const detailsContent = document.getElementById('locationDetailsContent');
+    const detailsLocationName = document.getElementById('detailsLocationName');
+    const detailsContentDiv = document.getElementById('detailsContent');
+    const coordX = document.getElementById('coordX');
+    const coordY = document.getElementById('coordY');
+    const coordinateEditor = document.getElementById('coordinateEditor');
+    
+    // Show the panel if hidden
+    detailsPanel.classList.remove('hidden');
+    
+    // Hide placeholder, show content
+    detailsPlaceholder.classList.add('hidden');
+    detailsContent.classList.remove('hidden');
+    
+    // Set location name as clickable link
+    detailsLocationName.innerHTML = `<a href="/locations/${location.id}" class="hover:underline">${location.name}</a>`;
+    
+    let html = `
+      <div class="space-y-4">
+        <div>
+          <span class="inline-block px-3 py-1 rounded text-sm font-medium ${getLocationColor(location.type)}-100 text-${getLocationColor(location.type).replace('bg-', '')}-700 dark:bg-opacity-20 dark:text-${getLocationColor(location.type).replace('bg-', '')}-300">
+            ${location.type}
+          </span>
+          ${location.region ? `<span class="ml-2 text-sm text-gray-600 dark:text-gray-400">📍 ${location.region}</span>` : ''}
+        </div>
+        <p class="text-gray-700 dark:text-gray-300">${location.description}</p>
+        ${location.notes ? `<div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 border-l-4 border-blue-500 p-3"><p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
+    `;
+
+    // Add NPCs
+    const npcs = locationNPCs[location.id] || [];
+    if (npcs.length > 0) {
+      html += `
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 class="font-semibold mb-2 dark:text-gray-200">NPCs at this location:</h3>
+          <div class="space-y-2">
+            ${npcs.map(npc => `
+              <a href="/npcs/${npc.id}" class="block p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <div class="font-medium text-primary-700 dark:text-primary-400">${npc.name}</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">${npc.race} ${npc.occupation ? `• ${npc.occupation}` : ''}</div>
+                  </div>
+                  <span class="px-2 py-1 rounded text-xs font-medium ${
+                    npc.relationship === 'ally' ? 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300' :
+                    npc.relationship === 'enemy' ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300' :
+                    'bg-gray-100 text-gray-700 dark:bg-gray-600 dark:text-gray-300'
+                  }">
+                    ${npc.relationship}
+                  </span>
+                </div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // Add diary entries
+    const entries = locationDiaryEntries[location.id] || [];
+    if (entries.length > 0) {
+      html += `
+        <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+          <h3 class="font-semibold mb-2 dark:text-gray-200">Diary Entries:</h3>
+          <div class="space-y-2">
+            ${entries.map(entry => `
+              <a href="/diary/${entry.id}" class="block p-3 bg-amber-50 dark:bg-amber-900 dark:bg-opacity-30 rounded hover:bg-amber-100 dark:hover:bg-amber-800 dark:hover:bg-opacity-40 transition">
+                <div class="font-medium text-primary-700 dark:text-primary-400">${entry.title}</div>
+                <div class="text-sm text-gray-600 dark:text-gray-400">Session ${entry.session} • ${new Date(entry.date).toLocaleDateString()}</div>
+              </a>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    html += '</div>';
+    detailsContentDiv.innerHTML = html;
+
+    if (isLoggedIn && editMode && coordinateEditor) {
+      coordinateEditor.classList.remove('hidden');
+      if (coordX && coordY) {
+        coordX.value = location.mapX || 50;
+        coordY.value = location.mapY || 50;
+      }
+    } else if (coordinateEditor) {
+      coordinateEditor.classList.add('hidden');
+    }
+
+    // Panel is always visible on desktop, don't hide it
+  }
+
+  // Toggle edit mode
+  toggleEditModeBtn?.addEventListener('click', () => {
+    editMode = !editMode;
+    if (editMode) {
+      editModeText.textContent = 'Disable Edit Mode';
+      mapContainer.style.cursor = 'crosshair';
+      if (selectedLocationId) {
+        coordinateEditor?.classList.remove('hidden');
+      }
+    } else {
+      editModeText.textContent = 'Enable Edit Mode';
+      mapContainer.style.cursor = 'default';
+      coordinateEditor?.classList.add('hidden');
+    }
+  });
+
+  // Drag handling
+  if (isLoggedIn) {
+    document.addEventListener('mousemove', (e) => {
+      if (draggedPin && editMode) {
+        const rect = mapContainer.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        // Clamp values
+        const clampedX = Math.max(0, Math.min(100, x));
+        const clampedY = Math.max(0, Math.min(100, y));
+        
+        draggedPin.element.style.left = `${clampedX}%`;
+        draggedPin.element.style.top = `${clampedY}%`;
+        
+        // Update coordinate inputs if details panel is open
+        if (selectedLocationId === draggedPin.location.id) {
+          document.getElementById('coordX').value = clampedX.toFixed(1);
+          document.getElementById('coordY').value = clampedY.toFixed(1);
+        }
+      }
+    });
+
+    document.addEventListener('mouseup', async (e) => {
+      if (draggedPin && editMode) {
+        const rect = mapContainer.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        
+        const clampedX = Math.max(0, Math.min(100, x));
+        const clampedY = Math.max(0, Math.min(100, y));
+        
+        // Save coordinates
+        await saveLocationCoordinates(draggedPin.location.id, clampedX, clampedY);
+        
+        draggedPin.element.style.zIndex = '';
+        
+        // Small delay before clearing to prevent immediate click event
+        setTimeout(() => {
+          draggedPin = null;
+        }, DRAG_CLICK_DEBOUNCE_MS);
+      }
+    });
+  }
+
+  // Save coordinates
+  async function saveLocationCoordinates(locationId, x, y) {
+    try {
+      const response = await fetch(`/api/locations/${locationId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          mapX: parseFloat(x.toFixed(1)),
+          mapY: parseFloat(y.toFixed(1))
+        }),
+      });
+
+      if (!response.ok) {
+        alert('Failed to save coordinates. Please try again.');
+      } else {
+        // Update local data
+        const location = locations.find(l => l.id === locationId);
+        if (location) {
+          location.mapX = parseFloat(x.toFixed(1));
+          location.mapY = parseFloat(y.toFixed(1));
+        }
+      }
+    } catch (error) {
+      alert('An error occurred while saving coordinates.');
+    }
+  }
+
+  // Save coordinates from input fields
+  document.getElementById('saveCoordinates')?.addEventListener('click', async () => {
+    if (!selectedLocationId) return;
+    
+    const x = parseFloat(document.getElementById('coordX').value);
+    const y = parseFloat(document.getElementById('coordY').value);
+    
+    if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) {
+      alert('Please enter valid coordinates between 0 and 100.');
+      return;
+    }
+    
+    await saveLocationCoordinates(selectedLocationId, x, y);
+    
+    // Update pin position
+    const pin = document.querySelector(`[data-location-id="${selectedLocationId}"]`);
+    if (pin) {
+      pin.style.left = `${x}%`;
+      pin.style.top = `${y}%`;
+    }
+    
+    alert('Coordinates saved successfully!');
+  });
+
+  // Upload map functionality
+  uploadMapBtn?.addEventListener('click', () => {
+    uploadModal.classList.remove('hidden');
+  });
+
+  document.getElementById('cancelUpload')?.addEventListener('click', () => {
+    uploadModal.classList.add('hidden');
+  });
+
+  document.getElementById('confirmUpload')?.addEventListener('click', () => {
+    const fileInput = document.getElementById('mapImageInput');
+    const file = fileInput.files[0];
+    
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentMapImage = e.target.result;
+        
+        // Create an image to get dimensions
+        const img = new Image();
+        img.onload = () => {
+          // Set container size to match image dimensions
+          mapContainer.style.width = `${img.width}px`;
+          mapContainer.style.height = `${img.height}px`;
+          
+          // Set background
+          mapBackground.style.backgroundImage = `url(${currentMapImage})`;
+          mapBackground.style.backgroundSize = 'contain';
+          mapBackground.style.backgroundRepeat = 'no-repeat';
+          mapBackground.style.backgroundPosition = 'center';
+          mapBackground.innerHTML = '';
+          
+          // Store in localStorage
+          try {
+            localStorage.setItem('customMapImage', currentMapImage);
+            localStorage.setItem('customMapWidth', img.width);
+            localStorage.setItem('customMapHeight', img.height);
+          } catch (e) {
+            console.warn('Failed to save map image to localStorage:', e);
+          }
+          
+          uploadModal.classList.add('hidden');
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Load custom map from localStorage
+  try {
+    const savedMap = localStorage.getItem('customMapImage');
+    const savedWidth = localStorage.getItem('customMapWidth');
+    const savedHeight = localStorage.getItem('customMapHeight');
+    
+    if (savedMap) {
+      currentMapImage = savedMap;
+      
+      if (savedWidth && savedHeight) {
+        mapContainer.style.width = `${savedWidth}px`;
+        mapContainer.style.height = `${savedHeight}px`;
+      }
+      
+      mapBackground.style.backgroundImage = `url(${currentMapImage})`;
+      mapBackground.style.backgroundSize = 'contain';
+      mapBackground.style.backgroundRepeat = 'no-repeat';
+      mapBackground.style.backgroundPosition = 'center';
+      mapBackground.innerHTML = '';
+    }
+  } catch (e) {
+    console.warn('Failed to load custom map from localStorage:', e);
+  }
+
+  // Zoom and pan functionality
+  function updateTransform() {
+    mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+  }
+  
+  // Zoom button controls
+  zoomInBtn?.addEventListener('click', () => {
+    const rect = mapWrapper.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const newScale = Math.min(scale * 1.2, 3);
+    const scaleChange = newScale / scale;
+    translateX = centerX - (centerX - translateX) * scaleChange;
+    translateY = centerY - (centerY - translateY) * scaleChange;
+    
+    scale = newScale;
+    updateTransform();
+  });
+  
+  zoomOutBtn?.addEventListener('click', () => {
+    const rect = mapWrapper.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const newScale = Math.max(scale * 0.8, 0.3);
+    const scaleChange = newScale / scale;
+    translateX = centerX - (centerX - translateX) * scaleChange;
+    translateY = centerY - (centerY - translateY) * scaleChange;
+    
+    scale = newScale;
+    updateTransform();
+  });
+  
+  resetZoomBtn?.addEventListener('click', () => {
+    scale = 0.5;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  });
+
+  // Mouse wheel zoom
+  mapWrapper?.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    
+    const rect = mapWrapper.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    const mouseY = e.clientY - rect.top;
+    
+    // Calculate zoom
+    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+    const newScale = Math.min(Math.max(0.3, scale * delta), 3);
+    
+    // Adjust translation to zoom towards mouse position
+    const scaleChange = newScale / scale;
+    translateX = mouseX - (mouseX - translateX) * scaleChange;
+    translateY = mouseY - (mouseY - translateY) * scaleChange;
+    
+    scale = newScale;
+    updateTransform();
+  });
+
+  // Pan with mouse drag
+  mapWrapper?.addEventListener('mousedown', (e) => {
+    // Don't pan if clicking on a pin or in edit mode dragging a pin
+    if (e.target.closest('.location-pin') && editMode) {
+      return;
+    }
+    
+    isPanning = true;
+    startPanX = e.clientX - translateX;
+    startPanY = e.clientY - translateY;
+    mapWrapper.style.cursor = 'grabbing';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (isPanning && !draggedPin) {
+      translateX = e.clientX - startPanX;
+      translateY = e.clientY - startPanY;
+      updateTransform();
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isPanning) {
+      isPanning = false;
+      mapWrapper.style.cursor = 'grab';
+    }
+  });
+
+  // Prevent context menu on map
+  mapWrapper?.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+  });
+
+  // Initial render and setup
+  renderPins();
+  updateTransform(); // Apply initial transform
+  
+  // Show hidden pins in edit mode
+  if (isLoggedIn && toggleEditModeBtn) {
+    const originalToggle = toggleEditModeBtn.onclick;
+    toggleEditModeBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
+        hiddenPins.forEach(pin => {
+          if (editMode) {
+            pin.style.opacity = '0.5';
+            pin.style.pointerEvents = 'auto';
+            pin.style.border = '2px dashed orange';
+          } else {
+            pin.style.opacity = '0.3';
+            pin.style.pointerEvents = 'none';
+            pin.style.border = 'none';
+          }
+        });
+      }, 100);
+    });
+  }
+
+</script>
+
+<style>
+  .location-pin {
+    z-index: 10;
+  }
+  
+  .location-pin:hover {
+    z-index: 50;
+    transform: translate(-50%, -100%) scale(1.15);
+  }
+  
+  .location-pin.pin-active {
+    z-index: 40;
+  }
+  
+  .location-pin.pin-active .pin-circle {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+    border-width: 3px;
+  }
+  
+  .pin-tooltip a {
+    pointer-events: auto !important;
+  }
+
+  #mapContainer {
+    user-select: none;
+    transition: transform 0.1s ease-out;
+  }
+  
+  #mapWrapper {
+    position: relative;
+  }
+</style>
+</Layout>
