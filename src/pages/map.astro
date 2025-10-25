@@ -254,10 +254,13 @@ diaryEntries.forEach(entry => {
   // Create pin element
   function createPin(location) {
     const pin = document.createElement('div');
-    pin.className = `location-pin absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-110`;
+    pin.className = `location-pin absolute cursor-pointer transition-all`;
     pin.dataset.locationId = location.id;
+    
+    // Position pin - using left/top with transform to center on point
     pin.style.left = `${location.mapX || 50}%`;
     pin.style.top = `${location.mapY || 50}%`;
+    pin.style.transform = 'translate(-50%, -100%)'; // Center horizontally, bottom of pin at coordinate
     
     // Hide pin if visibleOnMap is false
     if (location.visibleOnMap === false) {
@@ -299,10 +302,10 @@ diaryEntries.forEach(entry => {
     }
     
     pin.innerHTML = `
-      <div class="relative">
-        <div class="${color} w-6 h-6 rounded-full border-2 border-white shadow-lg"></div>
-        <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
-        <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg shadow-lg text-xs opacity-0 hover:opacity-100 transition-opacity pointer-events-none z-50" style="min-width: 150px; white-space: normal;">
+      <div class="pin-wrapper relative">
+        <div class="pin-circle ${color} w-7 h-7 rounded-full border-3 border-white shadow-lg transition-all"></div>
+        <div class="pin-tip absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
+        <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity pointer-events-none z-[60]" style="min-width: 150px; max-width: 250px; white-space: normal;">
           ${tooltipContent}
         </div>
       </div>
@@ -312,6 +315,12 @@ diaryEntries.forEach(entry => {
     pin.addEventListener('click', (e) => {
       // Only show details if we didn't just finish a drag
       if (!draggedPin || !editMode) {
+        // Remove active class from all pins
+        document.querySelectorAll('.location-pin').forEach(p => {
+          p.classList.remove('pin-active');
+        });
+        // Add active class to clicked pin
+        pin.classList.add('pin-active');
         showLocationDetails(location);
       }
     });
@@ -713,12 +722,27 @@ diaryEntries.forEach(entry => {
 
 <style>
   .location-pin {
-    transition: transform 0.2s ease;
+    z-index: 10;
+  }
+  
+  .location-pin:hover {
+    z-index: 50;
+    transform: translate(-50%, -100%) scale(1.15);
   }
 
   .location-pin:hover .tooltip {
     opacity: 1 !important;
     pointer-events: auto !important;
+  }
+  
+  .location-pin.pin-active {
+    z-index: 40;
+  }
+  
+  .location-pin.pin-active .pin-circle {
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
+    border-width: 3px;
   }
 
   #mapContainer {
