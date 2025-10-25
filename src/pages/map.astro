@@ -33,64 +33,87 @@ diaryEntries.forEach(entry => {
 ---
 
 <Layout title="Interactive Map">
-  <div class="mb-8">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Interactive Map</h1>
-      {isLoggedIn && (
-        <div class="flex gap-2">
-          <button 
-            id="toggleEditMode"
-            class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
-          >
-            <span id="editModeText">Enable Edit Mode</span>
-          </button>
-          <button 
-            id="uploadMapBtn"
-            class="bg-secondary-600 text-white px-6 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition"
-          >
-            Upload Custom Map
-          </button>
-        </div>
-      )}
-    </div>
-    <p class="text-gray-600 dark:text-gray-400">
-      {isLoggedIn 
-        ? 'Click on location pins to view details. Enable Edit Mode to drag pins or adjust coordinates manually.'
-        : 'Click on location pins to view details about NPCs and diary entries for each location.'
-      }
-    </p>
-  </div>
+  <!-- Add CSS to hide the Layout's main container padding and footer -->
+  <style is:global>
+    body {
+      overflow: hidden;
+    }
+    main.container {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: none !important;
+    }
+    footer {
+      display: none !important;
+    }
+  </style>
 
-  <!-- Map and Details Container -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-    <!-- Map Column (2/3 width) -->
-    <div class="lg:col-span-2 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-      <div class="mb-4 flex items-center justify-between">
-        <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>Use mouse wheel to zoom, click and drag to pan the map</span>
+  <!-- Fullscreen Map Container -->
+  <div id="fullscreenMapContainer" class="fixed inset-0 top-16 bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
+    
+    <!-- Map Controls Overlay (top) -->
+    <div class="absolute top-0 left-0 right-0 z-30 bg-white/95 dark:bg-gray-800/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 shadow-md">
+      <div class="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-4">
+          <h1 class="text-xl sm:text-2xl font-bold text-primary-700 dark:text-primary-400">Interactive Map</h1>
+          <button 
+            id="toggleSidebar"
+            class="bg-accent-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm flex items-center gap-2"
+            title="Toggle location details sidebar"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+            <span class="hidden sm:inline" id="sidebarToggleText">Show Details</span>
+          </button>
         </div>
-        <!-- Zoom controls -->
-        <div class="flex gap-2">
-          <button id="zoomIn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom In">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
-            </svg>
-          </button>
-          <button id="zoomOut" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom Out">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
-            </svg>
-          </button>
-          <button id="resetZoom" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded transition text-sm" title="Reset View">
-            Reset
-          </button>
+        
+        <div class="flex flex-wrap gap-2">
+          {isLoggedIn && (
+            <>
+              <button 
+                id="toggleEditMode"
+                class="bg-primary-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm"
+              >
+                <span id="editModeText">Edit Mode</span>
+              </button>
+              <button 
+                id="uploadMapBtn"
+                class="bg-secondary-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition text-sm"
+              >
+                Upload Map
+              </button>
+            </>
+          )}
         </div>
       </div>
-      <!-- Map viewport with clipping -->
-      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px;">
+    </div>
+
+    <!-- Map Viewport -->
+    <div id="mapColumn" class="absolute inset-0 top-[64px] bg-white dark:bg-gray-800">
+    <!-- Map Viewport -->
+    <div id="mapColumn" class="absolute inset-0 top-[64px] bg-white dark:bg-gray-800">
+      <!-- Zoom controls - positioned absolutely in bottom-right -->
+      <div class="absolute bottom-6 right-6 z-20 flex flex-col gap-2">
+        <button id="zoomIn" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 p-3 rounded-lg shadow-lg transition" title="Zoom In">
+          <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+          </svg>
+        </button>
+        <button id="zoomOut" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 p-3 rounded-lg shadow-lg transition" title="Zoom Out">
+          <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+          </svg>
+        </button>
+        <button id="resetZoom" class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 px-3 py-2 rounded-lg shadow-lg transition text-sm text-gray-700 dark:text-gray-200" title="Reset View">
+          Reset
+        </button>
+      </div>
+
+      <!-- Map container with panning and zooming -->
+      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 overflow-hidden touch-none w-full h-full" id="mapViewport">
+      <!-- Map container with panning and zooming -->
+      <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 overflow-hidden touch-none w-full h-full" id="mapViewport">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
           <div id="mapContainer" class="absolute" style="min-width: 1200px; min-height: 1200px; transform-origin: 0 0;">
@@ -111,81 +134,98 @@ diaryEntries.forEach(entry => {
         </div>
       </div>
 
-      <!-- Legend -->
-      <div class="mt-6 flex flex-wrap gap-4 text-sm text-gray-700 dark:text-gray-200">
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
-          <span>City</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-primary-500 rounded-full"></div>
-          <span>Dungeon</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-green-500 rounded-full"></div>
-          <span>Wilderness</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-amber-500 rounded-full"></div>
-          <span>Building</span>
-        </div>
-        <div class="flex items-center gap-2">
-          <div class="w-4 h-4 bg-gray-500 rounded-full"></div>
-          <span>Other</span>
+      <!-- Legend - positioned absolutely in bottom-left -->
+      <div class="absolute bottom-6 left-6 z-20 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg p-3">
+        <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
+            <span>City</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-primary-500 rounded-full"></div>
+            <span>Dungeon</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+            <span>Wilderness</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
+            <span>Building</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 bg-gray-500 rounded-full"></div>
+            <span>Other</span>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Location Details Panel (1/3 width, on the right) -->
-    <div id="locationDetails" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 lg:block" style="height: fit-content; max-height: 800px; overflow-y: auto;">
-      <div id="locationDetailsPlaceholder" class="text-center text-gray-400 dark:text-gray-500 py-12">
-        <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-        <p class="text-sm">Click on a location pin to view details</p>
+    <!-- Slide-in Sidebar for Location Details -->
+    <div id="locationDetails" class="absolute top-[64px] right-0 bottom-0 w-full sm:w-96 bg-white dark:bg-gray-800 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto">
+      <!-- Sidebar Header -->
+      <div class="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between z-10">
+        <h2 id="detailsLocationName" class="text-xl font-bold text-primary-700 dark:text-primary-400">Location Details</h2>
+        <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
       </div>
-      <div id="locationDetailsContent" class="hidden">
-        <h2 id="detailsLocationName" class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4"></h2>
-        <div id="detailsContent"></div>
-        
-        {isLoggedIn && (
-          <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-            <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
-            <div class="grid grid-cols-2 gap-4 mb-4">
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">X Position (%)</label>
-                <input 
-                  type="number" 
-                  id="coordX" 
-                  min="0" 
-                  max="100" 
-                  step="0.1"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
+
+      <!-- Sidebar Content -->
+      <div class="p-4">
+        <div id="locationDetailsPlaceholder" class="text-center text-gray-400 dark:text-gray-500 py-12">
+          <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+          </svg>
+          <p class="text-sm">Click on a location pin to view details</p>
+        </div>
+        <div id="locationDetailsContent" class="hidden">
+          <div id="detailsContent"></div>
+          
+          {isLoggedIn && (
+            <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+              <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">X Position (%)</label>
+                  <input 
+                    type="number" 
+                    id="coordX" 
+                    min="0" 
+                    max="100" 
+                    step="0.1"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Y Position (%)</label>
+                  <input 
+                    type="number" 
+                    id="coordY" 
+                    min="0" 
+                    max="100" 
+                    step="0.1"
+                    class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
               </div>
-              <div>
-                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Y Position (%)</label>
-                <input 
-                  type="number" 
-                  id="coordY" 
-                  min="0" 
-                  max="100" 
-                  step="0.1"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
+              <button 
+                id="saveCoordinates"
+                class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+              >
+                Save Coordinates
+              </button>
             </div>
-            <button 
-              id="saveCoordinates"
-              class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
-            >
-              Save Coordinates
-            </button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
+
+    <!-- Mobile Overlay Backdrop -->
+    <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 top-16 bg-black/50 z-30" style="display: none;"></div>
   </div>
 
   <!-- Upload Map Modal -->
@@ -222,6 +262,7 @@ diaryEntries.forEach(entry => {
   let selectedLocationId = null;
   let draggedPin = null;
   let currentMapImage = null;
+  let isSidebarOpen = false;
   
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
@@ -233,6 +274,12 @@ diaryEntries.forEach(entry => {
   let isPanning = false;
   let startPanX = 0;
   let startPanY = 0;
+
+  // Touch state for pinch zoom
+  let touchStartDistance = 0;
+  let touchStartScale = 1;
+  let touchStartTranslateX = 0;
+  let touchStartTranslateY = 0;
 
   const mapWrapper = document.getElementById('mapWrapper');
   const mapContainer = document.getElementById('mapContainer');
@@ -247,6 +294,11 @@ diaryEntries.forEach(entry => {
   const zoomInBtn = document.getElementById('zoomIn');
   const zoomOutBtn = document.getElementById('zoomOut');
   const resetZoomBtn = document.getElementById('resetZoom');
+  const toggleSidebarBtn = document.getElementById('toggleSidebar');
+  const closeSidebarBtn = document.getElementById('closeSidebar');
+  const sidebarToggleText = document.getElementById('sidebarToggleText');
+  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  const mapViewport = document.getElementById('mapViewport');
 
   // Get color for location type
   function getLocationColor(type) {
@@ -487,8 +539,42 @@ diaryEntries.forEach(entry => {
       coordinateEditor.classList.add('hidden');
     }
 
-    // Panel is always visible on desktop, don't hide it
+    // Open sidebar when location is selected
+    if (!isSidebarOpen) {
+      toggleSidebar();
+    }
   }
+
+  // Toggle sidebar
+  function toggleSidebar() {
+    isSidebarOpen = !isSidebarOpen;
+    
+    if (isSidebarOpen) {
+      locationDetails.classList.remove('translate-x-full');
+      if (sidebarToggleText) {
+        sidebarToggleText.textContent = 'Hide Details';
+      }
+      
+      // Show backdrop on mobile
+      if (window.innerWidth < 640) {
+        sidebarBackdrop.style.display = 'block';
+        setTimeout(() => sidebarBackdrop.classList.remove('hidden'), 10);
+      }
+    } else {
+      locationDetails.classList.add('translate-x-full');
+      if (sidebarToggleText) {
+        sidebarToggleText.textContent = 'Show Details';
+      }
+      
+      // Hide backdrop on mobile
+      sidebarBackdrop.classList.add('hidden');
+      setTimeout(() => sidebarBackdrop.style.display = 'none', 300);
+    }
+  }
+
+  toggleSidebarBtn?.addEventListener('click', toggleSidebar);
+  closeSidebarBtn?.addEventListener('click', toggleSidebar);
+  sidebarBackdrop?.addEventListener('click', toggleSidebar);
 
   // Toggle edit mode
   toggleEditModeBtn?.addEventListener('click', () => {
@@ -737,6 +823,96 @@ diaryEntries.forEach(entry => {
     updateTransform();
   });
 
+  // Touch support for pinch zoom and pan
+  let touches = [];
+  
+  function getTouchDistance(touch1, touch2) {
+    const dx = touch1.clientX - touch2.clientX;
+    const dy = touch1.clientY - touch2.clientY;
+    return Math.sqrt(dx * dx + dy * dy);
+  }
+  
+  function getTouchCenter(touch1, touch2) {
+    return {
+      x: (touch1.clientX + touch2.clientX) / 2,
+      y: (touch1.clientY + touch2.clientY) / 2
+    };
+  }
+
+  mapWrapper?.addEventListener('touchstart', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length === 2) {
+      // Start pinch zoom
+      e.preventDefault();
+      touchStartDistance = getTouchDistance(touches[0], touches[1]);
+      touchStartScale = scale;
+      
+      const rect = mapWrapper.getBoundingClientRect();
+      const center = getTouchCenter(touches[0], touches[1]);
+      const centerX = center.x - rect.left;
+      const centerY = center.y - rect.top;
+      
+      touchStartTranslateX = translateX;
+      touchStartTranslateY = translateY;
+    } else if (touches.length === 1) {
+      // Start pan
+      isPanning = true;
+      startPanX = touches[0].clientX - translateX;
+      startPanY = touches[0].clientY - translateY;
+    }
+  }, { passive: false });
+
+  mapWrapper?.addEventListener('touchmove', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length === 2) {
+      // Pinch zoom
+      e.preventDefault();
+      const currentDistance = getTouchDistance(touches[0], touches[1]);
+      const distanceRatio = currentDistance / touchStartDistance;
+      
+      const newScale = Math.min(Math.max(0.3, touchStartScale * distanceRatio), 3);
+      
+      const rect = mapWrapper.getBoundingClientRect();
+      const center = getTouchCenter(touches[0], touches[1]);
+      const centerX = center.x - rect.left;
+      const centerY = center.y - rect.top;
+      
+      // Adjust translation to zoom towards center of pinch
+      const scaleChange = newScale / touchStartScale;
+      translateX = centerX - (centerX - touchStartTranslateX) * scaleChange;
+      translateY = centerY - (centerY - touchStartTranslateY) * scaleChange;
+      
+      scale = newScale;
+      updateTransform();
+    } else if (touches.length === 1 && isPanning) {
+      // Pan with single finger
+      e.preventDefault();
+      translateX = touches[0].clientX - startPanX;
+      translateY = touches[0].clientY - startPanY;
+      updateTransform();
+    }
+  }, { passive: false });
+
+  mapWrapper?.addEventListener('touchend', (e) => {
+    touches = Array.from(e.touches);
+    
+    if (touches.length < 2) {
+      touchStartDistance = 0;
+    }
+    
+    if (touches.length === 0) {
+      isPanning = false;
+    }
+  });
+
+  mapWrapper?.addEventListener('touchcancel', (e) => {
+    touches = [];
+    touchStartDistance = 0;
+    isPanning = false;
+  });
+
   // Pan with mouse drag
   mapWrapper?.addEventListener('mousedown', (e) => {
     // Don't pan if clicking on a pin or in edit mode dragging a pin
@@ -798,6 +974,11 @@ diaryEntries.forEach(entry => {
 </script>
 
 <style>
+  /* Fullscreen map container */
+  #fullscreenMapContainer {
+    z-index: 10;
+  }
+
   .location-pin {
     z-index: 10;
   }
@@ -828,6 +1009,40 @@ diaryEntries.forEach(entry => {
   
   #mapWrapper {
     position: relative;
+  }
+
+  /* Sidebar slide-in animation */
+  #locationDetails {
+    transition: transform 0.3s ease-in-out;
+  }
+
+  /* Make pins slightly larger on touch devices for better tap targets */
+  @media (hover: none) and (pointer: coarse) {
+    .location-pin .pin-circle {
+      width: 2rem;
+      height: 2rem;
+    }
+    
+    .location-pin:active {
+      transform: translate(-50%, -100%) scale(1.2);
+    }
+  }
+
+  /* Mobile overlay sidebar */
+  @media (max-width: 639px) {
+    #locationDetails {
+      width: 100%;
+    }
+    
+    #sidebarBackdrop {
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease-in-out;
+    }
+    
+    #sidebarBackdrop:not(.hidden) {
+      opacity: 1;
+    }
   }
 </style>
 </Layout>
