@@ -10,8 +10,7 @@ export const GET: APIRoute = async () => {
       return new Response(JSON.stringify({
         id: '1',
         currentLevel: 1,
-        currentXP: 0,
-        xpForNextLevel: 300,
+        progressPercent: 0,
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' }

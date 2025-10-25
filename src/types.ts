@@ -66,8 +66,7 @@ export interface Location {
 export interface CampaignProgress {
   id: string;
   currentLevel: number;
-  currentXP: number;
-  xpForNextLevel: number;
+  progressPercent: number; // 0-100 in steps of 10
   createdAt?: Date;
   updatedAt?: Date;
 }

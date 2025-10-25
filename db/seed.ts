@@ -158,14 +158,12 @@ export default async function seed() {
     }
   ]);
 
-  // Seed Campaign Progress - Group is level 5, halfway to level 6
-  // In D&D 5e: Level 5 starts at 6,500 XP, Level 6 starts at 14,000 XP
+  // Seed Campaign Progress - Level 5 at 50% progress to level 6
   await db.insert(CampaignProgress).values([
     {
       id: '1',
       currentLevel: 5,
-      currentXP: 10250,  // Halfway between 6,500 and 14,000
-      xpForNextLevel: 14000,
+      progressPercent: 50, // 50% progress to next level
       createdAt: new Date(),
       updatedAt: new Date(),
     }

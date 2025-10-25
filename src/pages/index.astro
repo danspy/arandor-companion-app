@@ -11,8 +11,7 @@ const campaignProgressData = await db.select().from(CampaignProgress);
 const campaignProgress = campaignProgressData.length > 0 ? campaignProgressData[0] : {
   id: '1',
   currentLevel: 1,
-  currentXP: 0,
-  xpForNextLevel: 300,
+  progressPercent: 0,
 };
 
 const activeQuests = quests.filter(q => q.status === 'active');
@@ -22,20 +21,8 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
-// Helper function to get XP required for a given level (D&D 5e standard progression)
-function getXPForLevel(level: number): number {
-  const xpTable: { [key: number]: number } = {
-    1: 0, 2: 300, 3: 900, 4: 2700, 5: 6500, 6: 14000, 7: 23000, 8: 34000, 9: 48000, 10: 64000,
-    11: 85000, 12: 100000, 13: 120000, 14: 140000, 15: 165000, 16: 195000, 17: 225000, 18: 265000, 19: 305000, 20: 355000
-  };
-  return xpTable[level] || 0;
-}
-
-// Calculate progress percentage with validation
-const xpForCurrentLevel = getXPForLevel(campaignProgress.currentLevel);
-const xpInCurrentLevel = Math.max(0, campaignProgress.currentXP - xpForCurrentLevel);
-const xpNeededForNextLevel = Math.max(1, campaignProgress.xpForNextLevel - xpForCurrentLevel);
-const progressPercentage = Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeededForNextLevel) * 100));
+// Use progressPercent directly (0-100)
+const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPercent));
 ---
 
 <Layout title="Dashboard">
@@ -135,17 +122,17 @@ const progressPercentage = Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeede
         <div class="flex-1">
           <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-6 overflow-hidden">
             <div 
-              class="bg-gradient-to-r from-primary-500 to-secondary-500 h-6 rounded-full transition-all duration-300 flex items-center justify-end pr-2"
+              class="bg-gradient-to-r from-primary-500 to-secondary-500 h-6 rounded-full transition-all duration-300 flex items-center justify-center"
               style={`width: ${progressPercentage}%`}
             >
-              {progressPercentage > 20 && (
-                <span class="text-xs font-medium text-white">{campaignProgress.currentXP} XP</span>
+              {progressPercentage > 15 && (
+                <span class="text-xs font-medium text-white">{progressPercentage}%</span>
               )}
             </div>
           </div>
           <div class="flex justify-between mt-1">
-            <span class="text-xs text-gray-500 dark:text-gray-400">{getXPForLevel(campaignProgress.currentLevel)} XP</span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">{campaignProgress.xpForNextLevel} XP</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">0%</span>
+            <span class="text-xs text-gray-500 dark:text-gray-400">100%</span>
           </div>
         </div>
         <div class="flex-shrink-0 text-center">
@@ -207,32 +194,20 @@ const progressPercentage = Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeede
           
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Current XP
+              Progress to Next Level (%)
             </label>
             <input 
               type="number" 
-              id="currentXP" 
-              name="currentXP" 
-              value={campaignProgress.currentXP}
+              id="progressPercent" 
+              name="progressPercent" 
+              value={campaignProgress.progressPercent}
               min="0"
+              max="100"
+              step="10"
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
               required
             />
-          </div>
-          
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              XP for Next Level
-            </label>
-            <input 
-              type="number" 
-              id="xpForNextLevel" 
-              name="xpForNextLevel" 
-              value={campaignProgress.xpForNextLevel}
-              min="0"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
-              required
-            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter in steps of 10 (0, 10, 20, ..., 100)</p>
           </div>
           
           <div class="flex gap-3 pt-4">
@@ -288,8 +263,7 @@ const progressPercentage = Math.min(100, Math.max(0, (xpInCurrentLevel / xpNeede
       const formData = new FormData(e.target);
       const data = {
         currentLevel: parseInt(formData.get('currentLevel')),
-        currentXP: parseInt(formData.get('currentXP')),
-        xpForNextLevel: parseInt(formData.get('xpForNextLevel')),
+        progressPercent: parseInt(formData.get('progressPercent')),
       };
 
       try {

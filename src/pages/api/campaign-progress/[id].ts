@@ -36,8 +36,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     await db.update(CampaignProgress)
       .set({
         currentLevel: body.currentLevel,
-        currentXP: body.currentXP,
-        xpForNextLevel: body.xpForNextLevel,
+        progressPercent: body.progressPercent,
         updatedAt: now,
       })
       .where(eq(CampaignProgress.id, params.id!));

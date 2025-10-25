@@ -104,8 +104,7 @@ const CampaignProgress = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     currentLevel: column.number(),
-    currentXP: column.number(),
-    xpForNextLevel: column.number(),
+    progressPercent: column.number(), // 0-100 in steps of 10
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
