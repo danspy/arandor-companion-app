@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { db, NPC, eq } from 'astro:db';
+import { db, NPC, Location, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 
 const { id } = Astro.params;
@@ -14,6 +14,13 @@ const npc = npcs[0];
 
 if (!npc) {
   return Astro.redirect('/npcs');
+}
+
+// Fetch location if locationId exists
+let location = null;
+if (npc.locationId) {
+  const locations = await db.select().from(Location).where(eq(Location.id, npc.locationId));
+  location = locations[0];
 }
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -93,10 +100,12 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
               {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
             </div>
           </div>
-          {npc.location && (
+          {location && (
             <div class="bg-primary-50 p-4 rounded-lg">
               <div class="text-sm text-gray-600 mb-1">Location</div>
-              <div class="text-2xl font-semibold text-primary-700">{npc.location}</div>
+              <a href={`/locations/${location.id}`} class="text-2xl font-semibold text-primary-700 hover:text-primary-900 hover:underline">
+                {location.name}
+              </a>
             </div>
           )}
         </div>

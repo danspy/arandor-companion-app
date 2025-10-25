@@ -39,6 +39,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         race: body.race,
         occupation: body.occupation,
         location: body.location,
+        locationId: body.locationId,
         description: body.description,
         relationship: body.relationship,
         notes: body.notes,

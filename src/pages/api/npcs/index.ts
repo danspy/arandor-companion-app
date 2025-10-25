@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       race: body.race,
       occupation: body.occupation,
       location: body.location,
+      locationId: body.locationId,
       description: body.description,
       relationship: body.relationship || 'neutral',
       notes: body.notes,
