@@ -1,4 +1,4 @@
-import { db, DiaryEntry, Quest, Character, NPC, Location, User } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress } from 'astro:db';
 import { hashPassword } from '../src/lib/auth';
 
 export default async function seed() {
@@ -155,6 +155,19 @@ export default async function seed() {
       username: 'admin',
       passwordHash: await hashPassword('admin'),
       createdAt: new Date(),
+    }
+  ]);
+
+  // Seed Campaign Progress - Group is level 5, halfway to level 6
+  // In D&D 5e: Level 5 starts at 6,500 XP, Level 6 starts at 14,000 XP
+  await db.insert(CampaignProgress).values([
+    {
+      id: '1',
+      currentLevel: 5,
+      currentXP: 10250,  // Halfway between 6,500 and 14,000
+      xpForNextLevel: 14000,
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
   ]);
 

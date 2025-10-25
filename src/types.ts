@@ -62,3 +62,10 @@ export interface Location {
   mapY?: number;
   visibleOnMap?: boolean;
 }
+
+export interface CampaignProgress {
+  id: string;
+  currentLevel: number;
+  currentXP: number;
+  xpForNextLevel: number;
+}
