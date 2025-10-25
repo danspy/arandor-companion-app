@@ -138,57 +138,54 @@ diaryEntries.forEach(entry => {
 
     <!-- Location Details Panel (1/3 width, on the right) -->
     <div id="locationDetails" class="hidden bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 lg:block" style="height: fit-content; max-height: 800px; overflow-y: auto;">
-      <div class="text-center text-gray-400 dark:text-gray-500 py-12">
+      <div id="locationDetailsPlaceholder" class="text-center text-gray-400 dark:text-gray-500 py-12">
         <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
         </svg>
         <p class="text-sm">Click on a location pin to view details</p>
       </div>
-    </div>
-  </div>
-
-  <!-- Location Details Content Template (populated by JavaScript) -->
-  <template id="locationDetailsTemplate">
-    <div>
-      <h2 id="detailsLocationName" class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4"></h2>
-      <div id="detailsContent"></div>
-
-    {isLoggedIn && (
-      <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
-        <div class="grid grid-cols-2 gap-4 mb-4">
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">X Position (%)</label>
-            <input 
-              type="number" 
-              id="coordX" 
-              min="0" 
-              max="100" 
-              step="0.1"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
+      <div id="locationDetailsContent" class="hidden">
+        <h2 id="detailsLocationName" class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4"></h2>
+        <div id="detailsContent"></div>
+        
+        {isLoggedIn && (
+          <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+            <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">X Position (%)</label>
+                <input 
+                  type="number" 
+                  id="coordX" 
+                  min="0" 
+                  max="100" 
+                  step="0.1"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Y Position (%)</label>
+                <input 
+                  type="number" 
+                  id="coordY" 
+                  min="0" 
+                  max="100" 
+                  step="0.1"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+            <button 
+              id="saveCoordinates"
+              class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            >
+              Save Coordinates
+            </button>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Y Position (%)</label>
-            <input 
-              type="number" 
-              id="coordY" 
-              min="0" 
-              max="100" 
-              step="0.1"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-            />
-          </div>
-        </div>
-        <button 
-          id="saveCoordinates"
-          class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
-        >
-          Save Coordinates
-        </button>
+        )}
       </div>
-    )}
+    </div>
   </div>
 
   <!-- Upload Map Modal -->
@@ -400,13 +397,20 @@ diaryEntries.forEach(entry => {
     selectedLocationId = location.id;
     
     const detailsPanel = document.getElementById('locationDetails');
+    const detailsPlaceholder = document.getElementById('locationDetailsPlaceholder');
+    const detailsContent = document.getElementById('locationDetailsContent');
     const detailsLocationName = document.getElementById('detailsLocationName');
-    const detailsContent = document.getElementById('detailsContent');
+    const detailsContentDiv = document.getElementById('detailsContent');
     const coordX = document.getElementById('coordX');
     const coordY = document.getElementById('coordY');
+    const coordinateEditor = document.getElementById('coordinateEditor');
     
     // Show the panel if hidden
     detailsPanel.classList.remove('hidden');
+    
+    // Hide placeholder, show content
+    detailsPlaceholder.classList.add('hidden');
+    detailsContent.classList.remove('hidden');
     
     // Set location name as clickable link
     detailsLocationName.innerHTML = `<a href="/locations/${location.id}" class="hover:underline">${location.name}</a>`;
@@ -471,16 +475,16 @@ diaryEntries.forEach(entry => {
     }
 
     html += '</div>';
-    detailsContent.innerHTML = html;
+    detailsContentDiv.innerHTML = html;
 
-    if (isLoggedIn && editMode) {
-      coordinateEditor?.classList.remove('hidden');
+    if (isLoggedIn && editMode && coordinateEditor) {
+      coordinateEditor.classList.remove('hidden');
       if (coordX && coordY) {
         coordX.value = location.mapX || 50;
         coordY.value = location.mapY || 50;
       }
-    } else {
-      coordinateEditor?.classList.add('hidden');
+    } else if (coordinateEditor) {
+      coordinateEditor.classList.add('hidden');
     }
 
     // Panel is always visible on desktop, don't hide it
