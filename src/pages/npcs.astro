@@ -1,9 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, NPC } from 'astro:db';
+import { db, NPC, Location } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const npcs = await db.select().from(NPC);
+const locations = await db.select().from(Location);
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
 const alliedNPCs = npcs.filter(n => n.relationship === 'ally');
@@ -26,64 +27,87 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 
   <!-- Filter tabs -->
   <div class="flex gap-4 mb-6 border-b">
-    <button class="px-4 py-2 border-b-2 border-primary-600 text-primary-600 font-semibold">
+    <button class="filter-tab px-4 py-2 border-b-2 border-primary-600 text-primary-600 font-semibold" data-filter="all">
       All ({npcs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
+    <button class="filter-tab px-4 py-2 text-gray-600 hover:text-primary-600" data-filter="ally">
       Allies ({alliedNPCs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
+    <button class="filter-tab px-4 py-2 text-gray-600 hover:text-primary-600" data-filter="neutral">
       Neutral ({neutralNPCs.length})
     </button>
-    <button class="px-4 py-2 text-gray-600 hover:text-primary-600">
+    <button class="filter-tab px-4 py-2 text-gray-600 hover:text-primary-600" data-filter="enemy">
       Enemies ({enemyNPCs.length})
     </button>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div id="npcGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {npcs.map(npc => (
-      <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
-        <div class="flex justify-between items-start mb-4">
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900">{npc.name}</h2>
-            <p class="text-gray-600">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
-          </div>
-          <span class={`px-3 py-1 rounded-full text-sm font-medium ${
-            npc.relationship === 'ally' ? 'bg-green-100 text-green-700' :
-            npc.relationship === 'enemy' ? 'bg-red-100 text-red-700' :
-            'bg-gray-100 text-gray-700'
+      <div class="npc-card bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition" data-relationship={npc.relationship}>
+        <a href={`/npcs/${npc.id}`} class="block">
+          <div class={`h-24 flex items-center justify-center ${
+            npc.relationship === 'ally' ? 'bg-gradient-to-r from-green-600 to-green-500' :
+            npc.relationship === 'enemy' ? 'bg-gradient-to-r from-red-600 to-red-500' :
+            'bg-gradient-to-r from-gray-600 to-gray-500'
           }`}>
-            {npc.relationship}
-          </span>
+            {npc.avatarUrl ? (
+              <img 
+                src={npc.avatarUrl} 
+                alt={npc.name}
+                class="w-16 h-16 rounded-full object-cover border-2 border-white"
+              />
+            ) : (
+              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl font-bold text-gray-700">
+                {npc.name.charAt(0)}
+              </div>
+            )}
+          </div>
+        </a>
+
+        <div class="p-6">
+          <a href={`/npcs/${npc.id}`} class="block hover:text-primary-700 transition">
+            <div class="flex justify-between items-start mb-2">
+              <h2 class="text-2xl font-bold text-gray-900">{npc.name}</h2>
+              <span class={`px-3 py-1 rounded-full text-sm font-medium ${
+                npc.relationship === 'ally' ? 'bg-green-100 text-green-700' :
+                npc.relationship === 'enemy' ? 'bg-red-100 text-red-700' :
+                'bg-gray-100 text-gray-700'
+              }`}>
+                {npc.relationship}
+              </span>
+            </div>
+            <p class="text-gray-600 mb-4">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
+          </a>
+
+          <div class="mb-4">
+            <p class="text-gray-700 line-clamp-3">{npc.description}</p>
+          </div>
+
+          {npc.location && (
+            <div class="mb-3">
+              <span class="text-sm text-gray-500">📍 Location: </span>
+              <span class="text-sm font-medium">{npc.location}</span>
+            </div>
+          )}
+
+          <a 
+            href={`/npcs/${npc.id}`}
+            class="block mt-4 text-center bg-accent-100 text-accent-700 px-4 py-2 rounded hover:bg-accent-200 transition font-medium"
+          >
+            View Details →
+          </a>
+
+          {isLoggedIn && (
+            <div class="flex gap-2 mt-2">
+              <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition" data-id={npc.id}>
+                Edit
+              </button>
+              <button class="delete-npc px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition" data-id={npc.id}>
+                Delete
+              </button>
+            </div>
+          )}
         </div>
-
-        <div class="mb-4">
-          <p class="text-gray-700">{npc.description}</p>
-        </div>
-
-        {npc.location && (
-          <div class="mb-3">
-            <span class="text-sm text-gray-500">📍 Location: </span>
-            <span class="text-sm font-medium">{npc.location}</span>
-          </div>
-        )}
-
-        {npc.notes && (
-          <div class="bg-amber-50 border-l-4 border-amber-500 p-3 mb-3">
-            <p class="text-sm text-amber-900"><strong>Notes:</strong> {npc.notes}</p>
-          </div>
-        )}
-
-        {isLoggedIn && (
-          <div class="flex gap-2 mt-4">
-            <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 transition" data-id={npc.id}>
-              Edit
-            </button>
-            <button class="delete-npc px-4 py-2 border border-red-300 text-red-600 rounded hover:bg-red-50 transition" data-id={npc.id}>
-              Delete
-            </button>
-          </div>
-        )}
       </div>
     ))}
   </div>
@@ -137,14 +161,29 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
           </div>
           
           <div>
-            <label for="location" class="block text-sm font-medium text-gray-700 mb-1">Location (optional)</label>
-            <input 
-              type="text" 
-              id="location" 
-              name="location" 
+            <label for="locationId" class="block text-sm font-medium text-gray-700 mb-1">Location (optional)</label>
+            <select 
+              id="locationId" 
+              name="locationId" 
               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
             >
+              <option value="">-- No Location --</option>
+              {locations.map(location => (
+                <option value={location.id}>{location.name}</option>
+              ))}
+            </select>
           </div>
+        </div>
+
+        <div>
+          <label for="avatarUrl" class="block text-sm font-medium text-gray-700 mb-1">Avatar URL (optional)</label>
+          <input 
+            type="url" 
+            id="avatarUrl" 
+            name="avatarUrl" 
+            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            placeholder="https://example.com/image.jpg"
+          >
         </div>
         
         <div>
@@ -235,14 +274,22 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
     e.preventDefault();
     
     const formData = new FormData(form);
+    
+    // Helper to convert empty strings to undefined for optional fields
+    const getOptionalValue = (key: string) => {
+      const value = formData.get(key) as string;
+      return value?.trim() || undefined;
+    };
+    
     const data = {
       name: formData.get('name'),
       race: formData.get('race'),
-      occupation: formData.get('occupation') || undefined,
-      location: formData.get('location') || undefined,
+      occupation: getOptionalValue('occupation'),
+      locationId: getOptionalValue('locationId'),
       relationship: formData.get('relationship'),
       description: formData.get('description'),
-      notes: formData.get('notes') || undefined,
+      notes: getOptionalValue('notes'),
+      avatarUrl: getOptionalValue('avatarUrl'),
     };
 
     try {
@@ -281,10 +328,11 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
         (document.getElementById('name') as HTMLInputElement).value = npc.name;
         (document.getElementById('race') as HTMLInputElement).value = npc.race;
         (document.getElementById('occupation') as HTMLInputElement).value = npc.occupation || '';
-        (document.getElementById('location') as HTMLInputElement).value = npc.location || '';
+        (document.getElementById('locationId') as HTMLSelectElement).value = npc.locationId || '';
         (document.getElementById('relationship') as HTMLSelectElement).value = npc.relationship;
         (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
+        (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit NPC';
         modal?.classList.remove('hidden');
@@ -315,5 +363,68 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
       }
     }
   });
-</script>
+
+  // Tab filtering functionality
+  const filterTabs = document.querySelectorAll('.filter-tab');
+  const npcCards = document.querySelectorAll('.npc-card');
+  
+  filterTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const filter = tab.getAttribute('data-filter');
+      
+      // Update active tab
+      filterTabs.forEach(t => {
+        t.classList.remove('border-primary-600', 'text-primary-600', 'font-semibold');
+        t.classList.add('text-gray-600');
+      });
+      tab.classList.add('border-primary-600', 'text-primary-600', 'font-semibold');
+      tab.classList.remove('text-gray-600');
+      
+      // Filter NPCs
+      npcCards.forEach(card => {
+        const relationship = card.getAttribute('data-relationship');
+        if (filter === 'all' || relationship === filter) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    });
+  });
+
+  // Check for edit parameter on page load and open modal if present
+  (async () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      try {
+        const response = await fetch(`/api/npcs/${editId}`);
+        if (!response.ok) {
+          throw new Error('NPC not found');
+        }
+        
+        const npc = await response.json();
+        
+        editingId = editId;
+        (document.getElementById('name') as HTMLInputElement).value = npc.name;
+        (document.getElementById('race') as HTMLInputElement).value = npc.race;
+        (document.getElementById('occupation') as HTMLInputElement).value = npc.occupation || '';
+        (document.getElementById('locationId') as HTMLSelectElement).value = npc.locationId || '';
+        (document.getElementById('relationship') as HTMLSelectElement).value = npc.relationship;
+        (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
+        (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
+        (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
+        
+        modalTitle.textContent = 'Edit NPC';
+        modal.classList.remove('hidden');
+        
+        // Clear the URL parameter so refreshing doesn't re-open the modal
+        window.history.replaceState({}, '', '/npcs');
+      } catch (error) {
+        console.error('Failed to load NPC for editing:', error);
+        alert('Failed to load NPC. Please try again.');
+      }
+    }
+  })();
 </script>

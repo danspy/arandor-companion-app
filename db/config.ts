@@ -62,10 +62,12 @@ const NPC = defineTable({
     name: column.text(),
     race: column.text(),
     occupation: column.text({ optional: true }),
-    location: column.text({ optional: true }),
+    location: column.text({ optional: true }), // Legacy text field for backward compatibility
+    locationId: column.text({ optional: true }), // Foreign key to Location table
     description: column.text(),
     relationship: column.text(), // 'ally' | 'neutral' | 'enemy'
     notes: column.text({ optional: true }),
+    avatarUrl: column.text({ optional: true }),
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
