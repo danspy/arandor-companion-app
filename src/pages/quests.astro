@@ -69,10 +69,13 @@ const failedQuests = quests.filter(q => q.status === 'failed');
                 <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
                   Complete
                 </button>
-                <button class="edit-quest px-4 py-2 border border-gray-300 rounded hover:bg-gray-50 transition text-sm" data-id={quest.id}>
+                <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
+                  Fail
+                </button>
+                <button class="edit-quest px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm" data-id={quest.id}>
                   Edit
                 </button>
-                <button class="delete-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
+                <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
                   Delete
                 </button>
               </div>
@@ -90,7 +93,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
 
   <!-- Completed Quests -->
   {completedQuests.length > 0 && (
-    <section>
+    <section class="mb-8">
       <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Completed Quests</h2>
       <div class="space-y-4">
         {completedQuests.map(quest => (
@@ -98,10 +101,32 @@ const failedQuests = quests.filter(q => q.status === 'failed');
             <div class="flex justify-between items-start">
               <div class="flex-1">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
-                <p class="text-gray-700">{quest.description}</p>
+                <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
               </div>
               <span class="bg-green-600 text-white px-3 py-1 rounded text-sm">
                 ✓ Completed
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  )}
+
+  <!-- Failed Quests -->
+  {failedQuests.length > 0 && (
+    <section>
+      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Failed Quests</h2>
+      <div class="space-y-4">
+        {failedQuests.map(quest => (
+          <div class="bg-red-50 dark:bg-red-900/20 rounded-lg shadow p-6 opacity-75 dark:border dark:border-red-800">
+            <div class="flex justify-between items-start">
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
+                <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
+              </div>
+              <span class="bg-red-600 text-white px-3 py-1 rounded text-sm">
+                ✗ Failed
               </span>
             </div>
           </div>
@@ -293,6 +318,31 @@ const failedQuests = quests.filter(q => q.status === 'failed');
           window.location.reload();
         } else {
           alert('Failed to complete quest. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Fail quest
+    if (target.classList.contains('fail-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        const updateResponse = await fetch(`/api/quests/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...quest, status: 'failed' }),
+        });
+        
+        if (updateResponse.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to mark quest as failed. Please try again.');
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
