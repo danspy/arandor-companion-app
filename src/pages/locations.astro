@@ -119,8 +119,8 @@ const unvisitedLocations = locations.filter(l => !l.visited);
 
   <!-- Modal for Add/Edit Location -->
   <div id="locationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700">New Location</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Location</h2>
       <form id="locationForm" class="space-y-4">
         <input type="hidden" id="locationId" name="id">
         
@@ -190,7 +190,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               type="checkbox" 
               id="visited" 
               name="visited"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 text-primary-600 dark:text-primary-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500"
             >
             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Mark as visited</span>
           </label>
@@ -202,7 +202,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
               type="checkbox" 
               id="visibleOnMap" 
               name="visibleOnMap"
-              class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+              class="w-4 h-4 text-primary-600 dark:text-primary-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500"
             >
             <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Show pin on map</span>
           </label>
@@ -241,7 +241,7 @@ const unvisitedLocations = locations.filter(l => !l.visited);
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
           >
             Save Location
           </button>
