@@ -269,15 +269,22 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
     e.preventDefault();
     
     const formData = new FormData(form);
+    
+    // Helper to convert empty strings to undefined for optional fields
+    const getOptionalValue = (key: string) => {
+      const value = formData.get(key) as string;
+      return value?.trim() || undefined;
+    };
+    
     const data = {
       name: formData.get('name'),
       race: formData.get('race'),
-      occupation: formData.get('occupation') || undefined,
-      location: formData.get('location') || undefined,
+      occupation: getOptionalValue('occupation'),
+      location: getOptionalValue('location'),
       relationship: formData.get('relationship'),
       description: formData.get('description'),
-      notes: formData.get('notes') || undefined,
-      avatarUrl: formData.get('avatarUrl') || undefined,
+      notes: getOptionalValue('notes'),
+      avatarUrl: getOptionalValue('avatarUrl'),
     };
 
     try {
