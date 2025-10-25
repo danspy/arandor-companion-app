@@ -68,4 +68,6 @@ export interface CampaignProgress {
   currentLevel: number;
   currentXP: number;
   xpForNextLevel: number;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
