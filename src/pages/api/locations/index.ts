@@ -36,6 +36,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       notes: body.notes,
       mapX: body.mapX,
       mapY: body.mapY,
+      visibleOnMap: body.visibleOnMap !== undefined ? body.visibleOnMap : true,
       createdAt: now,
       updatedAt: now,
     });

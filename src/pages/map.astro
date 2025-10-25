@@ -63,14 +63,32 @@ diaryEntries.forEach(entry => {
 
   <!-- Map Container -->
   <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
-    <div class="mb-4 flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-      </svg>
-      <span>Use mouse wheel to zoom, click and drag to pan the map</span>
+    <div class="mb-4 flex items-center justify-between">
+      <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Use mouse wheel to zoom, click and drag to pan the map</span>
+      </div>
+      <!-- Zoom controls -->
+      <div class="flex gap-2">
+        <button id="zoomIn" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom In">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+          </svg>
+        </button>
+        <button id="zoomOut" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2 rounded transition" title="Zoom Out">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+          </svg>
+        </button>
+        <button id="resetZoom" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 px-3 py-2 rounded transition text-sm" title="Reset View">
+          Reset
+        </button>
+      </div>
     </div>
-    <div id="mapWrapper" class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="min-height: 600px; cursor: grab;">
-      <div id="mapContainer" class="relative" style="min-height: 600px; transform-origin: 0 0;">
+    <div id="mapWrapper" class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px; cursor: grab;">
+      <div id="mapContainer" class="absolute" style="width: 1200px; height: 1200px; transform-origin: 0 0;">
         <!-- Placeholder map background -->
         <div id="mapBackground" class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
           <div class="text-center">
@@ -200,8 +218,8 @@ diaryEntries.forEach(entry => {
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
-  // Zoom and pan state
-  let scale = 1;
+  // Zoom and pan state with default scale
+  let scale = 0.5; // Start at 50% zoom to show more of the map
   let translateX = 0;
   let translateY = 0;
   let isPanning = false;
@@ -218,6 +236,9 @@ diaryEntries.forEach(entry => {
   const uploadMapBtn = document.getElementById('uploadMapBtn');
   const uploadModal = document.getElementById('uploadModal');
   const coordinateEditor = document.getElementById('coordinateEditor');
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomOutBtn = document.getElementById('zoomOut');
+  const resetZoomBtn = document.getElementById('resetZoom');
 
   // Get color for location type
   function getLocationColor(type) {
@@ -233,10 +254,17 @@ diaryEntries.forEach(entry => {
   // Create pin element
   function createPin(location) {
     const pin = document.createElement('div');
-    pin.className = `location-pin absolute cursor-pointer transform -translate-x-1/2 -translate-y-full transition-transform hover:scale-110`;
+    pin.className = `location-pin absolute cursor-pointer transform -translate-x-1/2 -translate-y-1/2 transition-transform hover:scale-110`;
     pin.dataset.locationId = location.id;
     pin.style.left = `${location.mapX || 50}%`;
     pin.style.top = `${location.mapY || 50}%`;
+    
+    // Hide pin if visibleOnMap is false
+    if (location.visibleOnMap === false) {
+      pin.style.opacity = '0.3';
+      pin.style.pointerEvents = 'none';
+      pin.dataset.hidden = 'true';
+    }
 
     const color = getLocationColor(location.type);
     
@@ -274,7 +302,7 @@ diaryEntries.forEach(entry => {
       <div class="relative">
         <div class="${color} w-6 h-6 rounded-full border-2 border-white shadow-lg"></div>
         <div class="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
-        <div class="tooltip absolute top-8 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg shadow-lg whitespace-nowrap text-xs opacity-0 hover:opacity-100 transition-opacity pointer-events-none z-50" style="min-width: 150px;">
+        <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 px-3 py-2 rounded-lg shadow-lg text-xs opacity-0 hover:opacity-100 transition-opacity pointer-events-none z-50" style="min-width: 150px; white-space: normal;">
           ${tooltipContent}
         </div>
       </div>
@@ -291,7 +319,7 @@ diaryEntries.forEach(entry => {
     // Drag functionality in edit mode
     if (isLoggedIn) {
       pin.addEventListener('mousedown', (e) => {
-        if (editMode) {
+        if (editMode && location.visibleOnMap !== false) {
           e.preventDefault();
           draggedPin = { element: pin, location: location };
           pin.style.zIndex = '1000';
@@ -565,6 +593,42 @@ diaryEntries.forEach(entry => {
   function updateTransform() {
     mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
   }
+  
+  // Zoom button controls
+  zoomInBtn?.addEventListener('click', () => {
+    const rect = mapWrapper.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const newScale = Math.min(scale * 1.2, 3);
+    const scaleChange = newScale / scale;
+    translateX = centerX - (centerX - translateX) * scaleChange;
+    translateY = centerY - (centerY - translateY) * scaleChange;
+    
+    scale = newScale;
+    updateTransform();
+  });
+  
+  zoomOutBtn?.addEventListener('click', () => {
+    const rect = mapWrapper.getBoundingClientRect();
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+    
+    const newScale = Math.max(scale * 0.8, 0.3);
+    const scaleChange = newScale / scale;
+    translateX = centerX - (centerX - translateX) * scaleChange;
+    translateY = centerY - (centerY - translateY) * scaleChange;
+    
+    scale = newScale;
+    updateTransform();
+  });
+  
+  resetZoomBtn?.addEventListener('click', () => {
+    scale = 0.5;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  });
 
   // Mouse wheel zoom
   mapWrapper?.addEventListener('wheel', (e) => {
@@ -576,7 +640,7 @@ diaryEntries.forEach(entry => {
     
     // Calculate zoom
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.min(Math.max(0.5, scale * delta), 3);
+    const newScale = Math.min(Math.max(0.3, scale * delta), 3);
     
     // Adjust translation to zoom towards mouse position
     const scaleChange = newScale / scale;
@@ -620,8 +684,31 @@ diaryEntries.forEach(entry => {
     e.preventDefault();
   });
 
-  // Initial render
+  // Initial render and setup
   renderPins();
+  updateTransform(); // Apply initial transform
+  
+  // Show hidden pins in edit mode
+  if (isLoggedIn && toggleEditModeBtn) {
+    const originalToggle = toggleEditModeBtn.onclick;
+    toggleEditModeBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
+        hiddenPins.forEach(pin => {
+          if (editMode) {
+            pin.style.opacity = '0.5';
+            pin.style.pointerEvents = 'auto';
+            pin.style.border = '2px dashed orange';
+          } else {
+            pin.style.opacity = '0.3';
+            pin.style.pointerEvents = 'none';
+            pin.style.border = 'none';
+          }
+        });
+      }, 100);
+    });
+  }
+
 </script>
 
 <style>

@@ -85,6 +85,7 @@ const Location = defineTable({
     // Map coordinates (percentage-based for responsive positioning)
     mapX: column.number({ optional: true }), // X coordinate (0-100)
     mapY: column.number({ optional: true }), // Y coordinate (0-100)
+    visibleOnMap: column.boolean({ default: true }), // Whether pin is visible on map
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }

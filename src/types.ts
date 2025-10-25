@@ -60,4 +60,5 @@ export interface Location {
   notes?: string;
   mapX?: number;
   mapY?: number;
+  visibleOnMap?: boolean;
 }
