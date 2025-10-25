@@ -703,7 +703,7 @@ diaryEntries.forEach(entry => {
   }
 
   // Toggle fullwidth mode
-  toggleFullWidthBtn?.addEventListener('click', () => {
+  function toggleFullWidth() {
     isFullWidth = !isFullWidth;
     
     if (isFullWidth) {
@@ -745,13 +745,15 @@ diaryEntries.forEach(entry => {
         console.warn('Failed to save fullwidth preference:', e);
       }
     }
-  });
+  }
+
+  toggleFullWidthBtn?.addEventListener('click', toggleFullWidth);
 
   // Load fullwidth preference
   try {
     const savedFullWidth = localStorage.getItem('mapFullWidth');
     if (savedFullWidth === 'true') {
-      toggleFullWidthBtn?.click();
+      toggleFullWidth();
     }
   } catch (e) {
     console.warn('Failed to load fullwidth preference:', e);
@@ -861,7 +863,6 @@ diaryEntries.forEach(entry => {
       touchStartTranslateY = translateY;
     } else if (touches.length === 1) {
       // Start pan
-      const rect = mapWrapper.getBoundingClientRect();
       isPanning = true;
       startPanX = touches[0].clientX - translateX;
       startPanY = touches[0].clientY - translateY;
@@ -1036,10 +1037,6 @@ diaryEntries.forEach(entry => {
   @media (max-width: 640px) {
     #mapViewport {
       height: 400px !important;
-    }
-    
-    #mapViewport.fullwidth {
-      height: 500px !important;
     }
   }
 
