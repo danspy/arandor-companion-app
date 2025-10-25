@@ -87,22 +87,29 @@ diaryEntries.forEach(entry => {
         </button>
       </div>
     </div>
-    <div id="mapWrapper" class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px; cursor: grab;">
-      <div id="mapContainer" class="absolute" style="width: 1200px; height: 1200px; transform-origin: 0 0;">
-        <!-- Placeholder map background -->
-        <div id="mapBackground" class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
-          <div class="text-center">
-            <svg class="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-            </svg>
-            <p class="text-lg font-medium">Upload a custom map image to get started</p>
-            <p class="text-sm mt-2">or use the placeholder fantasy map</p>
+    <!-- Map viewport with clipping -->
+    <div class="relative bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-700 dark:to-gray-600 rounded-lg overflow-hidden" style="height: 600px;">
+      <!-- Draggable map container -->
+      <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
+        <div id="mapContainer" class="absolute" style="width: 1200px; height: 1200px; transform-origin: 0 0;">
+          <!-- Placeholder map background -->
+          <div id="mapBackground" class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
+            <div class="text-center">
+              <svg class="w-24 h-24 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+              </svg>
+              <p class="text-lg font-medium">Upload a custom map image to get started</p>
+              <p class="text-sm mt-2">or use the placeholder fantasy map</p>
+            </div>
           </div>
-        </div>
 
-        <!-- Location pins will be added here by JavaScript -->
-        <div id="locationPins"></div>
+          <!-- Location pins will be added here by JavaScript -->
+          <div id="locationPins"></div>
+        </div>
       </div>
+      
+      <!-- Tooltip container outside overflow-hidden -->
+      <div id="tooltipContainer" class="absolute inset-0 pointer-events-none" style="z-index: 1000;"></div>
     </div>
 
     <!-- Legend -->
@@ -305,11 +312,30 @@ diaryEntries.forEach(entry => {
       <div class="pin-wrapper relative">
         <div class="pin-circle ${color} w-7 h-7 rounded-full border-3 border-white shadow-lg transition-all"></div>
         <div class="pin-tip absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[5px] border-r-[5px] border-t-[6px] ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
-        <div class="tooltip absolute bottom-full left-1/2 transform -translate-x-1/2 mb-1 bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity pointer-events-none z-[60]" style="min-width: 150px; max-width: 250px; white-space: normal;">
-          ${tooltipContent}
-        </div>
       </div>
     `;
+    
+    // Create separate tooltip element that can overflow
+    const tooltip = document.createElement('div');
+    tooltip.className = 'pin-tooltip fixed bg-white dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity pointer-events-none';
+    tooltip.style.cssText = 'min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999;';
+    tooltip.innerHTML = tooltipContent;
+    document.body.appendChild(tooltip);
+    
+    // Position tooltip on hover
+    pin.addEventListener('mouseenter', (e) => {
+      const rect = pin.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width / 2}px`;
+      tooltip.style.top = `${rect.top - 8}px`;
+      tooltip.style.transform = 'translate(-50%, -100%)';
+      tooltip.style.opacity = '1';
+      tooltip.style.pointerEvents = 'auto';
+    });
+    
+    pin.addEventListener('mouseleave', () => {
+      tooltip.style.opacity = '0';
+      tooltip.style.pointerEvents = 'none';
+    });
 
     // Click to view details (works in both normal and edit mode)
     pin.addEventListener('click', (e) => {
@@ -729,11 +755,6 @@ diaryEntries.forEach(entry => {
     z-index: 50;
     transform: translate(-50%, -100%) scale(1.15);
   }
-
-  .location-pin:hover .tooltip {
-    opacity: 1 !important;
-    pointer-events: auto !important;
-  }
   
   .location-pin.pin-active {
     z-index: 40;
@@ -744,6 +765,10 @@ diaryEntries.forEach(entry => {
     box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
     border-width: 3px;
   }
+  
+  .pin-tooltip a {
+    pointer-events: auto !important;
+  }
 
   #mapContainer {
     user-select: none;
@@ -752,10 +777,6 @@ diaryEntries.forEach(entry => {
   
   #mapWrapper {
     position: relative;
-  }
-  
-  .tooltip a {
-    pointer-events: auto;
   }
 </style>
 </Layout>
