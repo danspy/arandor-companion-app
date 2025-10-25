@@ -18,11 +18,11 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
 
 <Layout title="Adventure Diary">
   <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-primary-700">Adventure Diary</h1>
+    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Adventure Diary</h1>
     {isLoggedIn && (
       <button 
         id="addEntry"
-        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
         + New Entry
       </button>
@@ -31,7 +31,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
 
   <div id="entriesList" class="space-y-6">
     {sortedEntries.map(entry => (
-      <article class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition" data-entry-id={entry.id}>
+      <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-700" data-entry-id={entry.id}>
         {entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
             <img 
@@ -43,7 +43,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
         )}
         <div class="flex justify-between items-start mb-4">
           <div class="flex-1">
-            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 hover:text-primary-900 transition">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
               {entry.title}
             </a>
             <div class="flex gap-4 text-sm text-gray-500 mt-1">
@@ -53,25 +53,25 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
           </div>
           {isLoggedIn && (
             <div class="flex gap-2">
-              <button class="edit-entry text-primary-600 hover:text-primary-800 px-3 py-1 rounded" data-id={entry.id}>Edit</button>
-              <button class="delete-entry text-red-600 hover:text-red-800 px-3 py-1 rounded" data-id={entry.id}>Delete</button>
+              <button class="edit-entry text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 px-3 py-1 rounded" data-id={entry.id}>Edit</button>
+              <button class="delete-entry text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-3 py-1 rounded" data-id={entry.id}>Delete</button>
             </div>
           )}
         </div>
         
         <div class="prose max-w-none mb-4">
-          <p class="text-gray-700 line-clamp-3">{entry.content}</p>
+          <p class="text-gray-700 dark:text-gray-300 line-clamp-3">{entry.content}</p>
         </div>
         
         <div class="flex gap-2 flex-wrap mb-4">
           {Array.isArray(entry.tags) && entry.tags.map((tag: string) => (
-            <span class="bg-primary-100 text-primary-700 px-3 py-1 rounded-full text-sm">
+            <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm">
               #{tag}
             </span>
           ))}
         </div>
 
-        <a href={`/diary/${entry.id}`} class="text-primary-600 hover:text-primary-800 text-sm font-medium">
+        <a href={`/diary/${entry.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium">
           Read more →
         </a>
       </article>
@@ -79,67 +79,67 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
   </div>
 
   {sortedEntries.length === 0 && (
-    <div class="text-center py-16 bg-white rounded-lg shadow-md">
-      <p class="text-gray-500 text-lg">No diary entries yet. Start documenting your adventures!</p>
+    <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:border dark:border-gray-700">
+      <p class="text-gray-500 dark:text-gray-400 text-lg">No diary entries yet. Start documenting your adventures!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Entry -->
   <div id="entryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700">New Diary Entry</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Diary Entry</h2>
       <form id="entryForm" class="space-y-4">
         <input type="hidden" id="entryId" name="id">
         
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title</label>
+          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
           <input 
             type="text" 
             id="title" 
             name="title" 
             required 
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           >
         </div>
         
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
             <input 
               type="date" 
               id="date" 
               name="date" 
               required 
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
           </div>
           
           <div>
-            <label for="session" class="block text-sm font-medium text-gray-700 mb-1">Session Number</label>
+            <label for="session" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Session Number</label>
             <input 
               type="number" 
               id="session" 
               name="session" 
               required 
               min="1"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
           </div>
         </div>
         
         <div>
-          <label for="content" class="block text-sm font-medium text-gray-700 mb-1">Content</label>
+          <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Content</label>
           <textarea 
             id="content" 
             name="content" 
             required 
             rows="10"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           ></textarea>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">Cover Image</label>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image</label>
           <div class="space-y-3">
             <div>
               <label for="coverImageFile" class="block text-xs text-gray-600 mb-1">Upload Image (max 5MB)</label>
@@ -148,20 +148,20 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
                 id="coverImageFile" 
                 name="coverImageFile" 
                 accept="image/*"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
               >
             </div>
-            <div class="text-center text-sm text-gray-500">— OR —</div>
+            <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
             <div>
-              <label for="coverImageUrl" class="block text-xs text-gray-600 mb-1">Image URL</label>
+              <label for="coverImageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
               <input 
                 type="text" 
                 id="coverImageUrl" 
                 name="coverImageUrl" 
                 placeholder="https://example.com/image.jpg"
-                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
               >
-              <p class="text-xs text-gray-500 mt-1">External URL or uploaded image path</p>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
             </div>
           </div>
           <div id="imagePreview" class="mt-3 hidden">
@@ -170,95 +170,95 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
         </div>
         
         <div>
-          <label for="tags" class="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
+          <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
           <input 
             type="text" 
             id="tags" 
             name="tags" 
             placeholder="combat, discovery, ruins"
-            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           >
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="npcs" class="block text-sm font-medium text-gray-700 mb-1">NPCs Met</label>
+            <label for="npcs" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPCs Met</label>
             <select 
               id="npcs" 
               name="npcs" 
               multiple 
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
               {npcs.map(npc => (
                 <option value={npc.id}>{npc.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
 
           <div>
-            <label for="locations" class="block text-sm font-medium text-gray-700 mb-1">Locations Visited</label>
+            <label for="locations" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Locations Visited</label>
             <select 
               id="locations" 
               name="locations" 
               multiple 
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
               {locations.map(location => (
                 <option value={location.id}>{location.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="characters" class="block text-sm font-medium text-gray-700 mb-1">Party Members</label>
+            <label for="characters" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Party Members</label>
             <select 
               id="characters" 
               name="characters" 
               multiple 
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
               {characters.map(character => (
                 <option value={character.id}>{character.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
 
           <div>
-            <label for="quests" class="block text-sm font-medium text-gray-700 mb-1">Related Quests</label>
+            <label for="quests" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Related Quests</label>
             <select 
               id="quests" 
               name="quests" 
               multiple 
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
               {quests.map(quest => (
                 <option value={quest.id}>{quest.title}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
         </div>
         
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
           >
             Save Entry
           </button>
           <button 
             type="button" 
             id="cancelModal"
-            class="flex-1 bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
           >
             Cancel
           </button>
