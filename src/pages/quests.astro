@@ -342,7 +342,7 @@ const failedQuests = quests.filter(q => q.status === 'failed');
         if (updateResponse.ok) {
           window.location.reload();
         } else {
-          alert('Failed to mark quest as failed. Please try again.');
+          alert('Unable to mark quest as failed. Please try again.');
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
