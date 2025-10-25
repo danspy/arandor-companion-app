@@ -230,9 +230,10 @@ diaryEntries.forEach(entry => {
       </div>
     `;
 
-    // Click to view details
+    // Click to view details (works in both normal and edit mode)
     pin.addEventListener('click', (e) => {
-      if (!editMode) {
+      // Only show details if we didn't just finish a drag
+      if (!draggedPin || !editMode) {
         showLocationDetails(location);
       }
     });
@@ -401,7 +402,11 @@ diaryEntries.forEach(entry => {
         await saveLocationCoordinates(draggedPin.location.id, clampedX, clampedY);
         
         draggedPin.element.style.zIndex = '';
-        draggedPin = null;
+        
+        // Small delay before clearing to prevent immediate click event
+        setTimeout(() => {
+          draggedPin = null;
+        }, 100);
       }
     });
   }
