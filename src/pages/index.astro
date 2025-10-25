@@ -13,17 +13,17 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
 ---
 
 <Layout title="Dashboard">
-  <h1 class="text-4xl font-bold mb-8 text-primary-700">Dashboard</h1>
+  <h1 class="text-4xl font-bold mb-8 text-primary-700 dark:text-primary-400">Dashboard</h1>
   
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
     <!-- Active Quests Card -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600">Active Quests</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 dark:border dark:border-gray-700">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Quests</h2>
       <div class="space-y-3">
         {activeQuests.map(quest => (
-          <div class="border-l-4 border-primary-500 pl-4 py-2">
-            <h3 class="font-semibold">{quest.title}</h3>
-            <p class="text-sm text-gray-600">{quest.description}</p>
+          <div class="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
+            <h3 class="font-semibold dark:text-gray-100">{quest.title}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{quest.description}</p>
             <span class={`inline-block px-2 py-1 text-xs rounded mt-2 ${
               quest.priority === 'high' ? 'bg-red-100 text-red-700' :
               quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700' :
@@ -34,72 +34,72 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
           </div>
         ))}
       </div>
-      <a href="/quests" class="block mt-4 text-primary-600 hover:text-primary-800 font-medium">
+      <a href="/quests" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
         View all quests →
       </a>
     </div>
 
     <!-- Party Members Card -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600">Party Members</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 dark:border dark:border-gray-700">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Party Members</h2>
       <div class="space-y-3">
         {characters.map(char => (
-          <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 rounded hover:bg-gray-100 transition cursor-pointer">
+          <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer">
             <div>
-              <h3 class="font-semibold text-primary-700 hover:text-primary-900">{char.name}</h3>
-              <p class="text-sm text-gray-600">{char.race} {char.class} - Level {char.level}</p>
+              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{char.name}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400">{char.race} {char.class} - Level {char.level}</p>
             </div>
             <div class="text-right">
-              <span class="text-sm text-gray-500">{char.player}</span>
+              <span class="text-sm text-gray-500 dark:text-gray-400">{char.player}</span>
             </div>
           </a>
         ))}
       </div>
-      <a href="/characters" class="block mt-4 text-primary-600 hover:text-primary-800 font-medium">
+      <a href="/characters" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
         View all characters →
       </a>
     </div>
 
     <!-- Latest Diary Entries Card -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600">Latest Entries</h2>
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 dark:border dark:border-gray-700">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Latest Entries</h2>
       <div class="space-y-3">
         {latestEntries.map(entry => (
-          <a href={`/diary/${entry.id}`} class="block border-b pb-3 last:border-b-0 hover:bg-gray-50 rounded px-2 -mx-2 transition">
+          <a href={`/diary/${entry.id}`} class="block border-b dark:border-gray-700 pb-3 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-2 -mx-2 transition">
             <div class="flex justify-between items-start mb-1">
-              <h3 class="font-semibold text-primary-700 hover:text-primary-900">{entry.title}</h3>
-              <span class="text-xs text-gray-500">Session {entry.session}</span>
+              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
+              <span class="text-xs text-gray-500 dark:text-gray-400">Session {entry.session}</span>
             </div>
-            <p class="text-sm text-gray-600 line-clamp-2">{entry.content}</p>
-            <p class="text-xs text-gray-400 mt-1">{entry.date}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
+            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{entry.date}</p>
           </a>
         ))}
       </div>
-      <a href="/diary" class="block mt-4 text-primary-600 hover:text-primary-800 font-medium">
+      <a href="/diary" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
         View all entries →
       </a>
     </div>
   </div>
 
   <!-- Session Progress -->
-  <div class="bg-white rounded-lg shadow-md p-6">
-    <h2 class="text-2xl font-semibold mb-4 text-primary-600">Campaign Progress</h2>
+  <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 dark:border dark:border-gray-700">
+    <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Campaign Progress</h2>
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="text-center p-4 bg-primary-50 rounded">
-        <div class="text-3xl font-bold text-primary-600">{diaryEntries.length}</div>
-        <div class="text-sm text-gray-600">Sessions Played</div>
+      <div class="text-center p-4 bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 rounded">
+        <div class="text-3xl font-bold text-primary-600 dark:text-primary-400">{diaryEntries.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Sessions Played</div>
       </div>
-      <div class="text-center p-4 bg-accent-50 rounded">
-        <div class="text-3xl font-bold text-accent-600">{quests.length}</div>
-        <div class="text-sm text-gray-600">Total Quests</div>
+      <div class="text-center p-4 bg-accent-50 dark:bg-accent-900/20 dark:border dark:border-accent-800 rounded">
+        <div class="text-3xl font-bold text-accent-600 dark:text-accent-400">{quests.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Total Quests</div>
       </div>
-      <div class="text-center p-4 bg-green-50 rounded">
-        <div class="text-3xl font-bold text-green-600">{characters.length}</div>
-        <div class="text-sm text-gray-600">Party Members</div>
+      <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800 rounded">
+        <div class="text-3xl font-bold text-green-600 dark:text-green-400">{characters.length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Party Members</div>
       </div>
-      <div class="text-center p-4 bg-secondary-50 rounded">
-        <div class="text-3xl font-bold text-secondary-600">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
-        <div class="text-sm text-gray-600">Average Level</div>
+      <div class="text-center p-4 bg-secondary-50 dark:bg-secondary-900/20 dark:border dark:border-secondary-800 rounded">
+        <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Average Level</div>
       </div>
     </div>
   </div>

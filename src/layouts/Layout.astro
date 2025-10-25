@@ -17,9 +17,22 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} - Arandor Companion</title>
+    <script is:inline>
+      // Initialize dark mode before page renders to avoid flash
+      const getThemePreference = () => {
+        const stored = localStorage.getItem('theme');
+        if (stored) return stored;
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      };
+      
+      const theme = getThemePreference();
+      if (theme === 'dark') {
+        document.documentElement.classList.add('dark');
+      }
+    </script>
   </head>
-  <body>
-    <nav class="bg-primary text-white shadow-lg">
+  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
+    <nav class="bg-primary text-white shadow-lg dark:bg-gray-800 dark:border-b dark:border-gray-700">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
@@ -46,6 +59,21 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
             <a href="/npcs" class="hover:text-secondary-200 transition">NPCs</a>
             <a href="/locations" class="hover:text-secondary-200 transition">Locations</a>
             <a href="/quests" class="hover:text-secondary-200 transition">Quests</a>
+            
+            <!-- Dark mode toggle -->
+            <button 
+              id="themeToggle"
+              class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+              aria-label="Toggle dark mode"
+            >
+              <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+              <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
+            
             {isLoggedIn ? (
               <button 
                 id="logoutBtn"
@@ -64,12 +92,29 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         <!-- Mobile menu -->
         <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
           <div class="flex flex-col gap-3">
-            <a href="/" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Dashboard</a>
-            <a href="/diary" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Diary</a>
-            <a href="/characters" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Characters</a>
-            <a href="/npcs" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">NPCs</a>
-            <a href="/locations" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Locations</a>
-            <a href="/quests" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700">Quests</a>
+            <a href="/" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Dashboard</a>
+            <a href="/diary" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Diary</a>
+            <a href="/characters" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Characters</a>
+            <a href="/npcs" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">NPCs</a>
+            <a href="/locations" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Locations</a>
+            <a href="/quests" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Quests</a>
+            
+            <!-- Dark mode toggle for mobile -->
+            <button 
+              id="themeToggleMobile"
+              class="flex items-center gap-2 py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
+              aria-label="Toggle dark mode"
+            >
+              <svg id="sunIconMobile" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+              <svg id="moonIconMobile" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+              <span id="themeTextMobile" class="dark:hidden">Dark Mode</span>
+              <span id="themeTextMobile2" class="hidden dark:block">Light Mode</span>
+            </button>
+            
             {isLoggedIn ? (
               <button 
                 id="logoutBtnMobile"
@@ -91,13 +136,33 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <slot />
     </main>
     
-    <footer class="bg-accent-900 text-white mt-16 py-8">
+    <footer class="bg-accent-900 text-white mt-16 py-8 dark:bg-gray-800 dark:border-t dark:border-gray-700">
       <div class="container mx-auto px-4 text-center">
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>
     </footer>
     
     <script>
+      // Dark mode toggle functionality
+      const toggleTheme = () => {
+        const html = document.documentElement;
+        const isDark = html.classList.contains('dark');
+        
+        if (isDark) {
+          html.classList.remove('dark');
+          localStorage.setItem('theme', 'light');
+        } else {
+          html.classList.add('dark');
+          localStorage.setItem('theme', 'dark');
+        }
+      };
+      
+      const themeToggle = document.getElementById('themeToggle');
+      const themeToggleMobile = document.getElementById('themeToggleMobile');
+      
+      themeToggle?.addEventListener('click', toggleTheme);
+      themeToggleMobile?.addEventListener('click', toggleTheme);
+      
       // Mobile menu toggle
       const mobileMenuBtn = document.getElementById('mobileMenuBtn');
       const mobileMenu = document.getElementById('mobileMenu');
