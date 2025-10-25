@@ -34,6 +34,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       region: body.region,
       visited: body.visited || false,
       notes: body.notes,
+      mapX: body.mapX,
+      mapY: body.mapY,
       createdAt: now,
       updatedAt: now,
     });

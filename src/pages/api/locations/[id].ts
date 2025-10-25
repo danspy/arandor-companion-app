@@ -33,16 +33,22 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     const body = await request.json();
     const now = new Date();
     
+    // Build update object with only provided fields
+    const updateData: any = {
+      updatedAt: now,
+    };
+    
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.type !== undefined) updateData.type = body.type;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.region !== undefined) updateData.region = body.region;
+    if (body.visited !== undefined) updateData.visited = body.visited;
+    if (body.notes !== undefined) updateData.notes = body.notes;
+    if (body.mapX !== undefined) updateData.mapX = body.mapX;
+    if (body.mapY !== undefined) updateData.mapY = body.mapY;
+    
     await db.update(Location)
-      .set({
-        name: body.name,
-        type: body.type,
-        description: body.description,
-        region: body.region,
-        visited: body.visited,
-        notes: body.notes,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(Location.id, params.id!));
 
     const updatedLocation = await db.select().from(Location).where(eq(Location.id, params.id!));
