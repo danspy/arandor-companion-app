@@ -188,6 +188,9 @@ diaryEntries.forEach(entry => {
   let selectedLocationId = null;
   let draggedPin = null;
   let currentMapImage = null;
+  
+  // Debounce time to prevent click event immediately after drag
+  const DRAG_CLICK_DEBOUNCE_MS = 100;
 
   const mapContainer = document.getElementById('mapContainer');
   const mapBackground = document.getElementById('mapBackground');
@@ -406,7 +409,7 @@ diaryEntries.forEach(entry => {
         // Small delay before clearing to prevent immediate click event
         setTimeout(() => {
           draggedPin = null;
-        }, 100);
+        }, DRAG_CLICK_DEBOUNCE_MS);
       }
     });
   }
