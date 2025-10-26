@@ -1,0 +1,156 @@
+name: Deploy Static Preview to GitHub Pages
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, closed]
+  workflow_dispatch:
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+  pull-requests: write
+
+# Allow only one concurrent deployment per PR
+concurrency:
+  group: "pages-preview-${{ github.event.pull_request.number }}"
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages-preview
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Configure for static build
+        run: |
+          # Create a temporary astro config for static build
+          cat > astro.config.static.mjs << 'EOF'
+          import { defineConfig } from 'astro/config';
+          import tailwind from '@astrojs/tailwind';
+          
+          // Static build config for GitHub Pages preview
+          export default defineConfig({
+            integrations: [tailwind()],
+            output: 'static',
+            site: 'https://${{ github.repository_owner }}.github.io',
+            base: '/${{ github.event.repository.name }}/pr-preview/pr-${{ github.event.pull_request.number }}',
+          });
+          EOF
+
+      - name: Build static site
+        run: npx astro build --config astro.config.static.mjs
+        continue-on-error: true
+        id: static_build
+
+      - name: Setup Pages
+        if: steps.static_build.outcome == 'success'
+        uses: actions/configure-pages@v4
+
+      - name: Upload artifact
+        if: steps.static_build.outcome == 'success'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: './dist'
+
+      - name: Deploy to GitHub Pages
+        if: steps.static_build.outcome == 'success'
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Comment on PR - Success
+        if: steps.static_build.outcome == 'success' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = context.payload.pull_request.number;
+            const previewUrl = `https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/pr-preview/pr-${prNumber}`;
+            
+            const comment = `## 🌐 Static Preview Deployed to GitHub Pages
+            
+            **Preview URL:** [${previewUrl}](${previewUrl})
+            
+            ⚠️ **Note:** This is a static preview without database functionality. 
+            The following features are not available in the static preview:
+            - Database operations (characters, quests, NPCs, locations, diary)
+            - API endpoints
+            - Dynamic content updates
+            
+            For a full preview with all features, use the server-based deployment method described in the artifacts.
+            
+            ---
+            *This preview will be updated automatically with new commits.*`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: comment
+            });
+
+      - name: Comment on PR - Build Failed
+        if: steps.static_build.outcome != 'success' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## ⚠️ Static Preview Not Available
+            
+            This application requires a server to run (SSR with Astro DB). 
+            GitHub Pages only supports static sites, so a static preview cannot be generated.
+            
+            ### Alternative Preview Options:
+            
+            1. **Download the server artifact** from the "Deploy Preview Server" workflow
+            2. **Use the Docker deployment** method (see DEPLOYMENT.md)
+            3. **Deploy to a platform with SSR support:**
+               - Railway
+               - Render
+               - Vercel
+               - Netlify (with Astro SSR adapter)
+            
+            See [DEPLOYMENT.md](../blob/main/DEPLOYMENT.md) for detailed instructions.`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: comment
+            });
+
+  cleanup:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    
+    steps:
+      - name: Comment on PR - Cleanup
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const comment = `## 🧹 Preview Cleanup
+            
+            The static preview for this PR has been removed as the PR is now closed.`;
+            
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: comment
+            });
