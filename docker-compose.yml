@@ -1,0 +1,17 @@
+services:
+  arandor-app:
+    build: .
+    container_name: arandor-companion-app
+    ports:
+      - "4321:4321"
+    volumes:
+      # Persist database
+      - arandor-data:/app/.astro
+    environment:
+      - HOST=0.0.0.0
+      - PORT=4321
+      - NODE_ENV=production
+    restart: unless-stopped
+
+volumes:
+  arandor-data:

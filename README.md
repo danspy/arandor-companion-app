@@ -58,6 +58,19 @@ The built site will be in the `dist/` directory.
 npm run preview
 ```
 
+## Docker Deployment
+
+For easy deployment using Docker, see [DEPLOYMENT.md](DEPLOYMENT.md) for:
+- **Docker deployment** with `docker-compose`
+- **Uberspace deployment** instructions
+- Port configuration and data persistence
+- Production deployment best practices
+
+Quick start with Docker:
+```bash
+docker-compose up -d
+```
+
 ## Project Structure
 
 ```
