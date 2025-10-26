@@ -5,14 +5,27 @@
 ### Local/VPS Deployment (Recommended)
 
 ```bash
-# 1. Clone and build
+# 1. Clone repository
 git clone https://github.com/danspy/arandor-companion-app.git
 cd arandor-companion-app
-npm install
-ASTRO_DATABASE_FILE=./.astro/content.db npm run build
 
-# 2. Start the server
+# 2. Install dependencies
+npm install
+
+# 3. Configure environment (recommended)
+cp .env.example .env
+# Edit .env with your configuration
+
+# 4. Build the application
+npm run build
+
+# 5. Start the server
 npm start
+```
+
+**Alternative: One-off build without .env file**
+```bash
+ASTRO_DATABASE_FILE=./.astro/content.db npm run build
 ```
 
 The app will be available at http://localhost:4321
@@ -47,7 +60,8 @@ NODE_ENV=production
 ### Preview Server Setup
 
 1. Go to your repository Settings > Environments
-2. Create environment: `preview-{pr-number}` for each PR
+2. Create environment for each PR using the pattern: `preview-{PR_NUMBER}` (e.g., `preview-123` for PR #123)
+   - The workflow automatically uses: `preview-${{ github.event.pull_request.number || 'manual' }}`
 3. Configure environment variables if needed
 4. Workflow automatically creates deployment artifacts on PR
 
@@ -101,7 +115,7 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed instructions.
 ### Build fails
 - Ensure Node.js 20+ is installed
 - Run `npm install` to update dependencies
-- Set `ASTRO_DATABASE_FILE` environment variable
+- Set `ASTRO_DATABASE_FILE` environment variable before build
 
 ### Database issues
 - Verify `.astro/content.db` exists
