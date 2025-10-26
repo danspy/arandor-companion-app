@@ -100,6 +100,16 @@ const User = defineTable({
   }
 });
 
+const CampaignProgress = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    currentLevel: column.number(),
+    progressPercent: column.number(), // 0-100 in steps of 10
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -108,5 +118,6 @@ export default defineDb({
     NPC,
     Location,
     User,
+    CampaignProgress,
   }
 });

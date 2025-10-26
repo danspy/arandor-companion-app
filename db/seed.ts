@@ -1,4 +1,4 @@
-import { db, DiaryEntry, Quest, Character, NPC, Location, User } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress } from 'astro:db';
 import { hashPassword } from '../src/lib/auth';
 
 export default async function seed() {
@@ -155,6 +155,17 @@ export default async function seed() {
       username: 'admin',
       passwordHash: await hashPassword('admin'),
       createdAt: new Date(),
+    }
+  ]);
+
+  // Seed Campaign Progress - Level 5 at 50% progress to level 6
+  await db.insert(CampaignProgress).values([
+    {
+      id: '1',
+      currentLevel: 5,
+      progressPercent: 50, // 50% progress to next level
+      createdAt: new Date(),
+      updatedAt: new Date(),
     }
   ]);
 
