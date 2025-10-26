@@ -7,12 +7,13 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-RUN npm ci
+RUN npm install
 
 # Copy source files
 COPY . .
 
 # Build the application
+ENV ASTRO_DATABASE_FILE=./.astro/content.db
 RUN npm run build
 
 # Production stage
@@ -24,7 +25,7 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install production dependencies only
-RUN npm ci --only=production
+RUN npm install --production
 
 # Copy built files from builder
 COPY --from=builder /app/dist ./dist

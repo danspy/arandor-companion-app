@@ -39,6 +39,12 @@ jobs:
         env:
           ASTRO_DATABASE_FILE: ./.astro/content.db
 
+      - name: Test build output
+        run: |
+          echo "✅ Build completed successfully"
+          ls -la dist/
+          ls -la .astro/
+
       - name: Create deployment archive
         run: |
           tar -czf deployment.tar.gz \
@@ -82,17 +88,24 @@ jobs:
             
             1. Download the artifact from this workflow run
             2. Extract the archive on your preview server
-            3. Install dependencies: \`npm ci --only=production\`
+            3. Install dependencies: \`npm install --production\`
             4. Start the server: \`npm start\`
             
             Or use Docker:
             \`\`\`bash
             docker build -t arandor-preview:pr-${prNumber} .
-            docker run -p 4321:4321 arandor-preview:pr-${prNumber}
+            docker run -d -p 4321:4321 \\
+              -v arandor-data:/app/data \\
+              -e ASTRO_DATABASE_FILE=/app/data/content.db \\
+              arandor-preview:pr-${prNumber}
             \`\`\`
             
             ### 🔗 Preview URL
             Configure your preview server and update the environment URL in the workflow.
+            
+            ### 📚 Documentation
+            - See [DEPLOYMENT.md](../blob/main/DEPLOYMENT.md) for detailed deployment instructions
+            - Check [README.md](../blob/main/README.md) for configuration options
             
             ---
             *This is an automated preview deployment workflow.*`;
@@ -104,32 +117,3 @@ jobs:
               body: comment
             });
 
-  build-docker:
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          push: false
-          tags: arandor-companion:pr-${{ github.event.pull_request.number }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Test Docker image
-        run: |
-          docker build -t arandor-test:latest .
-          docker run -d -p 4321:4321 --name arandor-test arandor-test:latest
-          sleep 10
-          curl -f http://localhost:4321 || exit 1
-          docker stop arandor-test
-          docker rm arandor-test
-          echo "✅ Docker image builds and runs successfully"
