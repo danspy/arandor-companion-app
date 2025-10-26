@@ -99,8 +99,8 @@ docker-compose logs -f
 
 ### Database Issues
 - The database is stored in the `arandor-data` volume
-- To backup: `docker cp arandor-companion-app:/app/.astro/content.db ./backup.db`
-- To restore: `docker cp ./backup.db arandor-companion-app:/app/.astro/content.db`
+- To backup: `docker run --rm -v arandor-data:/data -v $(pwd):/backup alpine cp /data/content.db /backup/backup.db`
+- To restore: `docker run --rm -v arandor-data:/data -v $(pwd):/backup alpine cp /backup/backup.db /data/content.db`
 
 ## Port Configuration
 

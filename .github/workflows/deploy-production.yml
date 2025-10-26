@@ -31,7 +31,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
+          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts 2>&1 | grep -v '^#'
+          chmod 644 ~/.ssh/known_hosts
 
       - name: Copy Docker image to server
         run: |
@@ -55,11 +56,16 @@ jobs:
             cd ~/arandor-companion-app
             
             # Load the new Docker image
-            docker load < /tmp/arandor-app.tar.gz
-            rm /tmp/arandor-app.tar.gz
+            if docker load < /tmp/arandor-app.tar.gz; then
+              rm /tmp/arandor-app.tar.gz
+              echo "Docker image loaded successfully"
+            else
+              echo "Failed to load Docker image"
+              exit 1
+            fi
             
             # Stop the running container (if any)
-            docker-compose down || true
+            docker-compose down --remove-orphans 2>/dev/null || echo "No existing containers to stop"
             
             # Start the application with the new image
             # The volume mount ensures database persistence
