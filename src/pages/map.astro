@@ -8,6 +8,13 @@ const npcs = await db.select().from(NPC);
 const diaryEntries = await db.select().from(DiaryEntry);
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
+// Hard-coded, non-editable landmarks you can configure in code
+const configuredLandmarks = [
+  { id: 'lm-capital', name: 'Arandor City', type: 'city', mapX: 30, mapY: 50, notes: 'Capital of the realm' },
+  { id: 'lm-fort', name: 'Greyfort', type: 'building', mapX: 55, mapY: 45, notes: 'Old fort' },
+  { id: 'lm-ancient', name: 'Stone Circle', type: 'wilderness', mapX: 70, mapY: 40, notes: 'Druidic site' }
+];
+
 // Create a map of location IDs to NPCs
 const locationNPCs = new Map<string, typeof npcs>();
 npcs.forEach(npc => {
@@ -69,6 +76,14 @@ diaryEntries.forEach(entry => {
             </svg>
             <span class="hidden sm:inline" id="sidebarToggleText">Show Details</span>
           </button>
+          <button
+            id="toggleHeroPath"
+            class="bg-white/90 dark:bg-black/90 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
+            title="Toggle hero path"
+          >
+            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path></svg>
+            <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
+          </button>
           {isLoggedIn && (
             <>
               <button 
@@ -106,14 +121,25 @@ diaryEntries.forEach(entry => {
       <div class="relative bg-[#bdd2f0] overflow-hidden touch-none w-full h-full" id="mapViewport">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
-          <div id="mapContainer" class="absolute" style="min-width: 100vw; min-height: 100vh; transform-origin: 0 0;">
-            <!-- Placeholder map background -->
-            <div id="mapBackground" class="absolute inset-0 flex items-center justify-center text-gray-400 dark:text-gray-500">
-              <img src="/map.png" class="object-contain h-full w-full" alt="">
-            </div>
+          <div id="mapContainer" class="absolute" style="min-width: 100vw; min-height: 100vh;">
+            <!-- SVG-based map: image + pins + path all live in a single SVG coordinate space (0..100) -->
+            <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
+              <g id="mapGroup">
+                <!-- raster map image as SVG image so pins and path share the same coordinate system -->
+                <image id="mapImage" href="/map.png" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"></image>
 
-            <!-- Location pins will be added here by JavaScript -->
-            <div id="locationPins"></div>
+                <!-- path layer -->
+                <g id="pathGroup" pointer-events="none">
+                  <polyline id="heroPath" fill="none" stroke="rgba(250,100,0,0.95)" stroke-width="0.3" stroke-dasharray="1 1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></polyline>
+                </g>
+
+                <!-- landmarks (non-editable) -->
+                <g id="landmarksGroup"></g>
+
+                <!-- pins (locations) -->
+                <g id="pinsGroup"></g>
+              </g>
+            </svg>
           </div>
         </div>
       </div>
@@ -212,36 +238,10 @@ diaryEntries.forEach(entry => {
     <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 top-16 bg-black/50 z-30" style="display: none;"></div>
   </div>
 
-  <!-- Upload Map Modal -->
-  <div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-black rounded-lg p-8 max-w-md w-full dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold mb-4 text-primary-700 dark:text-primary-400">Upload Custom Map</h2>
-      <p class="text-gray-600 dark:text-gray-400 mb-4">Upload an image file to use as your custom map background.</p>
-      <input 
-        type="file" 
-        id="mapImageInput" 
-        accept="image/*"
-        class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg mb-4 dark:bg-gray-700 dark:text-gray-100"
-      />
-      <div class="flex gap-4">
-        <button 
-          id="confirmUpload"
-          class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
-        >
-          Upload
-        </button>
-        <button 
-          id="cancelUpload"
-          class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  </div>
+  <!-- Upload modal removed — using built-in, non-user-uploadable map image -->
 </Layout>
 
-<script define:vars={{ locations, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), isLoggedIn }}>
+<script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), isLoggedIn }}>
   let editMode = false;
   let selectedLocationId = null;
   let draggedPin = null;
@@ -264,16 +264,22 @@ diaryEntries.forEach(entry => {
   let touchStartScale = 1;
   let touchStartTranslateX = 0;
   let touchStartTranslateY = 0;
+  // Track last pointer position (relative to mapWrapper) so button zoom can use pointer as origin
+  let lastPointerX = null;
+  let lastPointerY = null;
+  let isPointerOverMap = false;
 
   const mapWrapper = document.getElementById('mapWrapper');
   const mapContainer = document.getElementById('mapContainer');
-  const mapBackground = document.getElementById('mapBackground');
-  const locationPins = document.getElementById('locationPins');
+  const mapSvg = document.getElementById('mapSvg');
+  const mapGroup = document.getElementById('mapGroup');
+  const pinsGroup = document.getElementById('pinsGroup');
+  const pathGroup = document.getElementById('pathGroup');
+  const heroPath = document.getElementById('heroPath');
+  const landmarksGroup = document.getElementById('landmarksGroup');
   const locationDetails = document.getElementById('locationDetails');
   const toggleEditModeBtn = document.getElementById('toggleEditMode');
   const editModeText = document.getElementById('editModeText');
-  const uploadMapBtn = document.getElementById('uploadMapBtn');
-  const uploadModal = document.getElementById('uploadModal');
   const coordinateEditor = document.getElementById('coordinateEditor');
   const zoomInBtn = document.getElementById('zoomIn');
   const zoomOutBtn = document.getElementById('zoomOut');
@@ -283,6 +289,229 @@ diaryEntries.forEach(entry => {
   const sidebarToggleText = document.getElementById('sidebarToggleText');
   const sidebarBackdrop = document.getElementById('sidebarBackdrop');
   const mapViewport = document.getElementById('mapViewport');
+  // removed heroPathSvg and landmarkPins; using SVG groups instead
+  const heroPathToggleBtn = document.getElementById('toggleHeroPath');
+  const heroPathToggleText = document.getElementById('heroPathToggleText');
+
+  // Make map fluid: container fills available area and SVG uses a 0-100 viewBox
+  function applyMapSize() {
+    if (!mapContainer) return;
+    // Use fluid sizing so the map fills the viewport wrapper
+    mapContainer.style.width = '100%';
+    mapContainer.style.height = '100%';
+    // Make sure the SVG fills the container and uses the 0..100 coordinate system
+    if (mapSvg) {
+      mapSvg.style.width = '100%';
+      mapSvg.style.height = '100%';
+      mapSvg.setAttribute('viewBox', '0 0 100 100');
+      mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    }
+  }
+
+  // Ensure the heroPathSvg fills the map container and scales with it.
+  function ensureMapSvgFillsContainer() {
+    if (!mapSvg || !mapContainer) return;
+    mapSvg.style.position = 'absolute';
+    mapSvg.style.left = '0';
+    mapSvg.style.top = '0';
+    mapSvg.style.width = '100%';
+    mapSvg.style.height = '100%';
+    mapSvg.style.bottom = '0';
+    mapSvg.style.right = '0';
+    mapSvg.setAttribute('viewBox', '0 0 100 100');
+    mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  }
+
+  // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
+  function fitToViewport() {
+    // With fluid sizing we start with identity scale and centered position
+    scale = 1;
+    translateX = 0;
+    translateY = 0;
+    updateTransform();
+  }
+
+  window.addEventListener('resize', () => {
+    fitToViewport();
+    // realign SVG overlay after resize
+  try { ensureMapSvgFillsContainer(); } catch (e) {}
+  });
+
+  // Render configured, non-editable landmarks into the SVG landmarksGroup
+  function renderLandmarks() {
+    if (!landmarksGroup) return;
+    // remove any existing landmark tooltips to avoid leaks
+    document.querySelectorAll('.landmark-tooltip').forEach(t => t.remove());
+    landmarksGroup.innerHTML = '';
+    (configuredLandmarks || []).forEach(l => {
+      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      g.setAttribute('class', 'landmark-pin');
+      g.setAttribute('data-landmark-id', l.id);
+      g.setAttribute('transform', `translate(${l.mapX}, ${l.mapY})`);
+
+      // render icon: prefer inline svg markup, then image, otherwise a simple circle
+      if (l.svg && typeof l.svg === 'string') {
+        // insert raw SVG markup inside group (trusted config)
+        const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        wrapper.innerHTML = l.svg;
+        g.appendChild(wrapper);
+      } else if (l.iconUrl) {
+        const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
+        img.setAttribute('href', l.iconUrl);
+        img.setAttribute('x', '-3');
+        img.setAttribute('y', '-8');
+        img.setAttribute('width', '6');
+        img.setAttribute('height', '6');
+        g.appendChild(img);
+      } else {
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '0');
+        circle.setAttribute('cy', '-3');
+        circle.setAttribute('r', '0.5');
+        circle.setAttribute('fill', getLocationHex(l.type));
+        circle.setAttribute('stroke', '#fff');
+        circle.setAttribute('stroke-width', '0.2');
+        g.appendChild(circle);
+      }
+
+      landmarksGroup.appendChild(g);
+
+      // create tooltip element for this landmark (DOM) and position it over the svg group
+      const tooltip = document.createElement('div');
+      tooltip.className = 'landmark-tooltip fixed bg-white dark:bg-black border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity';
+      tooltip.style.cssText = 'min-width: 100px; max-width: 220px; white-space: normal; z-index: 9999; pointer-events: none;';
+      tooltip.innerHTML = `<div class="font-semibold">${l.name}</div>${l.notes ? `<div class="text-xs text-gray-600 dark:text-gray-400 mt-1">${l.notes}</div>` : ''}`;
+      document.body.appendChild(tooltip);
+
+      let hideTimeout;
+
+      const showTooltipAt = () => {
+        const rect = g.getBoundingClientRect();
+        tooltip.style.left = `${rect.left + rect.width / 2}px`;
+        tooltip.style.top = `${rect.top - 8}px`;
+        tooltip.style.transform = 'translate(-50%, -100%)';
+        tooltip.style.opacity = '1';
+        tooltip.style.pointerEvents = 'auto';
+      };
+
+      g.addEventListener('mouseenter', () => {
+        clearTimeout(hideTimeout);
+        showTooltipAt();
+      });
+
+      g.addEventListener('mouseleave', () => {
+        hideTimeout = setTimeout(() => {
+          tooltip.style.opacity = '0';
+          tooltip.style.pointerEvents = 'none';
+        }, 100);
+      });
+
+      g.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // toggle tooltip visibility
+        const visible = tooltip.style.opacity === '1';
+        document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
+        if (!visible) showTooltipAt();
+      });
+
+      g.addEventListener('touchstart', (e) => { e.stopPropagation(); const visible = tooltip.style.opacity === '1'; document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; }); if (!visible) showTooltipAt(); }, { passive: true });
+    });
+    // ensure svg fills container
+    try { ensureMapSvgFillsContainer(); } catch (e) {}
+  }
+
+  // Hide any open landmark tooltips when tapping/clicking outside
+  document.addEventListener('click', () => {
+    document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
+  });
+  document.addEventListener('touchstart', () => {
+    document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
+  }, { passive: true });
+
+  // Build hero path from diary entries connected to locations
+  function buildHeroPath() {
+    if (!heroPath) return;
+    // diaryEntries is passed in from the server
+    const entries = (diaryEntries || []).slice();
+    // Sort chronologically by session then date
+    entries.sort((a, b) => {
+      const sA = a.session || 0;
+      const sB = b.session || 0;
+      if (sA !== sB) return sA - sB;
+      const dA = new Date(a.date || 0).getTime();
+      const dB = new Date(b.date || 0).getTime();
+      return dA - dB;
+    });
+
+    // Build ordered list of location ids from diary entries (all referenced locations)
+    const sequence = [];
+    entries.forEach(entry => {
+      const locIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+      locIds.forEach(locId => sequence.push({ locId, entry }));
+    });
+
+    // For each referenced location, try to read the existing pin's transform (preferred),
+    // otherwise fall back to location.mapX/mapY from server data.
+    const points = [];
+    const seen = new Set();
+    sequence.forEach(({ locId }) => {
+      const pin = document.querySelector(`[data-location-id="${locId}"]`);
+      let xPct = null, yPct = null;
+      if (pin) {
+        // Try to read SVG transform translate(x y)
+        const t = pin.getAttribute('transform') || '';
+        const m = t.match(/translate\(([^)]+)\)/);
+        if (m) {
+          const parts = m[1].trim().split(/[ ,]+/).map(Number);
+          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+            xPct = parts[0];
+            yPct = parts[1];
+          }
+        }
+      }
+
+      // fallback to server-side coordinates if pin not found
+      if ((xPct == null || yPct == null) && locations) {
+        const loc = locations.find(l => l.id === locId);
+        if (loc && loc.mapX != null && loc.mapY != null) {
+          xPct = Number(loc.mapX);
+          yPct = Number(loc.mapY);
+        }
+      }
+
+      if (xPct != null && yPct != null) {
+        const key = `${Math.round(xPct*100)/100}:${Math.round(yPct*100)/100}`;
+        if (!seen.has(key)) {
+          seen.add(key);
+          points.push({ x: xPct, y: yPct });
+        }
+      }
+    });
+
+    // Update polyline points on existing heroPath element
+    heroPath.setAttribute('points', '');
+    if (points.length < 2) {
+      console.warn('Hero path: not enough points to build a route (need 2+).');
+      return;
+    }
+
+    // debug: print the computed points in console to help diagnose mismatches
+    console.debug('Hero path points (percent):', points);
+
+    // Draw a single simple polyline connecting the pin positions (percent coordinates within viewBox 0..100)
+    heroPath.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
+  }
+
+  // Toggle visibility handler
+  if (heroPathToggleBtn) {
+    heroPathToggleBtn.addEventListener('click', () => {
+      if (!heroPath) return;
+      const hidden = heroPath.style.display === 'none' || heroPath.getAttribute('data-hidden') === 'true';
+      heroPath.style.display = hidden ? 'block' : 'none';
+      heroPath.setAttribute('data-hidden', hidden ? 'false' : 'true');
+      if (heroPathToggleText) heroPathToggleText.textContent = hidden ? 'Hide Path' : 'Show Path';
+    });
+  }
 
   // Get color for location type
   function getLocationColor(type) {
@@ -295,137 +524,134 @@ diaryEntries.forEach(entry => {
     }
   }
 
+  // Hex color mapping for SVG pins
+  function getLocationHex(type) {
+    switch(type) {
+      case 'city': return '#3b82f6'; // blue-500
+      case 'dungeon': return '#7c3aed'; // purple-ish
+      case 'wilderness': return '#16a34a'; // green-600
+      case 'building': return '#f59e0b'; // amber-500
+      default: return '#6b7280'; // gray-500
+    }
+  }
+
   // Create pin element
   function createPin(location) {
-    const pin = document.createElement('div');
-    pin.className = `location-pin absolute cursor-pointer transition-all`;
-    pin.dataset.locationId = location.id;
-    
-    // Position pin - using left/top with transform to center on point
-    pin.style.left = `${location.mapX || 50}%`;
-    pin.style.top = `${location.mapY || 50}%`;
-    pin.style.transform = 'translate(-50%, -100%)'; // Center horizontally, bottom of pin at coordinate
-    
-    // Hide pin if visibleOnMap is false
+    // Create an SVG-based pin (group) so it shares the SVG coordinate system
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'location-pin');
+    g.setAttribute('data-location-id', location.id);
+    const x = location.mapX != null ? Number(location.mapX) : 50;
+    const y = location.mapY != null ? Number(location.mapY) : 50;
+    g.setAttribute('transform', `translate(${x}, ${y})`);
+
     if (location.visibleOnMap === false) {
-      pin.style.opacity = '0.3';
-      pin.style.pointerEvents = 'none';
-      pin.dataset.hidden = 'true';
+      g.setAttribute('opacity', '0.3');
+      g.setAttribute('data-hidden', 'true');
     }
 
-    const color = getLocationColor(location.type);
-    
-    // Build tooltip content
+    // visual: circle above a small tip so that the provided (x,y) is the bottom-center anchor
+    const color = getLocationHex(location.type);
+    // Classic map pin: teardrop / pin shape with white outline and small white center highlight
+    const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    // symmetric teardrop whose tip sits at (0,0) and bulb extends upward (negative y)
+  // Plain, classic map pin made from a rounded head (circle) and a pointed bottom (triangle).
+  // Tip (apex) sits at (0,0) so the given translate(x,y) anchors the pin to that point.
+  const head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+  head.setAttribute('cx', '0');
+  head.setAttribute('cy', '-1.7');
+  head.setAttribute('r', '1');
+  head.setAttribute('fill', color);
+  head.setAttribute('stroke', '#ffffff');
+  head.setAttribute('stroke-width', '0.2');
+  g.appendChild(head);
+
+  // Small triangle under the circle pointing to (0,0).
+  // Make the point smaller and fill it fully white so it reads as a precise anchor.
+  const tri = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  // narrower base and shorter height so the tip is small
+  tri.setAttribute('d', 'M -0.3 -0.7 L 0.3 -0.7 L 0 0 Z');
+  tri.setAttribute('fill', '#ffffff');
+  tri.setAttribute('stroke', 'none');
+  g.appendChild(tri);
+
+    // Build tooltip content (DOM) as before
     const npcs = locationNPCs[location.id] || [];
     const entries = locationDiaryEntries[location.id] || [];
-    
     let tooltipContent = `<div class="font-semibold mb-1"><a href="/locations/${location.id}" class="hover:underline">${location.name}</a></div>`;
-    
     if (npcs.length > 0) {
-      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1">`;
-      tooltipContent += `<div class="font-medium">NPCs:</div>`;
-      npcs.slice(0, 3).forEach(npc => {
-        tooltipContent += `<a href="/npcs/${npc.id}" class="block hover:underline text-blue-600 dark:text-blue-400">• ${npc.name}</a>`;
-      });
-      if (npcs.length > 3) {
-        tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${npcs.length - 3} more</div>`;
-      }
+      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1"><div class="font-medium">NPCs:</div>`;
+      npcs.slice(0,3).forEach(npc => { tooltipContent += `<a href="/npcs/${npc.id}" class="block hover:underline text-blue-600 dark:text-blue-400">• ${npc.name}</a>`; });
+      if (npcs.length > 3) tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${npcs.length-3} more</div>`;
       tooltipContent += `</div>`;
     }
-    
     if (entries.length > 0) {
-      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1">`;
-      tooltipContent += `<div class="font-medium">Diary:</div>`;
-      entries.slice(0, 2).forEach(entry => {
-        tooltipContent += `<a href="/diary/${entry.id}" class="block hover:underline text-amber-600 dark:text-amber-400">• ${entry.title}</a>`;
-      });
-      if (entries.length > 2) {
-        tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${entries.length - 2} more</div>`;
-      }
+      tooltipContent += `<div class="text-xs mt-1 border-t border-gray-200 dark:border-gray-600 pt-1"><div class="font-medium">Diary:</div>`;
+      entries.slice(0,2).forEach(entry => { tooltipContent += `<a href="/diary/${entry.id}" class="block hover:underline text-amber-600 dark:text-amber-400">• ${entry.title}</a>`; });
+      if (entries.length > 2) tooltipContent += `<div class="text-gray-500 dark:text-gray-400">+${entries.length-2} more</div>`;
       tooltipContent += `</div>`;
     }
-    
-    pin.innerHTML = `
-      <div class="pin-wrapper relative rounded-full border-2 border-white">
-        <div class="pin-circle ${color} w-4 h-4 rounded-full transition-all"></div>
-        <div class="pin-tip absolute -bottom-[6px] left-1/2 transform -translate-x-1/2 w-0 h-0  border-l-[5px] border-r-[5px] border-t-[6px] ${color.replace('bg-', 'border-t-')} border-l-transparent border-r-transparent"></div>
-      </div>
-    `;
-    
-    // Create separate tooltip element that can overflow
+
     const tooltip = document.createElement('div');
     tooltip.className = 'pin-tooltip fixed bg-white dark:bg-black border-2 border-gray-300 dark:border-gray-600 px-3 py-2 rounded-lg shadow-xl text-xs opacity-0 transition-opacity';
     tooltip.style.cssText = 'min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999; pointer-events: none;';
     tooltip.innerHTML = tooltipContent;
     document.body.appendChild(tooltip);
-    
+
     let hideTooltipTimeout;
-    
-    // Position tooltip on hover
-    pin.addEventListener('mouseenter', (e) => {
-      clearTimeout(hideTooltipTimeout);
-      const rect = pin.getBoundingClientRect();
-      tooltip.style.left = `${rect.left + rect.width / 2}px`;
+
+    const showTooltip = () => {
+      const rect = g.getBoundingClientRect();
+      tooltip.style.left = `${rect.left + rect.width/2}px`;
       tooltip.style.top = `${rect.top - 8}px`;
       tooltip.style.transform = 'translate(-50%, -100%)';
       tooltip.style.opacity = '1';
       tooltip.style.pointerEvents = 'auto';
-    });
-    
-    pin.addEventListener('mouseleave', () => {
-      // Delay hiding to allow moving mouse to tooltip
-      hideTooltipTimeout = setTimeout(() => {
-        tooltip.style.opacity = '0';
-        tooltip.style.pointerEvents = 'none';
-      }, 100);
-    });
-    
-    // Keep tooltip visible when hovering over it
-    tooltip.addEventListener('mouseenter', () => {
-      clearTimeout(hideTooltipTimeout);
-      tooltip.style.opacity = '1';
-      tooltip.style.pointerEvents = 'auto';
-    });
-    
-    tooltip.addEventListener('mouseleave', () => {
-      tooltip.style.opacity = '0';
-      tooltip.style.pointerEvents = 'none';
-    });
+    };
 
-    // Click to view details (works in both normal and edit mode)
-    pin.addEventListener('click', (e) => {
-      // Only show details if we didn't just finish a drag
+    const hideTooltip = () => {
+      hideTooltipTimeout = setTimeout(() => { tooltip.style.opacity = '0'; tooltip.style.pointerEvents = 'none'; }, 100);
+    };
+
+    g.addEventListener('mouseenter', () => { clearTimeout(hideTooltipTimeout); showTooltip(); });
+    g.addEventListener('mouseleave', () => { hideTooltip(); });
+    tooltip.addEventListener('mouseenter', () => { clearTimeout(hideTooltipTimeout); tooltip.style.opacity = '1'; tooltip.style.pointerEvents = 'auto'; });
+    tooltip.addEventListener('mouseleave', hideTooltip);
+
+    g.addEventListener('click', (e) => {
       if (!draggedPin || !editMode) {
-        // Remove active class from all pins
-        document.querySelectorAll('.location-pin').forEach(p => {
-          p.classList.remove('pin-active');
-        });
-        // Add active class to clicked pin
-        pin.classList.add('pin-active');
+        document.querySelectorAll('.location-pin').forEach(p => p.classList && p.classList.remove('pin-active'));
+        // mark as active visually via class on SVG group
+        if (g.classList) g.classList.add('pin-active');
         showLocationDetails(location);
       }
     });
 
     // Drag functionality in edit mode
     if (isLoggedIn) {
-      pin.addEventListener('mousedown', (e) => {
+      g.addEventListener('mousedown', (e) => {
         if (editMode && location.visibleOnMap !== false) {
           e.preventDefault();
-          draggedPin = { element: pin, location: location };
-          pin.style.zIndex = '1000';
+          draggedPin = { element: g, location: location };
+          // bring to front
+          g.setAttribute('data-z', '1000');
         }
       });
     }
 
-    return pin;
+    return g;
   }
 
   // Render all pins
   function renderPins() {
-    locationPins.innerHTML = '';
+    if (!pinsGroup) return;
+    pinsGroup.innerHTML = '';
     locations.forEach(location => {
-      locationPins.appendChild(createPin(location));
+      const pinEl = createPin(location);
+      pinsGroup.appendChild(pinEl);
     });
+    // ensure SVG sizing
+    try { ensureMapSvgFillsContainer(); } catch (e) {}
   }
 
   // Show location details
@@ -580,17 +806,17 @@ diaryEntries.forEach(entry => {
   if (isLoggedIn) {
     document.addEventListener('mousemove', (e) => {
       if (draggedPin && editMode) {
-        const rect = mapContainer.getBoundingClientRect();
+        const rect = mapSvg.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
+
         // Clamp values
         const clampedX = Math.max(0, Math.min(100, x));
         const clampedY = Math.max(0, Math.min(100, y));
-        
-        draggedPin.element.style.left = `${clampedX}%`;
-        draggedPin.element.style.top = `${clampedY}%`;
-        
+
+        // update svg group transform
+        draggedPin.element.setAttribute('transform', `translate(${clampedX}, ${clampedY})`);
+
         // Update coordinate inputs if details panel is open
         if (selectedLocationId === draggedPin.location.id) {
           document.getElementById('coordX').value = clampedX.toFixed(1);
@@ -601,18 +827,19 @@ diaryEntries.forEach(entry => {
 
     document.addEventListener('mouseup', async (e) => {
       if (draggedPin && editMode) {
-        const rect = mapContainer.getBoundingClientRect();
+        const rect = mapSvg.getBoundingClientRect();
         const x = ((e.clientX - rect.left) / rect.width) * 100;
         const y = ((e.clientY - rect.top) / rect.height) * 100;
-        
+
         const clampedX = Math.max(0, Math.min(100, x));
         const clampedY = Math.max(0, Math.min(100, y));
-        
+
         // Save coordinates
         await saveLocationCoordinates(draggedPin.location.id, clampedX, clampedY);
-        
-        draggedPin.element.style.zIndex = '';
-        
+
+        // restore z
+        draggedPin.element.removeAttribute('data-z');
+
         // Small delay before clearing to prevent immediate click event
         setTimeout(() => {
           draggedPin = null;
@@ -641,6 +868,8 @@ diaryEntries.forEach(entry => {
         if (location) {
           location.mapX = parseFloat(x.toFixed(1));
           location.mapY = parseFloat(y.toFixed(1));
+          // rebuild route after coordinates changed
+          try { buildHeroPath(); } catch (e) { /* ignore */ }
         }
       }
     } catch (error) {
@@ -662,99 +891,37 @@ diaryEntries.forEach(entry => {
     
     await saveLocationCoordinates(selectedLocationId, x, y);
     
-    // Update pin position
+    // Update pin position (SVG group transform)
     const pin = document.querySelector(`[data-location-id="${selectedLocationId}"]`);
     if (pin) {
-      pin.style.left = `${x}%`;
-      pin.style.top = `${y}%`;
+      pin.setAttribute('transform', `translate(${x}, ${y})`);
     }
     
+    // update route to reflect changed pin position
+    try { buildHeroPath(); } catch (e) {}
+
     alert('Coordinates saved successfully!');
   });
 
-  // Upload map functionality
-  uploadMapBtn?.addEventListener('click', () => {
-    uploadModal.classList.remove('hidden');
-  });
-
-  document.getElementById('cancelUpload')?.addEventListener('click', () => {
-    uploadModal.classList.add('hidden');
-  });
-
-  document.getElementById('confirmUpload')?.addEventListener('click', () => {
-    const fileInput = document.getElementById('mapImageInput');
-    const file = fileInput.files[0];
-    
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        currentMapImage = e.target.result;
-        
-        // Create an image to get dimensions
-        const img = new Image();
-        img.onload = () => {
-          // Set container size to match image dimensions
-          mapContainer.style.width = `${img.width}px`;
-          mapContainer.style.height = `${img.height}px`;
-          
-          // Set background
-          mapBackground.style.backgroundImage = `url(${currentMapImage})`;
-          mapBackground.style.backgroundSize = 'contain';
-          mapBackground.style.backgroundRepeat = 'no-repeat';
-          mapBackground.style.backgroundPosition = 'center';
-          mapBackground.innerHTML = '';
-          
-          // Store in localStorage
-          try {
-            localStorage.setItem('customMapImage', currentMapImage);
-            localStorage.setItem('customMapWidth', img.width);
-            localStorage.setItem('customMapHeight', img.height);
-          } catch (e) {
-            console.warn('Failed to save map image to localStorage:', e);
-          }
-          
-          uploadModal.classList.add('hidden');
-        };
-        img.src = e.target.result;
-      };
-      reader.readAsDataURL(file);
-    }
-  });
-
-  // Load custom map from localStorage
-  try {
-    const savedMap = localStorage.getItem('customMapImage');
-    const savedWidth = localStorage.getItem('customMapWidth');
-    const savedHeight = localStorage.getItem('customMapHeight');
-    
-    if (savedMap) {
-      currentMapImage = savedMap;
-      
-      if (savedWidth && savedHeight) {
-        mapContainer.style.width = `${savedWidth}px`;
-        mapContainer.style.height = `${savedHeight}px`;
-      }
-      
-      mapBackground.style.backgroundImage = `url(${currentMapImage})`;
-      mapBackground.style.backgroundSize = 'contain';
-      mapBackground.style.backgroundRepeat = 'no-repeat';
-      mapBackground.style.backgroundPosition = 'center';
-      mapBackground.innerHTML = '';
-    }
-  } catch (e) {
-    console.warn('Failed to load custom map from localStorage:', e);
-  }
+  // Custom map upload/ localStorage removed — using built-in map image
 
   // Zoom and pan functionality
   function updateTransform() {
-    mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    // Apply transforms to the SVG so image, pins and path scale together in the same coordinate space
+    if (mapSvg) {
+      mapSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      mapSvg.style.transformOrigin = '0 0';
+    } else {
+      mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+    }
   }
   
   // Zoom button controls
   zoomInBtn?.addEventListener('click', () => {
     const rect = mapWrapper.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    // If the pointer is over the map and we have a last pointer position, zoom toward that point.
+    const centerX = (isPointerOverMap && lastPointerX != null) ? lastPointerX : rect.width / 2;
+    const centerY = (isPointerOverMap && lastPointerY != null) ? lastPointerY : rect.height / 2;
     
     const newScale = Math.min(scale * 1.2, 3);
     const scaleChange = newScale / scale;
@@ -767,8 +934,8 @@ diaryEntries.forEach(entry => {
   
   zoomOutBtn?.addEventListener('click', () => {
     const rect = mapWrapper.getBoundingClientRect();
-    const centerX = rect.width / 2;
-    const centerY = rect.height / 2;
+    const centerX = (isPointerOverMap && lastPointerX != null) ? lastPointerX : rect.width / 2;
+    const centerY = (isPointerOverMap && lastPointerY != null) ? lastPointerY : rect.height / 2;
     
     const newScale = Math.max(scale * 0.8, 0.3);
     const scaleChange = newScale / scale;
@@ -780,7 +947,7 @@ diaryEntries.forEach(entry => {
   });
   
   resetZoomBtn?.addEventListener('click', () => {
-    scale = 0.5;
+    scale = 1;
     translateX = 0;
     translateY = 0;
     updateTransform();
@@ -826,6 +993,14 @@ diaryEntries.forEach(entry => {
   mapWrapper?.addEventListener('touchstart', (e) => {
     touches = Array.from(e.touches);
     
+    // record pointer/touch for possible button-origin zoom
+    if (touches.length >= 1) {
+      const rect = mapWrapper.getBoundingClientRect();
+      lastPointerX = touches[0].clientX - rect.left;
+      lastPointerY = touches[0].clientY - rect.top;
+      isPointerOverMap = true;
+    }
+
     if (touches.length === 2) {
       // Start pinch zoom
       e.preventDefault();
@@ -897,6 +1072,21 @@ diaryEntries.forEach(entry => {
     isPanning = false;
   });
 
+  // Track mouse/touch pointer inside the map so zoom buttons can use pointer-origin when hovering
+  mapWrapper?.addEventListener('mouseenter', (e) => {
+    isPointerOverMap = true;
+  });
+  mapWrapper?.addEventListener('mouseleave', (e) => {
+    isPointerOverMap = false;
+    lastPointerX = null;
+    lastPointerY = null;
+  });
+  mapWrapper?.addEventListener('mousemove', (e) => {
+    const rect = mapWrapper.getBoundingClientRect();
+    lastPointerX = e.clientX - rect.left;
+    lastPointerY = e.clientY - rect.top;
+  });
+
   // Pan with mouse drag
   mapWrapper?.addEventListener('mousedown', (e) => {
     // Don't pan if clicking on a pin or in edit mode dragging a pin
@@ -931,7 +1121,14 @@ diaryEntries.forEach(entry => {
   });
 
   // Initial render and setup
+  // Apply configured map size and initial fitting
+  applyMapSize();
+  renderLandmarks();
+  // Render pins first so DOM elements exist, then build the hero path from actual pin positions
   renderPins();
+  // Now that pins are in the DOM, build the hero path to follow them
+  buildHeroPath();
+  fitToViewport();
   updateTransform(); // Apply initial transform
   
   // Show hidden pins in edit mode
@@ -963,23 +1160,30 @@ diaryEntries.forEach(entry => {
     z-index: 10;
   }
 
+  /* SVG pin root: keep small by default and scale up on hover or on touch devices */
   .location-pin {
-    z-index: 10;
+    transform-box: fill-box; /* ensure CSS transform uses the group's bounding box */
+    transform-origin: 50% 50%;
+    transform: scale(0.7);
+    transition: transform 0.12s ease, opacity 0.12s ease;
+    cursor: pointer;
   }
-  
+
   .location-pin:hover {
+    transform: scale(1.0);
     z-index: 50;
-    transform: translate(-50%, -100%) scale(1.15);
   }
-  
+
   .location-pin.pin-active {
-    z-index: 40;
+    transform: scale(1.15);
+    z-index: 60;
   }
-  
+
   .location-pin.pin-active .pin-circle {
-    transform: scale(1.2);
-    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.5);
-    border-width: 3px;
+    transform-box: fill-box;
+    transform-origin: 50% 50%;
+    transform: scale(1.3);
+    /* add a subtle glow via filter if desired (SVG filter can be added later) */
   }
   
   .pin-tooltip a {
@@ -1000,16 +1204,25 @@ diaryEntries.forEach(entry => {
     transition: transform 0.3s ease-in-out;
   }
 
-  /* Make pins slightly larger on touch devices for better tap targets */
+  /* Make pins larger on touch devices for better tap targets */
   @media (hover: none) and (pointer: coarse) {
-    .location-pin .pin-circle {
-      width: 2rem;
-      height: 2rem;
+    .location-pin {
+      transform: scale(1.15);
     }
-    
     .location-pin:active {
-      transform: translate(-50%, -100%) scale(1.2);
+      transform: scale(1.2);
     }
+  }
+
+  /* Mobile-friendly control layout */
+  @media (max-width: 639px) {
+    .absolute.bottom-6.right-6.z-20 { /* zoom controls container */ }
+    .zoom-mobile { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; gap: 8px; }
+    .zoom-mobile button { padding: 12px !important; width: 48px; height: 48px; }
+    #toggleSidebar { padding-left: 10px; padding-right: 10px; }
+    #toggleHeroPath { padding-left: 8px; padding-right: 8px; }
+    /* make legend compact */
+    .absolute.bottom-6.left-6.z-20 { left: 8px; bottom: 8px; padding: 8px; }
   }
 
   /* Mobile overlay sidebar */
@@ -1028,5 +1241,16 @@ diaryEntries.forEach(entry => {
       opacity: 1;
     }
   }
+
+  /* Landmarks (non-editable) */
+  .landmark-pin { z-index: 15; }
+  .landmark-dot { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
+  .landmark-svg svg { width: 1.25rem; height: 1.25rem; display: block; }
+
+  /* Landmark tooltip */
+  .landmark-tooltip { z-index: 9999; pointer-events: none; }
+
+  /* Hero path styling (SVG) */
+  #mapSvg { z-index: 5; }
 </style>
 </Layout>
