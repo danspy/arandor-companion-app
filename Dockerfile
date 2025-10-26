@@ -7,8 +7,9 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install dependencies
-# Note: strict-ssl is disabled due to SSL certificate issues in Docker build environment
-# This is safe for building but if you have concerns, you can remove this line
+# Note: strict-ssl false is a workaround for SSL certificate issues in some build environments.
+# You can try removing this if you have proper SSL certificates configured.
+# Alternative: Use a private npm registry with proper certificates
 RUN npm config set strict-ssl false && npm ci
 
 # Copy source files (excluding node_modules via .dockerignore)
@@ -28,6 +29,7 @@ WORKDIR /app
 
 # Copy package files and install production dependencies
 COPY package*.json ./
+# Note: strict-ssl false is a workaround for SSL issues. Remove if not needed.
 RUN npm config set strict-ssl false && npm ci --omit=dev
 
 # Copy built application from builder

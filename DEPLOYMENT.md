@@ -2,6 +2,24 @@
 
 This guide explains how to deploy the Arandor Companion App on an Uberspace server using Docker.
 
+## Quick Start
+
+**Local deployment with Docker:**
+```bash
+docker-compose up -d
+# Access at http://localhost:4321
+```
+
+**Uberspace deployment:**
+```bash
+ssh <username>@<username>.uber.space
+cd ~ && git clone https://github.com/danspy/arandor-companion-app.git
+cd arandor-companion-app
+docker-compose up -d
+uberspace web backend set / --http --port 4321
+# Access at https://<username>.uber.space
+```
+
 ## Prerequisites
 
 - An active Uberspace account (https://uberspace.de/)
@@ -83,8 +101,8 @@ Create a file `~/arandor-companion-app/start.sh`:
 #!/bin/bash
 export HOST=0.0.0.0
 export PORT=4321
-export ASTRO_DATABASE_FILE=/home/<username>/arandor-companion-app/.astro/content.db
-cd /home/<username>/arandor-companion-app
+export ASTRO_DATABASE_FILE=$HOME/arandor-companion-app/.astro/content.db
+cd $HOME/arandor-companion-app
 node ./dist/server/entry.mjs
 ```
 
@@ -99,7 +117,7 @@ Create `~/etc/services.d/arandor-app.ini`:
 
 ```ini
 [program:arandor-app]
-command=/home/<username>/arandor-companion-app/start.sh
+command=%(ENV_HOME)s/arandor-companion-app/start.sh
 autostart=yes
 autorestart=yes
 startsecs=30
