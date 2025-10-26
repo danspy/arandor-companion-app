@@ -57,7 +57,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Party Members</h2>
       <div class="space-y-3">
         {characters.map(char => (
-          <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded hover:bg-gray-100 dark:hover:bg-gray-600 transition cursor-pointer">
+          <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
             <div>
               <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{char.name}</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400">{char.race} {char.class} - Level {char.level}</p>
@@ -109,7 +109,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     </div>
     
     <!-- Level Progress Bar -->
-    <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
+    <div class="mb-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
       <div class="flex items-center justify-between mb-2">
         <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Party Level Progress</span>
         <span class="text-xs text-gray-500 dark:text-gray-400">{Math.round(progressPercentage)}%</span>
@@ -120,7 +120,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           <div class="text-xs text-gray-500 dark:text-gray-400">Level</div>
         </div>
         <div class="flex-1">
-          <div class="w-full bg-gray-200 dark:bg-gray-600 rounded-full h-6 overflow-hidden">
+          <div class="w-full bg-gray-200 dark:bg-black rounded-full h-6 overflow-hidden">
             <div 
               class="bg-gradient-to-r from-primary-500 to-secondary-500 h-6 rounded-full transition-all duration-300 flex items-center justify-center"
               style={`width: ${progressPercentage}%`}
