@@ -17,6 +17,9 @@ on:
 jobs:
   deploy-preview:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     environment:
       name: preview-${{ github.event.pull_request.number || 'manual' }}
       url: ${{ steps.deploy.outputs.url }}
