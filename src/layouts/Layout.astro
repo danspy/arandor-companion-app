@@ -36,8 +36,8 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       }
     </script>
   </head>
-  <body class="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors">
-    <nav class="bg-primary text-white shadow-lg dark:bg-gray-800 dark:border-b dark:border-gray-700">
+  <body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
+    <nav class="bg-primary text-white shadow-lg dark:bg-black dark:border-b dark:border-gray-900">
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
@@ -143,7 +143,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <slot />
     </main>
     
-    <footer class="bg-accent-900 text-white mt-16 py-8 dark:bg-gray-800 dark:border-t dark:border-gray-700">
+    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900">
       <div class="container mx-auto px-4 text-center">
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>

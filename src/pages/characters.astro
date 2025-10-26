@@ -25,7 +25,7 @@ const editCharacterId = Astro.url.searchParams.get('edit');
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-700">
+      <div class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900">
         <a href={`/characters/${character.id}`} class="block">
           <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-24 flex items-center justify-center">
             {character.avatarUrl ? (
@@ -60,7 +60,7 @@ const editCharacterId = Astro.url.searchParams.get('edit');
           </div>
 
           {character.stats && (
-            <div class="border-t dark:border-gray-700 pt-4">
+            <div class="border-t dark:border-gray-900 pt-4">
               <h3 class="font-semibold mb-3 dark:text-gray-200">Ability Scores</h3>
               <div class="grid grid-cols-3 gap-2 text-center">
                 <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
@@ -133,7 +133,7 @@ const editCharacterId = Astro.url.searchParams.get('edit');
 
   <!-- Modal for Add/Edit Character -->
   <div id="characterModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900">
       <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Character</h2>
       <form id="characterForm" class="space-y-4">
         <input type="hidden" id="characterId" name="id">

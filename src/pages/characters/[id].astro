@@ -50,7 +50,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     </div>
 
     <!-- Character Header -->
-    <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-700">
+    <article class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-900">
       <!-- Character Banner with Avatar -->
       <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-48 relative">
         <div class="absolute bottom-0 left-8 transform translate-y-1/2">
@@ -110,7 +110,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
     <!-- Character Details Section -->
     {(character.background || character.alignment || character.gender || character.age || character.height || character.weight || character.eyes || character.skin || character.hair) && (
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-700">
+      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6">Character Details</h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {character.background && (
@@ -173,7 +173,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
     <!-- Ability Scores -->
     {character.stats && (
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-700">
+      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6">Ability Scores</h2>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
           <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg text-center">

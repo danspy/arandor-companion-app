@@ -31,7 +31,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
 
   <div id="entriesList" class="space-y-6">
     {sortedEntries.map(entry => (
-      <article class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-700" data-entry-id={entry.id}>
+      <article class="bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id}>
         {entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
             <img 
@@ -47,8 +47,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
               {entry.title}
             </a>
             <div class="flex gap-4 text-sm text-gray-500 mt-1">
-              <span>📅 {entry.date}</span>
-              <span>🎲 Session {entry.session}</span>
+              <span>Session {entry.session}</span>
             </div>
           </div>
           {isLoggedIn && (
@@ -79,14 +78,14 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
   </div>
 
   {sortedEntries.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-gray-800 rounded-lg shadow-md dark:border dark:border-gray-700">
+    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
       <p class="text-gray-500 dark:text-gray-400 text-lg">No diary entries yet. Start documenting your adventures!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Entry -->
   <div id="entryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900">
       <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Diary Entry</h2>
       <form id="entryForm" class="space-y-4">
         <input type="hidden" id="entryId" name="id">
