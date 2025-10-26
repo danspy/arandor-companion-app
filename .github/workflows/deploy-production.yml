@@ -31,7 +31,8 @@ jobs:
           mkdir -p ~/.ssh
           echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts 2>&1 | grep -v '^#'
+          echo "Adding server to known hosts..."
+          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
           chmod 644 ~/.ssh/known_hosts
 
       - name: Copy Docker image to server
@@ -65,7 +66,12 @@ jobs:
             fi
             
             # Stop the running container (if any)
-            docker-compose down --remove-orphans 2>/dev/null || echo "No existing containers to stop"
+            if docker-compose ps -q 2>/dev/null | grep -q .; then
+              echo "Stopping existing containers..."
+              docker-compose down --remove-orphans
+            else
+              echo "No existing containers to stop"
+            fi
             
             # Start the application with the new image
             # The volume mount ensures database persistence
