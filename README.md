@@ -58,6 +58,153 @@ The built site will be in the `dist/` directory.
 npm run preview
 ```
 
+## Deployment
+
+The app is deployment-ready with multiple deployment options.
+
+### Prerequisites
+
+- Node.js 20.x or higher
+- npm 10.x or higher
+- (Optional) Docker for containerized deployment
+
+### Deployment Options
+
+#### Option 1: Node.js Deployment
+
+1. Build the application:
+```bash
+npm run build
+```
+
+2. Copy the following to your server:
+   - `dist/` directory
+   - `.astro/` directory
+   - `package.json`
+   - `package-lock.json`
+
+3. On your server, install production dependencies:
+```bash
+npm ci --only=production
+```
+
+4. Start the server:
+```bash
+npm start
+```
+
+The server will start on port 4321 by default. Configure with environment variables:
+- `HOST` - Host to bind to (default: 0.0.0.0)
+- `PORT` - Port to listen on (default: 4321)
+- `ASTRO_DATABASE_FILE` - Path to SQLite database (default: ./.astro/content.db)
+
+#### Option 2: Docker Deployment
+
+1. Build the Docker image:
+```bash
+docker build -t arandor-companion:latest .
+```
+
+2. Run the container:
+```bash
+docker run -d \
+  -p 4321:4321 \
+  -v arandor-data:/app/data \
+  -e ASTRO_DATABASE_FILE=/app/data/content.db \
+  --name arandor-companion \
+  arandor-companion:latest
+```
+
+Or use Docker Compose:
+```bash
+docker-compose up -d
+```
+
+The database is stored in a Docker volume for persistence.
+
+#### Option 3: Platform-Specific Deployments
+
+The app can be deployed to various platforms:
+
+- **Vercel/Netlify**: Requires SSR adapter configuration
+- **DigitalOcean/AWS/Azure**: Use Docker or Node.js deployment
+- **Railway/Render**: Connect your GitHub repo and configure build command
+- **VPS**: Use Node.js or Docker deployment with a reverse proxy (nginx/Apache)
+
+### Environment Variables
+
+Copy `.env.example` to `.env` and configure:
+
+```bash
+cp .env.example .env
+```
+
+Required variables:
+- `ASTRO_DATABASE_FILE` - Path to the SQLite database file
+- `HOST` - Server host (use 0.0.0.0 for production)
+- `PORT` - Server port (default: 4321)
+- `NODE_ENV` - Environment (development/production)
+
+### GitHub Actions
+
+The repository includes automated workflows:
+
+#### Preview Deployments
+- **Workflow**: `.github/workflows/preview-deploy.yml`
+- **Trigger**: Pull requests
+- **Purpose**: Creates preview builds and Docker images for testing
+- **Artifact**: `preview-build-{sha}` with deployment package
+
+#### Production Deployments
+- **Workflow**: `.github/workflows/production-deploy.yml`
+- **Trigger**: Push to `main` branch
+- **Purpose**: Creates production builds and verified Docker images
+- **Artifact**: `production-build-{sha}` with deployment package
+
+To configure automatic deployment to your server:
+1. Set up GitHub secrets for your deployment credentials
+2. Update the workflow files with your deployment commands
+3. Configure environment URLs in repository settings
+
+### Health Checks
+
+After deployment, verify the application:
+
+```bash
+# Check if the server is running
+curl http://localhost:4321
+
+# Check the API endpoints
+curl http://localhost:4321/api/characters
+curl http://localhost:4321/api/quests
+```
+
+### Database Management
+
+The app uses SQLite for data storage. To backup your database:
+
+```bash
+# Copy the database file
+cp .astro/content.db backups/content-$(date +%Y%m%d).db
+```
+
+For Docker deployments:
+```bash
+# Backup from Docker volume
+docker run --rm -v arandor-data:/data -v $(pwd):/backup \
+  alpine tar czf /backup/db-backup-$(date +%Y%m%d).tar.gz -C /data .
+```
+
+### Scaling Considerations
+
+For production use:
+- Place a reverse proxy (nginx, Caddy) in front of the Node.js server
+- Use PM2 or systemd for process management
+- Set up SSL/TLS certificates (Let's Encrypt recommended)
+- Configure firewall rules to allow only necessary ports
+- Set up monitoring and logging (PM2, Winston, or cloud solutions)
+- Consider using a managed database service for multi-instance deployments
+
 ## Project Structure
 
 ```

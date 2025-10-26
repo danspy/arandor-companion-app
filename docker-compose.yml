@@ -1,0 +1,19 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "4321:4321"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=4321
+      - NODE_ENV=production
+      - ASTRO_DATABASE_FILE=/app/data/content.db
+    volumes:
+      # Mount a volume for persistent database storage
+      - app-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  app-data:
