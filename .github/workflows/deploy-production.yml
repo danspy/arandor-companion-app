@@ -1,0 +1,87 @@
+name: Deploy to Hetzner Production
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Deploy to Hetzner Server
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t arandor-companion-app:latest .
+
+      - name: Save Docker image
+        run: |
+          docker save arandor-companion-app:latest | gzip > arandor-app.tar.gz
+
+      - name: Install SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Copy Docker image to server
+        run: |
+          scp -P ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
+            arandor-app.tar.gz \
+            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }}:/tmp/
+
+      - name: Copy docker-compose to server
+        run: |
+          scp -P ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
+            docker-compose.yml \
+            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }}:~/arandor-companion-app/
+
+      - name: Deploy on server
+        run: |
+          ssh -p ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
+            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }} << 'EOF'
+            
+            # Create application directory if it doesn't exist
+            mkdir -p ~/arandor-companion-app
+            cd ~/arandor-companion-app
+            
+            # Load the new Docker image
+            docker load < /tmp/arandor-app.tar.gz
+            rm /tmp/arandor-app.tar.gz
+            
+            # Stop the running container (if any)
+            docker-compose down || true
+            
+            # Start the application with the new image
+            # The volume mount ensures database persistence
+            docker-compose up -d
+            
+            # Clean up old Docker images to save space
+            docker image prune -f
+            
+            echo "Deployment completed successfully"
+          EOF
+
+      - name: Verify deployment
+        run: |
+          ssh -p ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
+            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }} << 'EOF'
+            cd ~/arandor-companion-app
+            docker-compose ps
+            docker-compose logs --tail=50
+          EOF
+
+      - name: Cleanup
+        if: always()
+        run: |
+          rm -f ~/.ssh/deploy_key
+          rm -f arandor-app.tar.gz
