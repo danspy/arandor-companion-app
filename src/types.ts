@@ -70,3 +70,13 @@ export interface CampaignProgress {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface LibraryEntry {
+  id: string;
+  title: string;
+  content: string; // Markdown content
+  tags: string[];
+  locationId?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+}

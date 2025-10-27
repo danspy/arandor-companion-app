@@ -1,0 +1,195 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { db, LibraryEntry, Location, eq } from 'astro:db';
+import { isAuthenticated } from '../../lib/auth';
+import { renderMarkdown } from '../../utils/markdown';
+
+const { id } = Astro.params;
+
+if (!id) {
+  return Astro.redirect('/library');
+}
+
+const entries = await db.select().from(LibraryEntry).where(eq(LibraryEntry.id, id));
+
+if (entries.length === 0) {
+  return Astro.redirect('/library');
+}
+
+const entry = entries[0];
+const isLoggedIn = isAuthenticated(Astro.cookies);
+
+// Get location if connected
+let location = null;
+if (entry.locationId) {
+  const locations = await db.select().from(Location).where(eq(Location.id, entry.locationId));
+  if (locations.length > 0) {
+    location = locations[0];
+  }
+}
+
+// Render markdown content
+const renderedContent = renderMarkdown(entry.content);
+---
+
+<Layout title={entry.title}>
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex justify-between items-start mb-4">
+        <div class="flex-1">
+          <a href="/library" class="text-primary-600 dark:text-primary-400 hover:underline mb-2 inline-block">
+            ← Back to Library
+          </a>
+          <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mt-2">{entry.title}</h1>
+        </div>
+        {isLoggedIn && (
+          <div class="flex gap-2">
+            <a 
+              href={`/library?edit=${id}`}
+              class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 px-4 py-2 rounded border border-primary-600 dark:border-primary-400"
+            >
+              Edit
+            </a>
+            <button 
+              id="deleteEntry"
+              class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 px-4 py-2 rounded border border-red-600 dark:border-red-400"
+            >
+              Delete
+            </button>
+          </div>
+        )}
+      </div>
+
+      <!-- Metadata -->
+      <div class="flex flex-wrap gap-3 items-center text-sm text-gray-600 dark:text-gray-400">
+        {location && (
+          <a href={`/locations/${location.id}`} class="flex items-center gap-1 text-secondary-600 dark:text-secondary-400 hover:underline">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            Found at: {location.name}
+          </a>
+        )}
+        {location && (
+          <span>•</span>
+        )}
+        <span>Created: {new Date(entry.createdAt || '').toLocaleDateString()}</span>
+        {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
+          <>
+            <span>•</span>
+            <span>Updated: {new Date(entry.updatedAt).toLocaleDateString()}</span>
+          </>
+        )}
+      </div>
+
+      <!-- Tags -->
+      {Array.isArray(entry.tags) && entry.tags.length > 0 && (
+        <div class="flex gap-2 flex-wrap mt-4">
+          {entry.tags.map((tag: string) => (
+            <a 
+              href={`/library?tag=${encodeURIComponent(tag)}`}
+              class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-primary-900/30 transition"
+            >
+              #{tag}
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+
+    <!-- Content -->
+    <article class="bg-white dark:bg-black rounded-lg shadow-md p-8 dark:border dark:border-gray-900">
+      <div 
+        class="prose dark:prose-invert max-w-none"
+        set:html={renderedContent}
+      />
+    </article>
+
+    <!-- Location Map Link -->
+    {location && location.mapX != null && location.mapY != null && (
+      <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
+        <h2 class="text-xl font-semibold text-primary-700 dark:text-primary-400 mb-3">Location on Map</h2>
+        <p class="text-gray-700 dark:text-gray-300 mb-4">
+          This entry is connected to <strong>{location.name}</strong>. View it on the interactive map.
+        </p>
+        <a 
+          href="/map"
+          class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition font-medium"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+          </svg>
+          View on Map
+        </a>
+      </div>
+    )}
+  </div>
+</Layout>
+
+<script define:vars={{ id }}>
+  const deleteBtn = document.getElementById('deleteEntry');
+  
+  deleteBtn?.addEventListener('click', async () => {
+    if (confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+      try {
+        const response = await fetch(`/api/library/${id}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          window.location.href = '/library';
+        } else {
+          alert('Failed to delete entry. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+  });
+</script>
+
+<style>
+  /* Enhance markdown rendering */
+  .prose {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(h1):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-700 dark:text-primary-400;
+  }
+  
+  .prose :where(h2):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400;
+  }
+  
+  .prose :where(h3):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-500;
+  }
+  
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
+  }
+  
+  .prose :where(strong):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(code):not(:where([class~="not-prose"] *)) {
+    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
+  }
+  
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
+  }
+  
+  .prose :where(ul):not(:where([class~="not-prose"] *)),
+  .prose :where(ol):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+  
+  .prose :where(hr):not(:where([class~="not-prose"] *)) {
+    @apply border-gray-300 dark:border-gray-700;
+  }
+</style>

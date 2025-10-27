@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest, eq, inArray } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
+import { renderMarkdown } from '../../utils/markdown';
 
 const { id } = Astro.params;
 
@@ -41,6 +42,9 @@ if (characterIds.length > 0) {
 if (questIds.length > 0) {
   relatedQuests = await db.select().from(Quest).where(inArray(Quest.id, questIds));
 }
+
+// Render markdown content
+const renderedContent = renderMarkdown(entry.content);
 ---
 
 <Layout title={entry.title}>
@@ -106,10 +110,11 @@ if (questIds.length > 0) {
       )}
 
       <!-- Content -->
-      <div class="prose max-w-none">
-        <div class="text-gray-700 dark:text-gray-300 text-lg leading-relaxed whitespace-pre-wrap">
-          {entry.content}
-        </div>
+      <div class="prose dark:prose-invert max-w-none">
+        <div 
+          class="text-gray-700 dark:text-gray-300 text-lg leading-relaxed"
+          set:html={renderedContent}
+        />
       </div>
     </article>
 

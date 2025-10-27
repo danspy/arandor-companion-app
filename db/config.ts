@@ -110,6 +110,18 @@ const CampaignProgress = defineTable({
   }
 });
 
+const LibraryEntry = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    title: column.text(),
+    content: column.text(), // Markdown content
+    tags: column.json({ default: [] }), // Array of tags for filtering
+    locationId: column.text({ optional: true }), // Foreign key to Location table
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -119,5 +131,6 @@ export default defineDb({
     Location,
     User,
     CampaignProgress,
+    LibraryEntry,
   }
 });
