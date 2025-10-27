@@ -113,8 +113,25 @@ jobs:
               exit 0
             fi
 
-            # Backup current DB if it exists (timestamped)
+            # Check if database exists and has data
             if [ -f \"\$DB_PATH\" ]; then
+              echo \"Database file exists at \$DB_PATH\"
+              
+              # Check if User table exists and has data
+              USER_COUNT=\$(sqlite3 \"\$DB_PATH\" \"SELECT COUNT(*) FROM User;\" 2>/dev/null || echo \"0\")
+              echo \"User count in database: \$USER_COUNT\"
+              
+              if [ \"\$USER_COUNT\" -gt 0 ]; then
+                echo \"Database has existing data (\$USER_COUNT users) - preserving and skipping migration\"
+                echo \"Note: If you need to add new tables/columns, edit scripts/migrate-db.sql\"
+                echo \"Current DB tables:\"
+                sqlite3 \"\$DB_PATH\" \".tables\" || true
+                exit 0
+              else
+                echo \"Database exists but is empty - will run migration\"
+              fi
+              
+              # Backup current DB (timestamped)
               BACKUP=\"\${DB_PATH}.bak.\$(date +%s)\"
               cp -- \"\$DB_PATH\" \"\$BACKUP\"
               echo \"Backed up existing DB to \$BACKUP\"
@@ -127,6 +144,7 @@ jobs:
             if [ -f \"\$MIGRATE_SQL\" ]; then
               echo \"Applying SQL migration \$MIGRATE_SQL\"
               sqlite3 \"\$DB_PATH\" < \"\$MIGRATE_SQL\"
+              echo \"Migration applied successfully\"
             else
               echo \"No migration script found; nothing to apply.\"
             fi
