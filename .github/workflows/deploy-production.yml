@@ -121,9 +121,6 @@ jobs:
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
 
-            # Copy systemd service file to system location (requires sudo)
-            sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
-
             # Reload systemd daemon and restart service
             sudo systemctl daemon-reload
             sudo systemctl enable arandor.service
