@@ -1,6 +1,46 @@
-# Database Migration Scripts
+# Database Migration and Deployment Scripts
 
 This directory contains database migration scripts and server management tools.
+
+## Overview
+
+**Important:** Database migrations are **MANUAL ONLY**. The deployment workflow never touches your production database automatically.
+
+## Database Update Script
+
+### update-database.sh
+
+**Purpose:** Interactive script for manually updating the production database schema.
+
+**When to use:**
+- On first deployment to create the initial database
+- When pulling code that includes database schema changes (new tables or columns)
+- NEVER run automatically - always manual and explicit
+
+**Features:**
+- Interactive prompts with safety confirmations
+- Automatic timestamped backups before changes
+- Dry-run mode to preview changes
+- Data integrity verification
+- Shows before/after state
+
+**Usage:**
+```bash
+# Preview what will happen (no changes made)
+./scripts/update-database.sh --dry-run
+
+# Apply database migration (interactive prompts)
+./scripts/update-database.sh
+```
+
+**What it does:**
+1. Checks if database exists
+2. Shows current database state (tables, data count)
+3. Asks for confirmation
+4. Creates timestamped backup in `.astro/backups/`
+5. Applies migration from `migrate-db.sql`
+6. Verifies data integrity
+7. Shows updated state
 
 ## Database Migrations
 
@@ -94,14 +134,16 @@ sudo /usr/local/sbin/arandor-deploy-status
 
 ## Automated Deployment Integration
 
-These scripts are used by the GitHub Actions deployment workflow. The workflow:
+The GitHub Actions deployment workflow (`../.github/workflows/deploy-production.yml`) does NOT run database migrations.
 
-1. Syncs the repository to the server
-2. Runs `npm install` and `npm run build` on the server
-3. Applies database migrations
-4. Uses systemd commands directly to restart the service
+The workflow only:
+1. Syncs code to the server (excluding `.astro/` directory)
+2. Builds in a temporary directory with a temporary database
+3. Copies compiled `dist/` to production
+4. Ensures database directory exists (but never touches the database file)
+5. Restarts the service
 
-The deployment workflow does not use the wrapper scripts anymore - it directly executes systemd commands with sudo. However, the wrapper scripts remain available for manual operations if needed.
+**Database migrations must be run manually** using the `update-database.sh` script when needed.
 
 ## Important Notes
 
