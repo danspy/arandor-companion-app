@@ -10,97 +10,60 @@ permissions:
   contents: read
   actions: read
 
-env:
-  # default DB path (override by setting DB_PATH in the workflow or as a secret/env when needed)
-  DB_PATH: "/srv/arandor/.astro/content.db"
-
 jobs:
-  deploy:
-    name: Deploy to server (rsync -> build -> restart)
+  build:
+    name: Build dist
     runs-on: ubuntu-latest
-    environment: production
-    env:
-      DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+    outputs:
+      dist-path: ./dist
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (server output)
+        run: npm run build
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+
+  deploy:
+    name: Deploy to server (rsync -> restart systemd)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      # optional secret: set DEPLOY_DOMAIN in repo secrets to override default
+      DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ./dist
 
       - name: Start ssh-agent and add private key
         uses: webfactory/ssh-agent@v0.7.0
         with:
           ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-      - name: Ensure remote directories exist
+      - name: Ensure remote directory exists
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "
-            set -e
-            mkdir -p /srv/arandor
-            mkdir -p \"\$(dirname \"${DB_PATH}\")\"
-          "
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist || true'
 
-      - name: Sync repository to server (excluding build artifacts and DB)
+      - name: Sync dist to server
         run: |
-          # Sync complete repository but exclude:
-          # - node_modules (will be installed on server)
-          # - dist (will be built on server)
-          # - .astro (preserve existing database)
-          # - .git (not needed on server)
-          rsync -avz --delete \
-            --exclude='.git/' \
-            --exclude='node_modules/' \
-            --exclude='dist/' \
-            --exclude='.astro/' \
-            --exclude='.env' \
-            --exclude='.env.local' \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/"
-
-      - name: Install dependencies and build on server
-        run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
-            set -e
-
-            # Build in a temporary directory to avoid touching production database
-            BUILD_DIR="/tmp/arandor-build-$$"
-            echo "Building in temporary directory: $BUILD_DIR"
-            mkdir -p "$BUILD_DIR"
-
-            # Copy source files to build directory (exclude production .astro directory)
-            echo "Copying source files to build directory..."
-            rsync -a --exclude=".astro/" --exclude="dist/" --exclude="node_modules/" \
-              /srv/arandor/ "$BUILD_DIR/"
-
-            cd "$BUILD_DIR"
-
-            echo "Installing dependencies..."
-            npm install
-
-            echo "Building application..."
-            npm run build
-
-            echo "Copying built files back to production..."
-            # Copy dist directory to production
-            rm -rf /srv/arandor/dist
-            cp -r "$BUILD_DIR/dist" /srv/arandor/
-
-            # Copy node_modules if needed (for server dependencies)
-            echo "Updating production node_modules..."
-            rsync -a --delete "$BUILD_DIR/node_modules/" /srv/arandor/node_modules/
-
-            echo "Cleaning up build directory..."
-            rm -rf "$BUILD_DIR"
-
-            echo "Build completed successfully"
-          '
-
-      - name: Ensure database directory exists
-        run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "
-            # Ensure parent directory exists for database
-            mkdir -p \"\$(dirname \"${DB_PATH}\")\"
-            echo \"Database directory ready at \$(dirname \"${DB_PATH}\")\"
-            echo \"Note: Database migrations must be run manually. See DEPLOYMENT.md for instructions.\"
-          "
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
 
       - name: Install server deps and restart service on remote
         run: |
@@ -120,14 +83,12 @@ jobs:
 
       - name: Verify site (quick smoke test)
         run: |
-          DEPLOY_DOMAIN="${{ secrets.DEPLOY_DOMAIN || 'arandor.app' }}"
+          # Default to arandor.app if DEPLOY_DOMAIN secret is not set
+          DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-arandor.app}"
           echo "Smoke test domain: $DEPLOY_DOMAIN"
 
-          # show remote service status
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo systemctl status arandor.service --no-pager -l | head -10"
-
-          # Wait a few seconds for the service to start
-          sleep 5
+          # show remote service status (non-interactive)
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo -n /usr/local/sbin/arandor-deploy-status | sed -n '1,10p'"
 
           # request the public HTTPS URL
           curl -I --max-time 10 "https://${DEPLOY_DOMAIN}"
