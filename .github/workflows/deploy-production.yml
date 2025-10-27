@@ -116,20 +116,20 @@ jobs:
             sqlite3 "$DB_PATH" ".tables" || true
           '
 
-      - name: Copy systemd service file and restart service
+      - name: Install server deps and restart service on remote
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
+            if [ -d /srv/arandor/dist/server ] && [ -f /srv/arandor/dist/server/package.json ]; then
+              cd /srv/arandor/dist/server
+              npm ci --production || true
+            fi
 
-            # Reload systemd daemon and restart service
-            sudo systemctl daemon-reload
-            sudo systemctl enable arandor.service
-            sudo systemctl restart arandor.service
+            # Use the root-owned wrapper scripts exposed via sudoers (must be NOPASSWD for CI)
+            sudo -n /usr/local/sbin/arandor-deploy-restart
 
-            echo "Service restarted successfully"
-
-            # Print service status for diagnostics
-            sudo systemctl status arandor.service --no-pager -l | head -60
+            # Print service status for diagnostics via the status wrapper
+            sudo -n /usr/local/sbin/arandor-deploy-status | sed -n "1,60p"
           '
 
       - name: Verify site (quick smoke test)
