@@ -2,6 +2,15 @@
 
 This guide explains how to deploy the Arandor Companion App on a production server using systemd.
 
+## 🔒 Database Safety First
+
+**IMPORTANT:** This deployment approach **NEVER touches your database automatically**. Your data is completely safe during deployments.
+
+- ✅ Deployments only update code and rebuild the application
+- ✅ Database schema updates are **manual and explicit** 
+- ✅ You have full control over when and how database changes are applied
+- ✅ No surprises, no automatic migrations, no data loss
+
 ## Quick Start
 
 **Production server deployment (systemd):**
@@ -14,6 +23,9 @@ cd arandor
 git clone https://github.com/danspy/arandor-companion-app.git .
 npm install
 npm run build
+
+# Initialize database (ONLY on first deployment)
+./scripts/update-database.sh
 
 # Set up systemd service (requires root/sudo)
 sudo cp arandor.service /etc/systemd/system/arandor.service
@@ -164,12 +176,11 @@ sudo systemctl disable arandor.service
 ### Update the Application
 
 **Automatic Updates (Recommended - Uses GitHub Actions):**
-The GitHub Actions workflow automatically handles updates when you push to main:
-- Syncs code to server (preserving database)
-- Builds in isolation
-- Intelligently skips migrations if data exists
-- Restarts service
-- No manual intervention needed
+The GitHub Actions workflow automatically handles code updates when you push to main:
+- ✅ Syncs code to server 
+- ✅ Builds in isolation (using temporary database, never touches production data)
+- ✅ Restarts service
+- ❌ **NEVER touches your production database**
 
 **Manual Updates (If not using GitHub Actions):**
 ```bash
@@ -183,18 +194,9 @@ git pull
 npm install
 
 # Rebuild the application
-# Note: This builds using a temporary database and won't affect your production data
+# Note: This builds using a temporary database (/tmp/astro-build.db)
+# Your production database is NEVER touched during build
 npm run build
-
-# Check if you need to run migrations
-# Migrations are ONLY needed if you're adding NEW tables/columns
-# If your database has data, migrations will be automatically skipped
-
-# For NEW table additions, manually run:
-# sqlite3 /srv/arandor/.astro/content.db < scripts/migrate-db.sql
-
-# For existing tables, you'll need to manually ALTER:
-# sqlite3 /srv/arandor/.astro/content.db "ALTER TABLE TableName ADD COLUMN newColumn TYPE;"
 
 # Restart the service
 sudo systemctl restart arandor.service
@@ -204,13 +206,13 @@ sudo systemctl status arandor.service
 ```
 
 **Important Notes:**
-- Your production data is safe - it's never touched by builds or deploys
-- The database file at `/srv/arandor/.astro/content.db` persists across all updates
-- Backups are automatically created at `.astro/content.db.bak.{timestamp}` before any changes
+- ✅ **Your production data is completely safe** - deployments never touch the database
+- ✅ The database file at `/srv/arandor/.astro/content.db` persists across all updates
+- ✅ Database schema updates are manual and explicit (see Database Management section below)
 
 ## Automated Deployment with GitHub Actions
 
-The repository includes a GitHub Actions workflow (`.github/workflows/deploy-production.yml`) that automates deployment.
+The repository includes a GitHub Actions workflow (`.github/workflows/deploy-production.yml`) that automates code deployment.
 
 ### Setup Requirements
 
@@ -247,80 +249,117 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy-pro
 3. Builds the application in a temporary directory to avoid touching the production database
    - Creates a temporary build directory (`/tmp/arandor-build-*`)
    - Copies source files to the temp directory
-   - Runs `npm install` and `npm run build` in the temp directory
+   - Runs `npm install` and `npm run build` in the temp directory with `ASTRO_DATABASE_FILE=/tmp/astro-build.db`
    - Copies only the `dist/` folder and `node_modules/` back to production
    - Deletes the temporary build directory
-4. Runs database migrations (safe, idempotent SQL scripts)
+4. Ensures database directory exists (but never touches the database itself)
 5. Restarts the systemd service
 6. Verifies the deployment with a smoke test
 
-### Database Preservation
+### Database Safety During Deployment
 
-The workflow is designed to preserve existing database data during deployments:
+**The deployment workflow NEVER modifies your production database:**
+- ✅ The `.astro/` directory (containing the production database) is excluded from rsync
+- ✅ The build happens in a temporary directory with a temporary database
+- ✅ Only compiled code (`dist/`) is copied to production
+- ✅ **No automatic migrations** - all database changes are manual
+- ✅ **No automatic seeding** - your data is never touched
 
-**Build-time vs Runtime Database Separation:**
-- The build process runs in a **completely isolated temporary directory** (`/tmp/arandor-build-*`)
-- During build, a temporary database is created for build-time operations (schema creation, validation)
-- Only the compiled `dist/` folder is copied back to the production directory
-- The production database at `/srv/arandor/.astro/content.db` is **never touched** during the build process
-- The actual production database is only used at runtime by the Node.js server
+## Database Management
 
-**Deployment Safety Measures:**
-- The `.astro/` directory (containing the production database) is excluded from rsync
-- The build happens in isolation, so even if Astro creates temporary files, they don't affect production
-- **Smart Migration Check**: Before running migrations, the workflow checks if the database has existing data (User count > 0)
-  - If data exists: Migration is **completely skipped** to preserve all data
-  - If database is empty or doesn't exist: Migration runs to create tables
-- Timestamped backups are created before any migration runs (`.bak.{timestamp}` files)
-- The seed script (`db/seed.ts`) only populates data if the User table contains no records
+### Initial Database Setup (First Deployment Only)
 
-**Migration Behavior:**
-- **First Deployment**: Creates database with empty tables via migration, no seed runs at runtime
-- **Subsequent Deployments**: Detects existing data and **skips migration entirely** to preserve data
-- **Adding New Tables/Columns**: Edit `scripts/migrate-db.sql` to add new schema elements
-  - If you need to add columns to existing tables, manually add them using `ALTER TABLE` commands
-  - Test migrations locally first before deploying
+On your first deployment, you need to create the database:
 
-**Key Improvements:**
-1. **PR #26**: Moved builds to isolated temporary directory to prevent build process from touching production database
-2. **Current Fix**: Added intelligent data detection that skips migration if database contains data
-3. **Complete Isolation**: Production database is never modified during build or deployment, only by the running application
+```bash
+# As deploy user on the server
+cd /srv/arandor
+./scripts/update-database.sh
+```
 
-This approach ensures:
-- ✅ **Existing data is NEVER overwritten** - migrations are skipped when data exists
-- ✅ Schema updates require manual migration scripts for existing databases  
-- ✅ Fresh installations get empty tables ready for manual data entry
-- ✅ No data loss during the build process
-- ✅ Production database is completely isolated from build operations
-- ✅ Timestamped backups provide recovery option if needed
+This will:
+- Create the database at `/srv/arandor/.astro/content.db`
+- Create all required tables (empty, no seed data)
+- You can then add your data through the application UI
+
+### Updating Database Schema
+
+**When to update:** Only when you pull code that includes database schema changes (new tables or columns).
+
+**How to update:**
+
+1. **Check the release notes or commit messages** to see if database changes are needed
+2. **Backup your database first:**
+   ```bash
+   cd /srv/arandor
+   cp .astro/content.db .astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
+   ```
+
+3. **Run the update script:**
+   ```bash
+   # Preview what will happen (dry run)
+   ./scripts/update-database.sh --dry-run
+   
+   # Apply the migration
+   ./scripts/update-database.sh
+   ```
+
+4. **Restart the application:**
+   ```bash
+   sudo systemctl restart arandor.service
+   ```
+
+The update script will:
+- Show you the current database state
+- Create a timestamped backup
+- Apply the migration (uses `CREATE TABLE IF NOT EXISTS`, safe for existing data)
+- Verify your data is still intact
+- Show you the updated state
+
+### Manual Database Operations
+
+**View database tables:**
+```bash
+sqlite3 /srv/arandor/.astro/content.db ".tables"
+```
+
+**View table schema:**
+```bash
+sqlite3 /srv/arandor/.astro/content.db ".schema User"
+```
+
+**Check data:**
+```bash
+sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM User;"
+```
+
+**Backup database:**
+```bash
+mkdir -p /srv/arandor/.astro/backups
+cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
+```
+
+**Restore from backup:**
+```bash
+# Stop the service first
+sudo systemctl stop arandor.service
+
+# Restore the backup
+cp /srv/arandor/.astro/backups/content.db.backup.YYYYMMDD_HHMMSS /srv/arandor/.astro/content.db
+
+# Start the service
+sudo systemctl start arandor.service
+```
 
 ## Data Persistence
 
 - Database is stored at `/srv/arandor/.astro/content.db`
 - Data persists across application restarts and deployments
-- Backup regularly: `cp /srv/arandor/.astro/content.db ~/backup-$(date +%Y%m%d).db`
-
-## Database Migrations
-
-When updating to a new version that includes database schema changes:
-
-1. **Backup your database first:**
-   ```bash
-   cp /srv/arandor/.astro/content.db ~/backup-$(date +%Y%m%d).db
-   ```
-
-2. **Run the migration script:**
-   ```bash
-   cd /srv/arandor
-   sqlite3 /srv/arandor/.astro/content.db < scripts/migrate-db.sql
-   ```
-
-3. **Verify the migration:**
-   ```bash
-   sqlite3 /srv/arandor/.astro/content.db "SELECT name FROM sqlite_master WHERE type='table';"
-   ```
-
-The migration scripts are designed to be idempotent (safe to run multiple times) and will not affect existing data.
+- **Recommended:** Set up automated daily backups:
+  ```bash
+  # Add to crontab (crontab -e)
+  0 2 * * * cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
+  ```
 
 ## Environment Variables
 
@@ -352,64 +391,52 @@ Common issues:
 
 ### Database Issues
 
-**Data Being Overwritten on Deployment:**
-This should NO LONGER happen with the current deployment workflow. If you're experiencing this:
-
-1. Check that your GitHub Actions workflow is up to date:
-   ```bash
-   # On your local machine
-   git pull origin main
-   # Verify .github/workflows/deploy-production.yml has the "Smart Migration Check" section
-   ```
-
-2. Verify the deployment is actually skipping migration when data exists:
-   ```bash
-   # Check GitHub Actions logs - you should see:
-   # "Database has existing data (X users) - preserving and skipping migration"
-   ```
-
-3. Check for backup files on the server:
-   ```bash
-   ls -lah /srv/arandor/.astro/*.bak.*
-   # These are automatic backups created before any migration attempt
-   ```
-
-4. Restore from backup if needed:
-   ```bash
-   # Find the most recent backup
-   ls -lt /srv/arandor/.astro/*.bak.* | head -1
-   
-   # Restore it (replace TIMESTAMP with actual timestamp)
-   cp /srv/arandor/.astro/content.db.bak.TIMESTAMP /srv/arandor/.astro/content.db
-   
-   # Restart service
-   sudo systemctl restart arandor.service
-   ```
-
 **Database Not Created on First Deployment:**
-For fresh installations:
-- The deployment automatically creates an empty database with all tables
-- You'll need to manually add your first user and data through the application
-- The seed script does NOT run in production to prevent accidental data loss
 
-**Manual Database Initialization (Fresh Install Only):**
+If the database doesn't exist after deployment:
 ```bash
-# Create the database directory
-mkdir -p /srv/arandor/.astro
-
-# Run migration to create tables
-sqlite3 /srv/arandor/.astro/content.db < /srv/arandor/scripts/migrate-db.sql
-
-# Verify tables were created
-sqlite3 /srv/arandor/.astro/content.db ".tables"
+# Create it manually using the update script
+cd /srv/arandor
+./scripts/update-database.sh
 ```
 
-**General Database Checks:**
-If the database isn't working properly, ensure:
-- The `.astro` directory exists and is writable: `mkdir -p /srv/arandor/.astro`
-- The deploy user owns the directory: `sudo chown -R deploy:deploy /srv/arandor/.astro`
-- The `ASTRO_DATABASE_FILE` environment variable is set correctly in the service file
-- Check current data: `sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM User;"`
+**Need to Update Database Schema:**
+
+When you pull new code that includes database schema changes:
+```bash
+# Use the update script
+cd /srv/arandor
+./scripts/update-database.sh
+
+# Restart the service
+sudo systemctl restart arandor.service
+```
+
+**Database File Permissions:**
+
+If you get permission errors:
+```bash
+# Ensure correct ownership
+sudo chown -R deploy:deploy /srv/arandor/.astro
+
+# Ensure directory is writable
+chmod 755 /srv/arandor/.astro
+chmod 644 /srv/arandor/.astro/content.db
+```
+
+**Verify Database State:**
+
+Check if database exists and has data:
+```bash
+# Check if database file exists
+ls -lh /srv/arandor/.astro/content.db
+
+# View tables
+sqlite3 /srv/arandor/.astro/content.db ".tables"
+
+# Check user count
+sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM User;"
+```
 
 ### Permission Issues
 

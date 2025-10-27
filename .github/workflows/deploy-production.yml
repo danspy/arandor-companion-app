@@ -93,65 +93,13 @@ jobs:
             echo "Build completed successfully"
           '
 
-      - name: Run DB creation + migration on server (backups + idempotent)
+      - name: Ensure database directory exists
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "
-            set -euo pipefail
-
-            DB_PATH=\"${DB_PATH}\"
-            MIGRATE_SQL=\"/srv/arandor/scripts/migrate-db.sql\"
-
-            echo \"DB_PATH=\$DB_PATH\"
-            echo \"MIGRATE_SQL=\$MIGRATE_SQL\"
-
-            # Ensure parent directory exists (created earlier, but be defensive)
-            mkdir -p \"\$(dirname \"\$DB_PATH\")\"
-
-            # Ensure sqlite3 is present
-            if ! command -v sqlite3 >/dev/null 2>&1; then
-              echo \"sqlite3 not installed on server - install sqlite3 (sudo apt update && sudo apt install -y sqlite3) and re-run workflow.\"
-              exit 0
-            fi
-
-            # Check if database exists and has data
-            if [ -f \"\$DB_PATH\" ]; then
-              echo \"Database file exists at \$DB_PATH\"
-              
-              # Check if User table exists and has data
-              USER_COUNT=\$(sqlite3 \"\$DB_PATH\" \"SELECT COUNT(*) FROM User;\" 2>/dev/null || echo \"0\")
-              echo \"User count in database: \$USER_COUNT\"
-              
-              if [ \"\$USER_COUNT\" -gt 0 ]; then
-                echo \"Database has existing data (\$USER_COUNT users) - preserving and skipping migration\"
-                echo \"Note: If you need to add new tables/columns, edit scripts/migrate-db.sql\"
-                echo \"Current DB tables:\"
-                sqlite3 \"\$DB_PATH\" \".tables\" || true
-                exit 0
-              else
-                echo \"Database exists but is empty - will run migration\"
-              fi
-              
-              # Backup current DB (timestamped)
-              BACKUP=\"\${DB_PATH}.bak.\$(date +%s)\"
-              cp -- \"\$DB_PATH\" \"\$BACKUP\"
-              echo \"Backed up existing DB to \$BACKUP\"
-            else
-              echo \"No existing database found at \$DB_PATH - will be created by migration\"
-            fi
-
-            # Apply migration if SQL file exists
-            # SQLite will create the database file if it doesn't exist
-            if [ -f \"\$MIGRATE_SQL\" ]; then
-              echo \"Applying SQL migration \$MIGRATE_SQL\"
-              sqlite3 \"\$DB_PATH\" < \"\$MIGRATE_SQL\"
-              echo \"Migration applied successfully\"
-            else
-              echo \"No migration script found; nothing to apply.\"
-            fi
-
-            # Show tables for debugging
-            echo \"Current DB tables:\"
-            sqlite3 \"\$DB_PATH\" \".tables\" || true
+            # Ensure parent directory exists for database
+            mkdir -p \"\$(dirname \"${DB_PATH}\")\"
+            echo \"Database directory ready at \$(dirname \"${DB_PATH}\")\"
+            echo \"Note: Database migrations must be run manually. See DEPLOYMENT.md for instructions.\"
           "
 
       - name: Install server deps and restart service on remote
