@@ -44,13 +44,15 @@ jobs:
           path: scripts
 
   deploy:
-    name: Deploy to server (rsync -> restart systemd)
+    name: Deploy to server (rsync -> migrations -> restart systemd)
     needs: build
     runs-on: ubuntu-latest
     environment: production
     env:
       # optional secret: set DEPLOY_DOMAIN in repo secrets to override default
       DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
+      # default DB path on server — change if your DB is located somewhere else
+      DB_PATH: "/srv/arandor/.astro/content.db"
     steps:
       - name: Download dist artifact
         uses: actions/download-artifact@v4
@@ -81,22 +83,46 @@ jobs:
         run: |
           rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./scripts/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/scripts/"
 
-      - name: Run database migration
+      - name: Run database migration (if script present and sqlite3 available)
         run: |
+          # run migration on the server; checks for sqlite3 and backups DB before applying
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            # Ensure the database directory exists
-            mkdir -p /srv/arandor/data/.astro
-            
-            # Run the migration script on the production database
-            # This safely adds missing tables without affecting existing data
-            if [ -f /srv/arandor/scripts/migrate-db.sql ]; then
-              echo "Running database migration..."
-              sqlite3 /srv/arandor/data/.astro/content.db < /srv/arandor/scripts/migrate-db.sql
-              echo "Database migration complete"
-            else
-              echo "Warning: No migration script found, skipping migration"
+            DB_PATH="${DB_PATH:-/srv/arandor/.astro/content.db}"
+            MIGRATE_SQL="/srv/arandor/scripts/migrate-db.sql"
+
+            echo "DB_PATH=$DB_PATH"
+            echo "MIGRATE_SQL=$MIGRATE_SQL"
+
+            # Ensure DB directory exists
+            mkdir -p "$(dirname "$DB_PATH")"
+
+            if [ ! -f "$MIGRATE_SQL" ]; then
+              echo "No migration script found at $MIGRATE_SQL; skipping migration."
+              exit 0
             fi
+
+            if ! command -v sqlite3 >/dev/null 2>&1; then
+              echo "sqlite3 not installed on server; skipping migration."
+              echo "Install sqlite3 on the server (sudo apt update && sudo apt install -y sqlite3) and re-run the workflow to apply migrations."
+              exit 0
+            fi
+
+            if [ ! -f "$DB_PATH" ]; then
+              echo "Database file $DB_PATH does not exist. Creating empty DB file."
+              # create an empty DB file as deploy so permissions are correct
+              mkdir -p "$(dirname "$DB_PATH")"
+              touch "$DB_PATH"
+              chown $USER:$USER "$DB_PATH" || true
+            fi
+
+            # Backup current DB
+            BACKUP="${DB_PATH}.bak.$(date +%s)"
+            echo "Backing up DB to $BACKUP"
+            cp -- "$DB_PATH" "$BACKUP"
+            echo "Applying migration SQL..."
+            sqlite3 "$DB_PATH" < "$MIGRATE_SQL"
+            echo "Migration applied successfully."
           '
 
       - name: Install server deps and restart service on remote
@@ -117,12 +143,7 @@ jobs:
 
       - name: Verify site (quick smoke test)
         run: |
-          # Default to arandor.app if DEPLOY_DOMAIN secret is not set
           DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-arandor.app}"
           echo "Smoke test domain: $DEPLOY_DOMAIN"
-
-          # show remote service status (non-interactive)
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo -n /usr/local/sbin/arandor-deploy-status | sed -n '1,10p'"
-
-          # request the public HTTPS URL
           curl -I --max-time 10 "https://${DEPLOY_DOMAIN}"
