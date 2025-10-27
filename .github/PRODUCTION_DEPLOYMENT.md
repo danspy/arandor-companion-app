@@ -6,13 +6,13 @@ Before the deployment workflow can run, you need to configure the following GitH
 
 ### Required Secrets
 
-1. **HETZNER_HOST** - Your Hetzner server's IP address or hostname
+1. **SERVER_HOST** - Your Hetzner server's IP address or hostname
    - Example: `123.45.67.89` or `server.example.com`
 
-2. **HETZNER_USERNAME** - SSH username for your Hetzner server
-   - Example: `root` or `ubuntu`
+2. **SERVER_USER** - SSH username for your Hetzner server
+   - Example: `deploy` or `ubuntu`
 
-3. **HETZNER_SSH_KEY** - Private SSH key for authentication
+3. **SERVER_SSH_PRIVATE_KEY** - Private SSH key for authentication
    - Generate on your local machine if you don't have one:
      ```bash
      ssh-keygen -t ed25519 -C "github-deploy" -f ~/.ssh/hetzner_deploy
@@ -26,54 +26,88 @@ Before the deployment workflow can run, you need to configure the following GitH
      cat ~/.ssh/hetzner_deploy
      ```
 
-4. **HETZNER_PORT** (Optional) - SSH port, defaults to 22 if not set
-   - Example: `22` or `2222`
-
 ## How the Deployment Works
 
 The workflow automatically deploys to your Hetzner server when you push to the `main` branch or manually trigger it.
 
 ### Deployment Process
 
-1. **Build** - Builds the Docker image from the Dockerfile
-2. **Transfer** - Copies the image and docker-compose.yml to the server
-3. **Deploy** - Stops the old container, loads the new image, and starts the updated application
-4. **Persist Data** - Database is stored in a Docker volume (`arandor-data`) that persists across deployments
+1. **Build** - Builds the Astro application in server mode using `npm run build`
+2. **Upload Artifact** - Uploads the built `dist/` folder as a GitHub artifact
+3. **Download Artifact** - Downloads the artifact in the deploy job
+4. **Sync** - Uses rsync to sync only the `dist/` directory to `/srv/arandor/dist/` on the server
+5. **Restart** - Restarts the systemd service to apply the new code
 
 ### Data Preservation
 
 The deployment **preserves your database and data** by:
-- Using a Docker volume (`arandor-data`) defined in `docker-compose.yml`
-- The volume persists across container restarts and updates
-- `docker-compose down` removes containers but **NEVER** removes volumes (unless you explicitly use `-v` flag, which we don't)
-- When `docker-compose up -d` starts the new container, it reattaches the existing volume
-- Only the application code is updated, not the database
+- Only syncing the `dist/` folder containing application code
+- The database file (`.astro/content.db`) is stored outside the `dist/` directory
+- rsync's `--delete` flag only affects files within `/srv/arandor/dist/`, not the database location
+- The systemd service should be configured to use a database path outside `/srv/arandor/dist/`
 
-**Important:** Docker named volumes are persistent storage that exist independently of containers. Your database file at `.astro/content.db` inside the volume will remain intact across all deployments.
+**Important:** Ensure your systemd service sets the `ASTRO_DATABASE_FILE` environment variable to a location outside `/srv/arandor/dist/`, such as `/srv/arandor/data/.astro/content.db` or `/var/lib/arandor/.astro/content.db`.
 
 ### Server Setup (First Time Only)
 
-On your Hetzner server, ensure Docker and Docker Compose are installed:
+On your Hetzner server, you need to set up the systemd service and directory structure.
+
+#### 1. Create Application Directory
 
 ```bash
-# Install Docker (if not already installed)
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+sudo mkdir -p /srv/arandor/dist
+sudo mkdir -p /srv/arandor/data/.astro
+sudo chown -R deploy:deploy /srv/arandor
+```
 
-# Install Docker Compose (if not already installed)
-sudo apt-get update
-sudo apt-get install docker-compose-plugin
+#### 2. Create Systemd Service
 
-# Add your user to the docker group (to run without sudo)
-sudo usermod -aG docker $USER
-# Log out and back in for this to take effect
+Create `/etc/systemd/system/arandor.service`:
+
+```ini
+[Unit]
+Description=Arandor Companion App
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/srv/arandor/dist/server
+Environment="NODE_ENV=production"
+Environment="HOST=0.0.0.0"
+Environment="PORT=4321"
+Environment="ASTRO_DATABASE_FILE=/srv/arandor/data/.astro/content.db"
+ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+#### 3. Enable and Start Service
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable arandor.service
+sudo systemctl start arandor.service
+sudo systemctl status arandor.service
+```
+
+#### 4. Configure Sudo for Service Restart
+
+The deploy user needs permission to restart the service without a password. Add to `/etc/sudoers.d/arandor`:
+
+```
+deploy ALL=(ALL) NOPASSWD: /bin/systemctl restart arandor.service
+deploy ALL=(ALL) NOPASSWD: /bin/systemctl status arandor.service
 ```
 
 ## Manual Deployment
 
 You can also trigger the deployment manually:
 1. Go to the `Actions` tab in your GitHub repository
-2. Select the "Deploy to Hetzner Production" workflow
+2. Select the "Build and Deploy (Node server)" workflow
 3. Click "Run workflow"
 4. Select the `main` branch
 5. Click "Run workflow"
@@ -84,9 +118,8 @@ After deployment, you can check the application status:
 
 ```bash
 ssh user@server
-cd ~/arandor-companion-app
-docker-compose ps
-docker-compose logs -f
+sudo systemctl status arandor.service
+sudo journalctl -u arandor.service -f
 ```
 
 ## Troubleshooting
@@ -94,17 +127,18 @@ docker-compose logs -f
 ### SSH Connection Issues
 - Verify your SSH key is correctly added to GitHub secrets
 - Ensure the public key is in `~/.ssh/authorized_keys` on your server
-- Check that the HETZNER_HOST and HETZNER_PORT are correct
+- Check that SERVER_HOST and SERVER_USER are correct
 
-### Docker Issues
-- Ensure Docker is running: `sudo systemctl status docker`
-- Check available disk space: `df -h`
-- View container logs: `docker-compose logs`
+### Service Not Starting
+- Check logs: `sudo journalctl -u arandor.service -n 50`
+- Verify the database directory exists and is writable
+- Ensure Node.js 20+ is installed on the server
 
 ### Database Issues
-- The database is stored in the `arandor-data` volume
-- To backup: `docker run --rm -v arandor-data:/data -v $(pwd):/backup alpine cp /data/content.db /backup/backup.db`
-- To restore: `docker run --rm -v arandor-data:/data -v $(pwd):/backup alpine cp /backup/backup.db /data/content.db`
+- The database is stored at the path specified in `ASTRO_DATABASE_FILE`
+- To backup: `cp /srv/arandor/data/.astro/content.db ~/backup.db`
+- To restore: `cp ~/backup.db /srv/arandor/data/.astro/content.db`
+- Ensure the directory exists: `mkdir -p /srv/arandor/data/.astro`
 
 ## Port Configuration
 
@@ -142,22 +176,25 @@ Then access via: `http://your-server-ip:4321`
 1. **Use HTTPS** - Set up SSL/TLS with Let's Encrypt
 2. **Firewall** - Configure UFW to only allow necessary ports
 3. **SSH Security** - Use SSH keys only, disable password authentication
-4. **Regular Updates** - Keep Docker and the server OS updated
-5. **Backups** - Regularly backup the database volume
+4. **Regular Updates** - Keep Node.js and the server OS updated
+5. **Backups** - Regularly backup the database file
+6. **Service User** - Run the service as a non-root user (e.g., `deploy`)
 
 ## Rollback
 
-If a deployment fails, you can rollback:
+If a deployment fails, you can rollback by redeploying a previous version:
 
 ```bash
+# On your local machine, checkout the previous commit
+git checkout <previous-commit-hash>
+
+# Manually trigger the workflow or push to a branch and merge to main
+```
+
+Alternatively, if you have a backup of the dist folder:
+```bash
 ssh user@server
-cd ~/arandor-companion-app
-
-# View available images
-docker images | grep arandor
-
-# If you have an old image, update docker-compose.yml to use it
-# Then restart
-docker-compose down
-docker-compose up -d
+sudo systemctl stop arandor.service
+# Restore previous dist folder
+sudo systemctl start arandor.service
 ```

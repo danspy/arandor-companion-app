@@ -1,4 +1,4 @@
-name: Deploy to Hetzner Production
+name: Build and Deploy (Node server)
 
 on:
   push:
@@ -6,102 +6,70 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: read
+  actions: read
+
 jobs:
-  deploy:
-    name: Deploy to Hetzner Server
+  build:
+    name: Build dist
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    
+    outputs:
+      dist-path: ./dist
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
 
-      - name: Build Docker image
-        run: |
-          docker build -t arandor-companion-app:latest .
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Save Docker image
-        run: |
-          docker save arandor-companion-app:latest | gzip > arandor-app.tar.gz
+      - name: Build (server output)
+        run: npm run build
 
-      - name: Install SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.HETZNER_SSH_KEY }}" > ~/.ssh/deploy_key
-          chmod 600 ~/.ssh/deploy_key
-          echo "Adding server to known hosts..."
-          ssh-keyscan -p ${{ secrets.HETZNER_PORT || 22 }} -H ${{ secrets.HETZNER_HOST }} >> ~/.ssh/known_hosts
-          chmod 644 ~/.ssh/known_hosts
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
 
-      - name: Copy Docker image to server
-        run: |
-          scp -P ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
-            arandor-app.tar.gz \
-            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }}:/tmp/
+  deploy:
+    name: Deploy to server (rsync -> restart systemd)
+    needs: build
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download dist artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: ./dist
 
-      - name: Copy docker-compose to server
-        run: |
-          scp -P ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
-            docker-compose.yml \
-            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }}:~/arandor-companion-app/
+      - name: Start ssh-agent and add private key
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          # Add the private key (set this secret in repo settings)
+          ssh-private-key: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
 
-      - name: Deploy on server
+      - name: Ensure remote directory exists
         run: |
-          ssh -p ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
-            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }} << 'EOF'
-            
-            # Create application directory if it doesn't exist
-            mkdir -p ~/arandor-companion-app
-            cd ~/arandor-companion-app
-            
-            # Load the new Docker image
-            if docker load < /tmp/arandor-app.tar.gz; then
-              rm /tmp/arandor-app.tar.gz
-              echo "Docker image loaded successfully"
-            else
-              echo "Failed to load Docker image"
-              exit 1
-            fi
-            
-            # Stop the running container (if any)
-            # NOTE: This does NOT delete the 'arandor-data' volume, so the database is preserved
-            if docker-compose ps -q 2>/dev/null | grep -q .; then
-              echo "Stopping existing containers..."
-              docker-compose down --remove-orphans
-            else
-              echo "No existing containers to stop"
-            fi
-            
-            # Verify the database volume exists (if this is not the first deployment)
-            if docker volume ls | grep -q arandor-data; then
-              echo "✓ Existing database volume found - data will be preserved"
-            fi
-            
-            # Start the application with the new image
-            # The 'arandor-data' volume will be reattached, preserving all database contents
-            docker-compose up -d
-            
-            # Clean up old Docker images to save space
-            docker image prune -f
-            
-            echo "Deployment completed successfully"
-          EOF
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "mkdir -p /srv/arandor/dist"
+        # expects secrets: SERVER_USER (e.g. deploy) and SERVER_HOST (ip/floating ip)
 
-      - name: Verify deployment
+      - name: Sync dist to server
         run: |
-          ssh -p ${{ secrets.HETZNER_PORT || 22 }} -i ~/.ssh/deploy_key \
-            ${{ secrets.HETZNER_USERNAME }}@${{ secrets.HETZNER_HOST }} << 'EOF'
-            cd ~/arandor-companion-app
-            docker-compose ps
-            docker-compose logs --tail=50
-          EOF
+          # rsync the built dist directory to the server as the deploy user
+          # NOTE: Only the dist/ folder is synced. Database files are NOT affected.
+          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
 
-      - name: Cleanup
-        if: always()
+      - name: Install server deps and restart service on remote
         run: |
-          rm -f ~/.ssh/deploy_key
-          rm -f arandor-app.tar.gz
+          # Install production deps for the server bundle (if package.json exists) and restart systemd service
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" \
+            "cd /srv/arandor/dist/server 2>/dev/null || exit 0; \
+             if [ -f package.json ]; then npm ci --production || true; fi; \
+             sudo systemctl restart arandor.service && sudo systemctl status arandor.service --no-pager"
