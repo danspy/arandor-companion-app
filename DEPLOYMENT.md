@@ -248,15 +248,15 @@ The workflow is designed to preserve existing database data during deployments:
 **Additional Safety Measures:**
 - The `.astro/` directory (containing the production database) is excluded from rsync
 - The build happens in isolation, so even if Astro creates temporary files, they don't affect production
-- The seed script (`db/seed.ts`) only populates data if the database is completely empty (checks User table)
+- The seed script (`db/seed.ts`) only populates data if the User table contains no records
 - Database migrations use `CREATE TABLE IF NOT EXISTS` statements to add new schema elements
 - A timestamped backup is created before each migration runs (only if database exists)
-- SQLite creates the database file during migration if needed (not via `touch` which creates empty files)
+- SQLite creates the database file during migration instead of using `touch` to create empty files
 
 **Key Fixes:**
 1. **PR #26**: Previous versions built directly in `/srv/arandor`, causing the build process to create an empty `.astro/content.db` file that **overwrote the production database**. The fix moved builds to an isolated temporary directory (`/tmp/arandor-build-$$`).
 
-2. **Current Fix**: The migration step was using `touch` to create an empty database file before running migrations. This empty file caused the seed script to run and overwrite all data. The fix removes `touch` and lets SQLite create the database properly during migration.
+2. **Current Fix**: The migration step was using `touch` to create an empty database file before running migrations. When the server started, this empty database had an empty User table, which triggered the seed script to run and overwrite all existing data. The fix removes `touch` and lets SQLite create the database properly during migration.
 
 This approach ensures:
 - ✅ Existing data is preserved across all deployments
