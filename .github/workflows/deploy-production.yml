@@ -15,57 +15,15 @@ env:
   DB_PATH: "/srv/arandor/.astro/content.db"
 
 jobs:
-  build:
-    name: Build dist
-    runs-on: ubuntu-latest
-    outputs:
-      dist-path: ./dist
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Use Node.js 20
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build (server output)
-        run: npm run build
-
-      - name: Upload dist artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: dist
-          path: dist
-
-      - name: Upload migration scripts
-        uses: actions/upload-artifact@v4
-        with:
-          name: scripts
-          path: scripts
-
   deploy:
-    name: Deploy to server (rsync -> migrations -> restart)
-    needs: build
+    name: Deploy to server (rsync -> build -> migrations -> restart)
     runs-on: ubuntu-latest
     environment: production
     env:
       DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
     steps:
-      - name: Download dist artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: dist
-          path: ./dist
-
-      - name: Download migration scripts
-        uses: actions/download-artifact@v4
-        with:
-          name: scripts
-          path: ./scripts
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Start ssh-agent and add private key
         uses: webfactory/ssh-agent@v0.7.0
@@ -76,19 +34,41 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            mkdir -p /srv/arandor/dist
-            mkdir -p /srv/arandor/scripts
+            mkdir -p /srv/arandor
             mkdir -p "$(dirname "'"${DB_PATH}"'")"
           '
 
-      - name: Sync dist to server
+      - name: Sync repository to server (excluding build artifacts and DB)
         run: |
-          # Sync only the build output; it does not touch /srv/arandor/.astro
-          rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
+          # Sync complete repository but exclude:
+          # - node_modules (will be installed on server)
+          # - dist (will be built on server)
+          # - .astro (preserve existing database)
+          # - .git (not needed on server)
+          rsync -avz --delete \
+            --exclude='.git/' \
+            --exclude='node_modules/' \
+            --exclude='dist/' \
+            --exclude='.astro/' \
+            --exclude='.env' \
+            --exclude='.env.local' \
+            -e "ssh -o StrictHostKeyChecking=no" \
+            ./ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/"
 
-      - name: Sync migration scripts to server
+      - name: Install dependencies and build on server
         run: |
-          rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./scripts/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/scripts/"
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
+            set -e
+            cd /srv/arandor
+
+            echo "Installing dependencies..."
+            npm install
+
+            echo "Building application..."
+            npm run build
+
+            echo "Build completed successfully"
+          '
 
       - name: Run DB creation + migration on server (backups + idempotent)
         run: |
@@ -97,11 +77,9 @@ jobs:
 
             DB_PATH="'"${DB_PATH}"'"
             MIGRATE_SQL="/srv/arandor/scripts/migrate-db.sql"
-            MIGRATE_SH="/srv/arandor/scripts/migrate.sh"
 
             echo "DB_PATH=$DB_PATH"
             echo "MIGRATE_SQL=$MIGRATE_SQL"
-            echo "MIGRATE_SH=$MIGRATE_SH"
 
             # Ensure parent directory exists (created earlier, but be defensive)
             mkdir -p "$(dirname "$DB_PATH")"
@@ -125,16 +103,12 @@ jobs:
             cp -- "$DB_PATH" "$BACKUP"
             echo "Backed up DB to $BACKUP"
 
-            # Apply migration: if migrate.sh exists, use it (it should be idempotent); otherwise use migrate-db.sql directly.
-            if [ -f "$MIGRATE_SH" ]; then
-              chmod +x "$MIGRATE_SH" || true
-              echo "Running migration script $MIGRATE_SH"
-              "$MIGRATE_SH" "$DB_PATH" "$MIGRATE_SQL"
-            elif [ -f "$MIGRATE_SQL" ]; then
+            # Apply migration if SQL file exists
+            if [ -f "$MIGRATE_SQL" ]; then
               echo "Applying SQL migration $MIGRATE_SQL"
               sqlite3 "$DB_PATH" < "$MIGRATE_SQL"
             else
-              echo "No migration script/sql found; nothing to apply."
+              echo "No migration script found; nothing to apply."
             fi
 
             # Show tables for debugging
@@ -142,21 +116,23 @@ jobs:
             sqlite3 "$DB_PATH" ".tables" || true
           '
 
-      - name: Install server deps and restart service on remote
+      - name: Copy systemd service file and restart service
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            # Install production dependencies inside the server bundle (if present)
-            if [ -d /srv/arandor/dist/server ] && [ -f /srv/arandor/dist/server/package.json ]; then
-              cd /srv/arandor/dist/server
-              npm ci --production || true
-            fi
 
-            # Restart service using root-owned, sudoers-approved wrapper script (must be NOPASSWD)
-            sudo -n /usr/local/sbin/arandor-deploy-restart
+            # Copy systemd service file to system location (requires sudo)
+            sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
 
-            # Print service status via wrapper for diagnostics
-            sudo -n /usr/local/sbin/arandor-deploy-status | sed -n "1,60p"
+            # Reload systemd daemon and restart service
+            sudo systemctl daemon-reload
+            sudo systemctl enable arandor.service
+            sudo systemctl restart arandor.service
+
+            echo "Service restarted successfully"
+
+            # Print service status for diagnostics
+            sudo systemctl status arandor.service --no-pager -l | head -60
           '
 
       - name: Verify site (quick smoke test)
@@ -165,7 +141,10 @@ jobs:
           echo "Smoke test domain: $DEPLOY_DOMAIN"
 
           # show remote service status
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo -n /usr/local/sbin/arandor-deploy-status | sed -n '1,10p'"
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo systemctl status arandor.service --no-pager -l | head -10"
+
+          # Wait a few seconds for the service to start
+          sleep 5
 
           # request the public HTTPS URL
           curl -I --max-time 10 "https://${DEPLOY_DOMAIN}"

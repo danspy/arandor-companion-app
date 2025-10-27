@@ -1,0 +1,10 @@
+#!/bin/bash
+# arandor-deploy-status
+# This script should be installed at /usr/local/sbin/arandor-deploy-status
+# and configured in sudoers to allow NOPASSWD execution by the deploy user.
+#
+# Add to /etc/sudoers.d/arandor-deploy:
+# deploy ALL=(ALL) NOPASSWD: /usr/local/sbin/arandor-deploy-restart
+# deploy ALL=(ALL) NOPASSWD: /usr/local/sbin/arandor-deploy-status
+
+systemctl status arandor.service

@@ -1,0 +1,20 @@
+[Unit]
+Description=Arandor Companion App - D&D Companion Application
+After=network.target
+
+[Service]
+Type=simple
+User=deploy
+WorkingDirectory=/srv/arandor
+Environment="HOST=0.0.0.0"
+Environment="PORT=4321"
+Environment="ASTRO_DATABASE_FILE=/srv/arandor/.astro/content.db"
+ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=arandor
+
+[Install]
+WantedBy=multi-user.target
