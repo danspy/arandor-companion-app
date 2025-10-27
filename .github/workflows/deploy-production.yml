@@ -113,20 +113,17 @@ jobs:
               exit 0
             fi
 
-            # If DB does not exist, create an empty DB file as the deploy user
-            if [ ! -f "$DB_PATH" ]; then
-              echo "Database not found at $DB_PATH; creating an empty DB file."
-              touch "$DB_PATH"
-              echo "Created $DB_PATH"
+            # Backup current DB if it exists (timestamped)
+            if [ -f "$DB_PATH" ]; then
+              BACKUP="${DB_PATH}.bak.$(date +%s)"
+              cp -- "$DB_PATH" "$BACKUP"
+              echo "Backed up existing DB to $BACKUP"
+            else
+              echo "No existing database found at $DB_PATH - will be created by migration"
             fi
 
-            # Ensure DB is writable by deploy (we are running as deploy via ssh)
-            # Backup current DB (timestamped)
-            BACKUP="${DB_PATH}.bak.$(date +%s)"
-            cp -- "$DB_PATH" "$BACKUP"
-            echo "Backed up DB to $BACKUP"
-
             # Apply migration if SQL file exists
+            # SQLite will create the database file if it doesn't exist
             if [ -f "$MIGRATE_SQL" ]; then
               echo "Applying SQL migration $MIGRATE_SQL"
               sqlite3 "$DB_PATH" < "$MIGRATE_SQL"
