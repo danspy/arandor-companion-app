@@ -45,7 +45,11 @@ The workflow automatically deploys to your Hetzner server when you push to the `
 The deployment **preserves your database and data** by:
 - Using a Docker volume (`arandor-data`) defined in `docker-compose.yml`
 - The volume persists across container restarts and updates
+- `docker-compose down` removes containers but **NEVER** removes volumes (unless you explicitly use `-v` flag, which we don't)
+- When `docker-compose up -d` starts the new container, it reattaches the existing volume
 - Only the application code is updated, not the database
+
+**Important:** Docker named volumes are persistent storage that exist independently of containers. Your database file at `.astro/content.db` inside the volume will remain intact across all deployments.
 
 ### Server Setup (First Time Only)
 

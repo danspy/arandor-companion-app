@@ -68,6 +68,7 @@ jobs:
             fi
             
             # Stop the running container (if any)
+            # NOTE: This does NOT delete the 'arandor-data' volume, so the database is preserved
             if docker-compose ps -q 2>/dev/null | grep -q .; then
               echo "Stopping existing containers..."
               docker-compose down --remove-orphans
@@ -75,8 +76,13 @@ jobs:
               echo "No existing containers to stop"
             fi
             
+            # Verify the database volume exists (if this is not the first deployment)
+            if docker volume ls | grep -q arandor-data; then
+              echo "✓ Existing database volume found - data will be preserved"
+            fi
+            
             # Start the application with the new image
-            # The volume mount ensures database persistence
+            # The 'arandor-data' volume will be reattached, preserving all database contents
             docker-compose up -d
             
             # Clean up old Docker images to save space
