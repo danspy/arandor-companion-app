@@ -128,7 +128,7 @@ if (questIds.length > 0) {
             <ul class="space-y-2">
               {relatedNPCs.map(npc => (
                 <li class="border-l-2 border-primary-300 dark:border-primary-700 pl-3">
-                  <a href="/npcs" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                  <a href={`/npcs/${npc.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                     {npc.name}
                   </a>
                   <p class="text-sm text-gray-600 dark:text-gray-400">{npc.race} - {npc.relationship}</p>
@@ -151,7 +151,7 @@ if (questIds.length > 0) {
             <ul class="space-y-2">
               {relatedLocations.map(location => (
                 <li class="border-l-2 border-primary-300 dark:border-primary-700 pl-3">
-                  <a href="/locations" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                  <a href={`/locations/${location.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                     {location.name}
                   </a>
                   <p class="text-sm text-gray-600 capitalize">{location.type}</p>
@@ -173,7 +173,7 @@ if (questIds.length > 0) {
             <ul class="space-y-2">
               {relatedCharacters.map(character => (
                 <li class="border-l-2 border-primary-300 dark:border-primary-700 pl-3">
-                  <a href="/characters" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+                  <a href={`/characters/${character.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
                     {character.name}
                   </a>
                   <p class="text-sm text-gray-600 dark:text-gray-400">Level {character.level} {character.race} {character.class}</p>
