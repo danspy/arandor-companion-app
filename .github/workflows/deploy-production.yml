@@ -32,11 +32,11 @@ jobs:
 
       - name: Ensure remote directories exist
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "
             set -e
             mkdir -p /srv/arandor
-            mkdir -p "$(dirname "'"${DB_PATH}"'")"
-          '
+            mkdir -p \"\$(dirname \"${DB_PATH}\")\"
+          "
 
       - name: Sync repository to server (excluding build artifacts and DB)
         run: |
@@ -95,46 +95,46 @@ jobs:
 
       - name: Run DB creation + migration on server (backups + idempotent)
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "
             set -euo pipefail
 
-            DB_PATH="'"${DB_PATH}"'"
-            MIGRATE_SQL="/srv/arandor/scripts/migrate-db.sql"
+            DB_PATH=\"${DB_PATH}\"
+            MIGRATE_SQL=\"/srv/arandor/scripts/migrate-db.sql\"
 
-            echo "DB_PATH=$DB_PATH"
-            echo "MIGRATE_SQL=$MIGRATE_SQL"
+            echo \"DB_PATH=\$DB_PATH\"
+            echo \"MIGRATE_SQL=\$MIGRATE_SQL\"
 
             # Ensure parent directory exists (created earlier, but be defensive)
-            mkdir -p "$(dirname "$DB_PATH")"
+            mkdir -p \"\$(dirname \"\$DB_PATH\")\"
 
             # Ensure sqlite3 is present
             if ! command -v sqlite3 >/dev/null 2>&1; then
-              echo "sqlite3 not installed on server - install sqlite3 (sudo apt update && sudo apt install -y sqlite3) and re-run workflow."
+              echo \"sqlite3 not installed on server - install sqlite3 (sudo apt update && sudo apt install -y sqlite3) and re-run workflow.\"
               exit 0
             fi
 
             # Backup current DB if it exists (timestamped)
-            if [ -f "$DB_PATH" ]; then
-              BACKUP="${DB_PATH}.bak.$(date +%s)"
-              cp -- "$DB_PATH" "$BACKUP"
-              echo "Backed up existing DB to $BACKUP"
+            if [ -f \"\$DB_PATH\" ]; then
+              BACKUP=\"\${DB_PATH}.bak.\$(date +%s)\"
+              cp -- \"\$DB_PATH\" \"\$BACKUP\"
+              echo \"Backed up existing DB to \$BACKUP\"
             else
-              echo "No existing database found at $DB_PATH - will be created by migration"
+              echo \"No existing database found at \$DB_PATH - will be created by migration\"
             fi
 
             # Apply migration if SQL file exists
             # SQLite will create the database file if it doesn't exist
-            if [ -f "$MIGRATE_SQL" ]; then
-              echo "Applying SQL migration $MIGRATE_SQL"
-              sqlite3 "$DB_PATH" < "$MIGRATE_SQL"
+            if [ -f \"\$MIGRATE_SQL\" ]; then
+              echo \"Applying SQL migration \$MIGRATE_SQL\"
+              sqlite3 \"\$DB_PATH\" < \"\$MIGRATE_SQL\"
             else
-              echo "No migration script found; nothing to apply."
+              echo \"No migration script found; nothing to apply.\"
             fi
 
             # Show tables for debugging
-            echo "Current DB tables:"
-            sqlite3 "$DB_PATH" ".tables" || true
-          '
+            echo \"Current DB tables:\"
+            sqlite3 \"\$DB_PATH\" \".tables\" || true
+          "
 
       - name: Install server deps and restart service on remote
         run: |
