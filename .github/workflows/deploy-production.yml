@@ -54,7 +54,6 @@ jobs:
     environment: production
     env:
       DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
-      DB_PATH: ${{ env.DB_PATH }}
     steps:
       - name: Download dist artifact
         uses: actions/download-artifact@v4
