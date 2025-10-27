@@ -33,10 +33,12 @@ The workflow automatically deploys to your Hetzner server when you push to the `
 ### Deployment Process
 
 1. **Build** - Builds the Astro application in server mode using `npm run build`
-2. **Upload Artifact** - Uploads the built `dist/` folder as a GitHub artifact
-3. **Download Artifact** - Downloads the artifact in the deploy job
-4. **Sync** - Uses rsync to sync only the `dist/` directory to `/srv/arandor/dist/` on the server
-5. **Restart** - Restarts the systemd service to apply the new code
+2. **Upload Artifacts** - Uploads the built `dist/` folder and `scripts/` directory as GitHub artifacts
+3. **Download Artifacts** - Downloads the artifacts in the deploy job
+4. **Sync Dist** - Uses rsync to sync the `dist/` directory to `/srv/arandor/dist/` on the server
+5. **Sync Scripts** - Syncs migration scripts to `/srv/arandor/scripts/` on the server
+6. **Run Migration** - Executes database migration to add new tables/columns without affecting existing data
+7. **Restart** - Restarts the systemd service to apply the new code
 
 ### Data Preservation
 
@@ -45,6 +47,7 @@ The deployment **preserves your database and data** by:
 - The database file (`.astro/content.db`) is stored outside the `dist/` directory
 - rsync's `--delete` flag only affects files within `/srv/arandor/dist/`, not the database location
 - The systemd service should be configured to use a database path outside `/srv/arandor/dist/`
+- Database migrations use `CREATE TABLE IF NOT EXISTS` to safely add schema changes without data loss
 
 **Important:** Ensure your systemd service sets the `ASTRO_DATABASE_FILE` environment variable to a location outside `/srv/arandor/dist/`, such as `/srv/arandor/data/.astro/content.db` or `/var/lib/arandor/.astro/content.db`.
 
@@ -139,6 +142,36 @@ sudo journalctl -u arandor.service -f
 - To backup: `cp /srv/arandor/data/.astro/content.db ~/backup.db`
 - To restore: `cp ~/backup.db /srv/arandor/data/.astro/content.db`
 - Ensure the directory exists: `mkdir -p /srv/arandor/data/.astro`
+
+## Database Migrations
+
+The deployment workflow automatically runs database migrations to update the schema without losing data.
+
+### How It Works
+
+1. During deployment, migration scripts in the `scripts/` directory are synced to `/srv/arandor/scripts/`
+2. The `migrate-db.sql` script is run against the production database before restarting the service
+3. Migrations use `CREATE TABLE IF NOT EXISTS` to safely add new tables
+4. Existing data is preserved
+
+### Manual Migration
+
+If you need to run migrations manually:
+
+```bash
+ssh user@server
+cd /srv/arandor
+sqlite3 /srv/arandor/data/.astro/content.db < scripts/migrate-db.sql
+```
+
+### Viewing Database Schema
+
+To inspect the current database schema:
+
+```bash
+ssh user@server
+sqlite3 /srv/arandor/data/.astro/content.db ".schema"
+```
 
 ## Port Configuration
 
