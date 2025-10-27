@@ -235,7 +235,7 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy-pro
 The workflow is designed to preserve existing database data during deployments:
 
 **Build-time vs Runtime Database Separation:**
-- During `npm run build`, a temporary database (`/tmp/astro-build.db`) is created for schema validation
+- During `npm run build`, a temporary database (`/tmp/astro-build.db`) is created for build-time operations (schema creation, seeding, validation)
 - The actual production database (`/srv/arandor/.astro/content.db`) is only used at runtime
 - This ensures builds never overwrite production data
 
