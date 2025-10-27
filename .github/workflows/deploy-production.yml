@@ -59,19 +59,19 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            
+
             # Build in a temporary directory to avoid touching production database
             BUILD_DIR="/tmp/arandor-build-$$"
             echo "Building in temporary directory: $BUILD_DIR"
             mkdir -p "$BUILD_DIR"
-            
+
             # Copy source files to build directory (exclude production .astro directory)
             echo "Copying source files to build directory..."
             rsync -a --exclude=".astro/" --exclude="dist/" --exclude="node_modules/" \
               /srv/arandor/ "$BUILD_DIR/"
-            
+
             cd "$BUILD_DIR"
-            
+
             echo "Installing dependencies..."
             npm install
 
