@@ -20,9 +20,11 @@ const latestEntries = diaryEntries.slice().sort((a, b) =>
   new Date(b.date).getTime() - new Date(a.date).getTime()
 ).slice(0, 3);
 
-const latestLibraryEntries = libraryEntries.slice().sort((a, b) =>
-  new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime()
-).slice(0, 3);
+const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
+  const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+  const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+  return dateB - dateA;
+}).slice(0, 3);
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
@@ -33,7 +35,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 <Layout title="Dashboard">
   <h1 class="text-4xl font-bold mb-8 text-primary-700 dark:text-primary-400">Dashboard</h1>
   
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
     <!-- Active Quests Card -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
       <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Quests</h2>
