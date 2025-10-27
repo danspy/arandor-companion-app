@@ -2,6 +2,17 @@ import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress
 import { hashPassword } from '../src/lib/auth';
 
 export default async function seed() {
+  // Only seed if database is empty (check if User table has any records)
+  // This preserves existing data during deployments while allowing initial setup
+  const existingUsers = await db.select().from(User).limit(1);
+  
+  if (existingUsers.length > 0) {
+    console.log('Database already seeded - skipping seed to preserve existing data');
+    return;
+  }
+
+  console.log('Database is empty - seeding initial data...');
+
   // Seed Diary Entries
   await db.insert(DiaryEntry).values([
     {
