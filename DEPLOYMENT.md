@@ -1,81 +1,30 @@
-# Deployment Instructions for Uberspace
+# Deployment Instructions
 
-This guide explains how to deploy the Arandor Companion App on an Uberspace server using Docker.
+This guide explains how to deploy the Arandor Companion App on a production server or Uberspace.
 
 ## Quick Start
-
-**Local deployment with Docker:**
-```bash
-docker-compose up -d
-# Access at http://localhost:4321
-```
 
 **Uberspace deployment:**
 ```bash
 ssh <username>@<username>.uber.space
 cd ~ && git clone https://github.com/danspy/arandor-companion-app.git
 cd arandor-companion-app
-docker-compose up -d
+npm install
+npm run build
+# Set up as service (see below)
 uberspace web backend set / --http --port 4321
 # Access at https://<username>.uber.space
 ```
 
 ## Prerequisites
 
-- An active Uberspace account (https://uberspace.de/)
-- SSH access to your Uberspace server
-- Docker installed on your Uberspace (if not available, see alternative deployment below)
+- An active Uberspace account (https://uberspace.de/) or any Node.js hosting server
+- SSH access to your server
+- Node.js 20.x or higher
 
 ## Deployment Steps
 
-### Option 1: Docker Deployment (Recommended)
-
-#### 1. Connect to Your Uberspace Server
-
-```bash
-ssh <username>@<username>.uber.space
-```
-
-#### 2. Clone the Repository
-
-```bash
-cd ~
-git clone https://github.com/danspy/arandor-companion-app.git
-cd arandor-companion-app
-```
-
-#### 3. Build and Run with Docker Compose
-
-```bash
-docker-compose up -d
-```
-
-This will:
-- Build the Docker image
-- Start the container
-- Persist data in a Docker volume
-- Run the app on port 4321
-
-#### 4. Set Up Port Forwarding
-
-Uberspace requires you to register your application's port. Run:
-
-```bash
-uberspace web backend set / --http --port 4321
-```
-
-This maps your Uberspace domain to the Docker container's port 4321.
-
-#### 5. Access Your Application
-
-Your app should now be available at:
-```
-https://<username>.uber.space
-```
-
-### Option 2: Native Node.js Deployment (Without Docker)
-
-If Docker is not available on your Uberspace, you can deploy directly:
+### Native Node.js Deployment
 
 #### 1. Connect and Clone
 
@@ -145,31 +94,7 @@ https://<username>.uber.space
 
 ## Managing Your Deployment
 
-### Docker Commands
-
-**View logs:**
-```bash
-docker-compose logs -f
-```
-
-**Stop the application:**
-```bash
-docker-compose down
-```
-
-**Restart the application:**
-```bash
-docker-compose restart
-```
-
-**Update the application:**
-```bash
-git pull
-docker-compose down
-docker-compose up -d --build
-```
-
-### Native Deployment Commands
+### Application Management Commands
 
 **View logs:**
 ```bash
@@ -197,13 +122,8 @@ supervisorctl restart arandor-app
 
 ## Data Persistence
 
-### Docker Deployment
-- Database is stored in a Docker volume named `arandor-data`
-- Data persists across container restarts
-- To backup: `docker cp arandor-companion-app:/app/.astro/content.db ./backup.db`
-
-### Native Deployment
 - Database is stored at `~/.astro/content.db` or in the app directory
+- Data persists across application restarts
 - Backup regularly: `cp ~/.astro/content.db ~/backup.db`
 
 ## Custom Domain (Optional)
@@ -225,23 +145,10 @@ uberspace web backend set yourdomain.com / --http --port 4321
 ## Troubleshooting
 
 ### Port Already in Use
-If port 4321 is already in use, you can change it:
-
-**Docker:** Edit `docker-compose.yml` and change both port mappings:
-```yaml
-ports:
-  - "4322:4321"  # Change external port to 4322
-environment:
-  - PORT=4321    # Keep internal port as 4321
-```
-Then run: `uberspace web backend set / --http --port 4322`
-
-**Native:** Change PORT in `start.sh` and update the web backend accordingly.
+If port 4321 is already in use, you can change it by updating the PORT environment variable in `start.sh` and then running: `uberspace web backend set / --http --port <new-port>`
 
 ### Application Not Starting
-Check logs for errors:
-- Docker: `docker-compose logs`
-- Native: `supervisorctl tail arandor-app`
+Check logs for errors: `supervisorctl tail arandor-app`
 
 ### Database Issues
 If the database isn't being created properly, ensure:
