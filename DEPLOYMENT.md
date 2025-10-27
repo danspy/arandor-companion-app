@@ -224,32 +224,43 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy-pro
 
 1. Checks out the repository
 2. Syncs the complete repository to the server (excluding build artifacts and database)
-3. Runs `npm install` on the server
-4. Runs `npm run build` on the server
-5. Runs database migrations
-6. Copies the systemd service file and restarts the service
-7. Verifies the deployment with a smoke test
+3. Builds the application in a temporary directory to avoid touching the production database
+   - Creates a temporary build directory (`/tmp/arandor-build-*`)
+   - Copies source files to the temp directory
+   - Runs `npm install` and `npm run build` in the temp directory
+   - Copies only the `dist/` folder and `node_modules/` back to production
+   - Deletes the temporary build directory
+4. Runs database migrations (safe, idempotent SQL scripts)
+5. Restarts the systemd service
+6. Verifies the deployment with a smoke test
 
 ### Database Preservation
 
 The workflow is designed to preserve existing database data during deployments:
 
 **Build-time vs Runtime Database Separation:**
-- During `npm run build`, a temporary database (`/tmp/astro-build.db`) is created for build-time operations (schema creation, seeding, validation)
-- The actual production database (`/srv/arandor/.astro/content.db`) is only used at runtime
-- This ensures builds never overwrite production data
+- The build process now runs in a **completely isolated temporary directory** (`/tmp/arandor-build-*`)
+- During build, a temporary database is created for build-time operations (schema creation, validation)
+- Only the compiled `dist/` folder is copied back to the production directory
+- The production database at `/srv/arandor/.astro/content.db` is **never touched** during the build process
+- The actual production database is only used at runtime by the Node.js server
 
 **Additional Safety Measures:**
 - The `.astro/` directory (containing the production database) is excluded from rsync
+- The build happens in isolation, so even if Astro creates temporary files, they don't affect production
 - The seed script (`db/seed.ts`) only populates data if the database is completely empty
 - Database migrations use `CREATE TABLE IF NOT EXISTS` statements to add new schema elements
 - A timestamped backup is created before each migration runs
+
+**Key Fix:**
+Previous versions built directly in `/srv/arandor`, which caused the build process to create an empty `.astro/content.db` file, **overwriting the production database**. The fix ensures the build happens in an isolated temporary directory, completely protecting the production database.
 
 This approach ensures:
 - ✅ Existing data is preserved across all deployments
 - ✅ Schema updates are applied safely via migrations
 - ✅ Fresh installations get seeded with initial data automatically
 - ✅ No data loss during the build process
+- ✅ Production database is completely isolated from build operations
 
 ## Data Persistence
 
