@@ -10,11 +10,12 @@ const libraryEntries = await db.select().from(LibraryEntry);
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
 // Hard-coded, non-editable landmarks you can configure in code
-const configuredLandmarks = [
+/*const configuredLandmarks = [
   { id: 'lm-capital', name: 'Arandor City', type: 'city', mapX: 30, mapY: 50, notes: 'Capital of the realm' },
   { id: 'lm-fort', name: 'Greyfort', type: 'building', mapX: 55, mapY: 45, notes: 'Old fort' },
   { id: 'lm-ancient', name: 'Stone Circle', type: 'wilderness', mapX: 70, mapY: 40, notes: 'Druidic site' }
-];
+];*/
+const configuredLandmarks = [];
 
 // Create a map of location IDs to NPCs
 const locationNPCs = new Map<string, typeof npcs>();
