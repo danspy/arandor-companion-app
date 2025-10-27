@@ -117,6 +117,11 @@ cd ~/arandor-companion-app
 git pull
 npm install
 npm run build
+
+# Run database migration if schema changed
+# This safely adds new tables/columns without affecting existing data
+sqlite3 ~/.astro/content.db < scripts/migrate-db.sql
+
 supervisorctl restart arandor-app
 ```
 
@@ -125,6 +130,28 @@ supervisorctl restart arandor-app
 - Database is stored at `~/.astro/content.db` or in the app directory
 - Data persists across application restarts
 - Backup regularly: `cp ~/.astro/content.db ~/backup.db`
+
+## Database Migrations
+
+When updating to a new version that includes database schema changes:
+
+1. **Backup your database first:**
+   ```bash
+   cp ~/.astro/content.db ~/backup-$(date +%Y%m%d).db
+   ```
+
+2. **Run the migration script:**
+   ```bash
+   cd ~/arandor-companion-app
+   sqlite3 ~/.astro/content.db < scripts/migrate-db.sql
+   ```
+
+3. **Verify the migration:**
+   ```bash
+   sqlite3 ~/.astro/content.db "SELECT name FROM sqlite_master WHERE type='table';"
+   ```
+
+The migration scripts are designed to be idempotent (safe to run multiple times) and will not affect existing data.
 
 ## Custom Domain (Optional)
 

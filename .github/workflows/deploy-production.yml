@@ -37,6 +37,12 @@ jobs:
           name: dist
           path: dist
 
+      - name: Upload migration scripts
+        uses: actions/upload-artifact@v4
+        with:
+          name: scripts
+          path: scripts
+
   deploy:
     name: Deploy to server (rsync -> restart systemd)
     needs: build
@@ -52,6 +58,12 @@ jobs:
           name: dist
           path: ./dist
 
+      - name: Download migration scripts
+        uses: actions/download-artifact@v4
+        with:
+          name: scripts
+          path: ./scripts
+
       - name: Start ssh-agent and add private key
         uses: webfactory/ssh-agent@v0.7.0
         with:
@@ -64,6 +76,28 @@ jobs:
       - name: Sync dist to server
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
+
+      - name: Sync migration scripts to server
+        run: |
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./scripts/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/scripts/"
+
+      - name: Run database migration
+        run: |
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
+            set -e
+            # Ensure the database directory exists
+            mkdir -p /srv/arandor/data/.astro
+            
+            # Run the migration script on the production database
+            # This safely adds missing tables without affecting existing data
+            if [ -f /srv/arandor/scripts/migrate-db.sql ]; then
+              echo "Running database migration..."
+              sqlite3 /srv/arandor/data/.astro/content.db < /srv/arandor/scripts/migrate-db.sql
+              echo "Database migration complete"
+            else
+              echo "Warning: No migration script found, skipping migration"
+            fi
+          '
 
       - name: Install server deps and restart service on remote
         run: |
