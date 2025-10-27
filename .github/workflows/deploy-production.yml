@@ -42,6 +42,9 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: production
+    env:
+      # optional secret: set DEPLOY_DOMAIN in repo secrets to override default
+      DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
     steps:
       - name: Download dist artifact
         uses: actions/download-artifact@v4
@@ -56,35 +59,36 @@ jobs:
 
       - name: Ensure remote directory exists
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist && chown -R $USER:$USER /srv/arandor || true'
-        # expects secrets: SERVER_USER (e.g. deploy) and SERVER_HOST (ip/floating ip)
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist || true'
 
       - name: Sync dist to server
         run: |
-          # rsync the built dist directory to the server as the deploy user
-          # NOTE: Only the dist/ folder is synced. Database files (.astro/content.db) are NOT affected.
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
 
       - name: Install server deps and restart service on remote
-        # run non-interactive; relies on passwordless sudo for the restart wrapper scripts
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            # Install production deps in the server bundle as the deploy user (if package.json exists)
             if [ -d /srv/arandor/dist/server ] && [ -f /srv/arandor/dist/server/package.json ]; then
               cd /srv/arandor/dist/server
               npm ci --production || true
             fi
 
-            # Restart the service using the root-owned wrapper exposed via sudoers (must be NOPASSWD for CI)
+            # Use the root-owned wrapper scripts exposed via sudoers (must be NOPASSWD for CI)
             sudo -n /usr/local/sbin/arandor-deploy-restart
 
-            # Optional: print service status for diagnostics (uses the status wrapper)
+            # Print service status for diagnostics via the status wrapper
             sudo -n /usr/local/sbin/arandor-deploy-status | sed -n "1,60p"
           '
 
       - name: Verify site (quick smoke test)
         run: |
-          # check that the remote service is listening (via ssh) and that the public HTTPS returns 200 (use -k if needed)
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'sudo -n /usr/local/sbin/arandor-deploy-status | sed -n "1,10p"'
-          curl -I --max-time 10 https://${{ secrets.DEPLOY_DOMAIN }}
+          # Default to arandor.app if DEPLOY_DOMAIN secret is not set
+          DEPLOY_DOMAIN="${DEPLOY_DOMAIN:-arandor.app}"
+          echo "Smoke test domain: $DEPLOY_DOMAIN"
+
+          # show remote service status (non-interactive)
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo -n /usr/local/sbin/arandor-deploy-status | sed -n '1,10p'"
+
+          # request the public HTTPS URL
+          curl -I --max-time 10 "https://${DEPLOY_DOMAIN}"
