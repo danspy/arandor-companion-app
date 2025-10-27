@@ -16,7 +16,7 @@ env:
 
 jobs:
   deploy:
-    name: Deploy to server (rsync -> build -> migrations -> restart)
+    name: Deploy to server (rsync -> build -> restart)
     runs-on: ubuntu-latest
     environment: production
     env:
