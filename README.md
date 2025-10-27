@@ -52,6 +52,8 @@ npm run build
 
 The built site will be in the `dist/` directory.
 
+**Note:** The build process uses a temporary database for build-time operations. Your production database (when deployed) is kept separate and is never modified during builds, ensuring data preservation across deployments.
+
 ### Preview Production Build
 
 ```bash

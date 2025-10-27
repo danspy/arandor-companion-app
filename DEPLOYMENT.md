@@ -174,6 +174,7 @@ git pull
 npm install
 
 # Rebuild the application
+# Note: This builds using a temporary database and won't affect your production data
 npm run build
 
 # Run database migration if schema changed
@@ -231,10 +232,24 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy-pro
 
 ### Database Preservation
 
-The workflow is designed to preserve existing database data:
-- The `.astro/` directory (containing the database) is excluded from rsync
-- Database migrations are run using `CREATE TABLE IF NOT EXISTS` statements
-- A backup is created before each migration
+The workflow is designed to preserve existing database data during deployments:
+
+**Build-time vs Runtime Database Separation:**
+- During `npm run build`, a temporary database (`/tmp/astro-build.db`) is created for build-time operations (schema creation, seeding, validation)
+- The actual production database (`/srv/arandor/.astro/content.db`) is only used at runtime
+- This ensures builds never overwrite production data
+
+**Additional Safety Measures:**
+- The `.astro/` directory (containing the production database) is excluded from rsync
+- The seed script (`db/seed.ts`) only populates data if the database is completely empty
+- Database migrations use `CREATE TABLE IF NOT EXISTS` statements to add new schema elements
+- A timestamped backup is created before each migration runs
+
+This approach ensures:
+- ✅ Existing data is preserved across all deployments
+- ✅ Schema updates are applied safely via migrations
+- ✅ Fresh installations get seeded with initial data automatically
+- ✅ No data loss during the build process
 
 ## Data Persistence
 
