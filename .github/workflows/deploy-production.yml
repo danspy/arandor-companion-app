@@ -60,13 +60,13 @@ jobs:
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
             cd /srv/arandor
-            
+
             echo "Installing dependencies..."
             npm install
-            
+
             echo "Building application..."
             npm run build
-            
+
             echo "Build completed successfully"
           '
 
@@ -120,17 +120,17 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            
+
             # Copy systemd service file to system location (requires sudo)
             sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
-            
+
             # Reload systemd daemon and restart service
             sudo systemctl daemon-reload
             sudo systemctl enable arandor.service
             sudo systemctl restart arandor.service
-            
+
             echo "Service restarted successfully"
-            
+
             # Print service status for diagnostics
             sudo systemctl status arandor.service --no-pager -l | head -60
           '
