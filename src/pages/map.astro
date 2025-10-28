@@ -466,7 +466,6 @@ libraryEntries.forEach(entry => {
     // For each referenced location, try to read the existing pin's transform (preferred),
     // otherwise fall back to location.mapX/mapY from server data.
     const points = [];
-    const seen = new Set();
     sequence.forEach(({ locId }) => {
       const pin = document.querySelector(`[data-location-id="${locId}"]`);
       let xPct = null, yPct = null;
@@ -493,11 +492,7 @@ libraryEntries.forEach(entry => {
       }
 
       if (xPct != null && yPct != null) {
-        const key = `${Math.round(xPct*100)/100}:${Math.round(yPct*100)/100}`;
-        if (!seen.has(key)) {
-          seen.add(key);
-          points.push({ x: xPct, y: yPct });
-        }
+        points.push({ x: xPct, y: yPct });
       }
     });
 
