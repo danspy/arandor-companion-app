@@ -98,6 +98,26 @@ libraryEntries.forEach(entry => {
             <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
           </button>
           {isLoggedIn && (
+            <button
+              id="toggleManualPath"
+              class="bg-white/90 dark:bg-black/90 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition text-sm flex items-center gap-2 hidden"
+              title="Toggle manual path mode"
+            >
+              <svg class="w-4 h-4 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+              <span class="hidden sm:inline" id="manualPathToggleText">Manual Path</span>
+            </button>
+          )}
+          {isLoggedIn && (
+            <button
+              id="clearManualPath"
+              class="bg-red-600 text-white p-2 rounded-lg hover:bg-red-700 transition text-sm flex items-center gap-2 hidden"
+              title="Clear manual path connections"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+              <span class="hidden sm:inline">Clear Path</span>
+            </button>
+          )}
+          {isLoggedIn && (
             <>
               <button 
                 id="toggleEditMode"
@@ -261,6 +281,11 @@ libraryEntries.forEach(entry => {
   let currentMapImage = null;
   let isSidebarOpen = false;
   
+  // Manual path drawing state
+  let manualPathMode = false;
+  let firstSelectedPin = null;
+  let manualConnections = [];
+  
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
@@ -305,6 +330,31 @@ libraryEntries.forEach(entry => {
   // removed heroPathSvg and landmarkPins; using SVG groups instead
   const heroPathToggleBtn = document.getElementById('toggleHeroPath');
   const heroPathToggleText = document.getElementById('heroPathToggleText');
+  const toggleManualPathBtn = document.getElementById('toggleManualPath');
+  const manualPathToggleText = document.getElementById('manualPathToggleText');
+  const clearManualPathBtn = document.getElementById('clearManualPath');
+
+  // Load manual connections from localStorage
+  function loadManualConnections() {
+    try {
+      const saved = localStorage.getItem('heroPathManualConnections');
+      if (saved) {
+        manualConnections = JSON.parse(saved);
+      }
+    } catch (e) {
+      console.error('Failed to load manual connections:', e);
+      manualConnections = [];
+    }
+  }
+
+  // Save manual connections to localStorage
+  function saveManualConnections() {
+    try {
+      localStorage.setItem('heroPathManualConnections', JSON.stringify(manualConnections));
+    } catch (e) {
+      console.error('Failed to save manual connections:', e);
+    }
+  }
 
   // Make map fluid: container fills available area and SVG uses a 0-100 viewBox
   function applyMapSize() {
@@ -441,9 +491,105 @@ libraryEntries.forEach(entry => {
     document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
   }, { passive: true });
 
-  // Build hero path from diary entries connected to locations
+  // Build hero path from diary entries connected to locations OR manual connections
   function buildHeroPath() {
     if (!heroPath) return;
+    
+    // Check if we're in manual path mode and have manual connections
+    if (manualPathMode && manualConnections.length > 0) {
+      buildManualHeroPath();
+      return;
+    }
+    
+    // Otherwise, build automatic path from diary entries
+    buildAutomaticHeroPath();
+  }
+
+  // Build hero path from manual connections
+  function buildManualHeroPath() {
+    if (!heroPath || !pathGroup) return;
+    
+    // Clear existing path
+    pathGroup.innerHTML = '';
+    
+    if (manualConnections.length === 0) {
+      return;
+    }
+    
+    // Draw each connection as a separate line
+    manualConnections.forEach(([fromId, toId]) => {
+      const fromPin = document.querySelector(`[data-location-id="${fromId}"]`);
+      const toPin = document.querySelector(`[data-location-id="${toId}"]`);
+      
+      if (fromPin && toPin) {
+        const fromCoords = getPinCoordinates(fromPin, fromId);
+        const toCoords = getPinCoordinates(toPin, toId);
+        
+        if (fromCoords && toCoords) {
+          // Create a line element for this connection
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', fromCoords.x);
+          line.setAttribute('y1', fromCoords.y);
+          line.setAttribute('x2', toCoords.x);
+          line.setAttribute('y2', toCoords.y);
+          line.setAttribute('stroke', 'rgba(250,100,0,0.95)');
+          line.setAttribute('stroke-width', '0.3');
+          line.setAttribute('stroke-dasharray', '1 1.5');
+          line.setAttribute('stroke-linecap', 'round');
+          line.setAttribute('opacity', '0.95');
+          line.setAttribute('class', 'manual-path-line');
+          pathGroup.appendChild(line);
+        }
+      }
+    });
+    
+    console.debug(`Manual hero path: drew ${manualConnections.length} connections`);
+  }
+
+  // Helper function to get pin coordinates
+  function getPinCoordinates(pin, locationId) {
+    let xPct = null, yPct = null;
+    
+    if (pin) {
+      // Try to read SVG transform translate(x y)
+      const t = pin.getAttribute('transform') || '';
+      const m = t.match(/translate\(([^)]+)\)/);
+      if (m) {
+        const parts = m[1].trim().split(/[ ,]+/).map(Number);
+        if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+          xPct = parts[0];
+          yPct = parts[1];
+        }
+      }
+    }
+    
+    // fallback to server-side coordinates if pin transform not found
+    if ((xPct == null || yPct == null) && locations) {
+      const loc = locations.find(l => l.id === locationId);
+      if (loc && loc.mapX != null && loc.mapY != null) {
+        xPct = Number(loc.mapX);
+        yPct = Number(loc.mapY);
+      }
+    }
+    
+    if (xPct != null && yPct != null) {
+      return { x: xPct, y: yPct };
+    }
+    
+    return null;
+  }
+
+  // Build hero path from diary entries (automatic mode)
+  function buildAutomaticHeroPath() {
+    if (!heroPath || !pathGroup) return;
+    
+    // Clear any manual path lines
+    pathGroup.querySelectorAll('.manual-path-line').forEach(line => line.remove());
+    
+    // Make sure heroPath polyline is in the pathGroup
+    if (!pathGroup.contains(heroPath)) {
+      pathGroup.appendChild(heroPath);
+    }
     // diaryEntries is passed in from the server
     const entries = (diaryEntries || []).slice();
     // Sort chronologically by session then date
@@ -469,34 +615,13 @@ libraryEntries.forEach(entry => {
     const seen = new Set();
     sequence.forEach(({ locId }) => {
       const pin = document.querySelector(`[data-location-id="${locId}"]`);
-      let xPct = null, yPct = null;
-      if (pin) {
-        // Try to read SVG transform translate(x y)
-        const t = pin.getAttribute('transform') || '';
-        const m = t.match(/translate\(([^)]+)\)/);
-        if (m) {
-          const parts = m[1].trim().split(/[ ,]+/).map(Number);
-          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            xPct = parts[0];
-            yPct = parts[1];
-          }
-        }
-      }
-
-      // fallback to server-side coordinates if pin not found
-      if ((xPct == null || yPct == null) && locations) {
-        const loc = locations.find(l => l.id === locId);
-        if (loc && loc.mapX != null && loc.mapY != null) {
-          xPct = Number(loc.mapX);
-          yPct = Number(loc.mapY);
-        }
-      }
-
-      if (xPct != null && yPct != null) {
-        const key = `${Math.round(xPct*100)/100}:${Math.round(yPct*100)/100}`;
+      const coords = getPinCoordinates(pin, locId);
+      
+      if (coords) {
+        const key = `${Math.round(coords.x*100)/100}:${Math.round(coords.y*100)/100}`;
         if (!seen.has(key)) {
           seen.add(key);
-          points.push({ x: xPct, y: yPct });
+          points.push(coords);
         }
       }
     });
@@ -518,11 +643,120 @@ libraryEntries.forEach(entry => {
   // Toggle visibility handler
   if (heroPathToggleBtn) {
     heroPathToggleBtn.addEventListener('click', () => {
-      if (!heroPath) return;
-      const hidden = heroPath.style.display === 'none' || heroPath.getAttribute('data-hidden') === 'true';
-      heroPath.style.display = hidden ? 'block' : 'none';
-      heroPath.setAttribute('data-hidden', hidden ? 'false' : 'true');
+      if (!pathGroup) return;
+      const hidden = pathGroup.style.display === 'none' || pathGroup.getAttribute('data-hidden') === 'true';
+      pathGroup.style.display = hidden ? 'block' : 'none';
+      pathGroup.setAttribute('data-hidden', hidden ? 'false' : 'true');
       if (heroPathToggleText) heroPathToggleText.textContent = hidden ? 'Hide Path' : 'Show Path';
+    });
+  }
+
+  // Handle manual path click - connect two pins
+  function handleManualPathClick(locationId, pinElement) {
+    if (!firstSelectedPin) {
+      // First pin selected
+      firstSelectedPin = { id: locationId, element: pinElement };
+      // Add visual feedback
+      pinElement.classList.add('pin-selected-for-path');
+      // Show notification
+      showNotification('Click another pin to connect', 'info');
+    } else {
+      // Second pin selected - create connection
+      const fromId = firstSelectedPin.id;
+      const toId = locationId;
+      
+      if (fromId === toId) {
+        // Same pin clicked - deselect
+        firstSelectedPin.element.classList.remove('pin-selected-for-path');
+        firstSelectedPin = null;
+        showNotification('Selection cleared', 'info');
+        return;
+      }
+      
+      // Check if connection already exists
+      const connectionExists = manualConnections.some(
+        ([from, to]) => (from === fromId && to === toId) || (from === toId && to === fromId)
+      );
+      
+      if (connectionExists) {
+        // Remove the connection
+        manualConnections = manualConnections.filter(
+          ([from, to]) => !((from === fromId && to === toId) || (from === toId && to === fromId))
+        );
+        showNotification('Connection removed', 'success');
+      } else {
+        // Add new connection
+        manualConnections.push([fromId, toId]);
+        showNotification('Connection created', 'success');
+      }
+      
+      // Clear selection
+      firstSelectedPin.element.classList.remove('pin-selected-for-path');
+      firstSelectedPin = null;
+      
+      // Save and rebuild path
+      saveManualConnections();
+      buildHeroPath();
+    }
+  }
+
+  // Show notification (simple toast message)
+  function showNotification(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-24 right-6 z-50 px-4 py-3 rounded-lg shadow-lg text-white transition-opacity duration-300 ${
+      type === 'success' ? 'bg-green-600' :
+      type === 'error' ? 'bg-red-600' :
+      'bg-blue-600'
+    }`;
+    toast.textContent = message;
+    toast.style.opacity = '0';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => toast.style.opacity = '1', 10);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      setTimeout(() => toast.remove(), 300);
+    }, 2000);
+  }
+
+  // Toggle manual path mode
+  if (toggleManualPathBtn) {
+    toggleManualPathBtn.addEventListener('click', () => {
+      manualPathMode = !manualPathMode;
+      
+      if (manualPathMode) {
+        manualPathToggleText.textContent = 'Auto Path';
+        toggleManualPathBtn.classList.add('bg-purple-600', 'text-white');
+        toggleManualPathBtn.classList.remove('bg-white/90', 'dark:bg-black/90');
+        clearManualPathBtn?.classList.remove('hidden');
+        showNotification('Manual path mode enabled. Click pins to connect them.', 'info');
+      } else {
+        manualPathToggleText.textContent = 'Manual Path';
+        toggleManualPathBtn.classList.remove('bg-purple-600', 'text-white');
+        toggleManualPathBtn.classList.add('bg-white/90', 'dark:bg-black/90');
+        clearManualPathBtn?.classList.add('hidden');
+        
+        // Clear any pending selection
+        if (firstSelectedPin) {
+          firstSelectedPin.element.classList.remove('pin-selected-for-path');
+          firstSelectedPin = null;
+        }
+      }
+      
+      // Rebuild path with current mode
+      buildHeroPath();
+    });
+  }
+
+  // Clear manual path connections
+  if (clearManualPathBtn) {
+    clearManualPathBtn.addEventListener('click', () => {
+      if (confirm('Clear all manual path connections?')) {
+        manualConnections = [];
+        saveManualConnections();
+        buildHeroPath();
+        showNotification('Manual path cleared', 'success');
+      }
     });
   }
 
@@ -639,11 +873,18 @@ libraryEntries.forEach(entry => {
     tooltip.addEventListener('mouseleave', hideTooltip);
 
     g.addEventListener('click', (e) => {
-      if (!draggedPin || !editMode) {
-        document.querySelectorAll('.location-pin').forEach(p => p.classList && p.classList.remove('pin-active'));
-        // mark as active visually via class on SVG group
-        if (g.classList) g.classList.add('pin-active');
-        showLocationDetails(location);
+      if (!draggedPin) {
+        // In manual path mode and edit mode, handle connection creation
+        if (editMode && manualPathMode) {
+          e.stopPropagation();
+          handleManualPathClick(location.id, g);
+        } else {
+          // Normal behavior: show location details
+          document.querySelectorAll('.location-pin').forEach(p => p.classList && p.classList.remove('pin-active'));
+          // mark as active visually via class on SVG group
+          if (g.classList) g.classList.add('pin-active');
+          showLocationDetails(location);
+        }
       }
     });
 
@@ -833,10 +1074,34 @@ libraryEntries.forEach(entry => {
       if (selectedLocationId) {
         coordinateEditor?.classList.remove('hidden');
       }
+      // Show manual path button in edit mode
+      toggleManualPathBtn?.classList.remove('hidden');
     } else {
       editModeText.textContent = 'Enable Edit Mode';
       mapContainer.style.cursor = 'default';
       coordinateEditor?.classList.add('hidden');
+      // Hide manual path controls when exiting edit mode
+      toggleManualPathBtn?.classList.add('hidden');
+      clearManualPathBtn?.classList.add('hidden');
+      
+      // Exit manual path mode if active
+      if (manualPathMode) {
+        manualPathMode = false;
+        if (manualPathToggleText) {
+          manualPathToggleText.textContent = 'Manual Path';
+        }
+        toggleManualPathBtn?.classList.remove('bg-purple-600', 'text-white');
+        toggleManualPathBtn?.classList.add('bg-white/90', 'dark:bg-black/90');
+        
+        // Clear any pending selection
+        if (firstSelectedPin) {
+          firstSelectedPin.element.classList.remove('pin-selected-for-path');
+          firstSelectedPin = null;
+        }
+        
+        // Rebuild path in auto mode
+        buildHeroPath();
+      }
     }
   });
 
@@ -1159,6 +1424,8 @@ libraryEntries.forEach(entry => {
   });
 
   // Initial render and setup
+  // Load manual connections from localStorage
+  loadManualConnections();
   // Apply configured map size and initial fitting
   applyMapSize();
   renderLandmarks();
@@ -1222,6 +1489,18 @@ libraryEntries.forEach(entry => {
     transform-origin: 50% 50%;
     transform: scale(1.3);
     /* add a subtle glow via filter if desired (SVG filter can be added later) */
+  }
+
+  /* Pin selected for manual path connection */
+  .location-pin.pin-selected-for-path {
+    transform: scale(1.2);
+    z-index: 70;
+  }
+
+  .location-pin.pin-selected-for-path circle {
+    stroke: #9333ea !important; /* purple-600 */
+    stroke-width: 0.5 !important;
+    filter: drop-shadow(0 0 3px rgba(147, 51, 234, 0.8));
   }
   
   .pin-tooltip a {
