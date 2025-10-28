@@ -442,6 +442,8 @@ libraryEntries.forEach(entry => {
   }, { passive: true });
 
   // Build hero path from diary entries connected to locations
+  // This connects ALL location types (city, dungeon, wilderness, building, other)
+  // that are referenced in diary entries, regardless of their type
   function buildHeroPath() {
     if (!heroPath) return;
     // diaryEntries is passed in from the server
@@ -456,7 +458,8 @@ libraryEntries.forEach(entry => {
       return dA - dB;
     });
 
-    // Build ordered list of location ids from diary entries (all referenced locations)
+    // Build ordered list of location ids from diary entries
+    // Note: ALL location types are included, not just cities
     const sequence = [];
     entries.forEach(entry => {
       const locIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];

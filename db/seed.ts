@@ -42,6 +42,48 @@ export default async function seed() {
       questIds: ['1'],
       createdAt: new Date('2025-10-22'),
       updatedAt: new Date('2025-10-22'),
+    },
+    {
+      id: '3',
+      date: '2025-10-29',
+      title: 'The Merchant\'s Request',
+      content: 'Met with a merchant at his shop who had information about the amulet. He directed us to seek the wisdom of the druids in the forest.',
+      session: 3,
+      tags: ['investigation', 'shopping'],
+      npcIds: ['2'],
+      locationIds: ['3'],
+      characterIds: ['1', '2'],
+      questIds: ['1'],
+      createdAt: new Date('2025-10-29'),
+      updatedAt: new Date('2025-10-29'),
+    },
+    {
+      id: '4',
+      date: '2025-11-05',
+      title: 'Journey to the Forest',
+      content: 'Traveled through the wilderness to reach the ancient druid grove. The journey was peaceful but we sensed we were being watched.',
+      session: 4,
+      tags: ['travel', 'nature'],
+      npcIds: [],
+      locationIds: ['4'],
+      characterIds: ['1', '2'],
+      questIds: ['1'],
+      createdAt: new Date('2025-11-05'),
+      updatedAt: new Date('2025-11-05'),
+    },
+    {
+      id: '5',
+      date: '2025-11-12',
+      title: 'Return to the City',
+      content: 'Armed with knowledge from the druids, we returned to Neverwinter to prepare for the final confrontation.',
+      session: 5,
+      tags: ['preparation', 'city'],
+      npcIds: [],
+      locationIds: ['5'],
+      characterIds: ['1', '2'],
+      questIds: ['1'],
+      createdAt: new Date('2025-11-12'),
+      updatedAt: new Date('2025-11-12'),
     }
   ]);
 
@@ -135,7 +177,7 @@ export default async function seed() {
     }
   ]);
 
-  // Seed Locations
+  // Seed Locations - demonstrating all location types connecting via hero path
   await db.insert(Location).values([
     {
       id: '1',
@@ -147,7 +189,7 @@ export default async function seed() {
       notes: 'Our current base of operations',
       mapX: 30,
       mapY: 36,
-      visibleOnMap: true, // Make visible for demo
+      visibleOnMap: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     },
@@ -161,7 +203,49 @@ export default async function seed() {
       notes: 'Found goblin presence and a mysterious amulet',
       mapX: 28,
       mapY: 42,
-      visibleOnMap: true, // Make visible for demo
+      visibleOnMap: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: '3',
+      name: 'Curious Merchant Shop',
+      type: 'building',
+      description: 'A mysterious shop filled with rare and magical items',
+      region: 'Waterdeep Market District',
+      visited: true,
+      notes: 'The merchant had valuable information about the amulet',
+      mapX: 32,
+      mapY: 38,
+      visibleOnMap: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: '4',
+      name: 'Druid Grove',
+      type: 'wilderness',
+      description: 'An ancient grove deep in the forest, protected by druids',
+      region: 'Neverwinter Wood',
+      visited: true,
+      notes: 'The druids provided crucial knowledge about the amulet',
+      mapX: 45,
+      mapY: 30,
+      visibleOnMap: true,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
+    {
+      id: '5',
+      name: 'Neverwinter',
+      type: 'city',
+      description: 'The Jewel of the North, a vibrant city known for its craftsmen',
+      region: 'Sword Coast North',
+      visited: true,
+      notes: 'Returned here to prepare for the final battle',
+      mapX: 50,
+      mapY: 25,
+      visibleOnMap: true,
       createdAt: new Date(),
       updatedAt: new Date(),
     }
