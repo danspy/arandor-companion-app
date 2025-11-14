@@ -29,7 +29,7 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
     )}
   </div>
 
-  <div id="entriesList" class="space-y-6">
+  <div id="entriesList" class="grid md:grid-cols-2 gap-6">
     {sortedEntries.map(entry => (
       <article class="bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id}>
         {entry.coverImageUrl && (
