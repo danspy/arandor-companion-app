@@ -1,708 +1,318 @@
-# Arandor Companion App - Complete Architecture Guide
+# Arandor Companion App - Architecture Deep Dive
 
-This document provides a comprehensive overview of the Arandor Companion App, explaining how everything works, where data is stored, and how to set up the database on a server.
+This document explains how the app actually works, which files are needed, and how data storage functions.
 
 ## Table of Contents
-
-1. [Application Overview](#application-overview)
-2. [Technology Stack](#technology-stack)
-3. [Project Structure](#project-structure)
-4. [Database Architecture](#database-architecture)
-5. [Data Storage Locations](#data-storage-locations)
-6. [API Architecture](#api-architecture)
-7. [Authentication System](#authentication-system)
-8. [Server Setup Guide](#server-setup-guide)
-9. [Database Setup on Server](#database-setup-on-server)
-10. [Configuration Files](#configuration-files)
-11. [Troubleshooting](#troubleshooting)
+1. [How the App Works](#how-the-app-works)
+2. [Essential Files](#essential-files)
+3. [How Astro DB Really Works](#how-astro-db-really-works)
+4. [Files That Can Be Removed](#files-that-can-be-removed)
+5. [Database Setup Guide](#database-setup-guide)
+6. [Understanding the Build Process](#understanding-the-build-process)
 
 ---
 
-## Application Overview
+## How the App Works
 
-The Arandor Companion App is a D&D (Dungeons & Dragons) campaign companion application that helps players and Dungeon Masters track:
+The Arandor Companion App is a **server-rendered Astro application** that uses Astro DB (SQLite) for data persistence. Here's the key insight:
 
-- **Adventure Diary** - Session notes and journal entries
-- **Quests** - Active, completed, and failed quests with priority levels
-- **Player Characters** - Party members with stats, levels, and D&D Beyond integration
-- **NPCs (Non-Player Characters)** - Characters with relationships (ally/neutral/enemy)
-- **Locations** - Cities, dungeons, and other places with map coordinates
-- **Campaign Progress** - Party level progression tracking
-- **Factions** - Track relationships with various factions
-- **Library** - Knowledge base with markdown content and tags
+### The Database Path is BAKED INTO the Build
 
----
-
-## Technology Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Framework | [Astro.js 5.x](https://astro.build/) | Full-stack web framework with SSR |
-| Styling | [Tailwind CSS 3.x](https://tailwindcss.com/) | Utility-first CSS framework |
-| Database | [Astro DB](https://docs.astro.build/en/guides/astro-db/) (SQLite) | Embedded SQL database |
-| Runtime | [Node.js 20+](https://nodejs.org/) | Server runtime |
-| Language | TypeScript | Type-safe development |
-
----
-
-## Project Structure
-
-```
-arandor-companion-app/
-├── db/                          # Database configuration
-│   ├── config.ts                # Database schema definitions (tables/columns)
-│   └── seed.ts                  # Initial data seeding script
-├── scripts/                     # Server management scripts
-│   ├── update-database.sh       # Manual database migration script
-│   ├── migrate-db.sql           # SQL migration definitions
-│   ├── arandor-deploy-restart   # Systemd restart helper
-│   └── arandor-deploy-status    # Systemd status helper
-├── src/
-│   ├── layouts/                 # Page layout components
-│   │   └── Layout.astro         # Main layout with navigation
-│   ├── lib/                     # Shared libraries
-│   │   ├── auth.ts              # Authentication utilities
-│   │   └── middleware.ts        # API middleware
-│   ├── pages/                   # Route pages
-│   │   ├── api/                 # REST API endpoints
-│   │   │   ├── auth/            # Login/logout endpoints
-│   │   │   ├── diary/           # Diary entry CRUD
-│   │   │   ├── quests/          # Quest CRUD
-│   │   │   ├── characters/      # Character CRUD
-│   │   │   ├── npcs/            # NPC CRUD
-│   │   │   ├── locations/       # Location CRUD
-│   │   │   ├── library/         # Library entry CRUD
-│   │   │   ├── factions/        # Faction CRUD
-│   │   │   └── campaign-progress/ # Progress CRUD
-│   │   ├── characters/          # Character pages
-│   │   ├── diary/               # Diary pages
-│   │   ├── library/             # Library pages
-│   │   ├── locations/           # Location pages
-│   │   ├── npcs/                # NPC pages
-│   │   ├── index.astro          # Dashboard
-│   │   ├── quests.astro         # Quests page
-│   │   ├── map.astro            # Interactive map
-│   │   └── login.astro          # Login page
-│   ├── styles/                  # Global CSS
-│   ├── types.ts                 # TypeScript type definitions
-│   └── utils/                   # Utility functions
-├── public/                      # Static assets (images, map)
-├── astro.config.mjs             # Astro configuration
-├── tailwind.config.mjs          # Tailwind configuration
-├── package.json                 # Dependencies and scripts
-├── arandor.service              # Systemd service file
-├── DEPLOYMENT.md                # Deployment instructions
-└── tsconfig.json                # TypeScript configuration
-```
-
----
-
-## Database Architecture
-
-### Schema Overview
-
-The app uses **Astro DB** which wraps SQLite for data persistence. The schema is defined in `db/config.ts`:
-
-#### Tables
-
-| Table | Description | Key Fields |
-|-------|-------------|------------|
-| `DiaryEntry` | Session notes and journal entries | id, date, title, content, session, tags, linked entities |
-| `Quest` | Campaign quests | id, title, description, status, priority |
-| `Character` | Player characters | id, name, class, level, race, player, stats |
-| `NPC` | Non-player characters | id, name, race, relationship, location |
-| `Location` | Places in the world | id, name, type, region, visited, mapX, mapY |
-| `User` | Admin accounts | id, username, passwordHash |
-| `CampaignProgress` | Party level tracking | id, currentLevel, progressPercent |
-| `LibraryEntry` | Knowledge base entries | id, title, content (markdown), tags |
-| `Faction` | Faction relationships | id, name, status, progress |
-
-### Database Schema Details
-
-```typescript
-// DiaryEntry - Campaign session notes
-{
-  id: text (primary key),
-  date: text,
-  title: text,
-  content: text,
-  session: number,
-  tags: json (array),
-  coverImageUrl: text (optional),
-  npcIds: json (array),          // Links to NPCs
-  locationIds: json (array),     // Links to Locations
-  characterIds: json (array),    // Links to Characters
-  questIds: json (array),        // Links to Quests
-  createdAt: date,
-  updatedAt: date
-}
-
-// Quest - Campaign objectives
-{
-  id: text (primary key),
-  title: text,
-  description: text,
-  status: text,    // 'active' | 'completed' | 'failed'
-  priority: text,  // 'high' | 'medium' | 'low'
-  createdAt: date,
-  updatedAt: date
-}
-
-// Character - Party members
-{
-  id: text (primary key),
-  name: text,
-  class: text,
-  level: number,
-  race: text,
-  player: text,
-  avatarUrl: text (optional),
-  dndbeyondUrl: text (optional),
-  stats: json (optional),        // STR, DEX, CON, INT, WIS, CHA
-  gender: text (optional),
-  alignment: text (optional),
-  background: text (optional),
-  age: number (optional),
-  height: text (optional),
-  weight: number (optional),
-  eyes: text (optional),
-  skin: text (optional),
-  hair: text (optional),
-  createdAt: date,
-  updatedAt: date
-}
-
-// NPC - Non-player characters
-{
-  id: text (primary key),
-  name: text,
-  race: text,
-  occupation: text (optional),
-  location: text (optional),     // Legacy text field
-  locationId: text (optional),   // Foreign key to Location
-  description: text,
-  relationship: text,  // 'ally' | 'neutral' | 'enemy'
-  notes: text (optional),
-  avatarUrl: text (optional),
-  createdAt: date,
-  updatedAt: date
-}
-
-// Location - Places in the world
-{
-  id: text (primary key),
-  name: text,
-  type: text,          // 'city' | 'dungeon' | 'wilderness' | 'building' | 'other'
-  description: text,
-  region: text (optional),
-  visited: boolean,
-  notes: text (optional),
-  mapX: number (optional),       // Map X coordinate (0-100%)
-  mapY: number (optional),       // Map Y coordinate (0-100%)
-  visibleOnMap: boolean,
-  createdAt: date,
-  updatedAt: date
-}
-
-// User - Admin accounts
-{
-  id: text (primary key),
-  username: text (unique),
-  passwordHash: text,            // PBKDF2 with SHA-512
-  createdAt: date
-}
-
-// CampaignProgress - Level tracking
-{
-  id: text (primary key),
-  currentLevel: number,
-  progressPercent: number,       // 0-100
-  createdAt: date,
-  updatedAt: date
-}
-
-// LibraryEntry - Knowledge base
-{
-  id: text (primary key),
-  title: text,
-  content: text,                 // Markdown content
-  tags: json (array),
-  locationId: text (optional),   // Foreign key to Location
-  createdAt: date,
-  updatedAt: date
-}
-
-// Faction - Faction relationships
-{
-  id: text (primary key),
-  name: text,
-  status: text,    // 'enemy' | 'suspicious' | 'neutral' | 'friendly' | 'respectful'
-  progress: number,              // 0-100
-  createdAt: date,
-  updatedAt: date
-}
-```
-
----
-
-## Data Storage Locations
-
-### Development Environment
-
-| What | Where | Notes |
-|------|-------|-------|
-| Database file | `.astro/content.db` | SQLite database in project root |
-| Static assets | `public/` | Images, map backgrounds |
-| Build output | `dist/` | Generated during `npm run build` |
-
-### Production Environment
-
-| What | Where | Notes |
-|------|-------|-------|
-| Database file | `/srv/arandor/.astro/content.db` | **PERSISTS across deployments** |
-| Application code | `/srv/arandor/dist/` | Compiled Astro output |
-| Static assets | `/srv/arandor/dist/client/` | Served by Node.js |
-| Backups | `/srv/arandor/.astro/backups/` | Created by update script |
-| Node modules | `/srv/arandor/node_modules/` | Dependencies |
-
-### Environment Variables
+When you run `npm run build`, the `ASTRO_DATABASE_FILE` environment variable value is **compiled into** the JavaScript output. This means:
 
 ```bash
-# Development (default)
-ASTRO_DATABASE_FILE=.astro/content.db
+# During build:
+ASTRO_DATABASE_FILE=/tmp/astro-build.db astro build
+```
 
-# Production (set in systemd service)
-ASTRO_DATABASE_FILE=/srv/arandor/.astro/content.db
-HOST=0.0.0.0
-PORT=4321
+The path `/tmp/astro-build.db` gets embedded in `dist/server/*.mjs` files. At runtime, the app reads from THAT path.
 
-# Build (uses temporary database)
-ASTRO_DATABASE_FILE=/tmp/astro-build.db
+### Why Your App Works Without `.astro/content.db`
+
+Because the build script in `package.json` sets:
+```json
+"build": "ASTRO_DATABASE_FILE=/tmp/astro-build.db astro build"
+```
+
+The built app uses `/tmp/astro-build.db` (or whatever path was set during build), NOT the local `.astro/content.db` file.
+
+---
+
+## Essential Files
+
+### Source Code (Required for Building)
+
+```
+├── astro.config.mjs      # Astro configuration (integrations, adapter)
+├── package.json          # Dependencies and scripts
+├── tailwind.config.mjs   # Tailwind CSS configuration
+├── tsconfig.json         # TypeScript configuration
+├── db/
+│   ├── config.ts         # Database schema definitions
+│   └── seed.ts           # Initial data seeding (runs at build time)
+├── src/
+│   ├── layouts/          # Page layouts
+│   ├── lib/              # Auth utilities, middleware
+│   ├── pages/            # Routes and API endpoints
+│   │   └── api/          # REST API (diary, quests, characters, etc.)
+│   ├── styles/           # Global CSS
+│   └── types.ts          # TypeScript type definitions
+└── public/               # Static assets (map images, favicon)
+```
+
+### Runtime Files (Required for Production)
+
+```
+├── dist/                 # Built application
+│   ├── client/           # Static assets (JS, CSS)
+│   └── server/           # Node.js server code
+│       └── entry.mjs     # Server entry point
+├── node_modules/         # Dependencies (only @astrojs/* needed at runtime)
+└── [DATABASE FILE]       # SQLite database (path set during build)
+```
+
+### Server Management (Optional)
+
+```
+├── arandor.service       # Systemd service file
+└── scripts/
+    ├── update-database.sh  # Manual migration script
+    └── migrate-db.sql      # SQL schema for migrations
 ```
 
 ---
 
-## API Architecture
+## How Astro DB Really Works
 
-### RESTful Endpoints
+### Build Time vs Runtime
 
-All API endpoints are located in `src/pages/api/`:
+| Phase | Database Location | What Happens |
+|-------|-------------------|--------------|
+| **Build** | `ASTRO_DATABASE_FILE` env var (e.g., `/tmp/astro-build.db`) | Tables created, seed.ts runs, data inserted |
+| **Runtime** | Same path (baked into dist/) | App reads/writes to that database |
 
-```
-/api/diary          GET, POST           List/create diary entries
-/api/diary/[id]     GET, PUT, DELETE    Single diary entry operations
-/api/quests         GET, POST           List/create quests
-/api/quests/[id]    GET, PUT, DELETE    Single quest operations
-/api/characters     GET, POST           List/create characters
-/api/characters/[id] GET, PUT, DELETE   Single character operations
-/api/npcs           GET, POST           List/create NPCs
-/api/npcs/[id]      GET, PUT, DELETE    Single NPC operations
-/api/locations      GET, POST           List/create locations
-/api/locations/[id] GET, PUT, DELETE    Single location operations
-/api/library        GET, POST           List/create library entries
-/api/library/[id]   GET, PUT, DELETE    Single library entry operations
-/api/factions       GET, POST           List/create factions
-/api/factions/[id]  GET, PUT, DELETE    Single faction operations
-/api/campaign-progress/[id]  GET, PUT   Campaign progress operations
-/api/auth/login     POST                User authentication
-/api/auth/logout    POST                Session logout
-```
+### The `normalizeDatabaseUrl` Function
 
-### API Authentication
-
-- **GET** requests are public (read-only access)
-- **POST, PUT, DELETE** requests require authentication
-- Authentication is cookie-based with HTTP-only session cookies
-
----
-
-## Authentication System
-
-### How It Works
-
-1. **Password Hashing**: Uses PBKDF2 with SHA-512, 1000 iterations, and random salt
-2. **Session Management**: HTTP-only cookies with 7-day expiration
-3. **Protected Routes**: Write operations (POST/PUT/DELETE) require valid session
-
-### Default Admin Account
-
-After initial database setup with seed data:
-- **Username**: `admin`
-- **Password**: `admin`
-
-⚠️ **Change this password immediately in production!**
-
-### Session Cookie Details
+In the built code (`dist/server/chunks/*.mjs`), you'll find:
 
 ```javascript
-{
-  name: 'session',
-  httpOnly: true,
-  secure: true,              // In production
-  sameSite: 'strict',
-  maxAge: 604800             // 7 days in seconds
-}
+const dbUrl = normalizeDatabaseUrl(
+  "/tmp/astro-build.db",                                                    // Build-time ASTRO_DATABASE_FILE
+  "file:///home/runner/work/arandor-companion-app/arandor-companion-app/.astro/content.db"  // Fallback (project path)
+);
 ```
+
+This function works as follows:
+1. First argument: the value of `ASTRO_DATABASE_FILE` at build time
+2. Second argument: fallback URL (absolute path to project's `.astro/content.db`)
+
+At runtime, the first argument (build-time path) is used as the database location.
+
+### Important Implication
+
+**The database file MUST exist where the build expects it.** If you build with `ASTRO_DATABASE_FILE=/tmp/astro-build.db`, that file must exist at runtime for the app to work.
 
 ---
 
-## Server Setup Guide
+## Files That Can Be Removed
 
-### Prerequisites
+### 1. `src/data/mockData.ts` - UNUSED
 
-- Linux server with systemd (Ubuntu 20.04+, Debian 11+)
-- Node.js 20.x or higher
-- SQLite3
-- SSH access with sudo privileges
-
-### Quick Setup Commands
+This file contains hardcoded mock data that was used during early development before Astro DB was integrated. **It is not imported anywhere** and can be safely deleted.
 
 ```bash
-# 1. Create deployment user (as root)
-sudo useradd -m -s /bin/bash deploy
-sudo usermod -aG sudo deploy
+rm src/data/mockData.ts
+rmdir src/data  # Remove empty directory
+```
 
-# 2. Create application directory
-sudo mkdir -p /srv/arandor
-sudo chown deploy:deploy /srv/arandor
+### 2. Documentation Files (Keep What You Need)
 
-# 3. Clone and build (as deploy user)
-su - deploy
+These files are documentation/summaries that are not required for the app to run:
+
+| File | Description | Can Remove? |
+|------|-------------|-------------|
+| `README.md` | Main readme | Keep |
+| `DEPLOYMENT.md` | Deployment guide | Optional |
+| `ARCHITECTURE.md` | This file | Optional |
+| `DATABASE_FIX_SUMMARY.md` | Historical issue summary | Yes |
+| `HOW_THIS_FIXES_YOUR_ISSUE.md` | Historical fix explanation | Yes |
+| `SECURITY_SUMMARY.md` | Security notes | Optional |
+| `SOLUTION_SUMMARY.txt` | Historical solution notes | Yes |
+
+### 3. GitHub Workflows (Keep for CI/CD)
+
+The `.github/` folder contains deployment workflows. Keep if using automated deployments.
+
+### 4. Scripts Directory
+
+- `scripts/update-database.sh` - Useful for manual migrations
+- `scripts/migrate-db.sql` - Schema for manual DB setup
+- `scripts/README.md` - Documentation
+- `scripts/arandor-deploy-*` - Deployment helpers
+
+These are useful for server management but not required for the app to run.
+
+---
+
+## Database Setup Guide
+
+### For Fresh Deployment
+
+**Step 1: Build with correct database path**
+
+```bash
 cd /srv/arandor
 git clone https://github.com/danspy/arandor-companion-app.git .
 npm install
-npm run build
 
-# 4. Set up systemd service
-sudo cp arandor.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable arandor.service
-sudo systemctl start arandor.service
+# Build with your production database path
+ASTRO_DATABASE_FILE=/srv/arandor/data/arandor.db npm run build
+```
+
+This will:
+1. Create `/srv/arandor/data/arandor.db`
+2. Create all tables
+3. Run `seed.ts` to populate initial data
+4. Bake the database path into `dist/`
+
+**Step 2: Run the server**
+
+```bash
+node dist/server/entry.mjs
+# OR use systemd
+sudo systemctl start arandor
+```
+
+### For Existing Deployment
+
+If you already have data and need to preserve it:
+
+**Option A: Use existing database**
+```bash
+# Build pointing to your existing database
+ASTRO_DATABASE_FILE=/path/to/your/existing.db npm run build
+```
+
+**Option B: Create new database manually**
+```bash
+# Create database using migration script
+sqlite3 /srv/arandor/data/arandor.db < scripts/migrate-db.sql
+
+# Then build pointing to it
+ASTRO_DATABASE_FILE=/srv/arandor/data/arandor.db npm run build
 ```
 
 ---
 
-## Database Setup on Server
+## Understanding the Build Process
 
-### Initial Setup (First Deployment)
+### What `npm run build` Does
 
-**Step 1: Ensure the application is built**
-```bash
-cd /srv/arandor
-npm run build
-```
+1. **Astro compiles** all `.astro` and `.ts` files to JavaScript
+2. **Astro DB creates** the database at `ASTRO_DATABASE_FILE` path
+3. **Schema applied** from `db/config.ts`
+4. **Seeding runs** from `db/seed.ts` (if database is empty)
+5. **Database path baked** into `dist/server/*.mjs` files
+6. **Client assets built** to `dist/client/`
 
-**Step 2: Create the database directory**
-```bash
-mkdir -p /srv/arandor/.astro
-```
+### Environment Variables
 
-**Step 3: Initialize the database using the migration script**
-```bash
-# Make the script executable
-chmod +x /srv/arandor/scripts/update-database.sh
+| Variable | When | Purpose |
+|----------|------|---------|
+| `ASTRO_DATABASE_FILE` | Build & Runtime | Path to SQLite database |
+| `HOST` | Runtime | Server listen address (default: localhost) |
+| `PORT` | Runtime | Server port (default: 4321) |
 
-# Run the database initialization
-./scripts/update-database.sh
-```
-
-The script will:
-1. Check if a database exists (create new if not)
-2. Show you the current state
-3. Ask for confirmation
-4. Create all required tables
-5. Verify the setup
-
-**Step 4: Restart the application**
-```bash
-sudo systemctl restart arandor.service
-```
-
-### What the Migration Script Does
-
-The `update-database.sh` script:
-
-1. **Checks for SQLite3** - Ensures sqlite3 is installed
-2. **Detects database state** - New or existing database
-3. **Shows current state** - Tables, row counts
-4. **Creates backup** - Timestamped backup before changes
-5. **Runs migration** - Executes `migrate-db.sql`
-6. **Verifies integrity** - Confirms data preservation
-
-### Manual Database Commands
-
-```bash
-# View all tables
-sqlite3 /srv/arandor/.astro/content.db ".tables"
-
-# View table schema
-sqlite3 /srv/arandor/.astro/content.db ".schema Character"
-
-# Count records
-sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM Character;"
-
-# List all characters
-sqlite3 /srv/arandor/.astro/content.db "SELECT name, class, level FROM Character;"
-
-# Backup the database
-cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
-```
-
-### Seeding Initial Data (Optional)
-
-If you want to populate the database with sample data:
-
-```bash
-# The seed.ts file will populate sample data when database is empty
-# This happens automatically when you run the dev server for the first time
-cd /srv/arandor
-npm run dev
-# Press Ctrl+C after it starts
-```
-
-Or manually insert data:
-
-```bash
-sqlite3 /srv/arandor/.astro/content.db << 'EOF'
--- Insert a test character
-INSERT INTO Character (id, name, class, level, race, player, createdAt, updatedAt)
-VALUES ('1', 'Test Hero', 'Fighter', 1, 'Human', 'Player 1', datetime('now'), datetime('now'));
-EOF
-```
-
-> **Note**: For user creation, use the application's seed functionality or the web interface, as password hashes are generated using PBKDF2 with random salts and cannot be easily created manually.
-
-### Database Schema Updates
-
-When you update the schema (add new tables/columns):
-
-1. **Update `db/config.ts`** with new schema
-2. **Update `scripts/migrate-db.sql`** with matching SQL
-3. **Deploy code to server**
-4. **Run migration manually**:
-
-```bash
-cd /srv/arandor
-./scripts/update-database.sh
-sudo systemctl restart arandor.service
-```
-
-### Backup Strategy
-
-**Manual Backup:**
-```bash
-cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
-```
-
-**Automated Daily Backup (add to crontab):**
-```bash
-crontab -e
-# Add this line (note: % must be escaped as \% in crontab):
-0 2 * * * cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
-```
-
-> **Note**: In crontab, the `%` character has special meaning and must be escaped with `\`.
-
-**Restore from Backup:**
-```bash
-# Stop the service
-sudo systemctl stop arandor.service
-
-# Restore the backup
-cp /srv/arandor/.astro/backups/content.db.backup.YYYYMMDD_HHMMSS /srv/arandor/.astro/content.db
-
-# Start the service
-sudo systemctl start arandor.service
-```
-
----
-
-## Configuration Files
-
-### astro.config.mjs
+### The `astro.config.mjs` `storage` Option
 
 ```javascript
-import { defineConfig } from 'astro/config';
-import tailwind from '@astrojs/tailwind';
-import db from '@astrojs/db';
-import node from '@astrojs/node';
-
-export default defineConfig({
-  integrations: [
-    tailwind(), 
-    db({
-      // Production database path - hardcoded for this deployment
-      // The ASTRO_DATABASE_FILE env var in systemd service provides runtime flexibility
-      storage: '/srv/arandor/.astro/content.db',
-    })
-  ],
-  output: 'server',              // SSR mode
-  adapter: node({
-    mode: 'standalone'           // Runs as standalone Node.js server
-  }),
-});
+db({
+  storage: '/srv/arandor/.astro/content.db',
+})
 ```
 
-> **Note**: The `storage` path is hardcoded in the config file for production. The `ASTRO_DATABASE_FILE` environment variable in the systemd service provides an additional layer of configuration for the runtime.
-
-### arandor.service (systemd)
-
-```ini
-[Unit]
-Description=Arandor Companion App - D&D Companion Application
-After=network.target
-
-[Service]
-Type=simple
-User=deploy
-WorkingDirectory=/srv/arandor
-Environment="NODE_ENV=production"
-Environment="HOST=0.0.0.0"
-Environment="PORT=4321"
-Environment="ASTRO_DATABASE_FILE=/srv/arandor/.astro/content.db"
-ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=arandor
-
-[Install]
-WantedBy=multi-user.target
-```
-
-### package.json Scripts
-
-```json
-{
-  "scripts": {
-    "dev": "astro dev",
-    "build": "ASTRO_DATABASE_FILE=/tmp/astro-build.db astro build",
-    "preview": "astro preview",
-    "astro": "astro"
-  }
-}
-```
-
-> **Note**: The build script uses inline environment variable syntax which works on Unix/Linux/macOS. For Windows compatibility, consider using [cross-env](https://www.npmjs.com/package/cross-env) or setting the variable in your shell before running the command.
-
-The build script uses a temporary database (`/tmp/astro-build.db`) to avoid modifying the production database during builds.
+This option sets a default storage path, but it's primarily used as documentation for where you intend to put the database in production. **The actual database path used is determined by `ASTRO_DATABASE_FILE`** at build time, which is then baked into the compiled output.
 
 ---
 
-## Troubleshooting
+## Summary: What You Actually Need
 
-### Database Issues
+### Minimum Files for Production
 
-**Database file not found:**
-```bash
-# Check if file exists
-ls -la /srv/arandor/.astro/content.db
-
-# If not, run the update script
-./scripts/update-database.sh
+```
+dist/                     # Built application
+├── client/               # Static assets
+└── server/               # Server code
+    └── entry.mjs         # Entry point
+node_modules/             # Dependencies
+[your-database.db]        # SQLite database (path from build)
 ```
 
-**Permission denied:**
-```bash
-# Fix ownership
-sudo chown -R deploy:deploy /srv/arandor/.astro
-chmod 755 /srv/arandor/.astro
-chmod 644 /srv/arandor/.astro/content.db
+### Source Files for Development/Building
+
+```
+src/                      # Source code
+db/                       # Database schema and seed
+public/                   # Static assets
+astro.config.mjs          # Configuration
+package.json              # Dependencies
+tailwind.config.mjs       # Styles
+tsconfig.json             # TypeScript
 ```
 
-**Tables missing:**
-```bash
-# Check tables
-sqlite3 /srv/arandor/.astro/content.db ".tables"
+### Optional (Can Delete)
 
-# Run migration
-./scripts/update-database.sh
 ```
-
-### Application Issues
-
-**Service not starting:**
-```bash
-# Check logs
-sudo journalctl -u arandor.service -n 50 --no-pager
-
-# Common causes:
-# - Node.js not installed
-# - Missing node_modules (run npm install)
-# - Port 4321 in use
-# - Database directory not writable
-```
-
-**Port already in use:**
-```bash
-# Find what's using the port
-sudo lsof -i :4321
-
-# Change port in service file if needed
-sudo vim /etc/systemd/system/arandor.service
-sudo systemctl daemon-reload
-sudo systemctl restart arandor.service
-```
-
-### Useful Commands
-
-```bash
-# Service management
-sudo systemctl status arandor.service
-sudo systemctl restart arandor.service
-sudo systemctl stop arandor.service
-sudo journalctl -u arandor.service -f  # Live logs
-
-# Database inspection
-sqlite3 /srv/arandor/.astro/content.db ".tables"
-sqlite3 /srv/arandor/.astro/content.db ".schema"
-sqlite3 /srv/arandor/.astro/content.db "SELECT * FROM User;"
-
-# Application
-cd /srv/arandor
-npm run build
-npm run preview  # Test locally before deploying
+src/data/mockData.ts      # Unused mock data (DELETE)
+DATABASE_FIX_SUMMARY.md   # Historical documentation
+HOW_THIS_FIXES_YOUR_ISSUE.md  # Historical documentation  
+SOLUTION_SUMMARY.txt      # Historical documentation
 ```
 
 ---
 
 ## Quick Reference
 
-### Data Flow
+### Build Commands
 
+```bash
+# Development
+npm run dev
+
+# Production build (customize database path)
+ASTRO_DATABASE_FILE=/path/to/database.db npm run build
+
+# Preview production build
+npm run preview
 ```
-User Browser
-    ↓
-Astro Server (Node.js on port 4321)
-    ↓
-API Routes (src/pages/api/)
-    ↓
-Astro DB (SQLite at .astro/content.db)
+
+### Database Commands
+
+```bash
+# View tables
+sqlite3 /path/to/database.db ".tables"
+
+# View schema
+sqlite3 /path/to/database.db ".schema"
+
+# Count records
+sqlite3 /path/to/database.db "SELECT COUNT(*) FROM Character;"
+
+# Backup
+cp /path/to/database.db /path/to/database.db.backup
 ```
 
-### Key Paths
+### Server Commands
 
-| Purpose | Path |
-|---------|------|
-| App directory | `/srv/arandor/` |
-| Database | `/srv/arandor/.astro/content.db` |
-| Compiled app | `/srv/arandor/dist/` |
-| Backups | `/srv/arandor/.astro/backups/` |
-| Service file | `/etc/systemd/system/arandor.service` |
-| Migration script | `/srv/arandor/scripts/update-database.sh` |
+```bash
+# Run directly
+node dist/server/entry.mjs
 
-### Default Credentials
+# With custom port
+HOST=0.0.0.0 PORT=3000 node dist/server/entry.mjs
 
-| Field | Value | Note |
-|-------|-------|------|
-| Username | `admin` | Change in production |
-| Password | `admin` | Change in production |
-
----
-
-## Support
-
-For issues and contributions:
-- GitHub: https://github.com/danspy/arandor-companion-app/issues
-- See also: [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions
+# Via systemd
+sudo systemctl start arandor
+sudo systemctl status arandor
+sudo journalctl -u arandor -f
+```
