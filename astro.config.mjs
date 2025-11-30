@@ -5,7 +5,12 @@ import node from '@astrojs/node';
 
 // https://astro.build/config
 export default defineConfig({
-  integrations: [tailwind(), db()],
+  integrations: [
+    tailwind(), 
+    db({
+      storage: '/srv/arandor/.astro/content.db', // set this path to your persistent server DB file!
+    })
+  ],
   output: 'server',
   adapter: node({
     mode: 'standalone'
