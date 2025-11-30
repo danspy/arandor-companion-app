@@ -7,4 +7,6 @@
 # deploy ALL=(ALL) NOPASSWD: /usr/local/sbin/arandor-deploy-restart
 # deploy ALL=(ALL) NOPASSWD: /usr/local/sbin/arandor-deploy-status
 
+set -e
+
 systemctl status arandor.service
