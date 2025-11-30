@@ -2,6 +2,9 @@ import type { APIRoute } from 'astro';
 import { db, Faction, eq } from 'astro:db';
 import { requireAuth } from '../../../lib/middleware';
 
+console.log('process.env.ASTRO_DATABASE_FILE:', process.env.ASTRO_DATABASE_FILE);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+
 const VALID_STATUSES = ['enemy', 'suspicious', 'neutral', 'friendly', 'respectful'];
 
 export const GET: APIRoute = async () => {
