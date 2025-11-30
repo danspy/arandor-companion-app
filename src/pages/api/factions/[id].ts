@@ -2,9 +2,19 @@ import type { APIRoute } from 'astro';
 import { db, Faction, eq } from 'astro:db';
 import { requireAuth } from '../../../lib/middleware';
 
+const VALID_STATUSES = ['enemy', 'suspicious', 'neutral', 'friendly', 'respectful'];
+
 export const GET: APIRoute = async ({ params }) => {
   try {
-    const faction = await db.select().from(Faction).where(eq(Faction.id, params.id!));
+    const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Faction ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const faction = await db.select().from(Faction).where(eq(Faction.id, id));
     
     if (faction.length === 0) {
       return new Response(JSON.stringify({ error: 'Faction not found' }), {
@@ -30,18 +40,42 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (authError) return authError;
 
   try {
+    const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Faction ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const body = await request.json();
+    
+    // Validate required fields
+    if (!body.name || typeof body.name !== 'string' || body.name.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Faction name is required and must be a non-empty string' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    if (!body.status || !VALID_STATUSES.includes(body.status)) {
+      return new Response(JSON.stringify({ error: `Status must be one of: ${VALID_STATUSES.join(', ')}` }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const now = new Date();
     
     await db.update(Faction)
       .set({
-        name: body.name,
+        name: body.name.trim(),
         status: body.status,
         updatedAt: now,
       })
-      .where(eq(Faction.id, params.id!));
+      .where(eq(Faction.id, id));
 
-    const updatedFaction = await db.select().from(Faction).where(eq(Faction.id, params.id!));
+    const updatedFaction = await db.select().from(Faction).where(eq(Faction.id, id));
     
     return new Response(JSON.stringify(updatedFaction[0]), {
       status: 200,
@@ -60,7 +94,15 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
   if (authError) return authError;
 
   try {
-    await db.delete(Faction).where(eq(Faction.id, params.id!));
+    const id = params.id;
+    if (!id) {
+      return new Response(JSON.stringify({ error: 'Faction ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    await db.delete(Faction).where(eq(Faction.id, id));
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
