@@ -80,3 +80,11 @@ export interface LibraryEntry {
   createdAt?: Date;
   updatedAt?: Date;
 }
+
+export interface Faction {
+  id: string;
+  name: string;
+  status: 'enemy' | 'suspicious' | 'neutral' | 'friendly' | 'respectful';
+  createdAt?: Date;
+  updatedAt?: Date;
+}
