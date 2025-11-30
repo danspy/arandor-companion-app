@@ -3,6 +3,9 @@
 -- Safe to run multiple times - will not affect existing data
 -- Schema matches db/config.ts definitions
 
+-- Helper: ISO timestamp default for SQLite
+-- Use: (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
+
 -- Create DiaryEntry table
 CREATE TABLE IF NOT EXISTS "DiaryEntry" (
   "id" text PRIMARY KEY,
@@ -111,6 +114,16 @@ CREATE TABLE IF NOT EXISTS "LibraryEntry" (
   "content" text NOT NULL,
   "tags" text NOT NULL DEFAULT '[]',
   "locationId" text,
+  "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
+  "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
+);
+
+-- Create Faction table
+CREATE TABLE IF NOT EXISTS "Faction" (
+  "id" text PRIMARY KEY,
+  "name" text NOT NULL,
+  "status" text NOT NULL,
+  "progress" integer NOT NULL DEFAULT 50,
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
