@@ -9,7 +9,7 @@ WorkingDirectory=/srv/arandor
 Environment="NODE_ENV=production"
 Environment="HOST=0.0.0.0"
 Environment="PORT=4321"
-Environment="ASTRO_DATABASE_FILE=/srv/arandor/.astro/content.db"
+Environment="ASTRO_DATABASE_FILE=/srv/arandor/data/content.db"
 ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
 Restart=always
 RestartSec=10

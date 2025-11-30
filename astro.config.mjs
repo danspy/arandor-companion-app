@@ -8,7 +8,7 @@ export default defineConfig({
   integrations: [
     tailwind(), 
     db({
-      storage: '/srv/arandor/.astro/content.db', // set this path to your persistent server DB file!
+      storage: '/srv/arandor/data/content.db', // set this path to your persistent server DB file!
     })
   ],
   output: 'server',
