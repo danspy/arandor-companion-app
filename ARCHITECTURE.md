@@ -464,15 +464,13 @@ Or manually insert data:
 
 ```bash
 sqlite3 /srv/arandor/.astro/content.db << 'EOF'
--- Insert a test user (password: admin)
-INSERT INTO User (id, username, passwordHash, createdAt) 
-VALUES ('1', 'admin', 'YOUR_HASH_HERE', datetime('now'));
-
 -- Insert a test character
 INSERT INTO Character (id, name, class, level, race, player, createdAt, updatedAt)
 VALUES ('1', 'Test Hero', 'Fighter', 1, 'Human', 'Player 1', datetime('now'), datetime('now'));
 EOF
 ```
+
+> **Note**: For user creation, use the application's seed functionality or the web interface, as password hashes are generated using PBKDF2 with random salts and cannot be easily created manually.
 
 ### Database Schema Updates
 
@@ -499,9 +497,11 @@ cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.
 **Automated Daily Backup (add to crontab):**
 ```bash
 crontab -e
-# Add this line:
+# Add this line (note: % must be escaped as \% in crontab):
 0 2 * * * cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
 ```
+
+> **Note**: In crontab, the `%` character has special meaning and must be escaped with `\`.
 
 **Restore from Backup:**
 ```bash
@@ -531,7 +531,8 @@ export default defineConfig({
   integrations: [
     tailwind(), 
     db({
-      // Production database path
+      // Production database path - hardcoded for this deployment
+      // The ASTRO_DATABASE_FILE env var in systemd service provides runtime flexibility
       storage: '/srv/arandor/.astro/content.db',
     })
   ],
@@ -541,6 +542,8 @@ export default defineConfig({
   }),
 });
 ```
+
+> **Note**: The `storage` path is hardcoded in the config file for production. The `ASTRO_DATABASE_FILE` environment variable in the systemd service provides an additional layer of configuration for the runtime.
 
 ### arandor.service (systemd)
 
@@ -581,7 +584,9 @@ WantedBy=multi-user.target
 }
 ```
 
-Note: The build script uses a temporary database (`/tmp/astro-build.db`) to avoid modifying the production database during builds.
+> **Note**: The build script uses inline environment variable syntax which works on Unix/Linux/macOS. For Windows compatibility, consider using [cross-env](https://www.npmjs.com/package/cross-env) or setting the variable in your shell before running the command.
+
+The build script uses a temporary database (`/tmp/astro-build.db`) to avoid modifying the production database during builds.
 
 ---
 
