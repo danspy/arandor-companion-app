@@ -4,18 +4,67 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 
 ## Features
 
-- **Dashboard** - Overview of active quests, party members, latest diary entries, and campaign progress
-- **Adventure Diary** - Document your campaign sessions in a journal format with tags and session numbers
-- **Player Characters** - Track party members with stats, levels, classes, and D&D Beyond integration
-- **NPCs** - Manage non-player characters with relationships (ally/neutral/enemy), locations, and notes
-- **Locations** - Catalog cities, dungeons, and other places with visit tracking
-- **Quests** - Organize active, completed, and failed quests with priority levels
+### Core Features
+
+- **Dashboard** - Overview of campaign progress, faction standings, active quests, party members, latest diary entries, and library entries
+- **Adventure Diary** - Document your campaign sessions with:
+  - Markdown formatting support
+  - Cover image uploads
+  - Tags for organization
+  - Session numbers
+  - Links to NPCs, locations, characters, and quests mentioned
+- **Library** - Store campaign lore, notes, and knowledge with:
+  - Markdown content support
+  - Tag-based organization and filtering
+  - Location associations
+- **Player Characters** - Track party members with:
+  - Character stats (STR, DEX, CON, INT, WIS, CHA)
+  - Levels, classes, races, and backgrounds
+  - Physical attributes (age, height, weight, eyes, skin, hair)
+  - D&D Beyond URL integration
+  - Avatar images
+- **NPCs** - Manage non-player characters with:
+  - Relationships (ally/neutral/enemy)
+  - Occupation and race
+  - Location associations
+  - Notes and avatar images
+- **Locations** - Catalog places with:
+  - Types (city, dungeon, wilderness, building, other)
+  - Regions and visit tracking
+  - Map coordinates for interactive map
+  - Notes
+- **Quests** - Organize quests with:
+  - Status tracking (active, completed, failed)
+  - Priority levels (high, medium, low)
+- **Interactive Map** - Visual map interface with:
+  - Draggable location pins with tooltips
+  - Hero path showing journey progression
+  - Zoom and pan controls (mouse wheel, buttons, touch gestures)
+  - Edit mode for placing and moving pins
+  - Color-coded legend by location type
+- **Faction Standings** - Track relationships with factions:
+  - Status levels (enemy, suspicious, neutral, friendly, respectful)
+  - Progress bars for each faction
+- **Campaign Progress** - Track party level progression:
+  - Current party level
+  - Progress percentage to next level
+
+### Additional Features
+
+- **Authentication** - Login system to protect editing functionality
+- **Dark Mode** - Toggle between light and dark themes
+- **Image Uploads** - Upload cover images for diary entries
+- **Markdown Support** - Rich text formatting in diary and library entries
+- **Mobile Responsive** - Optimized for all screen sizes
 
 ## Tech Stack
 
-- **Astro.js** - Modern static site generator with island architecture
+- **Astro.js 5.x** - Modern web framework with island architecture and server-side rendering
+- **Astro DB** - Built-in SQLite database with type-safe schema
 - **Tailwind CSS v3** - Utility-first CSS framework for rapid UI development
 - **TypeScript** - Type-safe development with strict mode
+- **Node.js Adapter** - Standalone server deployment
+- **marked** - Markdown parsing for rich text content
 
 ## Getting Started
 
@@ -71,65 +120,120 @@ For production deployment instructions (including Uberspace deployment), see [DE
 
 ```
 ./
-├── public/              # Static assets
+├── public/              # Static assets (map image, favicon)
 ├── db/                  # Database configuration
 │   ├── config.ts        # Astro DB schema definitions
 │   └── seed.ts          # Database seeding script
 ├── src/
-│   ├── components/      # Reusable components (future)
-│   ├── data/           # Mock data (deprecated, using DB now)
-│   ├── layouts/        # Page layouts
-│   ├── pages/          # Route pages
-│   │   └── api/        # REST API endpoints
-│   │       ├── diary/      # Diary entry endpoints
-│   │       ├── quests/     # Quest endpoints
-│   │       ├── characters/ # Character endpoints
-│   │       ├── npcs/       # NPC endpoints
-│   │       └── locations/  # Location endpoints
-│   ├── styles/         # Global CSS
-│   └── types.ts        # TypeScript type definitions
-├── astro.config.mjs    # Astro configuration
-├── tailwind.config.mjs # Tailwind configuration
-└── tsconfig.json       # TypeScript configuration
+│   ├── layouts/         # Page layouts (main layout with navigation)
+│   ├── lib/             # Authentication utilities
+│   │   ├── auth.ts      # Authentication helpers
+│   │   └── middleware.ts # Auth middleware
+│   ├── pages/           # Route pages
+│   │   ├── api/         # REST API endpoints
+│   │   │   ├── auth/        # Authentication endpoints
+│   │   │   ├── diary/       # Diary entry endpoints
+│   │   │   ├── quests/      # Quest endpoints
+│   │   │   ├── characters/  # Character endpoints
+│   │   │   ├── npcs/        # NPC endpoints
+│   │   │   ├── locations/   # Location endpoints
+│   │   │   ├── library/     # Library entry endpoints
+│   │   │   ├── factions/    # Faction endpoints
+│   │   │   └── campaign-progress/ # Campaign progress endpoints
+│   │   ├── characters/  # Character detail pages
+│   │   ├── diary/       # Diary entry detail pages
+│   │   ├── library/     # Library entry detail pages
+│   │   ├── locations/   # Location detail pages
+│   │   └── npcs/        # NPC detail pages
+│   ├── styles/          # Global CSS
+│   ├── utils/           # Utility functions (markdown rendering)
+│   └── types.ts         # TypeScript type definitions
+├── astro.config.mjs     # Astro configuration
+├── tailwind.config.mjs  # Tailwind configuration
+└── tsconfig.json        # TypeScript configuration
 ```
 
 ## Data Management
 
-The app uses **Astro DB** for persistent data storage with a local SQLite database in development. All content is fully editable through the web interface.
+The app uses **Astro DB** for persistent data storage with a local SQLite database. All content is fully editable through the web interface (when logged in).
+
+### Database Schema
+
+The database includes the following tables:
+- **DiaryEntry** - Session notes with markdown content, tags, and entity references
+- **Quest** - Quest tracking with status and priority
+- **Character** - Player characters with stats and details
+- **NPC** - Non-player characters with relationships
+- **Location** - Places with map coordinates
+- **LibraryEntry** - Lore and knowledge entries
+- **Faction** - Faction standings and progress
+- **CampaignProgress** - Party level tracking
+- **User** - Authentication credentials
 
 ### Features
 
 ✅ **Full CRUD Operations** - Create, read, update, and delete all content types
-✅ **Persistent Database** - Astro DB with SQLite for local development
+✅ **Persistent Database** - Astro DB with SQLite
 ✅ **RESTful API** - Complete API endpoints for all entities
 ✅ **Interactive Forms** - Modal-based forms for adding and editing content
 ✅ **Real-time Updates** - Changes are immediately reflected in the UI
+✅ **Markdown Support** - Rich text formatting for diary and library entries
+✅ **Image Uploads** - Upload and store images for diary entries
 
 ### Managing Content
 
-All content can be managed directly from the web interface:
+All content can be managed directly from the web interface (login required for editing):
 
-1. **Dashboard** - View overview of your campaign
-2. **Adventure Diary** - Add/edit/delete session notes with tags
-3. **Quests** - Track active, completed, and failed quests
-4. **Characters** - Manage party members with full stats
-5. **NPCs** - Organize non-player characters by relationship
-6. **Locations** - Catalog visited and unexplored places
+1. **Dashboard** - View campaign overview with faction standings and progress
+2. **Adventure Diary** - Add/edit/delete session notes with markdown, images, and entity links
+3. **Library** - Create/edit/delete lore entries with tags and location associations
+4. **Quests** - Track active, completed, and failed quests
+5. **Characters** - Manage party members with full stats and details
+6. **NPCs** - Organize non-player characters by relationship
+7. **Locations** - Catalog places and set map coordinates
+8. **Map** - Interactive map with draggable pins and hero path visualization
 
 ### API Endpoints
 
 The following REST API endpoints are available:
 
+**Authentication:**
+- `POST /api/auth/login` - Login
+- `POST /api/auth/logout` - Logout
+
+**Diary:**
 - `GET/POST /api/diary` - Diary entries
 - `GET/PUT/DELETE /api/diary/[id]` - Single diary entry
+
+**Library:**
+- `GET/POST /api/library` - Library entries
+- `GET/PUT/DELETE /api/library/[id]` - Single library entry
+
+**Quests:**
 - `GET/POST /api/quests` - Quests
 - `GET/PUT/DELETE /api/quests/[id]` - Single quest
+
+**Characters:**
 - `GET/POST /api/characters` - Characters
 - `GET/PUT/DELETE /api/characters/[id]` - Single character
+
+**NPCs:**
 - `GET/POST /api/npcs` - NPCs
 - `GET/PUT/DELETE /api/npcs/[id]` - Single NPC
+
+**Locations:**
 - `GET/POST /api/locations` - Locations
 - `GET/PUT/DELETE /api/locations/[id]` - Single location
+
+**Factions:**
+- `GET/POST /api/factions` - Factions
+- `GET/PUT/DELETE /api/factions/[id]` - Single faction
+
+**Campaign Progress:**
+- `GET/PUT /api/campaign-progress/[id]` - Campaign progress
+
+**File Upload:**
+- `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
 
 ## Customization
 
@@ -163,14 +267,21 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 
 - [x] Full CRUD operations via forms
 - [x] Data persistence with database
-- [ ] D&D Beyond API integration
+- [x] Interactive map with location pins
+- [x] Session notes with markdown support
+- [x] Mobile-responsive design
+- [x] Dark mode theme toggle
+- [x] Tag-based filtering (Library)
+- [x] Faction tracking system
+- [x] Campaign level progress tracking
+- [x] Image uploads for diary entries
+- [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
-- [ ] Search and filtering
-- [ ] Mobile-responsive improvements
 - [ ] Image uploads for characters/NPCs
-- [ ] Interactive maps
-- [ ] Session notes with rich text editor
-- [ ] Multi-user support with authentication
+- [ ] Multi-user support with role-based permissions
+- [ ] Session scheduling and reminders
+- [ ] Dice roller integration
+- [ ] Initiative tracker
 
 ## Contributing
 
