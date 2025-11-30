@@ -127,6 +127,7 @@ const Faction = defineTable({
     id: column.text({ primaryKey: true }),
     name: column.text(),
     status: column.text(), // 'enemy' | 'suspicious' | 'neutral' | 'friendly' | 'respectful'
+    progress: column.number({ default: 50 }), // 0-100 independent of status
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }

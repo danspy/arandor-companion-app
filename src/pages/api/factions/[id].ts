@@ -65,12 +65,16 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
+    // Validate progress (0-100)
+    const progress = typeof body.progress === 'number' ? Math.min(100, Math.max(0, body.progress)) : 50;
+
     const now = new Date();
     
     await db.update(Faction)
       .set({
         name: body.name.trim(),
         status: body.status,
+        progress,
         updatedAt: now,
       })
       .where(eq(Faction.id, id));

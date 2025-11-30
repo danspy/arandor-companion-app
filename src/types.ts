@@ -85,6 +85,7 @@ export interface Faction {
   id: string;
   name: string;
   status: 'enemy' | 'suspicious' | 'neutral' | 'friendly' | 'respectful';
+  progress: number; // 0-100 independent of status
   createdAt?: Date;
   updatedAt?: Date;
 }

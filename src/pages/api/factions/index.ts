@@ -43,6 +43,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
+    // Validate progress if provided (0-100)
+    const progress = typeof body.progress === 'number' ? Math.min(100, Math.max(0, body.progress)) : 50;
+
     const id = crypto.randomUUID();
     const now = new Date();
     
@@ -50,6 +53,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       id,
       name: body.name.trim(),
       status,
+      progress,
       createdAt: now,
       updatedAt: now,
     });
