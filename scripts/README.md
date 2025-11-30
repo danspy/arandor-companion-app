@@ -45,14 +45,10 @@ This directory contains database migration scripts and server management tools.
 ## Database Migrations
 
 ### migrate-db.sql
-SQL migration script that is run automatically during deployment.
 
-When you deploy new code with database schema changes:
+SQL migration script containing the database schema. This script is run **manually** using `update-database.sh`.
 
-1. The `migrate-db.sql` script is synced to the production server
-2. The deployment workflow runs the migration script against the production database
-3. The migration uses `CREATE TABLE IF NOT EXISTS` to safely add new tables
-4. Existing data is preserved - migrations only add missing tables/columns
+**Important:** Database migrations are never run automatically during deployment. You must manually run migrations when schema changes are needed.
 
 ### Adding New Migrations
 

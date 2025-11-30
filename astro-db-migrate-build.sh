@@ -20,7 +20,7 @@ else
 fi
 
 # Correct file permissions for node or your deployment user
-chown $(whoami):$(whoami) "$NEW_DB"   # Or use 'deploy:deploy' if your app runs as 'deploy'
+chown "$(whoami)":"$(whoami)" "$NEW_DB"   # Or use 'deploy:deploy' if your app runs as 'deploy'
 chmod 660 "$NEW_DB"
 
 # (Optional) Validate DB structure
