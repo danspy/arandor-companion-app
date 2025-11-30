@@ -1,6 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const diaryEntries = await db.select().from(DiaryEntry);
@@ -8,6 +8,24 @@ const quests = await db.select().from(Quest);
 const characters = await db.select().from(Character);
 const campaignProgressData = await db.select().from(CampaignProgress);
 const libraryEntries = await db.select().from(LibraryEntry);
+const factions = await db.select().from(Faction);
+
+// Status to color mapping for progress bars
+const statusToColor = (status: string): string => {
+  switch(status) {
+    case 'enemy': return 'bg-red-500';
+    case 'suspicious': return 'bg-orange-500';
+    case 'neutral': return 'bg-yellow-500';
+    case 'friendly': return 'bg-green-500';
+    case 'respectful': return 'bg-emerald-500';
+    default: return 'bg-gray-500';
+  }
+};
+
+// Status to label
+const statusLabel = (status: string): string => {
+  return status.charAt(0).toUpperCase() + status.slice(1);
+};
 
 const campaignProgress = campaignProgressData.length > 0 ? campaignProgressData[0] : {
   id: '1',
@@ -82,6 +100,85 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Faction Standings -->
+  <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Faction Standings</h2>
+      {isLoggedIn && (
+        <button 
+          id="addFactionBtn"
+          class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded transition text-sm"
+        >
+          Add Faction
+        </button>
+      )}
+    </div>
+    
+    <!-- Status Legend -->
+    <div class="flex flex-wrap gap-2 mb-4 text-xs">
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red-500 rounded"></span> Enemy</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-orange-500 rounded"></span> Suspicious</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-yellow-500 rounded"></span> Neutral</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded"></span> Friendly</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-emerald-500 rounded"></span> Respectful</span>
+    </div>
+    
+    {factions.length === 0 ? (
+      <p class="text-gray-500 dark:text-gray-400 text-center py-4">No factions tracked yet. Add your first faction to begin tracking relationships!</p>
+    ) : (
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {factions.map(faction => (
+          <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg faction-item" data-faction-id={faction.id}>
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-medium text-gray-700 dark:text-gray-300">{faction.name}</span>
+              <div class="flex items-center gap-2">
+                <span class={`px-2 py-0.5 text-xs rounded text-white ${statusToColor(faction.status)}`}>
+                  {statusLabel(faction.status)}
+                </span>
+                <span class="text-xs text-gray-500 dark:text-gray-400">{faction.progress}%</span>
+                {isLoggedIn && (
+                  <button 
+                    class="edit-faction-btn text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                    data-faction-id={faction.id}
+                    data-faction-name={faction.name}
+                    data-faction-status={faction.status}
+                    data-faction-progress={faction.progress}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
+                  </button>
+                )}
+                {isLoggedIn && (
+                  <button 
+                    class="delete-faction-btn text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                    data-faction-id={faction.id}
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                  </button>
+                )}
+              </div>
+            </div>
+            <div class="w-full bg-gray-200 dark:bg-black rounded-full h-4 overflow-hidden">
+              <div 
+                class={`${statusToColor(faction.status)} h-4 rounded-full transition-all duration-300`}
+                style={`width: ${faction.progress}%`}
+              >
+              </div>
+            </div>
+            <div class="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8">
@@ -270,8 +367,96 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     </div>
   )}
 
+  <!-- Faction Modal (Add/Edit) -->
+  {isLoggedIn && (
+    <div id="factionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
+        <div class="flex justify-between items-center mb-6">
+          <h3 id="factionModalTitle" class="text-xl font-semibold text-primary-700 dark:text-primary-400">Add Faction</h3>
+          <button id="closeFactionModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <form id="factionForm" class="space-y-4">
+          <input type="hidden" id="factionId" name="factionId" value="" />
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Faction Name
+            </label>
+            <input 
+              type="text" 
+              id="factionName" 
+              name="factionName" 
+              placeholder="Enter faction name"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              required
+            />
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Status
+            </label>
+            <select 
+              id="factionStatus" 
+              name="factionStatus"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              required
+            >
+              <option value="enemy">Enemy</option>
+              <option value="suspicious">Suspicious</option>
+              <option value="neutral" selected>Neutral</option>
+              <option value="friendly">Friendly</option>
+              <option value="respectful">Respectful</option>
+            </select>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Progress (<span id="progressValue">50</span>%)
+            </label>
+            <input 
+              type="range" 
+              id="factionProgress" 
+              name="factionProgress" 
+              min="0"
+              max="100"
+              value="50"
+              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+            />
+            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+              <span>0%</span>
+              <span>50%</span>
+              <span>100%</span>
+            </div>
+          </div>
+          
+          <div class="flex gap-3 pt-4">
+            <button 
+              type="submit" 
+              class="flex-1 bg-primary-600 hover:bg-primary-700 text-white px-4 py-2 rounded-lg transition"
+            >
+              Save
+            </button>
+            <button 
+              type="button" 
+              id="cancelFactionBtn"
+              class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )}
+
   <script define:vars={{ campaignProgressId: campaignProgress.id }}>
-    // Modal controls
+    // Campaign Progress Modal controls
     const editBtn = document.getElementById('editProgressBtn');
     const modal = document.getElementById('editProgressModal');
     const closeBtn = document.getElementById('closeModalBtn');
@@ -323,6 +508,129 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       } catch (error) {
         console.error('Error updating campaign progress:', error);
         alert('Failed to update campaign progress');
+      }
+    });
+
+    // Faction Modal controls
+    const addFactionBtn = document.getElementById('addFactionBtn');
+    const factionModal = document.getElementById('factionModal');
+    const factionModalTitle = document.getElementById('factionModalTitle');
+    const closeFactionModalBtn = document.getElementById('closeFactionModalBtn');
+    const cancelFactionBtn = document.getElementById('cancelFactionBtn');
+    const factionForm = document.getElementById('factionForm');
+    const factionIdInput = document.getElementById('factionId');
+    const factionNameInput = document.getElementById('factionName');
+    const factionStatusSelect = document.getElementById('factionStatus');
+    const factionProgressInput = document.getElementById('factionProgress');
+    const progressValueSpan = document.getElementById('progressValue');
+
+    // Update progress value display when slider changes
+    factionProgressInput?.addEventListener('input', (e) => {
+      if (progressValueSpan) progressValueSpan.textContent = e.target.value;
+    });
+
+    const closeFactionModal = () => {
+      factionModal?.classList.add('hidden');
+      // Reset form
+      if (factionForm) factionForm.reset();
+      if (factionIdInput) factionIdInput.value = '';
+      if (factionModalTitle) factionModalTitle.textContent = 'Add Faction';
+      if (factionProgressInput) factionProgressInput.value = '50';
+      if (progressValueSpan) progressValueSpan.textContent = '50';
+    };
+
+    // Add Faction button
+    addFactionBtn?.addEventListener('click', () => {
+      closeFactionModal(); // Reset first
+      factionModal?.classList.remove('hidden');
+    });
+
+    closeFactionModalBtn?.addEventListener('click', closeFactionModal);
+    cancelFactionBtn?.addEventListener('click', closeFactionModal);
+
+    // Close modal on background click
+    factionModal?.addEventListener('click', (e) => {
+      if (e.target === factionModal) {
+        closeFactionModal();
+      }
+    });
+
+    // Edit Faction buttons
+    document.querySelectorAll('.edit-faction-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const factionId = btn.getAttribute('data-faction-id');
+        const factionName = btn.getAttribute('data-faction-name');
+        const factionStatus = btn.getAttribute('data-faction-status');
+        const factionProgress = btn.getAttribute('data-faction-progress') || '50';
+        
+        if (factionIdInput) factionIdInput.value = factionId || '';
+        if (factionNameInput) factionNameInput.value = factionName || '';
+        if (factionStatusSelect) factionStatusSelect.value = factionStatus || 'neutral';
+        if (factionProgressInput) factionProgressInput.value = factionProgress;
+        if (progressValueSpan) progressValueSpan.textContent = factionProgress;
+        if (factionModalTitle) factionModalTitle.textContent = 'Edit Faction';
+        
+        factionModal?.classList.remove('hidden');
+      });
+    });
+
+    // Delete Faction buttons
+    document.querySelectorAll('.delete-faction-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const factionId = btn.getAttribute('data-faction-id');
+        
+        if (confirm('Are you sure you want to delete this faction?')) {
+          try {
+            const response = await fetch(`/api/factions/${factionId}`, {
+              method: 'DELETE',
+            });
+
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to delete faction');
+            }
+          } catch (error) {
+            console.error('Error deleting faction:', error);
+            alert('Failed to delete faction');
+          }
+        }
+      });
+    });
+
+    // Handle faction form submission
+    factionForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(e.target);
+      const factionId = formData.get('factionId');
+      const data = {
+        name: formData.get('factionName'),
+        status: formData.get('factionStatus'),
+        progress: parseInt(formData.get('factionProgress') || '50'),
+      };
+
+      try {
+        const isEditing = factionId && factionId !== '';
+        const url = isEditing ? `/api/factions/${factionId}` : '/api/factions';
+        const method = isEditing ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to save faction');
+        }
+      } catch (error) {
+        console.error('Error saving faction:', error);
+        alert('Failed to save faction');
       }
     });
   </script>
