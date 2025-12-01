@@ -1234,8 +1234,13 @@ libraryEntries.forEach(entry => {
     }
   }
   
-  // Initialize map on page load (works with view transitions)
+  // Initialize map on initial load and after page swaps (works with view transitions)
+  // astro:page-load fires on initial load, astro:after-swap fires during view transitions
   document.addEventListener('astro:page-load', () => {
+    initializeMap();
+  });
+  
+  document.addEventListener('astro:after-swap', () => {
     initializeMap();
   });
 
