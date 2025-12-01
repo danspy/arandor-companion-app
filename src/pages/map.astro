@@ -956,12 +956,13 @@ libraryEntries.forEach(entry => {
 
   // Zoom and pan functionality
   let rafId = null;
-  let pendingTransform = false;
   
   function updateTransform() {
-    if (pendingTransform) return;
+    // Cancel any pending animation frame to avoid stacking updates
+    if (rafId !== null) {
+      cancelAnimationFrame(rafId);
+    }
     
-    pendingTransform = true;
     rafId = requestAnimationFrame(() => {
       // Apply transforms to the SVG so image, pins and path scale together in the same coordinate space
       if (mapSvg) {
@@ -970,7 +971,7 @@ libraryEntries.forEach(entry => {
       } else {
         mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
       }
-      pendingTransform = false;
+      rafId = null;
     });
   }
   
