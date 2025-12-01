@@ -8,6 +8,17 @@ interface Props {
 
 const { title } = Astro.props;
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const currentPath = Astro.url.pathname;
+
+// Helper function to check if a nav link is active
+// For home page, only match exact path
+// For other pages, match if path starts with the nav link (to include detail pages)
+function isActiveLink(href: string): boolean {
+  if (href === '/') {
+    return currentPath === '/';
+  }
+  return currentPath === href || currentPath.startsWith(href + '/');
+}
 ---
 
 <!doctype html>
@@ -58,14 +69,14 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           
           <!-- Desktop menu -->
           <div class="hidden lg:flex gap-6 items-center">
-            <a href="/" class="hover:text-secondary-200 transition">Dashboard</a>
-            <a href="/diary" class="hover:text-secondary-200 transition">Diary</a>
-            <a href="/library" class="hover:text-secondary-200 transition">Library</a>
-            <a href="/characters" class="hover:text-secondary-200 transition">Characters</a>
-            <a href="/npcs" class="hover:text-secondary-200 transition">NPCs</a>
-            <a href="/locations" class="hover:text-secondary-200 transition">Locations</a>
-            <a href="/map" class="hover:text-secondary-200 transition">Map</a>
-            <a href="/quests" class="hover:text-secondary-200 transition">Quests</a>
+            <a href="/" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/') }]}>Dashboard</a>
+            <a href="/diary" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/diary') }]}>Diary</a>
+            <a href="/library" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/library') }]}>Library</a>
+            <a href="/characters" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/characters') }]}>Characters</a>
+            <a href="/npcs" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/npcs') }]}>NPCs</a>
+            <a href="/locations" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/locations') }]}>Locations</a>
+            <a href="/map" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
+            <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
             
             <!-- Dark mode toggle -->
             <button 
@@ -99,14 +110,14 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         <!-- Mobile menu -->
         <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
           <div class="flex flex-col gap-3">
-            <a href="/" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Dashboard</a>
-            <a href="/diary" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Diary</a>
-            <a href="/library" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Library</a>
-            <a href="/characters" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Characters</a>
-            <a href="/npcs" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">NPCs</a>
-            <a href="/locations" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Locations</a>
-            <a href="/map" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Map</a>
-            <a href="/quests" class="hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700">Quests</a>
+            <a href="/" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/') }]}>Dashboard</a>
+            <a href="/diary" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/diary') }]}>Diary</a>
+            <a href="/library" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/library') }]}>Library</a>
+            <a href="/characters" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/characters') }]}>Characters</a>
+            <a href="/npcs" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/npcs') }]}>NPCs</a>
+            <a href="/locations" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/locations') }]}>Locations</a>
+            <a href="/map" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
+            <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
             
             <!-- Dark mode toggle for mobile -->
             <button 
