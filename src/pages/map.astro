@@ -1197,8 +1197,8 @@ libraryEntries.forEach(entry => {
     e.preventDefault();
   });
 
-  // Track if event listeners have been set up
-  let listenersInitialized = false;
+  // Track if edit mode event listeners have been set up to prevent duplicates
+  let editModeListenersInitialized = false;
   
   // Initial render and setup function
   function initializeMap() {
@@ -1212,8 +1212,8 @@ libraryEntries.forEach(entry => {
     fitToViewport();
     updateTransform(); // Apply initial transform
     
-    // Set up event listeners only once
-    if (!listenersInitialized && isLoggedIn && toggleEditModeBtn) {
+    // Set up edit mode event listeners only once to prevent duplicates on re-navigation
+    if (!editModeListenersInitialized && isLoggedIn && toggleEditModeBtn) {
       toggleEditModeBtn.addEventListener('click', () => {
         setTimeout(() => {
           const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
@@ -1230,7 +1230,7 @@ libraryEntries.forEach(entry => {
           });
         }, 100);
       });
-      listenersInitialized = true;
+      editModeListenersInitialized = true;
     }
   }
   
