@@ -131,7 +131,7 @@ libraryEntries.forEach(entry => {
       </div>
 
       <!-- Map container with panning and zooming -->
-      <div class="relative bg-[#bdd2f0] overflow-hidden touch-none w-full h-full" id="mapViewport">
+      <div class="relative bg-[#bdd2f0] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
           <div id="mapContainer" class="absolute" style="min-width: 100vw; min-height: 100vh;">
@@ -1051,7 +1051,7 @@ libraryEntries.forEach(entry => {
     }
 
     if (touches.length === 2) {
-      // Start pinch zoom
+      // Start pinch zoom - prevent default to stop browser zoom
       e.preventDefault();
       touchStartDistance = getTouchDistance(touches[0], touches[1]);
       touchStartScale = scale;
@@ -1064,18 +1064,18 @@ libraryEntries.forEach(entry => {
       touchStartTranslateX = translateX;
       touchStartTranslateY = translateY;
     } else if (touches.length === 1) {
-      // Start pan
+      // Start pan - don't prevent default on touchstart to allow tap/click events
       isPanning = true;
       startPanX = touches[0].clientX - translateX;
       startPanY = touches[0].clientY - translateY;
     }
-  }, { passive: false });
+  });
 
   mapWrapper?.addEventListener('touchmove', (e) => {
     touches = Array.from(e.touches);
     
     if (touches.length === 2) {
-      // Pinch zoom
+      // Pinch zoom - prevent browser zoom
       e.preventDefault();
       const currentDistance = getTouchDistance(touches[0], touches[1]);
       const distanceRatio = currentDistance / touchStartDistance;
@@ -1095,13 +1095,13 @@ libraryEntries.forEach(entry => {
       scale = newScale;
       updateTransform();
     } else if (touches.length === 1 && isPanning) {
-      // Pan with single finger
+      // Pan with single finger - prevent scroll
       e.preventDefault();
       translateX = touches[0].clientX - startPanX;
       translateY = touches[0].clientY - startPanY;
       updateTransform();
     }
-  }, { passive: false });
+  });
 
   mapWrapper?.addEventListener('touchend', (e) => {
     touches = Array.from(e.touches);
@@ -1241,11 +1241,17 @@ libraryEntries.forEach(entry => {
 
   #mapContainer {
     user-select: none;
-    transition: transform 0.1s ease-out;
+    will-change: transform;
   }
   
   #mapWrapper {
     position: relative;
+    touch-action: none;
+  }
+  
+  #mapSvg {
+    transition: transform 0.05s ease-out;
+    will-change: transform;
   }
 
   /* Sidebar slide-in animation */
