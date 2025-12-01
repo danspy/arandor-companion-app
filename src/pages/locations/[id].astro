@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { db, Location, NPC, LibraryEntry, eq } from 'astro:db';
+import { db, Location, NPC, LibraryEntry, DiaryEntry, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
 
@@ -22,6 +22,13 @@ const npcsAtLocation = await db.select().from(NPC).where(eq(NPC.locationId, id))
 
 // Fetch all library entries for this location
 const libraryEntries = await db.select().from(LibraryEntry).where(eq(LibraryEntry.locationId, id));
+
+// Fetch all diary entries that mention this location
+const allDiaryEntries = await db.select().from(DiaryEntry);
+const relatedDiaryEntries = allDiaryEntries.filter(entry => {
+  const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+  return locationIds.includes(id);
+}).sort((a, b) => b.session - a.session); // Sort by session number, newest first
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
@@ -199,6 +206,50 @@ const renderedDescription = renderMarkdown(location.description);
                       #{tag}
                     </span>
                   ))}
+                </div>
+              )}
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
+    <!-- Diary Entries Mentioning This Location -->
+    {relatedDiaryEntries.length > 0 && (
+      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
+        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+          </svg>
+          Diary Entries
+        </h2>
+        <div class="space-y-4">
+          {relatedDiaryEntries.map(entry => (
+            <a 
+              href={`/diary/${entry.id}`}
+              class="block p-6 border border-secondary-200 dark:border-secondary-900 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition"
+            >
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">{entry.title}</h3>
+                <span class="bg-secondary-100 dark:bg-secondary-900/30 dark:border dark:border-secondary-800 text-secondary-700 dark:text-secondary-400 px-3 py-1 rounded-full text-sm whitespace-nowrap ml-4">
+                  Session {entry.session}
+                </span>
+              </div>
+              <p class="text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
+                {entry.content.substring(0, 200)}{entry.content.length > 200 ? '...' : ''}
+              </p>
+              {Array.isArray(entry.tags) && entry.tags.length > 0 && (
+                <div class="flex gap-2 flex-wrap">
+                  {entry.tags.slice(0, 3).map((tag: string) => (
+                    <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-2 py-1 rounded text-xs">
+                      #{tag}
+                    </span>
+                  ))}
+                  {entry.tags.length > 3 && (
+                    <span class="text-gray-500 dark:text-gray-400 text-xs py-1">
+                      +{entry.tags.length - 3} more
+                    </span>
+                  )}
                 </div>
               )}
             </a>
