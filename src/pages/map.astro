@@ -1065,13 +1065,13 @@ libraryEntries.forEach(entry => {
       touchStartTranslateX = translateX;
       touchStartTranslateY = translateY;
     } else if (touches.length === 1) {
-      // Start pan - don't prevent default on touchstart to allow tap/click events
+      // Start pan - set up state but allow tap/click to work naturally
       mapWrapper.classList.add('interacting');
       isPanning = true;
       startPanX = touches[0].clientX - translateX;
       startPanY = touches[0].clientY - translateY;
     }
-  });
+  }, { passive: false });
 
   mapWrapper?.addEventListener('touchmove', (e) => {
     touches = Array.from(e.touches);
@@ -1247,6 +1247,7 @@ libraryEntries.forEach(entry => {
 
   #mapContainer {
     user-select: none;
+    /* Transition removed for better performance - transform handled by #mapSvg */
   }
   
   #mapWrapper {
