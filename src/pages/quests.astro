@@ -14,6 +14,21 @@ const failedQuests = quests.filter(q => q.status === 'failed');
 const highPriority = quests.filter(q => q.priority === 'high').length;
 const mediumPriority = quests.filter(q => q.priority === 'medium').length;
 const lowPriority = quests.filter(q => q.priority === 'low').length;
+
+// Sort quests: active first, then by priority (high > medium > low)
+const sortedQuests = [...quests].sort((a, b) => {
+  // First sort by status (active first)
+  const statusOrder: Record<string, number> = { 'active': 0, 'completed': 1, 'failed': 2 };
+  const statusA = statusOrder[a.status] ?? 3;
+  const statusB = statusOrder[b.status] ?? 3;
+  if (statusA !== statusB) return statusA - statusB;
+  
+  // Then by priority (high first)
+  const priorityOrder: Record<string, number> = { 'high': 0, 'medium': 1, 'low': 2 };
+  const priorityA = priorityOrder[a.priority] ?? 3;
+  const priorityB = priorityOrder[b.priority] ?? 3;
+  return priorityA - priorityB;
+});
 ---
 
 <Layout title="Quests">
@@ -87,7 +102,7 @@ const lowPriority = quests.filter(q => q.priority === 'low').length;
 
   <!-- All Quests Grid -->
   <div id="questsGrid" class="space-y-4">
-    {quests.map(quest => (
+    {sortedQuests.map(quest => (
       <div class="quest-card bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-status={quest.status} data-priority={quest.priority} data-search={`${quest.title} ${quest.description}`.toLowerCase()}>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div class="flex-1">
@@ -417,13 +432,14 @@ const lowPriority = quests.filter(q => q.priority === 'low').length;
   let currentSearch = '';
 
   const applyFilters = () => {
-    const searchLower = currentSearch.toLowerCase();
+    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
     questCards.forEach(card => {
       const cardStatus = card.getAttribute('data-status') || '';
       const searchText = card.getAttribute('data-search') || '';
       
       const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
-      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
+      // Match if ANY search term is found in the text (more flexible search)
+      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

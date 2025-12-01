@@ -481,7 +481,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
   let currentSearch = '';
 
   const applyFilters = () => {
-    const searchLower = currentSearch.toLowerCase();
+    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
     locationCards.forEach(card => {
       const cardType = card.getAttribute('data-type') || '';
       const cardVisited = card.getAttribute('data-visited') || '';
@@ -498,7 +498,8 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
         matchesFilter = cardType === currentFilter;
       }
       
-      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
+      // Match if ANY search term is found in the text (more flexible search)
+      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

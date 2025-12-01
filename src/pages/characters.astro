@@ -787,13 +787,14 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
   let currentSearch = '';
 
   const applyFilters = () => {
-    const searchLower = currentSearch.toLowerCase();
+    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
     characterCards.forEach(card => {
       const cardClass = card.getAttribute('data-class') || '';
       const searchText = card.getAttribute('data-search') || '';
       
       const matchesFilter = currentFilter === 'all' || cardClass === currentFilter;
-      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
+      // Match if ANY search term is found in the text (more flexible search)
+      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });
