@@ -12,7 +12,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 const editId = Astro.url.searchParams.get('edit');
 
 const sortedEntries = diaryEntries.slice().sort((a, b) => 
-  new Date(b.date).getTime() - new Date(a.date).getTime()
+  b.session - a.session
 );
 
 // Get all unique tags from diary entries
