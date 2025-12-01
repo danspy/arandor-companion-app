@@ -108,6 +108,11 @@ const failedQuests = quests.filter(q => q.status === 'failed');
                   ✓ Completed
                 </span>
                 {isLoggedIn && (
+                  <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
+                    Reactivate
+                  </button>
+                )}
+                {isLoggedIn && (
                   <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
                     Delete
                   </button>
@@ -136,6 +141,11 @@ const failedQuests = quests.filter(q => q.status === 'failed');
                 <span class="bg-red-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap">
                   ✗ Failed
                 </span>
+                {isLoggedIn && (
+                  <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
+                    Reactivate
+                  </button>
+                )}
                 {isLoggedIn && (
                   <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
                     Delete
@@ -357,6 +367,31 @@ const failedQuests = quests.filter(q => q.status === 'failed');
           window.location.reload();
         } else {
           alert('Unable to mark quest as failed. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Reactivate quest (set status back to active)
+    if (target.classList.contains('reactivate-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        const updateResponse = await fetch(`/api/quests/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...quest, status: 'active' }),
+        });
+        
+        if (updateResponse.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to reactivate quest. Please try again.');
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
