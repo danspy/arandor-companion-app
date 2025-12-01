@@ -1053,6 +1053,7 @@ libraryEntries.forEach(entry => {
     if (touches.length === 2) {
       // Start pinch zoom - prevent default to stop browser zoom
       e.preventDefault();
+      mapWrapper.classList.add('interacting');
       touchStartDistance = getTouchDistance(touches[0], touches[1]);
       touchStartScale = scale;
       
@@ -1065,6 +1066,7 @@ libraryEntries.forEach(entry => {
       touchStartTranslateY = translateY;
     } else if (touches.length === 1) {
       // Start pan - don't prevent default on touchstart to allow tap/click events
+      mapWrapper.classList.add('interacting');
       isPanning = true;
       startPanX = touches[0].clientX - translateX;
       startPanY = touches[0].clientY - translateY;
@@ -1101,7 +1103,7 @@ libraryEntries.forEach(entry => {
       translateY = touches[0].clientY - startPanY;
       updateTransform();
     }
-  });
+  }, { passive: false });
 
   mapWrapper?.addEventListener('touchend', (e) => {
     touches = Array.from(e.touches);
@@ -1112,6 +1114,7 @@ libraryEntries.forEach(entry => {
     
     if (touches.length === 0) {
       isPanning = false;
+      mapWrapper.classList.remove('interacting');
     }
   });
 
@@ -1119,6 +1122,7 @@ libraryEntries.forEach(entry => {
     touches = [];
     touchStartDistance = 0;
     isPanning = false;
+    mapWrapper.classList.remove('interacting');
   });
 
   // Track mouse/touch pointer inside the map so zoom buttons can use pointer-origin when hovering
@@ -1144,6 +1148,7 @@ libraryEntries.forEach(entry => {
     }
     
     isPanning = true;
+    mapWrapper.classList.add('interacting');
     startPanX = e.clientX - translateX;
     startPanY = e.clientY - translateY;
     mapWrapper.style.cursor = 'grabbing';
@@ -1160,6 +1165,7 @@ libraryEntries.forEach(entry => {
   document.addEventListener('mouseup', () => {
     if (isPanning) {
       isPanning = false;
+      mapWrapper.classList.remove('interacting');
       mapWrapper.style.cursor = 'grab';
     }
   });
@@ -1241,7 +1247,6 @@ libraryEntries.forEach(entry => {
 
   #mapContainer {
     user-select: none;
-    will-change: transform;
   }
   
   #mapWrapper {
@@ -1251,6 +1256,10 @@ libraryEntries.forEach(entry => {
   
   #mapSvg {
     transition: transform 0.05s ease-out;
+  }
+  
+  /* Apply will-change only during active interactions for better performance */
+  #mapWrapper.interacting #mapSvg {
     will-change: transform;
   }
 
