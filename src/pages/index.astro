@@ -234,7 +234,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           <a href={`/diary/${entry.id}`} class="block border-b dark:border-gray-900 pb-3 last:border-b-0 hover:bg-gray-50 dark:hover:bg-gray-700 rounded px-2 -mx-2 transition">
             <div class="flex justify-between items-start mb-1">
               <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
-              <span class="text-xs text-gray-500 dark:text-gray-400">Session {entry.session}</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 whitespace-nowrap">Session {entry.session}</span>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
           </a>
