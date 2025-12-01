@@ -119,10 +119,6 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
             <p class="text-gray-600 dark:text-gray-400 mb-4">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
           </a>
 
-          <div class="mb-4">
-            <p class="text-gray-700 dark:text-gray-300 line-clamp-3">{npc.description}</p>
-          </div>
-
           {npc.location && (
             <div class="mb-3">
               <span class="text-sm text-gray-500 dark:text-gray-400">📍 Location: </span>
