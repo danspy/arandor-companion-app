@@ -176,45 +176,45 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6">Ability Scores</h2>
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Strength</div>
-            <div class="text-4xl font-bold text-red-700">{character.stats.strength}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 p-4 rounded-lg text-center dark:border dark:border-red-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Strength</div>
+            <div class="text-4xl font-bold text-red-700 dark:text-red-400">{character.stats.strength}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.strength - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.strength - 10) / 2)}
             </div>
           </div>
-          <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Dexterity</div>
-            <div class="text-4xl font-bold text-green-700">{character.stats.dexterity}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20 p-4 rounded-lg text-center dark:border dark:border-green-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Dexterity</div>
+            <div class="text-4xl font-bold text-green-700 dark:text-green-400">{character.stats.dexterity}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.dexterity - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.dexterity - 10) / 2)}
             </div>
           </div>
-          <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Constitution</div>
-            <div class="text-4xl font-bold text-orange-700">{character.stats.constitution}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-950/20 dark:to-orange-900/20 p-4 rounded-lg text-center dark:border dark:border-orange-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Constitution</div>
+            <div class="text-4xl font-bold text-orange-700 dark:text-orange-400">{character.stats.constitution}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.constitution - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.constitution - 10) / 2)}
             </div>
           </div>
-          <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Intelligence</div>
-            <div class="text-4xl font-bold text-blue-700">{character.stats.intelligence}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20 p-4 rounded-lg text-center dark:border dark:border-blue-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Intelligence</div>
+            <div class="text-4xl font-bold text-blue-700 dark:text-blue-400">{character.stats.intelligence}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.intelligence - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.intelligence - 10) / 2)}
             </div>
           </div>
-          <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Wisdom</div>
-            <div class="text-4xl font-bold text-purple-700">{character.stats.wisdom}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950/20 dark:to-purple-900/20 p-4 rounded-lg text-center dark:border dark:border-purple-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Wisdom</div>
+            <div class="text-4xl font-bold text-purple-700 dark:text-purple-400">{character.stats.wisdom}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.wisdom - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.wisdom - 10) / 2)}
             </div>
           </div>
-          <div class="bg-gradient-to-br from-pink-50 to-pink-100 p-4 rounded-lg text-center">
-            <div class="text-sm text-gray-600 mb-2 font-semibold">Charisma</div>
-            <div class="text-4xl font-bold text-pink-700">{character.stats.charisma}</div>
-            <div class="text-xs text-gray-500 mt-1">
+          <div class="bg-gradient-to-br from-pink-50 to-pink-100 dark:from-pink-950/20 dark:to-pink-900/20 p-4 rounded-lg text-center dark:border dark:border-pink-900/30">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-2 font-semibold">Charisma</div>
+            <div class="text-4xl font-bold text-pink-700 dark:text-pink-400">{character.stats.charisma}</div>
+            <div class="text-xs text-gray-500 dark:text-gray-500 mt-1">
               {Math.floor((character.stats.charisma - 10) / 2) >= 0 ? '+' : ''}{Math.floor((character.stats.charisma - 10) / 2)}
             </div>
           </div>

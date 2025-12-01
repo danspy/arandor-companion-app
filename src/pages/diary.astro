@@ -40,11 +40,11 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400">{maxSession}</div>
+      <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-500">{maxSession}</div>
       <div class="text-gray-600 dark:text-gray-400">Sessions</div>
     </div>
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-accent-600 dark:text-accent-400">{allTags.length}</div>
+      <div class="text-3xl font-bold text-accent-600 dark:text-accent-500">{allTags.length}</div>
       <div class="text-gray-600 dark:text-gray-400">Unique Tags</div>
     </div>
   </div>
@@ -83,7 +83,7 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
                 class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
                 data-tag={tag}
               >
-                {tag} ({count})
+                #{tag} ({count})
               </button>
             );
           })}

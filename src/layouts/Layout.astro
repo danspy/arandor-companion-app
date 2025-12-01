@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import { isAuthenticated } from '../lib/auth';
+import { ViewTransitions } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -28,6 +29,7 @@ function isActiveLink(href: string): boolean {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <title>{title} - Arandor Companion</title>
+    <ViewTransitions />
     <script is:inline>
       // Initialize dark mode before page renders to avoid flash
       const getThemePreference = () => {
@@ -48,7 +50,12 @@ function isActiveLink(href: string): boolean {
     </script>
   </head>
   <body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
-    <nav class="bg-primary text-white shadow-lg dark:bg-black dark:border-b dark:border-gray-900 relative z-50">
+    <!-- Loading indicator for page transitions -->
+    <div id="loading-indicator" class="hidden fixed inset-0 bg-black/20 dark:bg-black/40 z-[9999] flex items-center justify-center backdrop-blur-sm">
+      <div class="loading-spinner"></div>
+    </div>
+    
+    <nav class="bg-primary text-white shadow-lg dark:bg-black dark:border-b dark:border-gray-900 relative z-50" transition:persist>
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
@@ -152,17 +159,39 @@ function isActiveLink(href: string): boolean {
       </div>
     </nav>
     
-    <main class="container mx-auto px-4 py-8">
+    <main class="container mx-auto px-4 py-8 page-fade-in">
       <slot />
     </main>
     
-    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900">
+    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900" transition:persist>
       <div class="container mx-auto px-4 text-center">
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>
     </footer>
     
     <script>
+      // Function to get theme preference from localStorage
+      const getThemePreference = () => {
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored) return stored;
+        } catch (e) {
+          console.warn('localStorage not available:', e);
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      };
+      
+      // Function to apply theme
+      const applyTheme = () => {
+        const theme = getThemePreference();
+        const html = document.documentElement;
+        if (theme === 'dark') {
+          html.classList.add('dark');
+        } else {
+          html.classList.remove('dark');
+        }
+      };
+      
       // Dark mode toggle functionality
       const toggleTheme = () => {
         const html = document.documentElement;
@@ -185,44 +214,161 @@ function isActiveLink(href: string): boolean {
         }
       };
       
-      const themeToggle = document.getElementById('themeToggle');
-      const themeToggleMobile = document.getElementById('themeToggleMobile');
-      
-      themeToggle?.addEventListener('click', toggleTheme);
-      themeToggleMobile?.addEventListener('click', toggleTheme);
-      
-      // Mobile menu toggle
-      const mobileMenuBtn = document.getElementById('mobileMenuBtn');
-      const mobileMenu = document.getElementById('mobileMenu');
-      const menuIcon = document.getElementById('menuIcon');
-      const closeIcon = document.getElementById('closeIcon');
-      
-      mobileMenuBtn?.addEventListener('click', () => {
-        mobileMenu?.classList.toggle('hidden');
-        menuIcon?.classList.toggle('hidden');
-        closeIcon?.classList.toggle('hidden');
-      });
-      
-      // Logout handlers
-      const handleLogout = async () => {
-        try {
-          const response = await fetch('/api/auth/logout', {
-            method: 'POST',
-          });
+      // Function to update navigation active states
+      const updateNavigation = () => {
+        const currentPath = window.location.pathname;
+        const navLinks = document.querySelectorAll('nav a[href^="/"]');
+        
+        navLinks.forEach(link => {
+          const href = link.getAttribute('href');
+          if (!href) return;
           
-          if (response.ok) {
-            window.location.href = '/';
+          // Check if link is active
+          const isActive = href === '/' 
+            ? currentPath === '/' 
+            : currentPath === href || currentPath.startsWith(href + '/');
+          
+          // Update classes
+          if (isActive) {
+            link.classList.add('text-secondary-300', 'font-semibold');
+            if (link.classList.contains('py-2')) { // Mobile menu item
+              link.classList.add('bg-primary-700');
+              if (document.documentElement.classList.contains('dark')) {
+                link.classList.add('dark:bg-gray-700');
+              }
+            }
+          } else {
+            link.classList.remove('text-secondary-300', 'font-semibold', 'bg-primary-700', 'dark:bg-gray-700');
           }
-        } catch (error) {
-          console.error('Logout failed:', error);
-        }
+        });
       };
       
-      const logoutBtn = document.getElementById('logoutBtn');
-      const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+      // Initialize on first load
+      const init = () => {
+        const themeToggle = document.getElementById('themeToggle');
+        const themeToggleMobile = document.getElementById('themeToggleMobile');
+        
+        themeToggle?.addEventListener('click', toggleTheme);
+        themeToggleMobile?.addEventListener('click', toggleTheme);
+        
+        // Mobile menu toggle
+        const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        
+        mobileMenuBtn?.addEventListener('click', () => {
+          mobileMenu?.classList.toggle('hidden');
+          menuIcon?.classList.toggle('hidden');
+          closeIcon?.classList.toggle('hidden');
+        });
+        
+        // Logout handlers
+        const handleLogout = async () => {
+          try {
+            const response = await fetch('/api/auth/logout', {
+              method: 'POST',
+            });
+            
+            if (response.ok) {
+              window.location.href = '/';
+            }
+          } catch (error) {
+            console.error('Logout failed:', error);
+          }
+        };
+        
+        const logoutBtn = document.getElementById('logoutBtn');
+        const logoutBtnMobile = document.getElementById('logoutBtnMobile');
+        
+        logoutBtn?.addEventListener('click', handleLogout);
+        logoutBtnMobile?.addEventListener('click', handleLogout);
+        
+        // Update navigation active states
+        updateNavigation();
+      };
       
-      logoutBtn?.addEventListener('click', handleLogout);
-      logoutBtnMobile?.addEventListener('click', handleLogout);
+      // Detect navigation direction and type
+      let lastPath = window.location.pathname;
+      
+      const getNavigationType = (fromPath, toPath) => {
+        // Detail page patterns (going to a detail page)
+        const isToDetail = /\/(characters|npcs|locations|diary|library|quests)\/[^/]+$/.test(toPath);
+        const isFromDetail = /\/(characters|npcs|locations|diary|library|quests)\/[^/]+$/.test(fromPath);
+        
+        // Going from list to detail (zoom in)
+        if (!isFromDetail && isToDetail) {
+          return 'zoom-in';
+        }
+        
+        // Going from detail to list (zoom back)
+        if (isFromDetail && !isToDetail) {
+          return 'zoom-back';
+        }
+        
+        // Lateral navigation between similar pages
+        const mainPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locations', '/map', '/quests'];
+        const fromIndex = mainPages.indexOf(fromPath);
+        const toIndex = mainPages.indexOf(toPath);
+        
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+          return toIndex > fromIndex ? 'slide-left' : 'slide-right';
+        }
+        
+        return 'fade';
+      };
+      
+      // Apply transition classes before navigation
+      document.addEventListener('astro:before-preparation', (event) => {
+        const loader = document.getElementById('loading-indicator');
+        if (loader) loader.classList.remove('hidden');
+        
+        const toPath = event.newDocument?.location?.pathname || window.location.pathname;
+        const fromPath = lastPath;
+        const transitionType = getNavigationType(fromPath, toPath);
+        
+        // Apply transition class to root
+        const root = document.documentElement;
+        
+        // Remove all transition classes
+        root.classList.remove('zoom-out', 'zoom-in', 'zoom-back', 'zoom-back-in', 'slide-left', 'slide-right');
+        
+        // Add appropriate transition class
+        if (transitionType === 'zoom-in') {
+          document.documentElement.dataset.transition = 'zoom';
+        } else if (transitionType === 'zoom-back') {
+          document.documentElement.dataset.transition = 'zoom-back';
+        } else if (transitionType === 'slide-left') {
+          document.documentElement.dataset.transition = 'slide-left';
+        } else if (transitionType === 'slide-right') {
+          document.documentElement.dataset.transition = 'slide-right';
+        }
+      });
+      
+      document.addEventListener('astro:after-swap', () => {
+        const loader = document.getElementById('loading-indicator');
+        if (loader) loader.classList.add('hidden');
+        
+        // Update last path
+        lastPath = window.location.pathname;
+        
+        // Reapply theme after page swap
+        applyTheme();
+        
+        // Update navigation active states after page swap
+        updateNavigation();
+        
+        // Clear transition data attribute
+        setTimeout(() => {
+          delete document.documentElement.dataset.transition;
+        }, 500);
+      });
+      
+      // Run on page load (includes first load and after view transitions)
+      document.addEventListener('astro:page-load', () => {
+        init();
+        lastPath = window.location.pathname;
+      });
     </script>
   </body>
 </html>
