@@ -14,6 +14,14 @@ const editId = Astro.url.searchParams.get('edit');
 const sortedEntries = diaryEntries.slice().sort((a, b) => 
   new Date(b.date).getTime() - new Date(a.date).getTime()
 );
+
+// Get all unique tags from diary entries
+const allTags = [...new Set(diaryEntries.flatMap(entry => 
+  Array.isArray(entry.tags) ? entry.tags : []
+))].sort();
+
+// Get max session number
+const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e.session)) : 0;
 ---
 
 <Layout title="Adventure Diary">
@@ -29,9 +37,70 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
     )}
   </div>
 
+  <!-- Stats -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-3xl font-bold text-primary-600 dark:text-primary-400">{diaryEntries.length}</div>
+      <div class="text-gray-600 dark:text-gray-400">Total Entries</div>
+    </div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400">{maxSession}</div>
+      <div class="text-gray-600 dark:text-gray-400">Sessions</div>
+    </div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-3xl font-bold text-accent-600 dark:text-accent-400">{allTags.length}</div>
+      <div class="text-gray-600 dark:text-gray-400">Unique Tags</div>
+    </div>
+  </div>
+
+  <!-- Search and Filter -->
+  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Search Input -->
+      <div class="flex-1">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search diary entries by title, content, or tags..."
+            class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          >
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+      <!-- Tag Filter -->
+      {allTags.length > 0 && (
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
+          <button 
+            class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+            data-tag="all"
+          >
+            All ({diaryEntries.length})
+          </button>
+          {allTags.map(tag => {
+            const count = sortedEntries.filter(e => Array.isArray(e.tags) && e.tags.includes(tag)).length;
+            return (
+              <button 
+                class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+                data-tag={tag}
+              >
+                {tag} ({count})
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  </div>
+
   <div id="entriesList" class="grid md:grid-cols-2 gap-6">
-    {sortedEntries.map(entry => (
-      <article class="bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id}>
+    {sortedEntries.map(entry => {
+      const tags = Array.isArray(entry.tags) ? entry.tags : [];
+      return (
+      <article class="diary-entry bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
         {entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
             <img 
@@ -74,7 +143,8 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
           Read more →
         </a>
       </article>
-    ))}
+      );
+    })}
   </div>
 
   {sortedEntries.length === 0 && (
@@ -532,4 +602,52 @@ const sortedEntries = diaryEntries.slice().sort((a, b) =>
       window.history.replaceState({}, '', '/diary');
     }
   }
+
+  // Search and Filter functionality
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const filterBtns = document.querySelectorAll('.tag-filter');
+  const diaryCards = document.querySelectorAll('.diary-entry');
+  
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  const applyFilters = () => {
+    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+    diaryCards.forEach(card => {
+      const entryTags = JSON.parse(card.getAttribute('data-tags') || '[]');
+      const searchText = card.getAttribute('data-search') || '';
+      
+      const matchesFilter = currentFilter === 'all' || entryTags.includes(currentFilter);
+      // Match if ANY search term is found in the text (more flexible search)
+      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+      
+      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+    });
+  };
+
+  // Search functionality
+  searchInput?.addEventListener('input', (e) => {
+    currentSearch = (e.target as HTMLInputElement).value;
+    applyFilters();
+  });
+
+  // Filter functionality
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.getAttribute('data-tag') || 'all';
+      
+      // Update button styles
+      filterBtns.forEach(b => {
+        if (b.getAttribute('data-tag') === currentFilter) {
+          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          b.classList.add('bg-primary-600', 'text-white');
+        } else {
+          b.classList.remove('bg-primary-600', 'text-white');
+          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+      });
+      
+      applyFilters();
+    });
+  });
 </script>
