@@ -481,6 +481,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
   let currentSearch = '';
 
   const applyFilters = () => {
+    const searchLower = currentSearch.toLowerCase();
     locationCards.forEach(card => {
       const cardType = card.getAttribute('data-type') || '';
       const cardVisited = card.getAttribute('data-visited') || '';
@@ -497,7 +498,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
         matchesFilter = cardType === currentFilter;
       }
       
-      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

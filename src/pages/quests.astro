@@ -417,12 +417,13 @@ const lowPriority = quests.filter(q => q.priority === 'low').length;
   let currentSearch = '';
 
   const applyFilters = () => {
+    const searchLower = currentSearch.toLowerCase();
     questCards.forEach(card => {
       const cardStatus = card.getAttribute('data-status') || '';
       const searchText = card.getAttribute('data-search') || '';
       
       const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
-      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

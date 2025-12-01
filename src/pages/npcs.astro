@@ -413,12 +413,13 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
   let currentSearch = '';
 
   const applyFilters = () => {
+    const searchLower = currentSearch.toLowerCase();
     npcCards.forEach(card => {
       const relationship = card.getAttribute('data-relationship') || '';
       const searchText = card.getAttribute('data-search') || '';
       
       const matchesFilter = currentFilter === 'all' || relationship === currentFilter;
-      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

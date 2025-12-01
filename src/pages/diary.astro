@@ -612,12 +612,13 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
   let currentSearch = '';
 
   const applyFilters = () => {
+    const searchLower = currentSearch.toLowerCase();
     diaryCards.forEach(card => {
       const entryTags = JSON.parse(card.getAttribute('data-tags') || '[]');
       const searchText = card.getAttribute('data-search') || '';
       
       const matchesFilter = currentFilter === 'all' || entryTags.includes(currentFilter);
-      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
       
       (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
     });

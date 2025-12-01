@@ -283,13 +283,14 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
   
   const applyFilters = () => {
     const entries = document.querySelectorAll('.library-entry');
+    const searchLower = currentSearch.toLowerCase();
     
     entries.forEach(entry => {
       const entryTags = JSON.parse(entry.getAttribute('data-tags') || '[]');
       const searchText = entry.getAttribute('data-search') || '';
       
       const matchesTag = selectedTag === 'all' || entryTags.includes(selectedTag);
-      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      const matchesSearch = currentSearch === '' || searchText.includes(searchLower);
       
       (entry as HTMLElement).style.display = matchesTag && matchesSearch ? 'block' : 'none';
     });
