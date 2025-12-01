@@ -1211,7 +1211,6 @@ libraryEntries.forEach(entry => {
     
     // Show hidden pins in edit mode
     if (isLoggedIn && toggleEditModeBtn) {
-      const originalToggle = toggleEditModeBtn.onclick;
       toggleEditModeBtn.addEventListener('click', () => {
         setTimeout(() => {
           const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
