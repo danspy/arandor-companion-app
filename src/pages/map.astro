@@ -955,14 +955,23 @@ libraryEntries.forEach(entry => {
   // Custom map upload/ localStorage removed — using built-in map image
 
   // Zoom and pan functionality
+  let rafId = null;
+  let pendingTransform = false;
+  
   function updateTransform() {
-    // Apply transforms to the SVG so image, pins and path scale together in the same coordinate space
-    if (mapSvg) {
-      mapSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-      mapSvg.style.transformOrigin = '0 0';
-    } else {
-      mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-    }
+    if (pendingTransform) return;
+    
+    pendingTransform = true;
+    rafId = requestAnimationFrame(() => {
+      // Apply transforms to the SVG so image, pins and path scale together in the same coordinate space
+      if (mapSvg) {
+        mapSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+        mapSvg.style.transformOrigin = '0 0';
+      } else {
+        mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
+      }
+      pendingTransform = false;
+    });
   }
   
   // Zoom button controls
@@ -1053,6 +1062,8 @@ libraryEntries.forEach(entry => {
     if (touches.length === 2) {
       // Start pinch zoom - prevent default to stop browser zoom
       e.preventDefault();
+      // Disable transition during interaction for smooth performance
+      if (mapSvg) mapSvg.style.transition = 'none';
       mapWrapper.classList.add('interacting');
       touchStartDistance = getTouchDistance(touches[0], touches[1]);
       touchStartScale = scale;
@@ -1066,6 +1077,8 @@ libraryEntries.forEach(entry => {
       touchStartTranslateY = translateY;
     } else if (touches.length === 1) {
       // Start pan - set up state but allow tap/click to work naturally
+      // Disable transition during interaction for smooth performance
+      if (mapSvg) mapSvg.style.transition = 'none';
       mapWrapper.classList.add('interacting');
       isPanning = true;
       startPanX = touches[0].clientX - translateX;
@@ -1115,6 +1128,8 @@ libraryEntries.forEach(entry => {
     if (touches.length === 0) {
       isPanning = false;
       mapWrapper.classList.remove('interacting');
+      // Re-enable transition after interaction ends
+      if (mapSvg) mapSvg.style.transition = '';
     }
   });
 
@@ -1123,6 +1138,8 @@ libraryEntries.forEach(entry => {
     touchStartDistance = 0;
     isPanning = false;
     mapWrapper.classList.remove('interacting');
+    // Re-enable transition after interaction ends
+    if (mapSvg) mapSvg.style.transition = '';
   });
 
   // Track mouse/touch pointer inside the map so zoom buttons can use pointer-origin when hovering
@@ -1148,6 +1165,8 @@ libraryEntries.forEach(entry => {
     }
     
     isPanning = true;
+    // Disable transition during interaction for smooth performance
+    if (mapSvg) mapSvg.style.transition = 'none';
     mapWrapper.classList.add('interacting');
     startPanX = e.clientX - translateX;
     startPanY = e.clientY - translateY;
@@ -1166,6 +1185,8 @@ libraryEntries.forEach(entry => {
     if (isPanning) {
       isPanning = false;
       mapWrapper.classList.remove('interacting');
+      // Re-enable transition after interaction ends
+      if (mapSvg) mapSvg.style.transition = '';
       mapWrapper.style.cursor = 'grab';
     }
   });
@@ -1256,7 +1277,10 @@ libraryEntries.forEach(entry => {
   }
   
   #mapSvg {
-    transition: transform 0.05s ease-out;
+    /* Hardware acceleration for smoother transforms on mobile */
+    transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
   }
   
   /* Apply will-change only during active interactions for better performance */
