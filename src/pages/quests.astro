@@ -98,14 +98,21 @@ const failedQuests = quests.filter(q => q.status === 'failed');
       <div class="space-y-4">
         {completedQuests.map(quest => (
           <div class="bg-green-50 dark:bg-green-900/20 rounded-lg shadow p-6 opacity-75 dark:border dark:border-green-800">
-            <div class="flex justify-between items-start">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div class="flex-1">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
                 <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
               </div>
-              <span class="bg-green-600 text-white px-3 py-1 rounded text-sm">
-                ✓ Completed
-              </span>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <span class="bg-green-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap">
+                  ✓ Completed
+                </span>
+                {isLoggedIn && (
+                  <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
@@ -120,14 +127,21 @@ const failedQuests = quests.filter(q => q.status === 'failed');
       <div class="space-y-4">
         {failedQuests.map(quest => (
           <div class="bg-red-50 dark:bg-red-900/20 rounded-lg shadow p-6 opacity-75 dark:border dark:border-red-800">
-            <div class="flex justify-between items-start">
+            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
               <div class="flex-1">
                 <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
                 <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
               </div>
-              <span class="bg-red-600 text-white px-3 py-1 rounded text-sm">
-                ✗ Failed
-              </span>
+              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
+                <span class="bg-red-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap">
+                  ✗ Failed
+                </span>
+                {isLoggedIn && (
+                  <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
+                    Delete
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         ))}
