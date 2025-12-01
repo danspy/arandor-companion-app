@@ -288,26 +288,86 @@ function isActiveLink(href: string): boolean {
         updateNavigation();
       };
       
-      // Loading indicator for page transitions
-      document.addEventListener('astro:before-preparation', () => {
+      // Detect navigation direction and type
+      let lastPath = window.location.pathname;
+      
+      const getNavigationType = (fromPath, toPath) => {
+        // Detail page patterns (going to a detail page)
+        const isToDetail = /\/(characters|npcs|locations|diary|library|quests)\/[^/]+$/.test(toPath);
+        const isFromDetail = /\/(characters|npcs|locations|diary|library|quests)\/[^/]+$/.test(fromPath);
+        
+        // Going from list to detail (zoom in)
+        if (!isFromDetail && isToDetail) {
+          return 'zoom-in';
+        }
+        
+        // Going from detail to list (zoom back)
+        if (isFromDetail && !isToDetail) {
+          return 'zoom-back';
+        }
+        
+        // Lateral navigation between similar pages
+        const mainPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locations', '/map', '/quests'];
+        const fromIndex = mainPages.indexOf(fromPath);
+        const toIndex = mainPages.indexOf(toPath);
+        
+        if (fromIndex !== -1 && toIndex !== -1 && fromIndex !== toIndex) {
+          return toIndex > fromIndex ? 'slide-left' : 'slide-right';
+        }
+        
+        return 'fade';
+      };
+      
+      // Apply transition classes before navigation
+      document.addEventListener('astro:before-preparation', (event) => {
         const loader = document.getElementById('loading-indicator');
         if (loader) loader.classList.remove('hidden');
+        
+        const toPath = event.newDocument?.location?.pathname || window.location.pathname;
+        const fromPath = lastPath;
+        const transitionType = getNavigationType(fromPath, toPath);
+        
+        // Apply transition class to root
+        const root = document.documentElement;
+        
+        // Remove all transition classes
+        root.classList.remove('zoom-out', 'zoom-in', 'zoom-back', 'zoom-back-in', 'slide-left', 'slide-right');
+        
+        // Add appropriate transition class
+        if (transitionType === 'zoom-in') {
+          document.documentElement.dataset.transition = 'zoom';
+        } else if (transitionType === 'zoom-back') {
+          document.documentElement.dataset.transition = 'zoom-back';
+        } else if (transitionType === 'slide-left') {
+          document.documentElement.dataset.transition = 'slide-left';
+        } else if (transitionType === 'slide-right') {
+          document.documentElement.dataset.transition = 'slide-right';
+        }
       });
       
       document.addEventListener('astro:after-swap', () => {
         const loader = document.getElementById('loading-indicator');
         if (loader) loader.classList.add('hidden');
         
+        // Update last path
+        lastPath = window.location.pathname;
+        
         // Reapply theme after page swap
         applyTheme();
         
         // Update navigation active states after page swap
         updateNavigation();
+        
+        // Clear transition data attribute
+        setTimeout(() => {
+          delete document.documentElement.dataset.transition;
+        }, 500);
       });
       
       // Run on page load (includes first load and after view transitions)
       document.addEventListener('astro:page-load', () => {
         init();
+        lastPath = window.location.pathname;
       });
     </script>
   </body>
