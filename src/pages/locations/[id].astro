@@ -2,6 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import { db, Location, NPC, LibraryEntry, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
+import { renderMarkdown } from '../../utils/markdown';
 
 const { id } = Astro.params;
 
@@ -23,6 +24,9 @@ const npcsAtLocation = await db.select().from(NPC).where(eq(NPC.locationId, id))
 const libraryEntries = await db.select().from(LibraryEntry).where(eq(LibraryEntry.locationId, id));
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
+
+// Render markdown content for description
+const renderedDescription = renderMarkdown(location.description);
 ---
 
 <Layout title={location.name}>
@@ -115,7 +119,10 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <!-- Description Section -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
       <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Description</h2>
-      <p class="text-lg text-gray-800 dark:text-gray-200 leading-relaxed">{location.description}</p>
+      <div 
+        class="prose dark:prose-invert max-w-none"
+        set:html={renderedDescription}
+      />
     </div>
 
     <!-- Notes Section -->
@@ -241,3 +248,47 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     });
   }
 </script>
+
+<style>
+  /* Enhance markdown rendering */
+  .prose {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(h1):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-700 dark:text-primary-400;
+  }
+  
+  .prose :where(h2):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400;
+  }
+  
+  .prose :where(h3):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-500;
+  }
+  
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
+  }
+  
+  .prose :where(strong):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(code):not(:where([class~="not-prose"] *)) {
+    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
+  }
+  
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
+  }
+  
+  .prose :where(ul):not(:where([class~="not-prose"] *)),
+  .prose :where(ol):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+  
+  .prose :where(hr):not(:where([class~="not-prose"] *)) {
+    @apply border-gray-300 dark:border-gray-700;
+  }
+</style>
