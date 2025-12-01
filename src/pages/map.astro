@@ -254,6 +254,13 @@ libraryEntries.forEach(entry => {
   <!-- Upload modal removed — using built-in, non-user-uploadable map image -->
 </Layout>
 
+<script>
+  // Import markdown renderer for client-side use
+  import { renderMarkdown } from '../utils/markdown';
+  // Make it globally available for the inline script
+  window.renderMarkdown = renderMarkdown;
+</script>
+
 <script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), locationLibraryEntries: Object.fromEntries(locationLibraryEntries), isLoggedIn }}>
   let editMode = false;
   let selectedLocationId = null;
@@ -692,6 +699,9 @@ libraryEntries.forEach(entry => {
     // Set location name as clickable link
     detailsLocationName.innerHTML = `<a href="/locations/${location.id}" class="hover:underline">${location.name}</a>`;
     
+    // Render description as markdown
+    const renderedDescription = window.renderMarkdown ? window.renderMarkdown(location.description) : location.description;
+    
     let html = `
       <div class="space-y-4">
         <div>
@@ -700,7 +710,7 @@ libraryEntries.forEach(entry => {
           </span>
           ${location.region ? `<span class="ml-2 text-sm text-gray-600 dark:text-gray-400">📍 ${location.region}</span>` : ''}
         </div>
-        <p class="text-gray-700 dark:text-gray-300">${location.description}</p>
+        <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">${renderedDescription}</div>
         ${location.notes ? `<div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 border-l-4 border-blue-500 p-3"><p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
     `;
 
@@ -1285,5 +1295,47 @@ libraryEntries.forEach(entry => {
 
   /* Hero path styling (SVG) */
   #mapSvg { z-index: 5; }
+
+  /* Markdown prose styling for location descriptions */
+  .prose {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(h1):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-700 dark:text-primary-400;
+  }
+  
+  .prose :where(h2):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400;
+  }
+  
+  .prose :where(h3):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-500;
+  }
+  
+  .prose :where(a):not(:where([class~="not-prose"] *)) {
+    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
+  }
+  
+  .prose :where(strong):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  .prose :where(code):not(:where([class~="not-prose"] *)) {
+    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
+  }
+  
+  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
+    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
+  }
+  
+  .prose :where(ul):not(:where([class~="not-prose"] *)),
+  .prose :where(ol):not(:where([class~="not-prose"] *)) {
+    @apply text-gray-700 dark:text-gray-300;
+  }
+  
+  .prose :where(hr):not(:where([class~="not-prose"] *)) {
+    @apply border-gray-300 dark:border-gray-700;
+  }
 </style>
 </Layout>
