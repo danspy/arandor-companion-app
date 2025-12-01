@@ -35,7 +35,7 @@ const campaignProgress = campaignProgressData.length > 0 ? campaignProgressData[
 
 const activeQuests = quests.filter(q => q.status === 'active');
 const latestEntries = diaryEntries.slice().sort((a, b) => 
-  new Date(b.date).getTime() - new Date(a.date).getTime()
+  b.session - a.session
 ).slice(0, 3);
 
 const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
@@ -237,7 +237,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               <span class="text-xs text-gray-500 dark:text-gray-400">Session {entry.session}</span>
             </div>
             <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
-            <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">{entry.date}</p>
           </a>
         ))}
       </div>
