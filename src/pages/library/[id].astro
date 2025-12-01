@@ -62,8 +62,8 @@ const renderedContent = renderMarkdown(entry.content);
       </div>
 
       <!-- Metadata -->
-      <div class="flex flex-wrap gap-3 items-center text-sm text-gray-600 dark:text-gray-400">
-        {location && (
+      {location && (
+        <div class="flex flex-wrap gap-3 items-center text-sm text-gray-600 dark:text-gray-400">
           <a href={`/locations/${location.id}`} class="flex items-center gap-1 text-secondary-600 dark:text-secondary-400 hover:underline">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -71,18 +71,8 @@ const renderedContent = renderMarkdown(entry.content);
             </svg>
             Found at: {location.name}
           </a>
-        )}
-        {location && (
-          <span>•</span>
-        )}
-        <span>Created: {new Date(entry.createdAt || '').toLocaleDateString()}</span>
-        {entry.updatedAt && entry.updatedAt !== entry.createdAt && (
-          <>
-            <span>•</span>
-            <span>Updated: {new Date(entry.updatedAt).toLocaleDateString()}</span>
-          </>
-        )}
-      </div>
+        </div>
+      )}
 
       <!-- Tags -->
       {Array.isArray(entry.tags) && entry.tags.length > 0 && (
