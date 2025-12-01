@@ -528,22 +528,28 @@ libraryEntries.forEach(entry => {
     });
   }
 
-  // Get color for location type
+  // Get color for location type (returns full class string for tag styling)
   function getLocationColor(type) {
     switch(type) {
-      case 'city': return 'bg-blue-500';
-      case 'dungeon': return 'bg-primary-500';
-      case 'wilderness': return 'bg-green-500';
-      case 'building': return 'bg-amber-500';
-      default: return 'bg-gray-500';
+      case 'city': return 'bg-blue-500 text-white';
+      case 'dungeon': return 'bg-purple-600 text-white';
+      case 'wilderness': return 'bg-green-600 text-white';
+      case 'building': return 'bg-amber-500 text-white';
+      default: return 'bg-gray-500 text-white';
     }
+  }
+  
+  // Capitalize first letter of location type for display
+  function capitalizeType(type) {
+    if (!type) return '';
+    return type.charAt(0).toUpperCase() + type.slice(1);
   }
 
   // Hex color mapping for SVG pins
   function getLocationHex(type) {
     switch(type) {
       case 'city': return '#3b82f6'; // blue-500
-      case 'dungeon': return '#7c3aed'; // purple-ish
+      case 'dungeon': return '#9333ea'; // purple-600
       case 'wilderness': return '#16a34a'; // green-600
       case 'building': return '#f59e0b'; // amber-500
       default: return '#6b7280'; // gray-500
@@ -704,11 +710,11 @@ libraryEntries.forEach(entry => {
     
     let html = `
       <div class="space-y-4">
-        <div>
-          <span class="inline-block px-3 py-1 rounded text-sm font-medium ${getLocationColor(location.type)}-100 text-${getLocationColor(location.type).replace('bg-', '')}-700 dark:bg-opacity-20 dark:text-${getLocationColor(location.type).replace('bg-', '')}-300">
-            ${location.type}
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${getLocationColor(location.type)}">
+            ${capitalizeType(location.type)}
           </span>
-          ${location.region ? `<span class="ml-2 text-sm text-gray-600 dark:text-gray-400">📍 ${location.region}</span>` : ''}
+          ${location.region ? `<span class="text-sm text-gray-600 dark:text-gray-400">📍 ${location.region}</span>` : ''}
         </div>
         <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">${renderedDescription}</div>
         ${location.notes ? `<div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 border-l-4 border-blue-500 p-3"><p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
