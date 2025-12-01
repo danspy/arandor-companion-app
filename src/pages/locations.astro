@@ -8,6 +8,9 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
 const visitedLocations = locations.filter(l => l.visited);
 const unvisitedLocations = locations.filter(l => !l.visited);
+
+// Get unique types for filtering
+const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort();
 ---
 
 <Layout title="Locations">
@@ -39,9 +42,62 @@ const unvisitedLocations = locations.filter(l => !l.visited);
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+  <!-- Search and Filter -->
+  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Search Input -->
+      <div class="flex-1">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search locations by name, type, region, or description..."
+            class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          >
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </div>
+      </div>
+      <!-- Type Filter -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
+        <button 
+          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" 
+          data-filter="all"
+        >
+          All ({locations.length})
+        </button>
+        <button 
+          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+          data-filter="visited"
+        >
+          Visited ({visitedLocations.length})
+        </button>
+        <button 
+          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+          data-filter="unvisited"
+        >
+          Unvisited ({unvisitedLocations.length})
+        </button>
+        {allTypes.map(type => {
+          const count = locations.filter(l => l.type === type).length;
+          return (
+            <button 
+              class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+              data-filter={type}
+            >
+              {type} ({count})
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  <div id="locationGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {locations.map(location => (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900">
+      <div class="location-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
         <a href={`/locations/${location.id}`} class="block">
           <div class={`h-2 ${
             location.type === 'city' ? 'bg-blue-500' :
@@ -415,4 +471,61 @@ const unvisitedLocations = locations.filter(l => !l.visited);
       }
     }
   })();
+
+  // Search and Filter functionality
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const locationCards = document.querySelectorAll('.location-card');
+  
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  const applyFilters = () => {
+    locationCards.forEach(card => {
+      const cardType = card.getAttribute('data-type') || '';
+      const cardVisited = card.getAttribute('data-visited') || '';
+      const searchText = card.getAttribute('data-search') || '';
+      
+      let matchesFilter = false;
+      if (currentFilter === 'all') {
+        matchesFilter = true;
+      } else if (currentFilter === 'visited') {
+        matchesFilter = cardVisited === 'true';
+      } else if (currentFilter === 'unvisited') {
+        matchesFilter = cardVisited === 'false';
+      } else {
+        matchesFilter = cardType === currentFilter;
+      }
+      
+      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      
+      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+    });
+  };
+
+  // Search functionality
+  searchInput?.addEventListener('input', (e) => {
+    currentSearch = (e.target as HTMLInputElement).value;
+    applyFilters();
+  });
+
+  // Filter functionality
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.getAttribute('data-filter') || 'all';
+      
+      // Update button styles
+      filterBtns.forEach(b => {
+        if (b.getAttribute('data-filter') === currentFilter) {
+          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          b.classList.add('bg-primary-600', 'text-white');
+        } else {
+          b.classList.remove('bg-primary-600', 'text-white');
+          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+      });
+      
+      applyFilters();
+    });
+  });
 </script>

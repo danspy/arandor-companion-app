@@ -9,6 +9,11 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 const activeQuests = quests.filter(q => q.status === 'active');
 const completedQuests = quests.filter(q => q.status === 'completed');
 const failedQuests = quests.filter(q => q.status === 'failed');
+
+// Get priority counts
+const highPriority = quests.filter(q => q.priority === 'high').length;
+const mediumPriority = quests.filter(q => q.priority === 'medium').length;
+const lowPriority = quests.filter(q => q.priority === 'low').length;
 ---
 
 <Layout title="Quests">
@@ -44,119 +49,101 @@ const failedQuests = quests.filter(q => q.status === 'failed');
     </div>
   </div>
 
-  <!-- Active Quests -->
-  <section class="mb-8">
-    <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Active Quests</h2>
-    <div class="space-y-4">
-      {activeQuests.map(quest => (
-        <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900">
-          <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-            <div class="flex-1">
-              <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
-                <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                  quest.priority === 'high' ? 'bg-red-100 text-red-700' :
-                  quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700' :
-                  'bg-green-100 text-green-700'
-                }`}>
-                  {quest.priority} priority
-                </span>
-              </div>
-              <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
-            </div>
-            {isLoggedIn && (
-              <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
-                <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
-                  Complete
-                </button>
-                <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
-                  Fail
-                </button>
-                <button class="edit-quest px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm" data-id={quest.id}>
-                  Edit
-                </button>
-                <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
-                  Delete
-                </button>
-              </div>
-            )}
-          </div>
+  <!-- Search and Filter -->
+  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+    <div class="flex flex-col md:flex-row gap-4">
+      <!-- Search Input -->
+      <div class="flex-1">
+        <div class="relative">
+          <input 
+            type="text" 
+            id="searchInput" 
+            placeholder="Search quests by title or description..."
+            class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          >
+          <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
         </div>
-      ))}
-      {activeQuests.length === 0 && (
-        <div class="text-center py-8 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-          <p class="text-gray-500 dark:text-gray-400">No active quests</p>
-        </div>
-      )}
+      </div>
+      <!-- Status and Priority Filters -->
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Status:</span>
+        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" data-filter="all">
+          All ({quests.length})
+        </button>
+        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="active">
+          Active ({activeQuests.length})
+        </button>
+        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="completed">
+          Completed ({completedQuests.length})
+        </button>
+        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="failed">
+          Failed ({failedQuests.length})
+        </button>
+      </div>
     </div>
-  </section>
+  </div>
 
-  <!-- Completed Quests -->
-  {completedQuests.length > 0 && (
-    <section class="mb-8">
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Completed Quests</h2>
-      <div class="space-y-4">
-        {completedQuests.map(quest => (
-          <div class="bg-green-50 dark:bg-green-900/20 rounded-lg shadow p-6 opacity-75 dark:border dark:border-green-800">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-              <div class="flex-1">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
-                <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
-              </div>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span class="bg-green-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap">
-                  ✓ Completed
-                </span>
-                {isLoggedIn && (
-                  <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
-                    Reactivate
-                  </button>
-                )}
-                {isLoggedIn && (
-                  <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
-                    Delete
-                  </button>
-                )}
-              </div>
+  <!-- All Quests Grid -->
+  <div id="questsGrid" class="space-y-4">
+    {quests.map(quest => (
+      <div class="quest-card bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-status={quest.status} data-priority={quest.priority} data-search={`${quest.title} ${quest.description}`.toLowerCase()}>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+          <div class="flex-1">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+              <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
+              <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                quest.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
+                quest.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
+                'bg-accent-100 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400'
+              }`}>
+                {quest.status}
+              </span>
+              <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
+                quest.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
+                quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400' :
+                'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+              }`}>
+                {quest.priority} priority
+              </span>
             </div>
+            <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
           </div>
-        ))}
+          {isLoggedIn && (
+            <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
+              {quest.status === 'active' && (
+                <>
+                  <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
+                    Complete
+                  </button>
+                  <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
+                    Fail
+                  </button>
+                </>
+              )}
+              {(quest.status === 'completed' || quest.status === 'failed') && (
+                <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
+                  Reactivate
+                </button>
+              )}
+              <button class="edit-quest px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm dark:text-gray-300" data-id={quest.id}>
+                Edit
+              </button>
+              <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
+                Delete
+              </button>
+            </div>
+          )}
+        </div>
       </div>
-    </section>
-  )}
+    ))}
+  </div>
 
-  <!-- Failed Quests -->
-  {failedQuests.length > 0 && (
-    <section>
-      <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-4">Failed Quests</h2>
-      <div class="space-y-4">
-        {failedQuests.map(quest => (
-          <div class="bg-red-50 dark:bg-red-900/20 rounded-lg shadow p-6 opacity-75 dark:border dark:border-red-800">
-            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-              <div class="flex-1">
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
-                <p class="text-gray-700 dark:text-gray-300">{quest.description}</p>
-              </div>
-              <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                <span class="bg-red-600 text-white px-3 py-1 rounded text-sm whitespace-nowrap">
-                  ✗ Failed
-                </span>
-                {isLoggedIn && (
-                  <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
-                    Reactivate
-                  </button>
-                )}
-                {isLoggedIn && (
-                  <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
-                    Delete
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+  {quests.length === 0 && (
+    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
+      <p class="text-gray-500 dark:text-gray-400 text-lg">No quests yet. Start adding adventures!</p>
+    </div>
   )}
 
   <!-- Modal for Add/Edit Quest -->
@@ -419,5 +406,51 @@ const failedQuests = quests.filter(q => q.status === 'failed');
         }
       }
     }
+  });
+
+  // Search and Filter functionality
+  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+  const filterBtns = document.querySelectorAll('.filter-btn');
+  const questCards = document.querySelectorAll('.quest-card');
+  
+  let currentFilter = 'all';
+  let currentSearch = '';
+
+  const applyFilters = () => {
+    questCards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status') || '';
+      const searchText = card.getAttribute('data-search') || '';
+      
+      const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
+      const matchesSearch = currentSearch === '' || searchText.includes(currentSearch.toLowerCase());
+      
+      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+    });
+  };
+
+  // Search functionality
+  searchInput?.addEventListener('input', (e) => {
+    currentSearch = (e.target as HTMLInputElement).value;
+    applyFilters();
+  });
+
+  // Filter functionality
+  filterBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentFilter = btn.getAttribute('data-filter') || 'all';
+      
+      // Update button styles
+      filterBtns.forEach(b => {
+        if (b.getAttribute('data-filter') === currentFilter) {
+          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          b.classList.add('bg-primary-600', 'text-white');
+        } else {
+          b.classList.remove('bg-primary-600', 'text-white');
+          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+      });
+      
+      applyFilters();
+    });
   });
 </script>
