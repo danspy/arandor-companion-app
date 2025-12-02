@@ -350,6 +350,42 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
       alert('An error occurred. Please try again.');
     }
   });
+
+    // Check for edit parameter on page load and open modal if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/npcs/${editId}`);
+          if (!response.ok) {
+            throw new Error('NPC not found');
+          }
+          
+          const npc = await response.json();
+          
+          editingId = editId;
+          (document.getElementById('name') as HTMLInputElement).value = npc.name;
+          (document.getElementById('race') as HTMLInputElement).value = npc.race;
+          (document.getElementById('occupation') as HTMLInputElement).value = npc.occupation || '';
+          (document.getElementById('locationId') as HTMLSelectElement).value = npc.locationId || '';
+          (document.getElementById('relationship') as HTMLSelectElement).value = npc.relationship;
+          (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
+          (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
+          (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
+          
+          modalTitle.textContent = 'Edit NPC';
+          modal.classList.remove('hidden');
+          
+          // Clear the URL parameter so refreshing doesn't re-open the modal
+          window.history.replaceState({}, '', '/npcs');
+        } catch (error) {
+          console.error('Failed to load NPC for editing:', error);
+          alert('Failed to load NPC. Please try again.');
+        }
+      })();
+    }
   }
 
   // Edit/Delete NPCs with event delegation
@@ -468,40 +504,4 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
     initializeNPCModal();
     initializeFilters();
   });
-
-  // Check for edit parameter on page load and open modal if present
-  (async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    
-    if (editId && modal && form && modalTitle) {
-      try {
-        const response = await fetch(`/api/npcs/${editId}`);
-        if (!response.ok) {
-          throw new Error('NPC not found');
-        }
-        
-        const npc = await response.json();
-        
-        editingId = editId;
-        (document.getElementById('name') as HTMLInputElement).value = npc.name;
-        (document.getElementById('race') as HTMLInputElement).value = npc.race;
-        (document.getElementById('occupation') as HTMLInputElement).value = npc.occupation || '';
-        (document.getElementById('locationId') as HTMLSelectElement).value = npc.locationId || '';
-        (document.getElementById('relationship') as HTMLSelectElement).value = npc.relationship;
-        (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
-        (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
-        (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
-        
-        modalTitle.textContent = 'Edit NPC';
-        modal.classList.remove('hidden');
-        
-        // Clear the URL parameter so refreshing doesn't re-open the modal
-        window.history.replaceState({}, '', '/npcs');
-      } catch (error) {
-        console.error('Failed to load NPC for editing:', error);
-        alert('Failed to load NPC. Please try again.');
-      }
-    }
-  })();
 </script>

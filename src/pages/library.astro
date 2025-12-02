@@ -386,6 +386,51 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
       alert('An error occurred. Please try again.');
     }
   });
+
+    // Check for edit parameter on page load and open modal if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/library/${editId}`);
+          if (!response.ok) {
+            throw new Error('Library entry not found');
+          }
+          
+          const entry = await response.json();
+          
+          editingId = editId;
+          
+          // Populate form fields with null checks
+          const titleEl = document.getElementById('title') as HTMLInputElement;
+          const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+          const tagsEl = document.getElementById('tags') as HTMLInputElement;
+          const locationEl = document.getElementById('location') as HTMLSelectElement;
+          
+          if (!titleEl || !contentEl || !tagsEl || !locationEl) {
+            console.error('One or more form elements not found');
+            throw new Error('Form elements not found');
+          }
+          
+          titleEl.value = entry.title || '';
+          contentEl.value = entry.content || '';
+          tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+          locationEl.value = entry.locationId || '';
+          
+          modalTitle.textContent = 'Edit Library Entry';
+          previewDiv?.classList.add('hidden');
+          modal.classList.remove('hidden');
+          
+          // Clear the URL parameter so refreshing doesn't re-open the modal
+          window.history.replaceState({}, '', '/library');
+        } catch (error) {
+          console.error('Failed to load library entry for editing:', error);
+          alert('Failed to load library entry. Please try again.');
+        }
+      })();
+    }
   }
 
   // Edit/Delete entries with event delegation

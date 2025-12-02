@@ -382,6 +382,42 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
       alert('An error occurred. Please try again.');
     }
   });
+
+    // Check for edit parameter on page load and open modal if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/locations/${editId}`);
+          if (!response.ok) {
+            throw new Error('Location not found');
+          }
+          
+          const location = await response.json();
+          
+          editingId = editId;
+          (document.getElementById('name') as HTMLInputElement).value = location.name;
+          (document.getElementById('type') as HTMLSelectElement).value = location.type;
+          (document.getElementById('region') as HTMLInputElement).value = location.region || '';
+          (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
+          (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
+          (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
+          (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
+          (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+          
+          modalTitle.textContent = 'Edit Location';
+          modal.classList.remove('hidden');
+          
+          // Clear the URL parameter so refreshing doesn't re-open the modal
+          window.history.replaceState({}, '', '/locations');
+        } catch (error) {
+          console.error('Failed to load location for editing:', error);
+          alert('Failed to load location. Please try again.');
+        }
+      })();
+    }
   }
 
   // Edit/Delete locations with event delegation
@@ -444,43 +480,6 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
       }
     }
   });
-
-  // Check for edit parameter on page load and open modal if present
-  (async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    
-    if (editId && modal && form && modalTitle) {
-      try {
-        const response = await fetch(`/api/locations/${editId}`);
-        if (!response.ok) {
-          throw new Error('Location not found');
-        }
-        
-        const location = await response.json();
-        
-        editingId = editId;
-        (document.getElementById('name') as HTMLInputElement).value = location.name;
-        (document.getElementById('type') as HTMLSelectElement).value = location.type;
-        (document.getElementById('region') as HTMLInputElement).value = location.region || '';
-        (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
-        (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
-        (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
-        (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
-        (document.getElementById('mapX') as HTMLInputElement).value = location.mapX || '';
-        (document.getElementById('mapY') as HTMLInputElement).value = location.mapY || '';
-        
-        modalTitle.textContent = 'Edit Location';
-        modal.classList.remove('hidden');
-        
-        // Clear the URL parameter so refreshing doesn't re-open the modal
-        window.history.replaceState({}, '', '/locations');
-      } catch (error) {
-        console.error('Failed to load location for editing:', error);
-        alert('Failed to load location. Please try again.');
-      }
-    }
-  })();
 
   // Initialize search and filter functionality on page load
   // This ensures it works after Astro View Transitions navigation
