@@ -96,25 +96,6 @@ const renderedContent = renderMarkdown(entry.content);
         set:html={renderedContent}
       />
     </article>
-
-    <!-- Location Map Link -->
-    {location && location.mapX != null && location.mapY != null && (
-      <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-        <h2 class="text-xl font-semibold text-primary-700 dark:text-primary-400 mb-3">Location on Map</h2>
-        <p class="text-gray-700 dark:text-gray-300 mb-4">
-          This entry is connected to <strong>{location.name}</strong>. View it on the interactive map.
-        </p>
-        <a 
-          href="/map"
-          class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition font-medium"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
-          </svg>
-          View on Map
-        </a>
-      </div>
-    )}
   </div>
 </Layout>
 
