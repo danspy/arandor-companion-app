@@ -241,6 +241,9 @@ const sortedQuests = [...quests].sort((a, b) => {
 </Layout>
 
 <script>
+  // Shared state for editing quest ID
+  let editingId: string | null = null;
+
   // Initialize quest functionality on page load
   // This ensures it works after Astro View Transitions navigation
   function initializeQuests() {
@@ -249,8 +252,6 @@ const sortedQuests = [...quests].sort((a, b) => {
     const modalTitle = document.getElementById('modalTitle');
     const addButton = document.getElementById('addQuest');
     const cancelButton = document.getElementById('cancelModal');
-
-    let editingId: string | null = null;
 
     // Open modal for new quest
     addButton?.addEventListener('click', () => {
@@ -302,130 +303,133 @@ const sortedQuests = [...quests].sort((a, b) => {
         alert('An error occurred. Please try again.');
       }
     });
-
-    // Edit quest
-    document.addEventListener('click', async (e) => {
-      const target = e.target as HTMLElement;
-      
-      if (target.classList.contains('edit-quest')) {
-        const id = target.getAttribute('data-id');
-        if (!id) return;
-        
-        try {
-          const response = await fetch(`/api/quests/${id}`);
-          const quest = await response.json();
-          
-          editingId = id;
-          (document.getElementById('title') as HTMLInputElement).value = quest.title;
-          (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
-          (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
-          (document.getElementById('status') as HTMLSelectElement).value = quest.status;
-          
-          if (modalTitle) modalTitle.textContent = 'Edit Quest';
-          modal?.classList.remove('hidden');
-        } catch (error) {
-          alert('Failed to load quest. Please try again.');
-        }
-      }
-      
-      // Complete quest
-      if (target.classList.contains('complete-quest')) {
-        const id = target.getAttribute('data-id');
-        if (!id) return;
-        
-        try {
-          const response = await fetch(`/api/quests/${id}`);
-          const quest = await response.json();
-          
-          const updateResponse = await fetch(`/api/quests/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quest, status: 'completed' }),
-          });
-          
-          if (updateResponse.ok) {
-            window.location.reload();
-          } else {
-            alert('Failed to complete quest. Please try again.');
-          }
-        } catch (error) {
-          alert('An error occurred. Please try again.');
-        }
-      }
-      
-      // Fail quest
-      if (target.classList.contains('fail-quest')) {
-        const id = target.getAttribute('data-id');
-        if (!id) return;
-        
-        try {
-          const response = await fetch(`/api/quests/${id}`);
-          const quest = await response.json();
-          
-          const updateResponse = await fetch(`/api/quests/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quest, status: 'failed' }),
-          });
-          
-          if (updateResponse.ok) {
-            window.location.reload();
-          } else {
-            alert('Unable to mark quest as failed. Please try again.');
-          }
-        } catch (error) {
-          alert('An error occurred. Please try again.');
-        }
-      }
-      
-      // Reactivate quest (set status back to active)
-      if (target.classList.contains('reactivate-quest')) {
-        const id = target.getAttribute('data-id');
-        if (!id) return;
-        
-        try {
-          const response = await fetch(`/api/quests/${id}`);
-          const quest = await response.json();
-          
-          const updateResponse = await fetch(`/api/quests/${id}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...quest, status: 'active' }),
-          });
-          
-          if (updateResponse.ok) {
-            window.location.reload();
-          } else {
-            alert('Failed to reactivate quest. Please try again.');
-          }
-        } catch (error) {
-          alert('An error occurred. Please try again.');
-        }
-      }
-      
-      // Delete quest
-      if (target.classList.contains('delete-quest')) {
-        const id = target.getAttribute('data-id');
-        if (!id) return;
-        
-        if (confirm('Are you sure you want to delete this quest?')) {
-          try {
-            const response = await fetch(`/api/quests/${id}`, {
-              method: 'DELETE',
-            });
-            
-            if (response.ok) {
-              window.location.reload();
-            } else {
-              alert('Failed to delete quest. Please try again.');
-            }
-          } catch (error) {
-            alert('An error occurred. Please try again.');
-          }
-        }
-      }
-    });
   }
+
+  // Handle quest actions with event delegation (once per page lifecycle)
+  document.addEventListener('click', async (e) => {
+    const target = e.target as HTMLElement;
+    const modal = document.getElementById('questModal');
+    const modalTitle = document.getElementById('modalTitle');
+    
+    // Edit quest
+    if (target.classList.contains('edit-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        editingId = id;
+        (document.getElementById('title') as HTMLInputElement).value = quest.title;
+        (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
+        (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
+        (document.getElementById('status') as HTMLSelectElement).value = quest.status;
+        
+        if (modalTitle) modalTitle.textContent = 'Edit Quest';
+        modal?.classList.remove('hidden');
+      } catch (error) {
+        alert('Failed to load quest. Please try again.');
+      }
+    }
+    
+    // Complete quest
+    if (target.classList.contains('complete-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        const updateResponse = await fetch(`/api/quests/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...quest, status: 'completed' }),
+        });
+        
+        if (updateResponse.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to complete quest. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Fail quest
+    if (target.classList.contains('fail-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        const updateResponse = await fetch(`/api/quests/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...quest, status: 'failed' }),
+        });
+        
+        if (updateResponse.ok) {
+          window.location.reload();
+        } else {
+          alert('Unable to mark quest as failed. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Reactivate quest (set status back to active)
+    if (target.classList.contains('reactivate-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      try {
+        const response = await fetch(`/api/quests/${id}`);
+        const quest = await response.json();
+        
+        const updateResponse = await fetch(`/api/quests/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...quest, status: 'active' }),
+        });
+        
+        if (updateResponse.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to reactivate quest. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    }
+    
+    // Delete quest
+    if (target.classList.contains('delete-quest')) {
+      const id = target.getAttribute('data-id');
+      if (!id) return;
+      
+      if (confirm('Are you sure you want to delete this quest?')) {
+        try {
+          const response = await fetch(`/api/quests/${id}`, {
+            method: 'DELETE',
+          });
+          
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to delete quest. Please try again.');
+          }
+        } catch (error) {
+          alert('An error occurred. Please try again.');
+        }
+      }
+    }
+  });
 
   // Initialize search and filter functionality on page load
   // This ensures it works after Astro View Transitions navigation
