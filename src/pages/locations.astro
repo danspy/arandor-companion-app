@@ -392,6 +392,10 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
       const id = target.getAttribute('data-id');
       if (!id) return;
       
+      // Get DOM elements fresh
+      const modal = document.getElementById('locationModal');
+      const modalTitle = document.getElementById('modalTitle');
+      
       try {
         const response = await fetch(`/api/locations/${id}`);
         const location = await response.json();

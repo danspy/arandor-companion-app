@@ -360,6 +360,10 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
       const id = target.getAttribute('data-id');
       if (!id) return;
       
+      // Get DOM elements fresh
+      const modal = document.getElementById('npcModal');
+      const modalTitle = document.getElementById('modalTitle');
+      
       try {
         const response = await fetch(`/api/npcs/${id}`);
         const npc = await response.json();

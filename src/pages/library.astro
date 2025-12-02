@@ -396,6 +396,11 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
       const id = target.getAttribute('data-id');
       if (!id) return;
       
+      // Get DOM elements fresh
+      const modal = document.getElementById('entryModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const previewDiv = document.getElementById('markdownPreview');
+      
       try {
         const response = await fetch(`/api/library/${id}`);
         const entry = await response.json();

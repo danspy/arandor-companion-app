@@ -505,6 +505,13 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       const id = target.getAttribute('data-id');
       if (!id) return;
       
+      // Get DOM elements fresh
+      const modal = document.getElementById('entryModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg') as HTMLImageElement;
+      const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
+      
       try {
         const response = await fetch(`/api/diary/${id}`);
         const entry = await response.json();
