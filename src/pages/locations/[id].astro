@@ -86,35 +86,35 @@ const renderedDescription = renderMarkdown(location.description);
         <!-- Quick Info -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div class={`p-4 rounded-lg ${
-            location.type === 'city' ? 'bg-blue-50' :
-            location.type === 'dungeon' ? 'bg-purple-50' :
-            location.type === 'wilderness' ? 'bg-green-50' :
-            location.type === 'building' ? 'bg-amber-50' :
-            'bg-gray-50'
+            location.type === 'city' ? 'bg-blue-50 dark:bg-blue-900/20 dark:border dark:border-blue-800' :
+            location.type === 'dungeon' ? 'bg-purple-50 dark:bg-purple-900/20 dark:border dark:border-purple-800' :
+            location.type === 'wilderness' ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' :
+            location.type === 'building' ? 'bg-amber-50 dark:bg-amber-900/20 dark:border dark:border-amber-800' :
+            'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
           }`}>
-            <div class="text-sm text-gray-600 mb-1">Type</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Type</div>
             <div class={`text-2xl font-semibold ${
-              location.type === 'city' ? 'text-blue-700' :
-              location.type === 'dungeon' ? 'text-purple-700' :
-              location.type === 'wilderness' ? 'text-green-700' :
-              location.type === 'building' ? 'text-amber-700' :
-              'text-gray-700'
+              location.type === 'city' ? 'text-blue-700 dark:text-blue-400' :
+              location.type === 'dungeon' ? 'text-purple-700 dark:text-purple-400' :
+              location.type === 'wilderness' ? 'text-green-700 dark:text-green-400' :
+              location.type === 'building' ? 'text-amber-700 dark:text-amber-400' :
+              'text-gray-700 dark:text-gray-300'
             }`}>
               {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
             </div>
           </div>
           {location.region && (
-            <div class="bg-primary-50 p-4 rounded-lg">
-              <div class="text-sm text-gray-600 mb-1">Region</div>
-              <div class="text-2xl font-semibold text-primary-700">{location.region}</div>
+            <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">
+              <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Region</div>
+              <div class="text-2xl font-semibold text-primary-700 dark:text-primary-400">{location.region}</div>
             </div>
           )}
           <div class={`p-4 rounded-lg ${
-            location.visited ? 'bg-green-50' : 'bg-gray-50'
+            location.visited ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
           }`}>
-            <div class="text-sm text-gray-600 mb-1">Status</div>
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Status</div>
             <div class={`text-2xl font-semibold ${
-              location.visited ? 'text-green-700' : 'text-gray-700'
+              location.visited ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'
             }`}>
               {location.visited ? '✓ Visited' : 'Not Visited'}
             </div>
