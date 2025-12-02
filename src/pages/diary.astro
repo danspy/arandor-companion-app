@@ -514,6 +514,9 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       
       try {
         const response = await fetch(`/api/diary/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch entry');
+        }
         const entry = await response.json();
         
         editingId = id;
@@ -569,6 +572,7 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         if (modalTitle) modalTitle.textContent = 'Edit Diary Entry';
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load diary entry:', error);
         alert('Failed to load entry. Please try again.');
       }
     }

@@ -366,6 +366,9 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
       
       try {
         const response = await fetch(`/api/npcs/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch NPC');
+        }
         const npc = await response.json();
         
         editingId = id;
@@ -381,6 +384,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
         if (modalTitle) modalTitle.textContent = 'Edit NPC';
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load NPC:', error);
         alert('Failed to load NPC. Please try again.');
       }
     }

@@ -398,6 +398,9 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
       
       try {
         const response = await fetch(`/api/locations/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch location');
+        }
         const location = await response.json();
         
         editingId = id;
@@ -414,6 +417,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load location:', error);
         alert('Failed to load location. Please try again.');
       }
     }

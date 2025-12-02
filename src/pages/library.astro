@@ -403,6 +403,9 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
       
       try {
         const response = await fetch(`/api/library/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch entry');
+        }
         const entry = await response.json();
         
         editingId = id;
@@ -415,6 +418,7 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         previewDiv?.classList.add('hidden');
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load library entry:', error);
         alert('Failed to load entry. Please try again.');
       }
     }

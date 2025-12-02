@@ -697,6 +697,9 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
       
       try {
         const response = await fetch(`/api/characters/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch character');
+        }
         const character = await response.json();
         
         editingId = id;
@@ -731,6 +734,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         if (modalTitle) modalTitle.textContent = 'Edit Character';
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load character:', error);
         alert('Failed to load character. Please try again.');
       }
     }
