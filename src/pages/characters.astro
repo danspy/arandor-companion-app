@@ -452,106 +452,245 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
 </Layout>
 
 <script>
-  const modal = document.getElementById('characterModal');
-  const form = document.getElementById('characterForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addCharacter');
-  const cancelButton = document.getElementById('cancelModal');
-
+  // Shared state for editing character ID
   let editingId: string | null = null;
 
-  // Open modal for new character
-  addButton?.addEventListener('click', () => {
-    editingId = null;
-    form.reset();
-    if (modalTitle) modalTitle.textContent = 'New Character';
-    modal?.classList.remove('hidden');
-  });
+  // Initialize character modal and form functionality
+  function initializeCharacterModal() {
+    const modal = document.getElementById('characterModal');
+    const form = document.getElementById('characterForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addCharacter');
+    const cancelButton = document.getElementById('cancelModal');
+    const fetchButton = document.getElementById('fetchFromDndBeyond');
+    const fetchStatus = document.getElementById('fetchStatus');
 
-  // Close modal
-  cancelButton?.addEventListener('click', () => {
-    modal?.classList.add('hidden');
-  });
+    // Open modal for new character
+    addButton?.addEventListener('click', () => {
+      editingId = null;
+      form.reset();
+      if (modalTitle) modalTitle.textContent = 'New Character';
+      modal?.classList.remove('hidden');
+    });
 
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-    }
-  });
+    // Close modal
+    cancelButton?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
 
-  // Handle form submission
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    
-    // Validate that required fields are filled
-    const name = formData.get('name') as string;
-    const player = formData.get('player') as string;
-    const race = formData.get('race') as string;
-    const className = formData.get('class') as string;
-    const level = formData.get('level') as string;
-    
-    // Check if required fields are empty
-    if (!name || !player || !race || !className || !level) {
-      alert('Please fill out all required fields (Name, Player, Race, Class, Level) or use the D&D Beyond Auto-fill feature.');
-      return;
-    }
-    
-    const stats = {
-      strength: parseInt(formData.get('strength') as string) || 10,
-      dexterity: parseInt(formData.get('dexterity') as string) || 10,
-      constitution: parseInt(formData.get('constitution') as string) || 10,
-      intelligence: parseInt(formData.get('intelligence') as string) || 10,
-      wisdom: parseInt(formData.get('wisdom') as string) || 10,
-      charisma: parseInt(formData.get('charisma') as string) || 10,
-    };
-    
-    const data = {
-      name,
-      player,
-      race,
-      class: className,
-      level: parseInt(level),
-      avatarUrl: formData.get('avatarUrl') || undefined,
-      dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
-      stats,
-      // Additional character details
-      background: formData.get('background') || undefined,
-      alignment: formData.get('alignment') || undefined,
-      gender: formData.get('gender') || undefined,
-      age: formData.get('age') ? parseInt(formData.get('age') as string) : undefined,
-      height: formData.get('height') || undefined,
-      weight: formData.get('weight') ? parseInt(formData.get('weight') as string) : undefined,
-      eyes: formData.get('eyes') || undefined,
-      skin: formData.get('skin') || undefined,
-      hair: formData.get('hair') || undefined,
-    };
-
-    try {
-      const url = editingId ? `/api/characters/${editingId}` : '/api/characters';
-      const method = editingId ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        window.location.reload();
-      } else {
-        alert('Failed to save character. Please try again.');
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
       }
-    } catch (error) {
-      alert('An error occurred. Please try again.');
-    }
-  });
+    });
 
-  // Edit character
+    // Handle form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      
+      // Validate that required fields are filled
+      const name = formData.get('name') as string;
+      const player = formData.get('player') as string;
+      const race = formData.get('race') as string;
+      const className = formData.get('class') as string;
+      const level = formData.get('level') as string;
+      
+      // Check if required fields are empty
+      if (!name || !player || !race || !className || !level) {
+        alert('Please fill out all required fields (Name, Player, Race, Class, Level) or use the D&D Beyond Auto-fill feature.');
+        return;
+      }
+      
+      const stats = {
+        strength: parseInt(formData.get('strength') as string) || 10,
+        dexterity: parseInt(formData.get('dexterity') as string) || 10,
+        constitution: parseInt(formData.get('constitution') as string) || 10,
+        intelligence: parseInt(formData.get('intelligence') as string) || 10,
+        wisdom: parseInt(formData.get('wisdom') as string) || 10,
+        charisma: parseInt(formData.get('charisma') as string) || 10,
+      };
+      
+      const data = {
+        name,
+        player,
+        race,
+        class: className,
+        level: parseInt(level),
+        avatarUrl: formData.get('avatarUrl') || undefined,
+        dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
+        stats,
+        // Additional character details
+        background: formData.get('background') || undefined,
+        alignment: formData.get('alignment') || undefined,
+        gender: formData.get('gender') || undefined,
+        age: formData.get('age') ? parseInt(formData.get('age') as string) : undefined,
+        height: formData.get('height') || undefined,
+        weight: formData.get('weight') ? parseInt(formData.get('weight') as string) : undefined,
+        eyes: formData.get('eyes') || undefined,
+        skin: formData.get('skin') || undefined,
+        hair: formData.get('hair') || undefined,
+      };
+
+      try {
+        const url = editingId ? `/api/characters/${editingId}` : '/api/characters';
+        const method = editingId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to save character. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    });
+
+    // Fetch character data from D&D Beyond
+    fetchButton?.addEventListener('click', async () => {
+      const urlInput = document.getElementById('dndbeyondUrl') as HTMLInputElement;
+      const url = urlInput.value.trim();
+      
+      if (!url) {
+        alert('Please enter a D&D Beyond character URL first.');
+        return;
+      }
+      
+      // Show loading status
+      if (fetchStatus) {
+        fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
+        fetchStatus.className = 'p-3 rounded-lg mb-2 bg-blue-100 text-blue-800';
+        fetchStatus.classList.remove('hidden');
+      }
+      
+      try {
+        const response = await fetch('/api/characters/dndbeyond', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          // Fill in the form fields
+          if (data.name) (document.getElementById('name') as HTMLInputElement).value = data.name;
+          if (data.race) (document.getElementById('race') as HTMLInputElement).value = data.race;
+          if (data.class) (document.getElementById('class') as HTMLInputElement).value = data.class;
+          if (data.level) (document.getElementById('level') as HTMLInputElement).value = data.level;
+          if (data.avatarUrl) (document.getElementById('avatarUrl') as HTMLInputElement).value = data.avatarUrl;
+          
+          if (data.stats) {
+            if (data.stats.strength) (document.getElementById('strength') as HTMLInputElement).value = data.stats.strength;
+            if (data.stats.dexterity) (document.getElementById('dexterity') as HTMLInputElement).value = data.stats.dexterity;
+            if (data.stats.constitution) (document.getElementById('constitution') as HTMLInputElement).value = data.stats.constitution;
+            if (data.stats.intelligence) (document.getElementById('intelligence') as HTMLInputElement).value = data.stats.intelligence;
+            if (data.stats.wisdom) (document.getElementById('wisdom') as HTMLInputElement).value = data.stats.wisdom;
+            if (data.stats.charisma) (document.getElementById('charisma') as HTMLInputElement).value = data.stats.charisma;
+          }
+          
+          // Fill in additional character details
+          if (data.background) (document.getElementById('background') as HTMLInputElement).value = data.background;
+          if (data.alignment) (document.getElementById('alignment') as HTMLInputElement).value = data.alignment;
+          if (data.gender) (document.getElementById('gender') as HTMLInputElement).value = data.gender;
+          if (data.age) (document.getElementById('age') as HTMLInputElement).value = data.age;
+          if (data.height) (document.getElementById('height') as HTMLInputElement).value = data.height;
+          if (data.weight) (document.getElementById('weight') as HTMLInputElement).value = data.weight;
+          if (data.eyes) (document.getElementById('eyes') as HTMLInputElement).value = data.eyes;
+          if (data.skin) (document.getElementById('skin') as HTMLInputElement).value = data.skin;
+          if (data.hair) (document.getElementById('hair') as HTMLInputElement).value = data.hair;
+          
+          // Show success status
+          if (fetchStatus) {
+            fetchStatus.textContent = '✓ Character data fetched successfully!';
+            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-green-100 text-green-800';
+          }
+        } else {
+          const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+          if (fetchStatus) {
+            fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
+            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+          }
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        if (fetchStatus) {
+          fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
+          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+        }
+      }
+    });
+
+    // Check for edit parameter on page load and open modal if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/characters/${editId}`);
+          if (!response.ok) {
+            throw new Error('Character not found');
+          }
+          
+          const character = await response.json();
+          
+          editingId = editId;
+          (document.getElementById('name') as HTMLInputElement).value = character.name;
+          (document.getElementById('player') as HTMLInputElement).value = character.player;
+          (document.getElementById('race') as HTMLInputElement).value = character.race;
+          (document.getElementById('class') as HTMLInputElement).value = character.class;
+          (document.getElementById('level') as HTMLInputElement).value = character.level;
+          (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
+          (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+          
+          if (character.stats) {
+            (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
+            (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
+            (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
+            (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
+            (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
+            (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+          }
+          
+          // Load additional character details
+          (document.getElementById('background') as HTMLInputElement).value = character.background || '';
+          (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
+          (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
+          (document.getElementById('age') as HTMLInputElement).value = character.age || '';
+          (document.getElementById('height') as HTMLInputElement).value = character.height || '';
+          (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
+          (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
+          (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
+          (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
+          
+          modalTitle.textContent = 'Edit Character';
+          modal.classList.remove('hidden');
+          
+          // Clear the URL parameter so refreshing doesn't re-open the modal
+          window.history.replaceState({}, '', '/characters');
+        } catch (error) {
+          console.error('Failed to load character for editing:', error);
+          alert('Failed to load character. Please try again.');
+        }
+      })();
+    }
+  }
+
+  // Handle character edit/delete actions with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
+    const modal = document.getElementById('characterModal');
+    const modalTitle = document.getElementById('modalTitle');
     
+    // Edit character
     if (target.classList.contains('edit-character')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
@@ -619,141 +758,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     }
   });
 
-  // Fetch character data from D&D Beyond
-  const fetchButton = document.getElementById('fetchFromDndBeyond');
-  const fetchStatus = document.getElementById('fetchStatus');
-  
-  fetchButton?.addEventListener('click', async () => {
-    const urlInput = document.getElementById('dndbeyondUrl') as HTMLInputElement;
-    const url = urlInput.value.trim();
-    
-    if (!url) {
-      alert('Please enter a D&D Beyond character URL first.');
-      return;
-    }
-    
-    // Show loading status
-    if (fetchStatus) {
-      fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
-      fetchStatus.className = 'p-3 rounded-lg mb-2 bg-blue-100 text-blue-800';
-      fetchStatus.classList.remove('hidden');
-    }
-    
-    try {
-      const response = await fetch('/api/characters/dndbeyond', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url }),
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Fill in the form fields
-        if (data.name) (document.getElementById('name') as HTMLInputElement).value = data.name;
-        if (data.race) (document.getElementById('race') as HTMLInputElement).value = data.race;
-        if (data.class) (document.getElementById('class') as HTMLInputElement).value = data.class;
-        if (data.level) (document.getElementById('level') as HTMLInputElement).value = data.level;
-        if (data.avatarUrl) (document.getElementById('avatarUrl') as HTMLInputElement).value = data.avatarUrl;
-        
-        if (data.stats) {
-          if (data.stats.strength) (document.getElementById('strength') as HTMLInputElement).value = data.stats.strength;
-          if (data.stats.dexterity) (document.getElementById('dexterity') as HTMLInputElement).value = data.stats.dexterity;
-          if (data.stats.constitution) (document.getElementById('constitution') as HTMLInputElement).value = data.stats.constitution;
-          if (data.stats.intelligence) (document.getElementById('intelligence') as HTMLInputElement).value = data.stats.intelligence;
-          if (data.stats.wisdom) (document.getElementById('wisdom') as HTMLInputElement).value = data.stats.wisdom;
-          if (data.stats.charisma) (document.getElementById('charisma') as HTMLInputElement).value = data.stats.charisma;
-        }
-        
-        // Fill in additional character details
-        if (data.background) (document.getElementById('background') as HTMLInputElement).value = data.background;
-        if (data.alignment) (document.getElementById('alignment') as HTMLInputElement).value = data.alignment;
-        if (data.gender) (document.getElementById('gender') as HTMLInputElement).value = data.gender;
-        if (data.age) (document.getElementById('age') as HTMLInputElement).value = data.age;
-        if (data.height) (document.getElementById('height') as HTMLInputElement).value = data.height;
-        if (data.weight) (document.getElementById('weight') as HTMLInputElement).value = data.weight;
-        if (data.eyes) (document.getElementById('eyes') as HTMLInputElement).value = data.eyes;
-        if (data.skin) (document.getElementById('skin') as HTMLInputElement).value = data.skin;
-        if (data.hair) (document.getElementById('hair') as HTMLInputElement).value = data.hair;
-        
-        // Show success status
-        if (fetchStatus) {
-          fetchStatus.textContent = '✓ Character data fetched successfully!';
-          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-green-100 text-green-800';
-        }
-      } else {
-        const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-        if (fetchStatus) {
-          fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
-          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
-        }
-      }
-    } catch (error) {
-      console.error('Fetch error:', error);
-      if (fetchStatus) {
-        fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
-        fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
-      }
-    }
-  });
-
-  // Check for edit parameter on page load and open modal if present
-  (async () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const editId = urlParams.get('edit');
-    
-    if (editId && modal && form && modalTitle) {
-      try {
-        const response = await fetch(`/api/characters/${editId}`);
-        if (!response.ok) {
-          throw new Error('Character not found');
-        }
-        
-        const character = await response.json();
-        
-        editingId = editId;
-        (document.getElementById('name') as HTMLInputElement).value = character.name;
-        (document.getElementById('player') as HTMLInputElement).value = character.player;
-        (document.getElementById('race') as HTMLInputElement).value = character.race;
-        (document.getElementById('class') as HTMLInputElement).value = character.class;
-        (document.getElementById('level') as HTMLInputElement).value = character.level;
-        (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
-        (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
-        
-        if (character.stats) {
-          (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
-          (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
-          (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
-          (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
-          (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
-          (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
-        }
-        
-        // Load additional character details
-        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
-        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
-        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
-        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
-        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
-        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
-        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
-        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
-        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
-        
-        modalTitle.textContent = 'Edit Character';
-        modal.classList.remove('hidden');
-        
-        // Clear the URL parameter so refreshing doesn't re-open the modal
-        window.history.replaceState({}, '', '/characters');
-      } catch (error) {
-        console.error('Failed to load character for editing:', error);
-        alert('Failed to load character. Please try again.');
-      }
-    }
-  })();
-
-  // Initialize search and filter functionality on page load
-  // This ensures it works after Astro View Transitions navigation
+  // Initialize search and filter functionality
   function initializeFilters() {
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     const characterCards = document.querySelectorAll('.character-card');
@@ -789,5 +794,8 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
   }
 
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener('astro:page-load', () => {
+    initializeCharacterModal();
+    initializeFilters();
+  });
 </script>
