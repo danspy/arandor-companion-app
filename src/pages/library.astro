@@ -273,56 +273,62 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     }, 500);
   });
 
-  // Search and Tag filtering
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  let currentSearch = '';
-  
-  const applyFilters = () => {
-    const entries = document.querySelectorAll('.library-entry');
-    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+  // Initialize search and filter functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeFilters() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    let currentSearch = '';
     
-    entries.forEach(entry => {
-      const entryTags = JSON.parse(entry.getAttribute('data-tags') || '[]');
-      const searchText = entry.getAttribute('data-search') || '';
+    const applyFilters = () => {
+      const entries = document.querySelectorAll('.library-entry');
+      const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       
-      const matchesTag = selectedTag === 'all' || entryTags.includes(selectedTag);
-      // Match if ANY search term is found in the text (more flexible search)
-      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-      
-      (entry as HTMLElement).style.display = matchesTag && matchesSearch ? 'block' : 'none';
+      entries.forEach(entry => {
+        const entryTags = JSON.parse(entry.getAttribute('data-tags') || '[]');
+        const searchText = entry.getAttribute('data-search') || '';
+        
+        const matchesTag = selectedTag === 'all' || entryTags.includes(selectedTag);
+        // Match if ANY search term is found in the text (more flexible search)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+        
+        (entry as HTMLElement).style.display = matchesTag && matchesSearch ? 'block' : 'none';
+      });
+    };
+
+    // Search functionality
+    searchInput?.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
+      applyFilters();
     });
-  };
 
-  // Search functionality
-  searchInput?.addEventListener('input', (e) => {
-    currentSearch = (e.target as HTMLInputElement).value;
-    applyFilters();
-  });
+    // Tag filtering
+    const filterByTag = (tag: string) => {
+      selectedTag = tag;
+      
+      // Update button styles
+      document.querySelectorAll('.tag-filter').forEach(btn => {
+        if (btn.getAttribute('data-tag') === tag) {
+          btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          btn.classList.add('bg-primary-600', 'text-white');
+        } else {
+          btn.classList.remove('bg-primary-600', 'text-white');
+          btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        }
+      });
+      
+      applyFilters();
+    };
 
-  // Tag filtering
-  const filterByTag = (tag: string) => {
-    selectedTag = tag;
-    
-    // Update button styles
     document.querySelectorAll('.tag-filter').forEach(btn => {
-      if (btn.getAttribute('data-tag') === tag) {
-        btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-        btn.classList.add('bg-primary-600', 'text-white');
-      } else {
-        btn.classList.remove('bg-primary-600', 'text-white');
-        btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-      }
+      btn.addEventListener('click', () => {
+        const tag = btn.getAttribute('data-tag');
+        if (tag) filterByTag(tag);
+      });
     });
-    
-    applyFilters();
-  };
+  }
 
-  document.querySelectorAll('.tag-filter').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const tag = btn.getAttribute('data-tag');
-      if (tag) filterByTag(tag);
-    });
-  });
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeFilters);
 
   // Open modal for new entry
   addButton?.addEventListener('click', () => {

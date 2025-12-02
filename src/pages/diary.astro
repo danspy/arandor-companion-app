@@ -599,51 +599,57 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     }
   }
 
-  // Search and Filter functionality
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const filterBtns = document.querySelectorAll('.tag-filter');
-  const diaryCards = document.querySelectorAll('.diary-entry');
-  
-  let currentFilter = 'all';
-  let currentSearch = '';
+  // Initialize search and filter functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeFilters() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const filterBtns = document.querySelectorAll('.tag-filter');
+    const diaryCards = document.querySelectorAll('.diary-entry');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
 
-  const applyFilters = () => {
-    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
-    diaryCards.forEach(card => {
-      const entryTags = JSON.parse(card.getAttribute('data-tags') || '[]');
-      const searchText = card.getAttribute('data-search') || '';
-      
-      const matchesFilter = currentFilter === 'all' || entryTags.includes(currentFilter);
-      // Match if ANY search term is found in the text (more flexible search)
-      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-      
-      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
-    });
-  };
-
-  // Search functionality
-  searchInput?.addEventListener('input', (e) => {
-    currentSearch = (e.target as HTMLInputElement).value;
-    applyFilters();
-  });
-
-  // Filter functionality
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentFilter = btn.getAttribute('data-tag') || 'all';
-      
-      // Update button styles
-      filterBtns.forEach(b => {
-        if (b.getAttribute('data-tag') === currentFilter) {
-          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-          b.classList.add('bg-primary-600', 'text-white');
-        } else {
-          b.classList.remove('bg-primary-600', 'text-white');
-          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-        }
+    const applyFilters = () => {
+      const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      diaryCards.forEach(card => {
+        const entryTags = JSON.parse(card.getAttribute('data-tags') || '[]');
+        const searchText = card.getAttribute('data-search') || '';
+        
+        const matchesFilter = currentFilter === 'all' || entryTags.includes(currentFilter);
+        // Match if ANY search term is found in the text (more flexible search)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+        
+        (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
-      
+    };
+
+    // Search functionality
+    searchInput?.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
       applyFilters();
     });
-  });
+
+    // Filter functionality
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.getAttribute('data-tag') || 'all';
+        
+        // Update button styles
+        filterBtns.forEach(b => {
+          if (b.getAttribute('data-tag') === currentFilter) {
+            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.add('bg-primary-600', 'text-white');
+          } else {
+            b.classList.remove('bg-primary-600', 'text-white');
+            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          }
+        });
+        
+        applyFilters();
+      });
+    });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeFilters);
 </script>
