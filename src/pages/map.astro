@@ -673,6 +673,8 @@ libraryEntries.forEach(entry => {
   // Render all pins
   function renderPins() {
     if (!pinsGroup) return;
+    // Remove any existing pin tooltips to avoid memory leaks and duplicates
+    document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
       const pinEl = createPin(location);
@@ -1197,37 +1199,48 @@ libraryEntries.forEach(entry => {
     e.preventDefault();
   });
 
-  // Initial render and setup
-  // Apply configured map size and initial fitting
-  applyMapSize();
-  renderLandmarks();
-  // Render pins first so DOM elements exist, then build the hero path from actual pin positions
-  renderPins();
-  // Now that pins are in the DOM, build the hero path to follow them
-  buildHeroPath();
-  fitToViewport();
-  updateTransform(); // Apply initial transform
+  // Track if edit mode event listeners have been set up to prevent duplicates
+  let editModeListenersInitialized = false;
   
-  // Show hidden pins in edit mode
-  if (isLoggedIn && toggleEditModeBtn) {
-    const originalToggle = toggleEditModeBtn.onclick;
-    toggleEditModeBtn.addEventListener('click', () => {
-      setTimeout(() => {
-        const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
-        hiddenPins.forEach(pin => {
-          if (editMode) {
-            pin.style.opacity = '0.5';
-            pin.style.pointerEvents = 'auto';
-            pin.style.border = '2px dashed orange';
-          } else {
-            pin.style.opacity = '0.3';
-            pin.style.pointerEvents = 'none';
-            pin.style.border = 'none';
-          }
-        });
-      }, 100);
-    });
+  // Initial render and setup function
+  function initializeMap() {
+    // Apply configured map size and initial fitting
+    applyMapSize();
+    renderLandmarks();
+    // Render pins first so DOM elements exist, then build the hero path from actual pin positions
+    renderPins();
+    // Now that pins are in the DOM, build the hero path to follow them
+    buildHeroPath();
+    fitToViewport();
+    updateTransform(); // Apply initial transform
+    
+    // Set up edit mode event listeners only once to prevent duplicates on re-navigation
+    if (!editModeListenersInitialized && isLoggedIn && toggleEditModeBtn) {
+      toggleEditModeBtn.addEventListener('click', () => {
+        setTimeout(() => {
+          const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
+          hiddenPins.forEach(pin => {
+            if (editMode) {
+              pin.style.opacity = '0.5';
+              pin.style.pointerEvents = 'auto';
+              pin.style.border = '2px dashed orange';
+            } else {
+              pin.style.opacity = '0.3';
+              pin.style.pointerEvents = 'none';
+              pin.style.border = 'none';
+            }
+          });
+        }, 100);
+      });
+      editModeListenersInitialized = true;
+    }
   }
+  
+  // Initialize map on page load (works with both initial load and view transitions)
+  // astro:page-load fires after the page is visible and scripts are loaded
+  document.addEventListener('astro:page-load', () => {
+    initializeMap();
+  });
 
 </script>
 

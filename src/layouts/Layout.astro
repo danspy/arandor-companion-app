@@ -82,7 +82,7 @@ function isActiveLink(href: string): boolean {
             <a href="/characters" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/characters') }]}>Characters</a>
             <a href="/npcs" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/npcs') }]}>NPCs</a>
             <a href="/locations" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
+            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
             
             <!-- Dark mode toggle -->
@@ -123,7 +123,7 @@ function isActiveLink(href: string): boolean {
             <a href="/characters" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/characters') }]}>Characters</a>
             <a href="/npcs" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/npcs') }]}>NPCs</a>
             <a href="/locations" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
+            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
             
             <!-- Dark mode toggle for mobile -->
@@ -214,6 +214,19 @@ function isActiveLink(href: string): boolean {
         }
       };
       
+      // Function to close mobile menu
+      const closeMobileMenu = () => {
+        const mobileMenu = document.getElementById('mobileMenu');
+        const menuIcon = document.getElementById('menuIcon');
+        const closeIcon = document.getElementById('closeIcon');
+        
+        if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+          mobileMenu.classList.add('hidden');
+          menuIcon?.classList.remove('hidden');
+          closeIcon?.classList.add('hidden');
+        }
+      };
+      
       // Function to update navigation active states
       const updateNavigation = () => {
         const currentPath = window.location.pathname;
@@ -245,6 +258,14 @@ function isActiveLink(href: string): boolean {
       
       // Initialize on first load
       const init = () => {
+        // Check if nav has already been initialized (for persisted elements)
+        const nav = document.querySelector('nav');
+        if (nav?.dataset.initialized === 'true') {
+          // Just update navigation states, don't re-attach listeners
+          updateNavigation();
+          return;
+        }
+        
         const themeToggle = document.getElementById('themeToggle');
         const themeToggleMobile = document.getElementById('themeToggleMobile');
         
@@ -261,6 +282,14 @@ function isActiveLink(href: string): boolean {
           mobileMenu?.classList.toggle('hidden');
           menuIcon?.classList.toggle('hidden');
           closeIcon?.classList.toggle('hidden');
+        });
+        
+        // Close mobile menu when clicking on navigation links
+        const mobileMenuLinks = mobileMenu?.querySelectorAll('a[href^="/"]');
+        mobileMenuLinks?.forEach(link => {
+          link.addEventListener('click', () => {
+            closeMobileMenu();
+          });
         });
         
         // Logout handlers
@@ -283,6 +312,9 @@ function isActiveLink(href: string): boolean {
         
         logoutBtn?.addEventListener('click', handleLogout);
         logoutBtnMobile?.addEventListener('click', handleLogout);
+        
+        // Mark nav as initialized
+        if (nav) nav.dataset.initialized = 'true';
         
         // Update navigation active states
         updateNavigation();
@@ -320,6 +352,9 @@ function isActiveLink(href: string): boolean {
       
       // Apply transition classes before navigation
       document.addEventListener('astro:before-preparation', (event) => {
+        // Close mobile menu when navigation starts
+        closeMobileMenu();
+        
         const loader = document.getElementById('loading-indicator');
         if (loader) loader.classList.remove('hidden');
         
