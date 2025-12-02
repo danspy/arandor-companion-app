@@ -673,6 +673,8 @@ libraryEntries.forEach(entry => {
   // Render all pins
   function renderPins() {
     if (!pinsGroup) return;
+    // Remove any existing pin tooltips to avoid memory leaks and duplicates
+    document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
       const pinEl = createPin(location);
@@ -1234,13 +1236,9 @@ libraryEntries.forEach(entry => {
     }
   }
   
-  // Initialize map on initial load and after page swaps (works with view transitions)
-  // astro:page-load fires on initial load, astro:after-swap fires during view transitions
+  // Initialize map on page load (works with both initial load and view transitions)
+  // astro:page-load fires after the page is visible and scripts are loaded
   document.addEventListener('astro:page-load', () => {
-    initializeMap();
-  });
-  
-  document.addEventListener('astro:after-swap', () => {
     initializeMap();
   });
 
