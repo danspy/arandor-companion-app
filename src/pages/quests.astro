@@ -241,233 +241,246 @@ const sortedQuests = [...quests].sort((a, b) => {
 </Layout>
 
 <script>
-  const modal = document.getElementById('questModal');
-  const form = document.getElementById('questForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addQuest');
-  const cancelButton = document.getElementById('cancelModal');
+  // Initialize quest functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeQuests() {
+    const modal = document.getElementById('questModal');
+    const form = document.getElementById('questForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addQuest');
+    const cancelButton = document.getElementById('cancelModal');
 
-  let editingId: string | null = null;
+    let editingId: string | null = null;
 
-  // Open modal for new quest
-  addButton?.addEventListener('click', () => {
-    editingId = null;
-    form.reset();
-    if (modalTitle) modalTitle.textContent = 'New Quest';
-    modal?.classList.remove('hidden');
-  });
+    // Open modal for new quest
+    addButton?.addEventListener('click', () => {
+      editingId = null;
+      form.reset();
+      if (modalTitle) modalTitle.textContent = 'New Quest';
+      modal?.classList.remove('hidden');
+    });
 
-  // Close modal
-  cancelButton?.addEventListener('click', () => {
-    modal?.classList.add('hidden');
-  });
+    // Close modal
+    cancelButton?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
 
-  modal?.addEventListener('click', (e) => {
-    if (e.target === modal) {
-      modal.classList.add('hidden');
-    }
-  });
-
-  // Handle form submission
-  form?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(form);
-    const data = {
-      title: formData.get('title'),
-      description: formData.get('description'),
-      priority: formData.get('priority'),
-      status: formData.get('status'),
-    };
-
-    try {
-      const url = editingId ? `/api/quests/${editingId}` : '/api/quests';
-      const method = editingId ? 'PUT' : 'POST';
-      
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      if (response.ok) {
-        window.location.reload();
-      } else {
-        alert('Failed to save quest. Please try again.');
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
       }
-    } catch (error) {
-      alert('An error occurred. Please try again.');
-    }
-  });
+    });
 
-  // Edit quest
-  document.addEventListener('click', async (e) => {
-    const target = e.target as HTMLElement;
-    
-    if (target.classList.contains('edit-quest')) {
-      const id = target.getAttribute('data-id');
-      if (!id) return;
+    // Handle form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
       
+      const formData = new FormData(form);
+      const data = {
+        title: formData.get('title'),
+        description: formData.get('description'),
+        priority: formData.get('priority'),
+        status: formData.get('status'),
+      };
+
       try {
-        const response = await fetch(`/api/quests/${id}`);
-        const quest = await response.json();
+        const url = editingId ? `/api/quests/${editingId}` : '/api/quests';
+        const method = editingId ? 'PUT' : 'POST';
         
-        editingId = id;
-        (document.getElementById('title') as HTMLInputElement).value = quest.title;
-        (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
-        (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
-        (document.getElementById('status') as HTMLSelectElement).value = quest.status;
-        
-        if (modalTitle) modalTitle.textContent = 'Edit Quest';
-        modal?.classList.remove('hidden');
-      } catch (error) {
-        alert('Failed to load quest. Please try again.');
-      }
-    }
-    
-    // Complete quest
-    if (target.classList.contains('complete-quest')) {
-      const id = target.getAttribute('data-id');
-      if (!id) return;
-      
-      try {
-        const response = await fetch(`/api/quests/${id}`);
-        const quest = await response.json();
-        
-        const updateResponse = await fetch(`/api/quests/${id}`, {
-          method: 'PUT',
+        const response = await fetch(url, {
+          method,
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...quest, status: 'completed' }),
+          body: JSON.stringify(data),
         });
-        
-        if (updateResponse.ok) {
+
+        if (response.ok) {
           window.location.reload();
         } else {
-          alert('Failed to complete quest. Please try again.');
+          alert('Failed to save quest. Please try again.');
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
       }
-    }
-    
-    // Fail quest
-    if (target.classList.contains('fail-quest')) {
-      const id = target.getAttribute('data-id');
-      if (!id) return;
+    });
+
+    // Edit quest
+    document.addEventListener('click', async (e) => {
+      const target = e.target as HTMLElement;
       
-      try {
-        const response = await fetch(`/api/quests/${id}`);
-        const quest = await response.json();
+      if (target.classList.contains('edit-quest')) {
+        const id = target.getAttribute('data-id');
+        if (!id) return;
         
-        const updateResponse = await fetch(`/api/quests/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...quest, status: 'failed' }),
-        });
-        
-        if (updateResponse.ok) {
-          window.location.reload();
-        } else {
-          alert('Unable to mark quest as failed. Please try again.');
-        }
-      } catch (error) {
-        alert('An error occurred. Please try again.');
-      }
-    }
-    
-    // Reactivate quest (set status back to active)
-    if (target.classList.contains('reactivate-quest')) {
-      const id = target.getAttribute('data-id');
-      if (!id) return;
-      
-      try {
-        const response = await fetch(`/api/quests/${id}`);
-        const quest = await response.json();
-        
-        const updateResponse = await fetch(`/api/quests/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...quest, status: 'active' }),
-        });
-        
-        if (updateResponse.ok) {
-          window.location.reload();
-        } else {
-          alert('Failed to reactivate quest. Please try again.');
-        }
-      } catch (error) {
-        alert('An error occurred. Please try again.');
-      }
-    }
-    
-    // Delete quest
-    if (target.classList.contains('delete-quest')) {
-      const id = target.getAttribute('data-id');
-      if (!id) return;
-      
-      if (confirm('Are you sure you want to delete this quest?')) {
         try {
-          const response = await fetch(`/api/quests/${id}`, {
-            method: 'DELETE',
+          const response = await fetch(`/api/quests/${id}`);
+          const quest = await response.json();
+          
+          editingId = id;
+          (document.getElementById('title') as HTMLInputElement).value = quest.title;
+          (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
+          (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
+          (document.getElementById('status') as HTMLSelectElement).value = quest.status;
+          
+          if (modalTitle) modalTitle.textContent = 'Edit Quest';
+          modal?.classList.remove('hidden');
+        } catch (error) {
+          alert('Failed to load quest. Please try again.');
+        }
+      }
+      
+      // Complete quest
+      if (target.classList.contains('complete-quest')) {
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+        
+        try {
+          const response = await fetch(`/api/quests/${id}`);
+          const quest = await response.json();
+          
+          const updateResponse = await fetch(`/api/quests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quest, status: 'completed' }),
           });
           
-          if (response.ok) {
+          if (updateResponse.ok) {
             window.location.reload();
           } else {
-            alert('Failed to delete quest. Please try again.');
+            alert('Failed to complete quest. Please try again.');
           }
         } catch (error) {
           alert('An error occurred. Please try again.');
         }
       }
-    }
-  });
-
-  // Search and Filter functionality
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const questCards = document.querySelectorAll('.quest-card');
-  
-  let currentFilter = 'all';
-  let currentSearch = '';
-
-  const applyFilters = () => {
-    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
-    questCards.forEach(card => {
-      const cardStatus = card.getAttribute('data-status') || '';
-      const searchText = card.getAttribute('data-search') || '';
       
-      const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
-      // Match if ANY search term is found in the text (more flexible search)
-      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-      
-      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
-    });
-  };
-
-  // Search functionality
-  searchInput?.addEventListener('input', (e) => {
-    currentSearch = (e.target as HTMLInputElement).value;
-    applyFilters();
-  });
-
-  // Filter functionality
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentFilter = btn.getAttribute('data-filter') || 'all';
-      
-      // Update button styles
-      filterBtns.forEach(b => {
-        if (b.getAttribute('data-filter') === currentFilter) {
-          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-          b.classList.add('bg-primary-600', 'text-white');
-        } else {
-          b.classList.remove('bg-primary-600', 'text-white');
-          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+      // Fail quest
+      if (target.classList.contains('fail-quest')) {
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+        
+        try {
+          const response = await fetch(`/api/quests/${id}`);
+          const quest = await response.json();
+          
+          const updateResponse = await fetch(`/api/quests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quest, status: 'failed' }),
+          });
+          
+          if (updateResponse.ok) {
+            window.location.reload();
+          } else {
+            alert('Unable to mark quest as failed. Please try again.');
+          }
+        } catch (error) {
+          alert('An error occurred. Please try again.');
         }
-      });
+      }
       
+      // Reactivate quest (set status back to active)
+      if (target.classList.contains('reactivate-quest')) {
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+        
+        try {
+          const response = await fetch(`/api/quests/${id}`);
+          const quest = await response.json();
+          
+          const updateResponse = await fetch(`/api/quests/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...quest, status: 'active' }),
+          });
+          
+          if (updateResponse.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to reactivate quest. Please try again.');
+          }
+        } catch (error) {
+          alert('An error occurred. Please try again.');
+        }
+      }
+      
+      // Delete quest
+      if (target.classList.contains('delete-quest')) {
+        const id = target.getAttribute('data-id');
+        if (!id) return;
+        
+        if (confirm('Are you sure you want to delete this quest?')) {
+          try {
+            const response = await fetch(`/api/quests/${id}`, {
+              method: 'DELETE',
+            });
+            
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to delete quest. Please try again.');
+            }
+          } catch (error) {
+            alert('An error occurred. Please try again.');
+          }
+        }
+      }
+    });
+  }
+
+  // Initialize search and filter functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeFilters() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const questCards = document.querySelectorAll('.quest-card');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
+
+    const applyFilters = () => {
+      const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      questCards.forEach(card => {
+        const cardStatus = card.getAttribute('data-status') || '';
+        const searchText = card.getAttribute('data-search') || '';
+        
+        const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
+        // Match if ANY search term is found in the text (more flexible search)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+        
+        (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
+      });
+    };
+
+    // Search functionality
+    searchInput?.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
       applyFilters();
     });
+
+    // Filter functionality
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.getAttribute('data-filter') || 'all';
+        
+        // Update button styles
+        filterBtns.forEach(b => {
+          if (b.getAttribute('data-filter') === currentFilter) {
+            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.add('bg-primary-600', 'text-white');
+          } else {
+            b.classList.remove('bg-primary-600', 'text-white');
+            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          }
+        });
+        
+        applyFilters();
+      });
+    });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', () => {
+    initializeQuests();
+    initializeFilters();
   });
 </script>
