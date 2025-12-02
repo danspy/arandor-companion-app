@@ -238,16 +238,19 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
 <script>
   import { renderMarkdown } from '../utils/markdown';
 
-  const modal = document.getElementById('entryModal');
-  const form = document.getElementById('entryForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addEntry');
-  const cancelButton = document.getElementById('cancelModal');
-  const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
-  const togglePreviewBtn = document.getElementById('togglePreview');
-  const previewDiv = document.getElementById('markdownPreview');
-
+  // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Initialize library modal and form functionality
+  function initializeLibraryModal() {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addEntry');
+    const cancelButton = document.getElementById('cancelModal');
+    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+    const togglePreviewBtn = document.getElementById('togglePreview');
+    const previewDiv = document.getElementById('markdownPreview');
   let selectedTag: string = 'all';
 
   // Markdown preview toggle
@@ -327,9 +330,6 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     });
   }
 
-  // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
-
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
     editingId = null;
@@ -387,7 +387,53 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     }
   });
 
-  // Edit entry
+    // Check for edit parameter on page load and open modal if present
+    const urlParams = new URLSearchParams(window.location.search);
+    const editId = urlParams.get('edit');
+    
+    if (editId && modal && form && modalTitle) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/library/${editId}`);
+          if (!response.ok) {
+            throw new Error('Library entry not found');
+          }
+          
+          const entry = await response.json();
+          
+          editingId = editId;
+          
+          // Populate form fields with null checks
+          const titleEl = document.getElementById('title') as HTMLInputElement;
+          const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+          const tagsEl = document.getElementById('tags') as HTMLInputElement;
+          const locationEl = document.getElementById('location') as HTMLSelectElement;
+          
+          if (!titleEl || !contentEl || !tagsEl || !locationEl) {
+            console.error('One or more form elements not found');
+            throw new Error('Form elements not found');
+          }
+          
+          titleEl.value = entry.title || '';
+          contentEl.value = entry.content || '';
+          tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+          locationEl.value = entry.locationId || '';
+          
+          modalTitle.textContent = 'Edit Library Entry';
+          previewDiv?.classList.add('hidden');
+          modal.classList.remove('hidden');
+          
+          // Clear the URL parameter so refreshing doesn't re-open the modal
+          window.history.replaceState({}, '', '/library');
+        } catch (error) {
+          console.error('Failed to load library entry for editing:', error);
+          alert('Failed to load library entry. Please try again.');
+        }
+      })();
+    }
+  }
+
+  // Edit/Delete entries with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
@@ -395,20 +441,41 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
       const id = target.getAttribute('data-id');
       if (!id) return;
       
+      // Get DOM elements fresh
+      const modal = document.getElementById('entryModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const previewDiv = document.getElementById('markdownPreview');
+      
       try {
         const response = await fetch(`/api/library/${id}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch entry');
+        }
         const entry = await response.json();
         
         editingId = id;
-        (document.getElementById('title') as HTMLInputElement).value = entry.title;
-        (document.getElementById('content') as HTMLTextAreaElement).value = entry.content;
-        (document.getElementById('tags') as HTMLInputElement).value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
-        (document.getElementById('location') as HTMLSelectElement).value = entry.locationId || '';
+        
+        // Populate form fields with null checks
+        const titleEl = document.getElementById('title') as HTMLInputElement;
+        const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+        const tagsEl = document.getElementById('tags') as HTMLInputElement;
+        const locationEl = document.getElementById('location') as HTMLSelectElement;
+        
+        if (!titleEl || !contentEl || !tagsEl || !locationEl) {
+          console.error('One or more form elements not found');
+          throw new Error('Form elements not found');
+        }
+        
+        titleEl.value = entry.title || '';
+        contentEl.value = entry.content || '';
+        tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+        locationEl.value = entry.locationId || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Library Entry';
         previewDiv?.classList.add('hidden');
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load library entry:', error);
         alert('Failed to load entry. Please try again.');
       }
     }
@@ -434,5 +501,11 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         }
       }
     }
+  });
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', () => {
+    initializeLibraryModal();
+    initializeFilters();
   });
 </script>

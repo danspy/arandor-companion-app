@@ -340,17 +340,20 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
 </Layout>
 
 <script>
-  const modal = document.getElementById('entryModal');
-  const form = document.getElementById('entryForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addEntry');
-  const cancelButton = document.getElementById('cancelModal');
-  const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
-  const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
-  const imagePreview = document.getElementById('imagePreview');
-  const previewImg = document.getElementById('previewImg') as HTMLImageElement;
-
+  // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Initialize diary modal and form functionality
+  function initializeDiaryModal() {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addEntry');
+    const cancelButton = document.getElementById('cancelModal');
+    const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
+    const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg') as HTMLImageElement;
 
   // Handle image file selection and preview
   fileInput?.addEventListener('change', (e) => {
@@ -493,25 +496,72 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     }
   });
 
-  // Edit entry
+    // Check if we should auto-open modal for editing
+    const urlParams = new URLSearchParams(window.location.search);
+    const editIdFromUrl = urlParams.get('edit');
+    
+    if (editIdFromUrl) {
+      // Find and click the edit button for this entry
+      const editButton = document.querySelector(`button.edit-entry[data-id="${editIdFromUrl}"]`);
+      if (editButton) {
+        (editButton as HTMLElement).click();
+        // Remove the query parameter from URL
+        window.history.replaceState({}, '', '/diary');
+      }
+    }
+  }
+
+  // Edit/Delete entries with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
     if (target.classList.contains('edit-entry')) {
       const id = target.getAttribute('data-id');
-      if (!id) return;
+      if (!id) {
+        console.error('No data-id found on edit button');
+        return;
+      }
+      
+      // Get DOM elements fresh
+      const modal = document.getElementById('entryModal');
+      const modalTitle = document.getElementById('modalTitle');
+      const imagePreview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('previewImg') as HTMLImageElement;
+      const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
       
       try {
+        console.log('Fetching diary entry with ID:', id);
         const response = await fetch(`/api/diary/${id}`);
+        console.log('Response status:', response.status, 'OK:', response.ok);
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('API error response:', errorData);
+          throw new Error(`Failed to fetch entry: ${errorData.error || response.statusText}`);
+        }
         const entry = await response.json();
+        console.log('Successfully loaded diary entry:', entry);
         
         editingId = id;
-        (document.getElementById('title') as HTMLInputElement).value = entry.title;
-        (document.getElementById('date') as HTMLInputElement).value = entry.date;
-        (document.getElementById('session') as HTMLInputElement).value = entry.session;
-        (document.getElementById('content') as HTMLTextAreaElement).value = entry.content;
-        (document.getElementById('tags') as HTMLInputElement).value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
-        (document.getElementById('coverImageUrl') as HTMLInputElement).value = entry.coverImageUrl || '';
+        
+        // Populate form fields with null checks
+        const titleEl = document.getElementById('title') as HTMLInputElement;
+        const dateEl = document.getElementById('date') as HTMLInputElement;
+        const sessionEl = document.getElementById('session') as HTMLInputElement;
+        const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+        const tagsEl = document.getElementById('tags') as HTMLInputElement;
+        const coverImageUrlEl = document.getElementById('coverImageUrl') as HTMLInputElement;
+        
+        if (!titleEl || !dateEl || !sessionEl || !contentEl || !tagsEl || !coverImageUrlEl) {
+          console.error('One or more form elements not found');
+          throw new Error('Form elements not found');
+        }
+        
+        titleEl.value = entry.title || '';
+        dateEl.value = entry.date || '';
+        sessionEl.value = entry.session || '';
+        contentEl.value = entry.content || '';
+        tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+        coverImageUrlEl.value = entry.coverImageUrl || '';
         
         // Show image preview if there's a cover image
         if (entry.coverImageUrl && imagePreview && previewImg) {
@@ -530,34 +580,39 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
         const questsSelect = document.getElementById('quests') as HTMLSelectElement;
         
-        // Clear previous selections
-        Array.from(npcsSelect.options).forEach(option => option.selected = false);
-        Array.from(locationsSelect.options).forEach(option => option.selected = false);
-        Array.from(charactersSelect.options).forEach(option => option.selected = false);
-        Array.from(questsSelect.options).forEach(option => option.selected = false);
-        
-        // Set new selections
-        const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
-        const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
-        const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
-        const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
-        
-        Array.from(npcsSelect.options).forEach(option => {
-          if (npcIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(locationsSelect.options).forEach(option => {
-          if (locationIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(charactersSelect.options).forEach(option => {
-          if (characterIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(questsSelect.options).forEach(option => {
-          if (questIds.includes(option.value)) option.selected = true;
-        });
+        if (npcsSelect && locationsSelect && charactersSelect && questsSelect) {
+          // Clear previous selections
+          Array.from(npcsSelect.options).forEach(option => option.selected = false);
+          Array.from(locationsSelect.options).forEach(option => option.selected = false);
+          Array.from(charactersSelect.options).forEach(option => option.selected = false);
+          Array.from(questsSelect.options).forEach(option => option.selected = false);
+          
+          // Set new selections
+          const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
+          const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+          const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
+          const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
+          
+          Array.from(npcsSelect.options).forEach(option => {
+            if (npcIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(locationsSelect.options).forEach(option => {
+            if (locationIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(charactersSelect.options).forEach(option => {
+            if (characterIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(questsSelect.options).forEach(option => {
+            if (questIds.includes(option.value)) option.selected = true;
+          });
+        } else {
+          console.warn('One or more multi-select elements not found');
+        }
         
         if (modalTitle) modalTitle.textContent = 'Edit Diary Entry';
         modal?.classList.remove('hidden');
       } catch (error) {
+        console.error('Failed to load diary entry:', error);
         alert('Failed to load entry. Please try again.');
       }
     }
@@ -584,20 +639,6 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       }
     }
   });
-
-  // Check if we should auto-open modal for editing
-  const urlParams = new URLSearchParams(window.location.search);
-  const editIdFromUrl = urlParams.get('edit');
-  
-  if (editIdFromUrl) {
-    // Find and click the edit button for this entry
-    const editButton = document.querySelector(`button.edit-entry[data-id="${editIdFromUrl}"]`);
-    if (editButton) {
-      (editButton as HTMLElement).click();
-      // Remove the query parameter from URL
-      window.history.replaceState({}, '', '/diary');
-    }
-  }
 
   // Initialize search and filter functionality on page load
   // This ensures it works after Astro View Transitions navigation
@@ -651,5 +692,8 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
   }
 
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener('astro:page-load', () => {
+    initializeDiaryModal();
+    initializeFilters();
+  });
 </script>

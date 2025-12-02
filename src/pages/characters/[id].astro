@@ -239,12 +239,13 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 </Layout>
 
 <script>
-  const deleteBtn = document.getElementById('deleteCharacter');
-  const editBtn = document.getElementById('editCharacter');
-  
-  // Handle edit button click
-  if (editBtn) {
-    editBtn.addEventListener('click', () => {
+  function initializeDetailPage() {
+    const deleteBtn = document.getElementById('deleteCharacter');
+    const editBtn = document.getElementById('editCharacter');
+    
+    // Handle edit button click
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
       const id = editBtn.getAttribute('data-id');
       if (id) {
         window.location.href = `/characters?edit=${id}`;
@@ -276,4 +277,8 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       }
     });
   }
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
