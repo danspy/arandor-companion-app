@@ -400,53 +400,59 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
     }
   });
 
-  // Tab filtering and search functionality
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const filterTabs = document.querySelectorAll('.filter-tab');
-  const npcCards = document.querySelectorAll('.npc-card');
-  
-  let currentFilter = 'all';
-  let currentSearch = '';
+  // Initialize search and filter functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeFilters() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const filterTabs = document.querySelectorAll('.filter-tab');
+    const npcCards = document.querySelectorAll('.npc-card');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
 
-  const applyFilters = () => {
-    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
-    npcCards.forEach(card => {
-      const relationship = card.getAttribute('data-relationship') || '';
-      const searchText = card.getAttribute('data-search') || '';
-      
-      const matchesFilter = currentFilter === 'all' || relationship === currentFilter;
-      // Match if ANY search term is found in the text (more flexible search)
-      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-      
-      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
-    });
-  };
-
-  // Search functionality
-  searchInput?.addEventListener('input', (e) => {
-    currentSearch = (e.target as HTMLInputElement).value;
-    applyFilters();
-  });
-
-  // Filter functionality
-  filterTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      currentFilter = tab.getAttribute('data-filter') || 'all';
-      
-      // Update button styles
-      filterTabs.forEach(t => {
-        if (t.getAttribute('data-filter') === currentFilter) {
-          t.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-          t.classList.add('bg-primary-600', 'text-white');
-        } else {
-          t.classList.remove('bg-primary-600', 'text-white');
-          t.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-        }
+    const applyFilters = () => {
+      const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      npcCards.forEach(card => {
+        const relationship = card.getAttribute('data-relationship') || '';
+        const searchText = card.getAttribute('data-search') || '';
+        
+        const matchesFilter = currentFilter === 'all' || relationship === currentFilter;
+        // Match if ANY search term is found in the text (more flexible search)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+        
+        (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
-      
+    };
+
+    // Search functionality
+    searchInput?.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
       applyFilters();
     });
-  });
+
+    // Filter functionality
+    filterTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        currentFilter = tab.getAttribute('data-filter') || 'all';
+        
+        // Update button styles
+        filterTabs.forEach(t => {
+          if (t.getAttribute('data-filter') === currentFilter) {
+            t.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            t.classList.add('bg-primary-600', 'text-white');
+          } else {
+            t.classList.remove('bg-primary-600', 'text-white');
+            t.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          }
+        });
+        
+        applyFilters();
+      });
+    });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeFilters);
 
   // Check for edit parameter on page load and open modal if present
   (async () => {

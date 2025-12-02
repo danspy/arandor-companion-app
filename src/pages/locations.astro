@@ -470,62 +470,68 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
     }
   })();
 
-  // Search and Filter functionality
-  const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-  const filterBtns = document.querySelectorAll('.filter-btn');
-  const locationCards = document.querySelectorAll('.location-card');
-  
-  let currentFilter = 'all';
-  let currentSearch = '';
+  // Initialize search and filter functionality on page load
+  // This ensures it works after Astro View Transitions navigation
+  function initializeFilters() {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const filterBtns = document.querySelectorAll('.filter-btn');
+    const locationCards = document.querySelectorAll('.location-card');
+    
+    let currentFilter = 'all';
+    let currentSearch = '';
 
-  const applyFilters = () => {
-    const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
-    locationCards.forEach(card => {
-      const cardType = card.getAttribute('data-type') || '';
-      const cardVisited = card.getAttribute('data-visited') || '';
-      const searchText = card.getAttribute('data-search') || '';
-      
-      let matchesFilter = false;
-      if (currentFilter === 'all') {
-        matchesFilter = true;
-      } else if (currentFilter === 'visited') {
-        matchesFilter = cardVisited === 'true';
-      } else if (currentFilter === 'unvisited') {
-        matchesFilter = cardVisited === 'false';
-      } else {
-        matchesFilter = cardType === currentFilter;
-      }
-      
-      // Match if ANY search term is found in the text (more flexible search)
-      const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-      
-      (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
-    });
-  };
-
-  // Search functionality
-  searchInput?.addEventListener('input', (e) => {
-    currentSearch = (e.target as HTMLInputElement).value;
-    applyFilters();
-  });
-
-  // Filter functionality
-  filterBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentFilter = btn.getAttribute('data-filter') || 'all';
-      
-      // Update button styles
-      filterBtns.forEach(b => {
-        if (b.getAttribute('data-filter') === currentFilter) {
-          b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-          b.classList.add('bg-primary-600', 'text-white');
+    const applyFilters = () => {
+      const searchTerms = currentSearch.toLowerCase().split(/\s+/).filter(term => term.length > 0);
+      locationCards.forEach(card => {
+        const cardType = card.getAttribute('data-type') || '';
+        const cardVisited = card.getAttribute('data-visited') || '';
+        const searchText = card.getAttribute('data-search') || '';
+        
+        let matchesFilter = false;
+        if (currentFilter === 'all') {
+          matchesFilter = true;
+        } else if (currentFilter === 'visited') {
+          matchesFilter = cardVisited === 'true';
+        } else if (currentFilter === 'unvisited') {
+          matchesFilter = cardVisited === 'false';
         } else {
-          b.classList.remove('bg-primary-600', 'text-white');
-          b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          matchesFilter = cardType === currentFilter;
         }
+        
+        // Match if ANY search term is found in the text (more flexible search)
+        const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
+        
+        (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
-      
+    };
+
+    // Search functionality
+    searchInput?.addEventListener('input', (e) => {
+      currentSearch = (e.target as HTMLInputElement).value;
       applyFilters();
     });
-  });
+
+    // Filter functionality
+    filterBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentFilter = btn.getAttribute('data-filter') || 'all';
+        
+        // Update button styles
+        filterBtns.forEach(b => {
+          if (b.getAttribute('data-filter') === currentFilter) {
+            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.add('bg-primary-600', 'text-white');
+          } else {
+            b.classList.remove('bg-primary-600', 'text-white');
+            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          }
+        });
+        
+        applyFilters();
+      });
+    });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeFilters);
 </script>
