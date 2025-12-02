@@ -55,7 +55,11 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
           <input 
             type="text" 
             id="searchInput" 
+            name="library-search"
+            value=""
             placeholder="Search library entries by title or content..."
+            autocomplete="off"
+            transition:name="library-search-input"
             class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
           >
           <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,48 +242,23 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
 <script>
   import { renderMarkdown } from '../utils/markdown';
 
-  // Shared state for editing entry ID
+  // Shared state for editing entry ID and selected filter tag
   let editingId: string | null = null;
-
-  // Initialize library modal and form functionality
-  function initializeLibraryModal() {
-    const modal = document.getElementById('entryModal');
-    const form = document.getElementById('entryForm') as HTMLFormElement;
-    const modalTitle = document.getElementById('modalTitle');
-    const addButton = document.getElementById('addEntry');
-    const cancelButton = document.getElementById('cancelModal');
-    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
-    const togglePreviewBtn = document.getElementById('togglePreview');
-    const previewDiv = document.getElementById('markdownPreview');
   let selectedTag: string = 'all';
-
-  // Markdown preview toggle
-  togglePreviewBtn?.addEventListener('click', () => {
-    if (previewDiv?.classList.contains('hidden')) {
-      previewDiv.classList.remove('hidden');
-      if (contentTextarea) {
-        previewDiv.innerHTML = renderMarkdown(contentTextarea.value);
-      }
-    } else {
-      previewDiv?.classList.add('hidden');
-    }
-  });
-
-  // Update preview when typing (debounced)
-  let previewTimeout: number;
-  contentTextarea?.addEventListener('input', () => {
-    clearTimeout(previewTimeout);
-    previewTimeout = window.setTimeout(() => {
-      if (previewDiv && !previewDiv.classList.contains('hidden')) {
-        previewDiv.innerHTML = renderMarkdown(contentTextarea.value);
-      }
-    }, 500);
-  });
 
   // Initialize search and filter functionality on page load
   // This ensures it works after Astro View Transitions navigation
   function initializeFilters() {
+    // Reset filter state on each page load
+    selectedTag = 'all';
+    
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    
+    // Clear search input on each page load (no localStorage persistence)
+    if (searchInput) {
+      searchInput.value = '';
+    }
+    
     let currentSearch = '';
     
     const applyFilters = () => {
@@ -297,6 +276,17 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         (entry as HTMLElement).style.display = matchesTag && matchesSearch ? 'block' : 'none';
       });
     };
+
+    // Reset button styles to default (all selected)
+    document.querySelectorAll('.tag-filter').forEach(btn => {
+      if (btn.getAttribute('data-tag') === 'all') {
+        btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+        btn.classList.add('bg-primary-600', 'text-white');
+      } else {
+        btn.classList.remove('bg-primary-600', 'text-white');
+        btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+      }
+    });
 
     // Search functionality
     searchInput?.addEventListener('input', (e) => {
@@ -328,7 +318,44 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         if (tag) filterByTag(tag);
       });
     });
+    
+    // Apply initial filters to show all entries
+    applyFilters();
   }
+
+  // Initialize library modal and form functionality
+  function initializeLibraryModal() {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addEntry');
+    const cancelButton = document.getElementById('cancelModal');
+    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+    const togglePreviewBtn = document.getElementById('togglePreview');
+    const previewDiv = document.getElementById('markdownPreview');
+
+  // Markdown preview toggle
+  togglePreviewBtn?.addEventListener('click', () => {
+    if (previewDiv?.classList.contains('hidden')) {
+      previewDiv.classList.remove('hidden');
+      if (contentTextarea) {
+        previewDiv.innerHTML = renderMarkdown(contentTextarea.value);
+      }
+    } else {
+      previewDiv?.classList.add('hidden');
+    }
+  });
+
+  // Update preview when typing (debounced)
+  let previewTimeout: number;
+  contentTextarea?.addEventListener('input', () => {
+    clearTimeout(previewTimeout);
+    previewTimeout = window.setTimeout(() => {
+      if (previewDiv && !previewDiv.classList.contains('hidden')) {
+        previewDiv.innerHTML = renderMarkdown(contentTextarea.value);
+      }
+    }, 500);
+  });
 
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
@@ -503,9 +530,17 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     }
   });
 
+  // Clear search input immediately on DOM swap (before page is visible)
+  document.addEventListener('astro:after-swap', () => {
+    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    if (searchInput) {
+      searchInput.value = '';
+    }
+  });
+
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', () => {
-    initializeLibraryModal();
     initializeFilters();
+    initializeLibraryModal();
   });
 </script>
