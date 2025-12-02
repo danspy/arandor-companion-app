@@ -528,12 +528,26 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         console.log('Successfully loaded diary entry:', entry);
         
         editingId = id;
-        (document.getElementById('title') as HTMLInputElement).value = entry.title;
-        (document.getElementById('date') as HTMLInputElement).value = entry.date;
-        (document.getElementById('session') as HTMLInputElement).value = entry.session;
-        (document.getElementById('content') as HTMLTextAreaElement).value = entry.content;
-        (document.getElementById('tags') as HTMLInputElement).value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
-        (document.getElementById('coverImageUrl') as HTMLInputElement).value = entry.coverImageUrl || '';
+        
+        // Populate form fields with null checks
+        const titleEl = document.getElementById('title') as HTMLInputElement;
+        const dateEl = document.getElementById('date') as HTMLInputElement;
+        const sessionEl = document.getElementById('session') as HTMLInputElement;
+        const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+        const tagsEl = document.getElementById('tags') as HTMLInputElement;
+        const coverImageUrlEl = document.getElementById('coverImageUrl') as HTMLInputElement;
+        
+        if (!titleEl || !dateEl || !sessionEl || !contentEl || !tagsEl || !coverImageUrlEl) {
+          console.error('One or more form elements not found');
+          throw new Error('Form elements not found');
+        }
+        
+        titleEl.value = entry.title || '';
+        dateEl.value = entry.date || '';
+        sessionEl.value = entry.session || '';
+        contentEl.value = entry.content || '';
+        tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+        coverImageUrlEl.value = entry.coverImageUrl || '';
         
         // Show image preview if there's a cover image
         if (entry.coverImageUrl && imagePreview && previewImg) {
@@ -552,30 +566,34 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
         const questsSelect = document.getElementById('quests') as HTMLSelectElement;
         
-        // Clear previous selections
-        Array.from(npcsSelect.options).forEach(option => option.selected = false);
-        Array.from(locationsSelect.options).forEach(option => option.selected = false);
-        Array.from(charactersSelect.options).forEach(option => option.selected = false);
-        Array.from(questsSelect.options).forEach(option => option.selected = false);
-        
-        // Set new selections
-        const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
-        const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
-        const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
-        const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
-        
-        Array.from(npcsSelect.options).forEach(option => {
-          if (npcIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(locationsSelect.options).forEach(option => {
-          if (locationIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(charactersSelect.options).forEach(option => {
-          if (characterIds.includes(option.value)) option.selected = true;
-        });
-        Array.from(questsSelect.options).forEach(option => {
-          if (questIds.includes(option.value)) option.selected = true;
-        });
+        if (npcsSelect && locationsSelect && charactersSelect && questsSelect) {
+          // Clear previous selections
+          Array.from(npcsSelect.options).forEach(option => option.selected = false);
+          Array.from(locationsSelect.options).forEach(option => option.selected = false);
+          Array.from(charactersSelect.options).forEach(option => option.selected = false);
+          Array.from(questsSelect.options).forEach(option => option.selected = false);
+          
+          // Set new selections
+          const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
+          const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
+          const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
+          const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
+          
+          Array.from(npcsSelect.options).forEach(option => {
+            if (npcIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(locationsSelect.options).forEach(option => {
+            if (locationIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(charactersSelect.options).forEach(option => {
+            if (characterIds.includes(option.value)) option.selected = true;
+          });
+          Array.from(questsSelect.options).forEach(option => {
+            if (questIds.includes(option.value)) option.selected = true;
+          });
+        } else {
+          console.warn('One or more multi-select elements not found');
+        }
         
         if (modalTitle) modalTitle.textContent = 'Edit Diary Entry';
         modal?.classList.remove('hidden');

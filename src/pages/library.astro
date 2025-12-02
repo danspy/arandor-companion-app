@@ -409,10 +409,22 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         const entry = await response.json();
         
         editingId = id;
-        (document.getElementById('title') as HTMLInputElement).value = entry.title;
-        (document.getElementById('content') as HTMLTextAreaElement).value = entry.content;
-        (document.getElementById('tags') as HTMLInputElement).value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
-        (document.getElementById('location') as HTMLSelectElement).value = entry.locationId || '';
+        
+        // Populate form fields with null checks
+        const titleEl = document.getElementById('title') as HTMLInputElement;
+        const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+        const tagsEl = document.getElementById('tags') as HTMLInputElement;
+        const locationEl = document.getElementById('location') as HTMLSelectElement;
+        
+        if (!titleEl || !contentEl || !tagsEl || !locationEl) {
+          console.error('One or more form elements not found');
+          throw new Error('Form elements not found');
+        }
+        
+        titleEl.value = entry.title || '';
+        contentEl.value = entry.content || '';
+        tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
+        locationEl.value = entry.locationId || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Library Entry';
         previewDiv?.classList.add('hidden');
