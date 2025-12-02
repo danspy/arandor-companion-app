@@ -530,14 +530,6 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     }
   });
 
-  // Clear search input immediately on DOM swap (before page is visible)
-  document.addEventListener('astro:after-swap', () => {
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
-    if (searchInput) {
-      searchInput.value = '';
-    }
-  });
-
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', () => {
     initializeFilters();
