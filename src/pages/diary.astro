@@ -503,7 +503,10 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     
     if (target.classList.contains('edit-entry')) {
       const id = target.getAttribute('data-id');
-      if (!id) return;
+      if (!id) {
+        console.error('No data-id found on edit button');
+        return;
+      }
       
       // Get DOM elements fresh
       const modal = document.getElementById('entryModal');
@@ -513,11 +516,16 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
       
       try {
+        console.log('Fetching diary entry with ID:', id);
         const response = await fetch(`/api/diary/${id}`);
+        console.log('Response status:', response.status, 'OK:', response.ok);
         if (!response.ok) {
-          throw new Error('Failed to fetch entry');
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+          console.error('API error response:', errorData);
+          throw new Error(`Failed to fetch entry: ${errorData.error || response.statusText}`);
         }
         const entry = await response.json();
+        console.log('Successfully loaded diary entry:', entry);
         
         editingId = id;
         (document.getElementById('title') as HTMLInputElement).value = entry.title;
