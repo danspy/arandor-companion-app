@@ -238,16 +238,19 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
 <script>
   import { renderMarkdown } from '../utils/markdown';
 
-  const modal = document.getElementById('entryModal');
-  const form = document.getElementById('entryForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addEntry');
-  const cancelButton = document.getElementById('cancelModal');
-  const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
-  const togglePreviewBtn = document.getElementById('togglePreview');
-  const previewDiv = document.getElementById('markdownPreview');
-
+  // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Initialize library modal and form functionality
+  function initializeLibraryModal() {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addEntry');
+    const cancelButton = document.getElementById('cancelModal');
+    const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
+    const togglePreviewBtn = document.getElementById('togglePreview');
+    const previewDiv = document.getElementById('markdownPreview');
   let selectedTag: string = 'all';
 
   // Markdown preview toggle
@@ -327,9 +330,6 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
     });
   }
 
-  // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
-
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
     editingId = null;
@@ -386,8 +386,9 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
       alert('An error occurred. Please try again.');
     }
   });
+  }
 
-  // Edit entry
+  // Edit/Delete entries with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
@@ -434,5 +435,11 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
         }
       }
     }
+  });
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', () => {
+    initializeLibraryModal();
+    initializeFilters();
   });
 </script>

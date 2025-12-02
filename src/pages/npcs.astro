@@ -278,13 +278,16 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 </Layout>
 
 <script>
-  const modal = document.getElementById('npcModal');
-  const form = document.getElementById('npcForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addNPC');
-  const cancelButton = document.getElementById('cancelModal');
-
+  // Shared state for editing NPC ID
   let editingId: string | null = null;
+
+  // Initialize NPC modal and form functionality
+  function initializeNPCModal() {
+    const modal = document.getElementById('npcModal');
+    const form = document.getElementById('npcForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addNPC');
+    const cancelButton = document.getElementById('cancelModal');
 
   // Open modal for new NPC
   addButton?.addEventListener('click', () => {
@@ -347,8 +350,9 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
       alert('An error occurred. Please try again.');
     }
   });
+  }
 
-  // Edit NPC
+  // Edit/Delete NPCs with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
@@ -452,7 +456,10 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
   }
 
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener('astro:page-load', () => {
+    initializeNPCModal();
+    initializeFilters();
+  });
 
   // Check for edit parameter on page load and open modal if present
   (async () => {

@@ -313,13 +313,16 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
 </Layout>
 
 <script>
-  const modal = document.getElementById('locationModal');
-  const form = document.getElementById('locationForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addLocation');
-  const cancelButton = document.getElementById('cancelModal');
-
+  // Shared state for editing location ID
   let editingId: string | null = null;
+
+  // Initialize location modal and form functionality
+  function initializeLocationModal() {
+    const modal = document.getElementById('locationModal');
+    const form = document.getElementById('locationForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addLocation');
+    const cancelButton = document.getElementById('cancelModal');
 
   // Open modal for new location
   addButton?.addEventListener('click', () => {
@@ -379,8 +382,9 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
       alert('An error occurred. Please try again.');
     }
   });
+  }
 
-  // Edit location
+  // Edit/Delete locations with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
@@ -533,5 +537,8 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
   }
 
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener('astro:page-load', () => {
+    initializeLocationModal();
+    initializeFilters();
+  });
 </script>

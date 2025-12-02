@@ -340,17 +340,20 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
 </Layout>
 
 <script>
-  const modal = document.getElementById('entryModal');
-  const form = document.getElementById('entryForm') as HTMLFormElement;
-  const modalTitle = document.getElementById('modalTitle');
-  const addButton = document.getElementById('addEntry');
-  const cancelButton = document.getElementById('cancelModal');
-  const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
-  const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
-  const imagePreview = document.getElementById('imagePreview');
-  const previewImg = document.getElementById('previewImg') as HTMLImageElement;
-
+  // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Initialize diary modal and form functionality
+  function initializeDiaryModal() {
+    const modal = document.getElementById('entryModal');
+    const form = document.getElementById('entryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('modalTitle');
+    const addButton = document.getElementById('addEntry');
+    const cancelButton = document.getElementById('cancelModal');
+    const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
+    const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg') as HTMLImageElement;
 
   // Handle image file selection and preview
   fileInput?.addEventListener('change', (e) => {
@@ -492,8 +495,9 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       alert('An error occurred. Please try again.');
     }
   });
+  }
 
-  // Edit entry
+  // Edit/Delete entries with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
     
@@ -651,5 +655,8 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
   }
 
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeFilters);
+  document.addEventListener('astro:page-load', () => {
+    initializeDiaryModal();
+    initializeFilters();
+  });
 </script>
