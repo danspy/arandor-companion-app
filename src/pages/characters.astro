@@ -761,12 +761,6 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     // Storage key for persisting search text
     const SEARCH_STORAGE_KEY = 'characters_search';
     
-    // Restore search text from localStorage
-    const savedSearch = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
-    if (searchInput && savedSearch) {
-      searchInput.value = savedSearch;
-    }
-
     const applyFilters = (searchText: string) => {
       const searchTerms = searchText.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       characterCards.forEach(card => {
@@ -779,8 +773,10 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
       });
     };
 
-    // Apply initial filters with saved search
-    if (savedSearch) {
+    // Restore search text from localStorage and apply filters
+    const savedSearch = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
+    if (searchInput) {
+      searchInput.value = savedSearch;
       applyFilters(savedSearch);
     }
 
