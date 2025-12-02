@@ -261,12 +261,13 @@ const renderedDescription = renderMarkdown(location.description);
 </Layout>
 
 <script>
-  const deleteBtn = document.getElementById('deleteLocation');
-  const editBtn = document.getElementById('editLocation');
-  
-  // Handle edit button click
-  if (editBtn) {
-    editBtn.addEventListener('click', () => {
+  function initializeDetailPage() {
+    const deleteBtn = document.getElementById('deleteLocation');
+    const editBtn = document.getElementById('editLocation');
+    
+    // Handle edit button click
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
       const id = editBtn.getAttribute('data-id');
       if (id) {
         window.location.href = `/locations?edit=${id}`;
@@ -298,6 +299,10 @@ const renderedDescription = renderMarkdown(location.description);
       }
     });
   }
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
 
 <style>

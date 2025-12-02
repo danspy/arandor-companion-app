@@ -119,9 +119,10 @@ const renderedContent = renderMarkdown(entry.content);
 </Layout>
 
 <script define:vars={{ id }}>
-  const deleteBtn = document.getElementById('deleteEntry');
-  
-  deleteBtn?.addEventListener('click', async () => {
+  function initializeDetailPage() {
+    const deleteBtn = document.getElementById('deleteEntry');
+    
+    deleteBtn?.addEventListener('click', async () => {
     if (confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
       try {
         const response = await fetch(`/api/library/${id}`, {
@@ -138,6 +139,10 @@ const renderedContent = renderMarkdown(entry.content);
       }
     }
   });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
 
 <style>

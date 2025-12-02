@@ -189,12 +189,13 @@ const renderedDescription = renderMarkdown(npc.description);
 </Layout>
 
 <script>
-  const deleteBtn = document.getElementById('deleteNPC');
-  const editBtn = document.getElementById('editNPC');
-  
-  // Handle edit button click
-  if (editBtn) {
-    editBtn.addEventListener('click', () => {
+  function initializeDetailPage() {
+    const deleteBtn = document.getElementById('deleteNPC');
+    const editBtn = document.getElementById('editNPC');
+    
+    // Handle edit button click
+    if (editBtn) {
+      editBtn.addEventListener('click', () => {
       const id = editBtn.getAttribute('data-id');
       if (id) {
         window.location.href = `/npcs?edit=${id}`;
@@ -226,6 +227,10 @@ const renderedDescription = renderMarkdown(npc.description);
       }
     });
   }
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
 
 <style>

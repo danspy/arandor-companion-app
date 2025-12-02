@@ -221,18 +221,19 @@ const renderedContent = renderMarkdown(entry.content);
 </style>
 
 <script>
-  const deleteBtn = document.getElementById('deleteEntry');
-  const editBtn = document.getElementById('editEntry');
-  
-  // Handle edit button click
-  editBtn?.addEventListener('click', () => {
-    const id = editBtn.getAttribute('data-id');
-    if (id) {
-      window.location.href = `/diary?edit=${id}`;
-    }
-  });
-  
-  deleteBtn?.addEventListener('click', async () => {
+  function initializeDetailPage() {
+    const deleteBtn = document.getElementById('deleteEntry');
+    const editBtn = document.getElementById('editEntry');
+    
+    // Handle edit button click
+    editBtn?.addEventListener('click', () => {
+      const id = editBtn.getAttribute('data-id');
+      if (id) {
+        window.location.href = `/diary?edit=${id}`;
+      }
+    });
+    
+    deleteBtn?.addEventListener('click', async () => {
     const id = deleteBtn.getAttribute('data-id');
     if (!id) return;
     
@@ -254,4 +255,8 @@ const renderedContent = renderMarkdown(entry.content);
       }
     }
   });
+  }
+
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
