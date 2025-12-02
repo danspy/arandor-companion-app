@@ -98,15 +98,15 @@ const renderedDescription = renderMarkdown(npc.description);
         <!-- Quick Info -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
           <div class={`p-4 rounded-lg ${
-            npc.relationship === 'ally' ? 'bg-green-50' :
-            npc.relationship === 'enemy' ? 'bg-red-50' :
-            'bg-gray-50'
+            npc.relationship === 'ally' ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' :
+            npc.relationship === 'enemy' ? 'bg-red-50 dark:bg-red-900/20 dark:border dark:border-red-800' :
+            'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
           }`}>
             <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Relationship</div>
             <div class={`text-2xl font-semibold ${
-              npc.relationship === 'ally' ? 'text-green-700' :
-              npc.relationship === 'enemy' ? 'text-red-700' :
-              'text-gray-700'
+              npc.relationship === 'ally' ? 'text-green-700 dark:text-green-400' :
+              npc.relationship === 'enemy' ? 'text-red-700 dark:text-red-400' :
+              'text-gray-700 dark:text-gray-300'
             }`}>
               {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
             </div>
