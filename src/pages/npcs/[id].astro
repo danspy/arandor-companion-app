@@ -196,12 +196,12 @@ const renderedDescription = renderMarkdown(npc.description);
     // Handle edit button click
     if (editBtn) {
       editBtn.addEventListener('click', () => {
-      const id = editBtn.getAttribute('data-id');
-      if (id) {
-        window.location.href = `/npcs?edit=${id}`;
-      }
-    });
-  }
+        const id = editBtn.getAttribute('data-id');
+        if (id) {
+          window.location.href = `/npcs?edit=${id}`;
+        }
+      });
+    }
   
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {

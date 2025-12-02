@@ -268,12 +268,12 @@ const renderedDescription = renderMarkdown(location.description);
     // Handle edit button click
     if (editBtn) {
       editBtn.addEventListener('click', () => {
-      const id = editBtn.getAttribute('data-id');
-      if (id) {
-        window.location.href = `/locations?edit=${id}`;
-      }
-    });
-  }
+        const id = editBtn.getAttribute('data-id');
+        if (id) {
+          window.location.href = `/locations?edit=${id}`;
+        }
+      });
+    }
   
   if (deleteBtn) {
     deleteBtn.addEventListener('click', async () => {
