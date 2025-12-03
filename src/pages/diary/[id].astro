@@ -21,18 +21,18 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
 // Get all diary entries to find previous and next sessions
 const allEntries = await db.select().from(DiaryEntry);
-const sortedEntries = allEntries.slice().sort((a, b) => a.session - b.session);
+allEntries.sort((a, b) => a.session - b.session);
 
 // Find previous and next entries based on session number
 let previousEntry = null;
 let nextEntry = null;
 
-const currentIndex = sortedEntries.findIndex(e => e.id === id);
+const currentIndex = allEntries.findIndex(e => e.id === id);
 if (currentIndex > 0) {
-  previousEntry = sortedEntries[currentIndex - 1];
+  previousEntry = allEntries[currentIndex - 1];
 }
-if (currentIndex < sortedEntries.length - 1) {
-  nextEntry = sortedEntries[currentIndex + 1];
+if (currentIndex < allEntries.length - 1) {
+  nextEntry = allEntries[currentIndex + 1];
 }
 
 // Fetch related entities
