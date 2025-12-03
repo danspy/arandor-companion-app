@@ -261,15 +261,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
             <div class="flex-1 min-w-0">
               <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
               <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
-              {Array.isArray(entry.tags) && entry.tags.length > 0 && (
-                <div class="flex gap-1 flex-wrap mt-1">
-                  {entry.tags.slice(0, 2).map((tag: string) => (
-                    <span class="text-xs bg-purple-100 dark:bg-purple-900/30 dark:border dark:border-purple-800 text-purple-700 dark:text-purple-400 px-2 py-0.5 rounded">
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
             </div>
           </a>
         ))}
