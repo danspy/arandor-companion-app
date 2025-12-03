@@ -42,6 +42,7 @@ CREATE TABLE IF NOT EXISTS "Character" (
   "level" integer NOT NULL,
   "race" text NOT NULL,
   "player" text NOT NULL,
+  "isActive" integer NOT NULL DEFAULT 1,
   "avatarUrl" text,
   "dndbeyondUrl" text,
   "stats" text,
@@ -57,6 +58,12 @@ CREATE TABLE IF NOT EXISTS "Character" (
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
+
+-- Add isActive column to existing Character table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+-- All existing characters will default to active (1 = true)
+ALTER TABLE "Character" ADD COLUMN "isActive" integer NOT NULL DEFAULT 1;
 
 -- Create NPC table
 CREATE TABLE IF NOT EXISTS "NPC" (

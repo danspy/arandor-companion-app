@@ -33,6 +33,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       level: body.level,
       race: body.race,
       player: body.player,
+      isActive: body.isActive !== undefined ? body.isActive : true,
       avatarUrl: body.avatarUrl,
       dndbeyondUrl: body.dndbeyondUrl,
       stats: body.stats,
