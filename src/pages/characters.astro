@@ -60,27 +60,28 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
-      <div class="flex gap-2">
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
         <button 
           id="filterActive" 
-          class="px-4 py-2 rounded-lg border border-primary-600 bg-primary-600 text-white hover:bg-primary-700 dark:hover:bg-primary-500 transition"
+          class="px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
           data-active="true"
         >
-          Active
+          Active ({characters.filter(c => c.isActive !== false).length})
         </button>
         <button 
           id="filterInactive" 
-          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
           data-active="false"
         >
-          Inactive
+          Inactive ({characters.filter(c => c.isActive === false).length})
         </button>
         <button 
           id="filterAll" 
-          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
           data-active="false"
         >
-          All
+          All ({characters.length})
         </button>
       </div>
     </div>
@@ -825,11 +826,11 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     let currentFilter = localStorage.getItem(FILTER_STORAGE_KEY) || 'active';
     
     const updateFilterButtons = (filter: string) => {
-      // Reset all buttons
+      // Reset all buttons to inactive state
       [filterActive, filterInactive, filterAll].forEach(btn => {
         if (btn) {
-          btn.classList.remove('bg-primary-600', 'text-white', 'dark:hover:bg-primary-500');
-          btn.classList.add('border-gray-300', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
+          btn.classList.remove('bg-primary-600', 'text-white', 'hover:bg-primary-700');
+          btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
           btn.setAttribute('data-active', 'false');
         }
       });
@@ -840,8 +841,8 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
       if (filter === 'all') activeButton = filterAll;
       
       if (activeButton) {
-        activeButton.classList.remove('border-gray-300', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
-        activeButton.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700', 'dark:hover:bg-primary-500');
+        activeButton.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
+        activeButton.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700');
         activeButton.setAttribute('data-active', 'true');
       }
     };
