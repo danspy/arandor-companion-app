@@ -207,7 +207,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 
     <!-- Party Members Card -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Party Members</h2>
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Characters</h2>
       <div class="space-y-3">
         {characters.filter(char => char.isActive !== false).map(char => (
           <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
@@ -250,9 +250,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     <!-- Latest Library Entries Card -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
       <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400 flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-        </svg>
         Latest Library
       </h2>
       <div class="space-y-3">
@@ -283,8 +280,8 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         <div class="text-sm text-gray-600 dark:text-gray-400">Total Quests</div>
       </div>
       <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800 rounded">
-        <div class="text-3xl font-bold text-green-600 dark:text-green-500">{characters.length}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Party Members</div>
+        <div class="text-3xl font-bold text-green-600 dark:text-green-500">{characters.filter(c => c.isActive !== false).length}</div>
+        <div class="text-sm text-gray-600 dark:text-gray-400">Active Characters</div>
       </div>
       <div class="text-center p-4 bg-secondary-50 dark:bg-secondary-900/20 dark:border dark:border-secondary-800 rounded">
         <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-500">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
