@@ -20,6 +20,8 @@ if (!entry) {
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
 // Get all diary entries to find previous and next sessions
+// Note: For typical D&D campaigns (10-100 sessions), fetching all entries is acceptable.
+// For larger datasets, consider optimizing with targeted queries based on session number.
 const allEntries = await db.select().from(DiaryEntry);
 allEntries.sort((a, b) => a.session - b.session);
 
