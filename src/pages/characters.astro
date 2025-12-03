@@ -162,17 +162,17 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
 
           <a 
             href={`/characters/${character.id}`}
-            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium"
+            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
           >
             View Details →
           </a>
 
           {isLoggedIn && (
             <div class="mt-2 flex gap-2">
-              <button class="edit-character flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={character.id}>
+              <button class="edit-character flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={character.id}>
                 Edit
               </button>
-              <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition" data-id={character.id}>
+              <button class="delete-character px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={character.id}>
                 Delete
               </button>
             </div>
@@ -487,7 +487,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
           <button 
             type="button" 
             id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
           >
             Cancel
           </button>

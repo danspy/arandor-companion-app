@@ -101,12 +101,12 @@ function isActiveLink(href: string): boolean {
             {isLoggedIn ? (
               <button 
                 id="logoutBtn"
-                class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition"
+                class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition"
               >
                 Logout
               </button>
             ) : (
-              <a href="/login" class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition">
+              <a href="/login" class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition">
                 Login
               </a>
             )}
@@ -143,12 +143,12 @@ function isActiveLink(href: string): boolean {
             {isLoggedIn ? (
               <button 
                 id="logoutBtnMobile"
-                class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition text-left"
+                class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition text-left"
               >
                 Logout
               </button>
             ) : (
-              <a href="/login" class="bg-primary-800 hover:bg-primary-900 px-4 py-2 rounded transition">
+              <a href="/login" class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition">
                 Login
               </a>
             )}

@@ -128,17 +128,17 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
 
           <a 
             href={`/npcs/${npc.id}`}
-            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium"
+            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
           >
             View Details →
           </a>
 
           {isLoggedIn && (
             <div class="flex gap-2 mt-2">
-              <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={npc.id}>
+              <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={npc.id}>
                 Edit
               </button>
-              <button class="delete-npc px-4 py-2 border border-red-300 dark:border-red-700 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={npc.id}>
+              <button class="delete-npc px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={npc.id}>
                 Delete
               </button>
             </div>
@@ -260,14 +260,14 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
           >
             Save NPC
           </button>
           <button 
             type="button" 
             id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
           >
             Cancel
           </button>
