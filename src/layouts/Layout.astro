@@ -76,7 +76,6 @@ function isActiveLink(href: string): boolean {
           
           <!-- Desktop menu -->
           <div class="hidden lg:flex gap-6 items-center">
-            <a href="/" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/') }]}>Dashboard</a>
             <a href="/diary" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/diary') }]}>Diary</a>
             <a href="/library" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/library') }]}>Library</a>
             <a href="/characters" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/characters') }]}>Characters</a>
@@ -117,7 +116,6 @@ function isActiveLink(href: string): boolean {
         <!-- Mobile menu -->
         <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
           <div class="flex flex-col gap-3">
-            <a href="/" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/') }]}>Dashboard</a>
             <a href="/diary" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/diary') }]}>Diary</a>
             <a href="/library" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/library') }]}>Library</a>
             <a href="/characters" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/characters') }]}>Characters</a>
