@@ -33,7 +33,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
       <div class="text-gray-600 dark:text-gray-400">Total Characters</div>
     </div>
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive).length}</div>
+      <div class="text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive !== false).length}</div>
       <div class="text-gray-600 dark:text-gray-400">Active Players</div>
     </div>
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
