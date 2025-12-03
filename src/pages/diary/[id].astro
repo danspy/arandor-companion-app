@@ -19,6 +19,24 @@ if (!entry) {
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
+// Get all diary entries to find previous and next sessions
+// Note: For typical D&D campaigns (10-100 sessions), fetching all entries is acceptable.
+// For larger datasets, consider optimizing with targeted queries based on session number.
+const allEntries = await db.select().from(DiaryEntry);
+allEntries.sort((a, b) => a.session - b.session);
+
+// Find previous and next entries based on session number
+let previousEntry = null;
+let nextEntry = null;
+
+const currentIndex = allEntries.findIndex(e => e.id === id);
+if (currentIndex > 0) {
+  previousEntry = allEntries[currentIndex - 1];
+}
+if (currentIndex < allEntries.length - 1) {
+  nextEntry = allEntries[currentIndex + 1];
+}
+
 // Fetch related entities
 let relatedNPCs: any[] = [];
 let relatedLocations: any[] = [];
@@ -110,11 +128,54 @@ const renderedContent = renderMarkdown(entry.content);
       )}
 
       <!-- Content -->
-      <div class="prose dark:prose-invert max-w-none">
+      <div class="prose dark:prose-invert max-w-none mb-6">
         <div 
           class="diary-text text-gray-700 dark:text-gray-300 text-lg leading-relaxed"
           set:html={renderedContent}
         />
+      </div>
+
+      <!-- Session Navigation -->
+      <div class="flex items-center justify-center gap-3 pt-6 border-t border-gray-200 dark:border-gray-800">
+        {previousEntry ? (
+          <a 
+            href={`/diary/${previousEntry.id}`}
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            title={`Session ${previousEntry.session}: ${previousEntry.title}`}
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Session {previousEntry.session}</span>
+          </a>
+        ) : (
+          <div class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed font-medium text-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Previous</span>
+          </div>
+        )}
+        
+        {nextEntry ? (
+          <a 
+            href={`/diary/${nextEntry.id}`}
+            class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            title={`Session ${nextEntry.session}: ${nextEntry.title}`}
+          >
+            <span>Session {nextEntry.session}</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </a>
+        ) : (
+          <div class="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed font-medium text-sm">
+            <span>Next</span>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        )}
       </div>
     </article>
 
