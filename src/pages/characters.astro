@@ -27,10 +27,14 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
       <div class="text-3xl font-bold text-primary-600 dark:text-primary-400">{characters.length}</div>
       <div class="text-gray-600 dark:text-gray-400">Total Characters</div>
+    </div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive).length}</div>
+      <div class="text-gray-600 dark:text-gray-400">Active Players</div>
     </div>
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
       <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400">{allClasses.length}</div>
@@ -42,26 +46,56 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     </div>
   </div>
 
-  <!-- Search -->
+  <!-- Search and Filter -->
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
-    <div class="relative">
-      <input 
-        type="text" 
-        id="searchInput" 
-        placeholder="Search characters by name, race, class, or player..."
-        class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-      >
-      <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-      </svg>
+    <div class="flex flex-col md:flex-row gap-4">
+      <div class="relative flex-1">
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search characters by name, race, class, or player..."
+          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+        >
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+        </svg>
+      </div>
+      <div class="flex gap-2">
+        <button 
+          id="filterActive" 
+          class="px-4 py-2 rounded-lg border border-primary-600 bg-primary-600 text-white hover:bg-primary-700 dark:hover:bg-primary-500 transition"
+          data-active="true"
+        >
+          Active
+        </button>
+        <button 
+          id="filterInactive" 
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          data-active="false"
+        >
+          Inactive
+        </button>
+        <button 
+          id="filterAll" 
+          class="px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+          data-active="false"
+        >
+          All
+        </button>
+      </div>
     </div>
   </div>
 
   <div id="characterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
-      <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()}>
+      <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} data-is-active={character.isActive ? "true" : "false"}>
         <a href={`/characters/${character.id}`} class="block">
-          <div class="bg-gradient-to-r from-primary-600 to-secondary-600 h-24 flex items-center justify-center">
+          <div class={`bg-gradient-to-r ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'} h-24 flex items-center justify-center relative`}>
+            {!character.isActive && (
+              <div class="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+                Inactive
+              </div>
+            )}
             {character.avatarUrl ? (
               <img 
                 src={character.avatarUrl} 
@@ -198,6 +232,17 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             >
           </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            id="isActive" 
+            name="isActive" 
+            checked
+            class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 dark:bg-gray-700"
+          >
+          <label for="isActive" class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Player</label>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -518,6 +563,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         race,
         class: className,
         level: parseInt(level),
+        isActive: (document.getElementById('isActive') as HTMLInputElement).checked,
         avatarUrl: formData.get('avatarUrl') || undefined,
         dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
         stats,
@@ -648,6 +694,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
           (document.getElementById('race') as HTMLInputElement).value = character.race;
           (document.getElementById('class') as HTMLInputElement).value = character.class;
           (document.getElementById('level') as HTMLInputElement).value = character.level;
+          (document.getElementById('isActive') as HTMLInputElement).checked = character.isActive !== false;
           (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
           (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
           
@@ -708,6 +755,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         (document.getElementById('race') as HTMLInputElement).value = character.race;
         (document.getElementById('class') as HTMLInputElement).value = character.class;
         (document.getElementById('level') as HTMLInputElement).value = character.level;
+        (document.getElementById('isActive') as HTMLInputElement).checked = character.isActive !== false;
         (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
         (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
         
@@ -765,35 +813,96 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
   // Initialize search and filter functionality
   function initializeFilters() {
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const filterActive = document.getElementById('filterActive') as HTMLButtonElement;
+    const filterInactive = document.getElementById('filterInactive') as HTMLButtonElement;
+    const filterAll = document.getElementById('filterAll') as HTMLButtonElement;
     const characterCards = document.querySelectorAll('.character-card');
     
-    // Storage key for persisting search text
+    // Storage keys for persisting search and filter
     const SEARCH_STORAGE_KEY = 'characters_search';
+    const FILTER_STORAGE_KEY = 'characters_filter';
     
-    const applyFilters = (searchText: string) => {
+    let currentFilter = localStorage.getItem(FILTER_STORAGE_KEY) || 'active';
+    
+    const updateFilterButtons = (filter: string) => {
+      // Reset all buttons
+      [filterActive, filterInactive, filterAll].forEach(btn => {
+        if (btn) {
+          btn.classList.remove('bg-primary-600', 'text-white', 'dark:hover:bg-primary-500');
+          btn.classList.add('border-gray-300', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
+          btn.setAttribute('data-active', 'false');
+        }
+      });
+      
+      // Activate the selected button
+      let activeButton = filterActive;
+      if (filter === 'inactive') activeButton = filterInactive;
+      if (filter === 'all') activeButton = filterAll;
+      
+      if (activeButton) {
+        activeButton.classList.remove('border-gray-300', 'dark:border-gray-600', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-100', 'dark:hover:bg-gray-800');
+        activeButton.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700', 'dark:hover:bg-primary-500');
+        activeButton.setAttribute('data-active', 'true');
+      }
+    };
+    
+    const applyFilters = (searchText: string, filter: string) => {
       const searchTerms = searchText.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       characterCards.forEach(card => {
         const searchData = card.getAttribute('data-search') || '';
+        const isActive = card.getAttribute('data-is-active') === 'true';
         
         // Match if ANY search term is found in the text (more flexible search)
         const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchData.includes(term));
         
-        (card as HTMLElement).style.display = matchesSearch ? 'block' : 'none';
+        // Match based on active filter
+        let matchesFilter = true;
+        if (filter === 'active') {
+          matchesFilter = isActive;
+        } else if (filter === 'inactive') {
+          matchesFilter = !isActive;
+        }
+        // 'all' filter matches everything
+        
+        (card as HTMLElement).style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
       });
     };
 
-    // Restore search text from localStorage and apply filters
+    // Restore search text and filter from localStorage
     const savedSearch = localStorage.getItem(SEARCH_STORAGE_KEY) || '';
     if (searchInput) {
       searchInput.value = savedSearch;
-      applyFilters(savedSearch);
     }
+    updateFilterButtons(currentFilter);
+    applyFilters(savedSearch, currentFilter);
 
     // Search functionality with localStorage persistence
     searchInput?.addEventListener('input', (e) => {
       const searchText = (e.target as HTMLInputElement).value;
       localStorage.setItem(SEARCH_STORAGE_KEY, searchText);
-      applyFilters(searchText);
+      applyFilters(searchText, currentFilter);
+    });
+    
+    // Filter button handlers
+    filterActive?.addEventListener('click', () => {
+      currentFilter = 'active';
+      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
+      updateFilterButtons(currentFilter);
+      applyFilters(searchInput?.value || '', currentFilter);
+    });
+    
+    filterInactive?.addEventListener('click', () => {
+      currentFilter = 'inactive';
+      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
+      updateFilterButtons(currentFilter);
+      applyFilters(searchInput?.value || '', currentFilter);
+    });
+    
+    filterAll?.addEventListener('click', () => {
+      currentFilter = 'all';
+      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
+      updateFilterButtons(currentFilter);
+      applyFilters(searchInput?.value || '', currentFilter);
     });
   }
 

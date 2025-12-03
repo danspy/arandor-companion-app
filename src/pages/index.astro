@@ -207,9 +207,9 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 
     <!-- Party Members Card -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Party Members</h2>
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Party Members</h2>
       <div class="space-y-3">
-        {characters.map(char => (
+        {characters.filter(char => char.isActive !== false).map(char => (
           <a href={`/characters/${char.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
             <div>
               <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{char.name}</h3>

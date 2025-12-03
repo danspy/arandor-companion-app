@@ -38,6 +38,7 @@ const Character = defineTable({
     level: column.number(),
     race: column.text(),
     player: column.text(),
+    isActive: column.boolean({ default: true }),
     avatarUrl: column.text({ optional: true }),
     dndbeyondUrl: column.text({ optional: true }),
     stats: column.json({ optional: true }),
