@@ -100,26 +100,18 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
           data-tags={JSON.stringify(tags)}
           data-search={`${entry.title} ${entry.content}`.toLowerCase()}
         >
-          <div class="flex justify-between items-start mb-4">
-            <div class="flex-1">
-              <a href={`/library/${entry.id}`} class="text-xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition block mb-2">
-                {entry.title}
+          <div class="mb-4">
+            <a href={`/library/${entry.id}`} class="text-xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition block mb-2">
+              {entry.title}
+            </a>
+            {locationName && (
+              <a href={`/locations/${entry.locationId}`} class="text-sm text-secondary-600 dark:text-secondary-400 hover:underline flex items-center gap-1">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                {locationName}
               </a>
-              {locationName && (
-                <a href={`/locations/${entry.locationId}`} class="text-sm text-secondary-600 dark:text-secondary-400 hover:underline flex items-center gap-1">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-                  </svg>
-                  {locationName}
-                </a>
-              )}
-            </div>
-            {isLoggedIn && (
-              <div class="flex gap-2">
-                <button class="edit-entry bg-primary-600 text-white px-3 py-1 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={entry.id}>Edit</button>
-                <button class="delete-entry border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={entry.id}>Delete</button>
-              </div>
             )}
           </div>
           
@@ -133,9 +125,19 @@ const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
             </div>
           )}
 
-          <a href={`/library/${entry.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium">
-            Read more →
+          <a 
+            href={`/library/${entry.id}`}
+            class="block text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+          >
+            View Details →
           </a>
+
+          {isLoggedIn && (
+            <div class="flex gap-2 mt-2">
+              <button class="edit-entry flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={entry.id}>Edit</button>
+              <button class="delete-entry px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={entry.id}>Delete</button>
+            </div>
+          )}
         </article>
       );
     })}

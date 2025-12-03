@@ -106,21 +106,13 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
             />
           </div>
         )}
-        <div class="flex justify-between items-start mb-4">
-          <div class="flex-1">
-            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
-              {entry.title}
-            </a>
-            <div class="flex gap-4 text-sm text-gray-500 mt-1">
-              <span>Session {entry.session}</span>
-            </div>
+        <div class="mb-4">
+          <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
+            {entry.title}
+          </a>
+          <div class="flex gap-4 text-sm text-gray-500 mt-1">
+            <span>Session {entry.session}</span>
           </div>
-          {isLoggedIn && (
-            <div class="flex gap-2">
-              <button class="edit-entry bg-primary-600 text-white px-3 py-1 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={entry.id}>Edit</button>
-              <button class="delete-entry border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 px-3 py-1 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={entry.id}>Delete</button>
-            </div>
-          )}
         </div>
         
         <div class="prose max-w-none mb-4">
@@ -135,9 +127,19 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
           ))}
         </div>
 
-        <a href={`/diary/${entry.id}`} class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 text-sm font-medium">
-          Read more →
+        <a 
+          href={`/diary/${entry.id}`}
+          class="block text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+        >
+          View Details →
         </a>
+
+        {isLoggedIn && (
+          <div class="flex gap-2 mt-2">
+            <button class="edit-entry flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={entry.id}>Edit</button>
+            <button class="delete-entry px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={entry.id}>Delete</button>
+          </div>
+        )}
       </article>
       );
     })}
