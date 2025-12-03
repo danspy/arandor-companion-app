@@ -138,7 +138,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
               <button class="edit-npc flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={npc.id}>
                 Edit
               </button>
-              <button class="delete-npc px-4 py-2 border border-red-300 dark:border-red-700 dark:bg-gray-700 text-red-600 dark:text-red-400 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={npc.id}>
+              <button class="delete-npc px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={npc.id}>
                 Delete
               </button>
             </div>
@@ -260,7 +260,7 @@ const enemyNPCs = npcs.filter(n => n.relationship === 'enemy');
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
           >
             Save NPC
           </button>

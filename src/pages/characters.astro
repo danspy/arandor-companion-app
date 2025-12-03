@@ -172,7 +172,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
               <button class="edit-character flex-1 bg-primary-600 text-white px-4 py-2 rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition" data-id={character.id}>
                 Edit
               </button>
-              <button class="delete-character px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition" data-id={character.id}>
+              <button class="delete-character px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition" data-id={character.id}>
                 Delete
               </button>
             </div>

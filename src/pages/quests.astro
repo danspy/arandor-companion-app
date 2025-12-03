@@ -129,23 +129,23 @@ const sortedQuests = [...quests].sort((a, b) => {
             <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
               {quest.status === 'active' && (
                 <>
-                  <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition text-sm" data-id={quest.id}>
+                  <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition text-sm" data-id={quest.id}>
                     Complete
                   </button>
-                  <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition text-sm" data-id={quest.id}>
+                  <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition text-sm" data-id={quest.id}>
                     Fail
                   </button>
                 </>
               )}
               {(quest.status === 'completed' || quest.status === 'failed') && (
-                <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 transition text-sm" data-id={quest.id}>
+                <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm" data-id={quest.id}>
                   Reactivate
                 </button>
               )}
-              <button class="edit-quest px-4 py-2 border border-gray-300 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition text-sm dark:text-gray-300" data-id={quest.id}>
+              <button class="edit-quest px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={quest.id}>
                 Edit
               </button>
-              <button class="delete-quest px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700 transition text-sm" data-id={quest.id}>
+              <button class="delete-quest px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={quest.id}>
                 Delete
               </button>
             </div>
@@ -223,7 +223,7 @@ const sortedQuests = [...quests].sort((a, b) => {
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
           >
             Save Quest
           </button>
