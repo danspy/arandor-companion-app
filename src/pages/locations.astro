@@ -404,6 +404,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
           (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
           (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
           (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
+          (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
           (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
           
