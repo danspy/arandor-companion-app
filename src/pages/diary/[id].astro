@@ -19,6 +19,22 @@ if (!entry) {
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 
+// Get all diary entries to find previous and next sessions
+const allEntries = await db.select().from(DiaryEntry);
+const sortedEntries = allEntries.slice().sort((a, b) => a.session - b.session);
+
+// Find previous and next entries based on session number
+let previousEntry = null;
+let nextEntry = null;
+
+const currentIndex = sortedEntries.findIndex(e => e.id === id);
+if (currentIndex > 0) {
+  previousEntry = sortedEntries[currentIndex - 1];
+}
+if (currentIndex < sortedEntries.length - 1) {
+  nextEntry = sortedEntries[currentIndex + 1];
+}
+
 // Fetch related entities
 let relatedNPCs: any[] = [];
 let relatedLocations: any[] = [];
@@ -73,6 +89,53 @@ const renderedContent = renderMarkdown(entry.content);
           >
             Delete
           </button>
+        </div>
+      )}
+    </div>
+
+    <!-- Session Navigation -->
+    <div class="flex items-center justify-center gap-4 mb-6">
+      {previousEntry ? (
+        <a 
+          href={`/diary/${previousEntry.id}`}
+          class="flex items-center gap-2 px-6 py-3 bg-white dark:bg-black border-2 border-primary-600 dark:border-primary-500 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition font-medium shadow-sm"
+          title={`Session ${previousEntry.session}: ${previousEntry.title}`}
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Session {previousEntry.session}</span>
+        </a>
+      ) : (
+        <div class="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed font-medium shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span>Previous</span>
+        </div>
+      )}
+      
+      <div class="px-4 py-2 bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 rounded-lg font-semibold">
+        Session {entry.session}
+      </div>
+      
+      {nextEntry ? (
+        <a 
+          href={`/diary/${nextEntry.id}`}
+          class="flex items-center gap-2 px-6 py-3 bg-white dark:bg-black border-2 border-primary-600 dark:border-primary-500 text-primary-600 dark:text-primary-400 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition font-medium shadow-sm"
+          title={`Session ${nextEntry.session}: ${nextEntry.title}`}
+        >
+          <span>Session {nextEntry.session}</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+        </a>
+      ) : (
+        <div class="flex items-center gap-2 px-6 py-3 bg-gray-100 dark:bg-gray-800 border-2 border-gray-300 dark:border-gray-700 text-gray-400 dark:text-gray-600 rounded-lg cursor-not-allowed font-medium shadow-sm">
+          <span>Next</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
         </div>
       )}
     </div>
