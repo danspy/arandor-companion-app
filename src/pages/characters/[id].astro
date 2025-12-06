@@ -61,7 +61,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <!-- Character Banner with Avatar -->
       <div class={`bg-gradient-to-r ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'} h-48 relative`}>
         {!character.isActive && (
-          <div class="absolute top-4 right-4 bg-gray-800 text-white text-xs px-2 py-1 rounded">
+          <div class="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
             Inactive
           </div>
         )}
