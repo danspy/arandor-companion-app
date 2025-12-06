@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { db, Character, eq } from 'astro:db';
+import { db, Character, DiaryEntry, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 
 const { id } = Astro.params;
@@ -15,6 +15,13 @@ const character = characters[0];
 if (!character) {
   return Astro.redirect('/characters');
 }
+
+// Count sessions where this character appears
+const allDiaryEntries = await db.select().from(DiaryEntry);
+const sessionCount = allDiaryEntries.filter(entry => {
+  const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
+  return characterIds.includes(id);
+}).length;
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 ---
@@ -75,7 +82,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         <p class="text-lg text-gray-500 dark:text-gray-400 mb-6">Played by {character.player}</p>
 
         <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">
             <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Level</div>
             <div class="text-3xl font-bold text-primary-700 dark:text-primary-400">{character.level}</div>
@@ -87,6 +94,10 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           <div class="bg-accent-50 dark:bg-accent-900/20 dark:border dark:border-accent-800 p-4 rounded-lg">
             <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Class</div>
             <div class="text-2xl font-semibold text-accent-700 dark:text-accent-400">{character.class}</div>
+          </div>
+          <div class="bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800 p-4 rounded-lg">
+            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Sessions Played</div>
+            <div class="text-3xl font-bold text-green-700 dark:text-green-400">{sessionCount}</div>
           </div>
         </div>
 
