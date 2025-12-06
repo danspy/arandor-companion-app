@@ -27,6 +27,7 @@ export interface Character {
   level: number;
   race: string;
   player: string;
+  isActive?: boolean;
   avatarUrl?: string;
   dndbeyondUrl?: string;
   stats?: {
