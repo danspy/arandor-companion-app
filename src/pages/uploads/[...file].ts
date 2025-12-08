@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { readFile } from 'node:fs/promises';
-import { join, resolve, relative, sep, isAbsolute } from 'node:path';
+import { join, resolve, sep } from 'node:path';
 
 // Simple MIME type mapping for common image and video formats
 const MIME_TYPES: Record<string, string> = {
@@ -43,7 +43,9 @@ export const GET: APIRoute = async ({ params }) => {
     const resolvedUploadDir = resolve(uploadDir);
     
     // Prevent directory traversal attacks - ensure the resolved path is within uploadDir
-    // Check if the resolved filepath starts with the upload directory path
+    // By checking if filepath starts with uploadDir + path separator, we ensure:
+    // 1. The file is within the upload directory
+    // 2. Similar directory names don't pass (e.g., /uploads-malicious/)
     if (!filepath.startsWith(resolvedUploadDir + sep)) {
       return new Response('Invalid file path', { status: 400 });
     }
