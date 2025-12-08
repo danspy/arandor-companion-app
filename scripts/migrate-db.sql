@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS "DiaryEntry" (
   "session" integer NOT NULL,
   "tags" text NOT NULL DEFAULT '[]',
   "coverImageUrl" text,
+  "coverVideoUrl" text,
   "npcIds" text NOT NULL DEFAULT '[]',
   "locationIds" text NOT NULL DEFAULT '[]',
   "characterIds" text NOT NULL DEFAULT '[]',
@@ -64,6 +65,11 @@ CREATE TABLE IF NOT EXISTS "Character" (
 -- SQLite will silently ignore the error if the column exists
 -- All existing characters will default to active (1 = true)
 ALTER TABLE "Character" ADD COLUMN "isActive" integer NOT NULL DEFAULT 1;
+
+-- Add coverVideoUrl column to existing DiaryEntry table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+ALTER TABLE "DiaryEntry" ADD COLUMN "coverVideoUrl" text;
 
 -- Create NPC table
 CREATE TABLE IF NOT EXISTS "NPC" (

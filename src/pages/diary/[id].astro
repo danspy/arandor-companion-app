@@ -101,6 +101,9 @@ const renderedContent = renderMarkdown(entry.content);
         <video 
           src={entry.coverVideoUrl} 
           controls
+          loop
+          autoplay
+          muted
           class="w-full h-96 object-cover"
           aria-label={`Cover video for ${entry.title}`}
         />
