@@ -227,7 +227,7 @@ ASTRO_DATABASE_FILE=/srv/arandor/data/arandor.db npm run build
 
 ```javascript
 db({
-  storage: '/srv/arandor/.astro/content.db',
+  storage: '/srv/arandor/data/content.db',
 })
 ```
 
