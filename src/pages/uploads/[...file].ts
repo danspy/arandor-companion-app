@@ -43,7 +43,8 @@ export const GET: APIRoute = async ({ params }) => {
     const relativePath = relative(uploadDir, filepath);
     
     // Prevent directory traversal attacks - ensure the resolved path is within uploadDir
-    if (relativePath.startsWith('..') || resolve(uploadDir) !== resolve(uploadDir, relativePath)) {
+    // If relativePath starts with "..", it means the file is outside the upload directory
+    if (relativePath.startsWith('..') || relativePath.startsWith('/')) {
       return new Response('Invalid file path', { status: 400 });
     }
     
