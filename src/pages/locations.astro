@@ -238,6 +238,40 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
           ></textarea>
         </div>
         
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Location Image (optional)</label>
+          <div class="space-y-2">
+            <div>
+              <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+              <input 
+                type="file" 
+                id="imageFile" 
+                name="imageFile" 
+                accept="image/*"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+            </div>
+            <div>
+              <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+              <input 
+                type="text" 
+                id="imageUrl" 
+                name="imageUrl" 
+                placeholder="https://example.com/image.jpg"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+          </div>
+          <div id="imagePreview" class="hidden mt-2">
+            <img id="imagePreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+          </div>
+        </div>
+        
         <div>
           <label class="flex items-center">
             <input 
@@ -351,12 +385,42 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
     const mapX = formData.get('mapX');
     const mapY = formData.get('mapY');
     
+    // Handle image upload
+    let imageUrl = formData.get('imageUrl') as string || null;
+    const imageFile = formData.get('imageFile') as File;
+    
+    if (imageFile && imageFile.size > 0) {
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url;
+        } else {
+          const error = await uploadResponse.json();
+          alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload image. Please try again.');
+        return;
+      }
+    }
+    
     const data = {
       name: formData.get('name'),
       type: formData.get('type'),
       region: formData.get('region') || undefined,
       description: formData.get('description'),
       notes: formData.get('notes') || undefined,
+      imageUrl: imageUrl || undefined,
       visited: formData.get('visited') === 'on',
       visibleOnMap: formData.get('visibleOnMap') === 'on',
       mapX: mapX ? parseFloat(mapX as string) : undefined,
@@ -383,6 +447,38 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
     }
   });
 
+  // Handle image file preview
+  const fileInput = document.getElementById('imageFile') as HTMLInputElement;
+  const urlInput = document.getElementById('imageUrl') as HTMLInputElement;
+  const imagePreview = document.getElementById('imagePreview');
+  const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file && imagePreview && imagePreviewImg) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        imagePreviewImg.src = e.target?.result as string;
+        imagePreview.classList.remove('hidden');
+      };
+      reader.readAsDataURL(file);
+      // Clear URL input when file is selected
+      if (urlInput) urlInput.value = '';
+    }
+  });
+
+  urlInput?.addEventListener('input', (e) => {
+    const url = (e.target as HTMLInputElement).value;
+    if (url && imagePreview && imagePreviewImg) {
+      imagePreviewImg.src = url;
+      imagePreview.classList.remove('hidden');
+      // Clear file input when URL is entered
+      if (fileInput) fileInput.value = '';
+    } else if (imagePreview) {
+      imagePreview.classList.add('hidden');
+    }
+  });
+
     // Check for edit parameter on page load and open modal if present
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
@@ -403,10 +499,21 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
           (document.getElementById('region') as HTMLInputElement).value = location.region || '';
           (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
           (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
+          (document.getElementById('imageUrl') as HTMLInputElement).value = location.imageUrl || '';
           (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
           (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
           (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+          
+          // Show image preview if URL exists
+          if (location.imageUrl) {
+            const preview = document.getElementById('imagePreview');
+            const previewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+            if (preview && previewImg) {
+              previewImg.src = location.imageUrl;
+              preview.classList.remove('hidden');
+            }
+          }
           
           modalTitle.textContent = 'Edit Location';
           modal.classList.remove('hidden');
@@ -446,10 +553,21 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
         (document.getElementById('region') as HTMLInputElement).value = location.region || '';
         (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
+        (document.getElementById('imageUrl') as HTMLInputElement).value = location.imageUrl || '';
         (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
         (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
         (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
         (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+        
+        // Show image preview if URL exists
+        if (location.imageUrl) {
+          const preview = document.getElementById('imagePreview');
+          const previewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+          if (preview && previewImg) {
+            previewImg.src = location.imageUrl;
+            preview.classList.remove('hidden');
+          }
+        }
         
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');

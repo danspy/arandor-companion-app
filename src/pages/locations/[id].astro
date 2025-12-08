@@ -123,6 +123,17 @@ const renderedDescription = renderMarkdown(location.description);
       </div>
     </article>
 
+    <!-- Location Image -->
+    {location.imageUrl && (
+      <div class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-900">
+        <img 
+          src={location.imageUrl} 
+          alt={location.name}
+          class="w-full h-auto max-h-96 object-cover"
+        />
+      </div>
+    )}
+
     <!-- Description Section -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
       <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Description</h2>
