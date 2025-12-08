@@ -353,12 +353,25 @@ sudo systemctl start arandor.service
 
 ## Data Persistence
 
+### Database
 - Database is stored at `/srv/arandor/data/content.db`
 - Data persists across application restarts and deployments
 - **Recommended:** Set up automated daily backups:
   ```bash
   # Add to crontab (crontab -e)
   0 2 * * * cp /srv/arandor/data/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
+  ```
+
+### Uploaded Files (Images and Videos)
+- Uploaded files are stored at `/srv/arandor/uploads/`
+- Files persist across application restarts and deployments
+- The uploads directory is created automatically during deployment
+- Files are served through the `/uploads/` endpoint
+- **Note:** The uploads directory is separate from the `dist/` folder, which is rebuilt on every deployment
+- **Recommended:** Include uploads in your backup strategy:
+  ```bash
+  # Add to crontab (crontab -e)
+  0 2 * * * rsync -a /srv/arandor/uploads/ /srv/arandor/backups/uploads.$(date +\%Y\%m\%d)/
   ```
 
 ## Environment Variables
