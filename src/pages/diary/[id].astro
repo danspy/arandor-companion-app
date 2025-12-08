@@ -95,8 +95,16 @@ const renderedContent = renderMarkdown(entry.content);
       )}
     </div>
 
-    <!-- Cover Image -->
-    {entry.coverImageUrl && (
+    <!-- Cover Video or Image -->
+    {entry.coverVideoUrl ? (
+      <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
+        <video 
+          src={entry.coverVideoUrl} 
+          controls
+          class="w-full h-96 object-cover"
+        />
+      </div>
+    ) : entry.coverImageUrl && (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
         <img 
           src={entry.coverImageUrl} 
