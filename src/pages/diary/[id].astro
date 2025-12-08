@@ -99,14 +99,20 @@ const renderedContent = renderMarkdown(entry.content);
     {entry.coverVideoUrl ? (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
         <video 
-          src={entry.coverVideoUrl} 
           autoplay
           muted
-          playsInline
+          playsinline
+          webkit-playsinline
           loop
+          preload="auto"
+          disablePictureInPicture
+          x-webkit-airplay="allow"
           class="w-full h-96 object-cover"
           aria-label={`Cover video for ${entry.title}`}
-        />
+        >
+          <source src={entry.coverVideoUrl} type="video/mp4" />
+          Your browser does not support the video tag.
+        </video>
       </div>
     ) : entry.coverImageUrl && (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">

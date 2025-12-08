@@ -100,15 +100,20 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         {entry.coverVideoUrl ? (
           <div class="mb-4 rounded-lg overflow-hidden">
             <video 
-              src={entry.coverVideoUrl} 
               autoplay
               muted
-              playsInline
+              playsinline
+              webkit-playsinline
               loop
-              preload="metadata"
+              preload="auto"
+              disablePictureInPicture
+              x-webkit-airplay="allow"
               class="w-full h-48 object-cover"
               aria-label={`Video for ${entry.title}`}
-            />
+            >
+              <source src={entry.coverVideoUrl} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
           </div>
         ) : entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
@@ -282,7 +287,19 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
             </div>
           </div>
           <div id="videoPreview" class="mt-3 hidden">
-            <video id="previewVideo" src="" controls class="max-w-xs rounded-lg shadow-md" aria-label="Video preview"></video>
+            <video 
+              id="previewVideo" 
+              src="" 
+              autoplay
+              muted
+              playsinline
+              webkit-playsinline
+              loop
+              preload="auto"
+              disablePictureInPicture
+              class="max-w-xs rounded-lg shadow-md" 
+              aria-label="Video preview"
+            ></video>
           </div>
         </div>
         
