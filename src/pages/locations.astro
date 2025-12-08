@@ -259,7 +259,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
             <div>
               <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
               <input 
-                type="text" 
+                type="url" 
                 id="imageUrl" 
                 name="imageUrl" 
                 placeholder="https://example.com/image.jpg"
@@ -479,6 +479,18 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
     }
   });
 
+  // Helper function to show image preview
+  function showImagePreview(imageUrl: string) {
+    if (imageUrl) {
+      const preview = document.getElementById('imagePreview');
+      const previewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+      if (preview && previewImg) {
+        previewImg.src = imageUrl;
+        preview.classList.remove('hidden');
+      }
+    }
+  }
+
     // Check for edit parameter on page load and open modal if present
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
@@ -506,14 +518,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
           
           // Show image preview if URL exists
-          if (location.imageUrl) {
-            const preview = document.getElementById('imagePreview');
-            const previewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
-            if (preview && previewImg) {
-              previewImg.src = location.imageUrl;
-              preview.classList.remove('hidden');
-            }
-          }
+          showImagePreview(location.imageUrl);
           
           modalTitle.textContent = 'Edit Location';
           modal.classList.remove('hidden');
@@ -560,14 +565,7 @@ const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort()
         (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
         
         // Show image preview if URL exists
-        if (location.imageUrl) {
-          const preview = document.getElementById('imagePreview');
-          const previewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
-          if (preview && previewImg) {
-            previewImg.src = location.imageUrl;
-            preview.classList.remove('hidden');
-          }
-        }
+        showImagePreview(location.imageUrl);
         
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
