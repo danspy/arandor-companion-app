@@ -103,7 +103,8 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
               src={entry.coverVideoUrl} 
               autoplay
               muted
-              playsinline
+              playsInline
+              loop
               preload="metadata"
               class="w-full h-48 object-cover"
               aria-label={`Video for ${entry.title}`}
