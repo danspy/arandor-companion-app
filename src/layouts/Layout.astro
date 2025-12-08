@@ -29,14 +29,12 @@ function isActiveLink(href: string): boolean {
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="A modern D&D companion app for tracking your D&D adventures, characters, NPCs, locations, and more" />
     
-    <!-- PWA Meta Tags -->
+    <!-- Basic PWA support for installability only -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <meta name="theme-color" content="#8b4545" />
-    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Arandor" />
     
     <title>{title} - Arandor Companion</title>
@@ -57,16 +55,6 @@ function isActiveLink(href: string): boolean {
       const theme = getThemePreference();
       if (theme === 'dark') {
         document.documentElement.classList.add('dark');
-      }
-    </script>
-    <script is:inline>
-      // Register service worker for PWA (only in production builds)
-      if ('serviceWorker' in navigator && import.meta.env.PROD) {
-        window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error) => {
-            console.error('Service worker registration failed:', error);
-          });
-        });
       }
     </script>
   </head>

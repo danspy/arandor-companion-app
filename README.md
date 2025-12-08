@@ -56,11 +56,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Image Uploads** - Upload cover images for diary entries
 - **Markdown Support** - Rich text formatting in diary and library entries
 - **Mobile Responsive** - Optimized for all screen sizes
-- **Progressive Web App (PWA)** - Install as a native app on mobile and desktop devices
-  - Installable on home screen
-  - Standalone app experience
-  - Faster loading with cached assets
-  - Automatic updates
+- **Installable App** - Add to home screen on mobile and desktop devices with app manifest
 
 ## Tech Stack
 
@@ -70,7 +66,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **TypeScript** - Type-safe development with strict mode
 - **Node.js Adapter** - Standalone server deployment
 - **marked** - Markdown parsing for rich text content
-- **@vite-pwa/astro** - PWA support with service worker and asset caching
+
 
 ## Getting Started
 
@@ -114,46 +110,6 @@ The built site will be in the `dist/` directory.
 ```bash
 npm run preview
 ```
-
-## Progressive Web App (PWA)
-
-The Arandor Companion App is a fully featured Progressive Web App that can be installed on your device for a native app-like experience:
-
-### PWA Features
-
-- **Installable**: Add the app to your home screen on mobile devices or desktop
-- **Standalone Mode**: Runs in its own window without browser UI
-- **Fast Loading**: Cached static resources (CSS, JS, images) load instantly on repeat visits
-- **Automatic Updates**: The app automatically updates when new versions are available
-
-**Note**: As a server-rendered application with database operations, this app requires an active server connection to function. The PWA features provide installation capabilities and faster loading through asset caching, but full offline functionality is not supported.
-
-### How to Install
-
-**On Mobile (iOS/Android):**
-1. Open the app in your browser
-2. Tap the "Share" button (iOS) or menu button (Android)
-3. Select "Add to Home Screen"
-4. Confirm the installation
-
-**On Desktop (Chrome/Edge):**
-1. Look for the install icon in the address bar
-2. Click "Install" in the prompt
-3. The app will open in its own window
-
-**On Desktop (Firefox):**
-1. Click the three dots menu
-2. Select "Install Arandor Companion App"
-3. Confirm the installation
-
-### Performance Benefits
-
-The PWA caches:
-- Static assets (CSS, JavaScript, images)
-- External fonts (Google Fonts)
-- Icon and map resources
-
-This ensures faster page loads on repeat visits. However, as this is a server-rendered application with a database backend, an active server connection is required for the app to function. The service worker improves performance but does not enable full offline functionality.
 
 ## Deployment
 
@@ -321,7 +277,6 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Faction tracking system
 - [x] Campaign level progress tracking
 - [x] Image uploads for diary entries
-- [x] Progressive Web App (PWA) support with offline functionality
 - [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
 - [ ] Image uploads for characters/NPCs
