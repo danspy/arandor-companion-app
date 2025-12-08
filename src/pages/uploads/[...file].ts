@@ -11,11 +11,21 @@ const MIME_TYPES: Record<string, string> = {
   'gif': 'image/gif',
   'webp': 'image/webp',
   'svg': 'image/svg+xml',
+  'bmp': 'image/bmp',
+  'ico': 'image/x-icon',
   // Videos
   'mp4': 'video/mp4',
   'webm': 'video/webm',
   'ogg': 'video/ogg',
+  'ogv': 'video/ogg',
   'mov': 'video/quicktime',
+  'avi': 'video/x-msvideo',
+  'wmv': 'video/x-ms-wmv',
+  'flv': 'video/x-flv',
+  'mkv': 'video/x-matroska',
+  'm4v': 'video/x-m4v',
+  '3gp': 'video/3gpp',
+  '3g2': 'video/3gpp2',
 };
 
 function getMimeType(filename: string): string {
@@ -43,14 +53,16 @@ export const GET: APIRoute = async ({ params }) => {
     const resolvedUploadDir = resolve(uploadDir);
     
     // Security check: Prevent directory traversal and path manipulation attacks
-    // By checking if filepath starts with uploadDir + path separator, we prevent:
-    // 1. Directory traversal attacks (e.g., ../../../etc/passwd)
-    // 2. Absolute path attempts (e.g., /etc/passwd)
-    // 3. Similar directory name attacks (e.g., /uploads-malicious/)
-    // Note: resolve() already normalizes paths, and we ensure trailing separator for exact matching
-    const expectedPrefix = resolvedUploadDir.endsWith(sep) ? resolvedUploadDir : resolvedUploadDir + sep;
-    if (!filepath.startsWith(expectedPrefix)) {
+    // Fixed: Check if filepath is within uploadDir, allowing files directly in the directory
+    // or in subdirectories, but not the directory itself or parent directories
+    if (filepath !== resolvedUploadDir && !filepath.startsWith(resolvedUploadDir + sep)) {
+      console.error('[uploads] Security check failed:', { filepath, resolvedUploadDir, file });
       return new Response('Invalid file path', { status: 400 });
+    }
+    
+    // Additional check: filepath must be different from resolvedUploadDir (not serving the directory)
+    if (filepath === resolvedUploadDir) {
+      return new Response('File not found', { status: 404 });
     }
     
     try {
