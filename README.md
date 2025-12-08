@@ -56,6 +56,11 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Image Uploads** - Upload cover images for diary entries
 - **Markdown Support** - Rich text formatting in diary and library entries
 - **Mobile Responsive** - Optimized for all screen sizes
+- **Progressive Web App (PWA)** - Install as a native app on mobile and desktop devices
+  - Offline support with service worker caching
+  - App installation on home screen
+  - Standalone app experience
+  - Automatic updates
 
 ## Tech Stack
 
@@ -65,6 +70,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **TypeScript** - Type-safe development with strict mode
 - **Node.js Adapter** - Standalone server deployment
 - **marked** - Markdown parsing for rich text content
+- **@vite-pwa/astro** - PWA support with service worker and offline capabilities
 
 ## Getting Started
 
@@ -108,6 +114,46 @@ The built site will be in the `dist/` directory.
 ```bash
 npm run preview
 ```
+
+## Progressive Web App (PWA)
+
+The Arandor Companion App is a fully featured Progressive Web App that can be installed on your device for a native app-like experience:
+
+### PWA Features
+
+- **Installable**: Add the app to your home screen on mobile devices or desktop
+- **Offline Support**: Service worker caches essential resources for offline access
+- **Automatic Updates**: The app automatically updates when new versions are available
+- **Standalone Mode**: Runs in its own window without browser UI
+- **Fast Loading**: Cached resources load instantly on repeat visits
+
+### How to Install
+
+**On Mobile (iOS/Android):**
+1. Open the app in your browser
+2. Tap the "Share" button (iOS) or menu button (Android)
+3. Select "Add to Home Screen"
+4. Confirm the installation
+
+**On Desktop (Chrome/Edge):**
+1. Look for the install icon in the address bar
+2. Click "Install" in the prompt
+3. The app will open in its own window
+
+**On Desktop (Firefox):**
+1. Click the three dots menu
+2. Select "Install Arandor Companion App"
+3. Confirm the installation
+
+### Offline Functionality
+
+The PWA caches:
+- Static assets (CSS, JavaScript, images)
+- App shell for basic navigation
+- API responses (with a 5-minute expiration)
+- Map and favicon resources
+
+This ensures the app remains functional even with poor or no internet connectivity.
 
 ## Deployment
 
@@ -275,6 +321,7 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Faction tracking system
 - [x] Campaign level progress tracking
 - [x] Image uploads for diary entries
+- [x] Progressive Web App (PWA) support with offline functionality
 - [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
 - [ ] Image uploads for characters/NPCs
