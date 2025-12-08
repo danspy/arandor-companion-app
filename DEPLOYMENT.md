@@ -207,7 +207,7 @@ sudo systemctl status arandor.service
 
 **Important Notes:**
 - ✅ **Your production data is completely safe** - deployments never touch the database
-- ✅ The database file at `/srv/arandor/.astro/content.db` persists across all updates
+- ✅ The database file at `/srv/arandor/data/content.db` persists across all updates
 - ✅ Database schema updates are manual and explicit (see Database Management section below)
 
 ## Automated Deployment with GitHub Actions
@@ -278,7 +278,7 @@ cd /srv/arandor
 ```
 
 This will:
-- Create the database at `/srv/arandor/.astro/content.db`
+- Create the database at `/srv/arandor/data/content.db`
 - Create all required tables (empty, no seed data)
 - You can then add your data through the application UI
 
@@ -320,23 +320,23 @@ The update script will:
 
 **View database tables:**
 ```bash
-sqlite3 /srv/arandor/.astro/content.db ".tables"
+sqlite3 /srv/arandor/data/content.db ".tables"
 ```
 
 **View table schema:**
 ```bash
-sqlite3 /srv/arandor/.astro/content.db ".schema User"
+sqlite3 /srv/arandor/data/content.db ".schema User"
 ```
 
 **Check data:**
 ```bash
-sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM User;"
+sqlite3 /srv/arandor/data/content.db "SELECT COUNT(*) FROM User;"
 ```
 
 **Backup database:**
 ```bash
 mkdir -p /srv/arandor/.astro/backups
-cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
+cp /srv/arandor/data/content.db /srv/arandor/.astro/backups/content.db.backup.$(date +%Y%m%d_%H%M%S)
 ```
 
 **Restore from backup:**
@@ -345,7 +345,7 @@ cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.backup.
 sudo systemctl stop arandor.service
 
 # Restore the backup
-cp /srv/arandor/.astro/backups/content.db.backup.YYYYMMDD_HHMMSS /srv/arandor/.astro/content.db
+cp /srv/arandor/.astro/backups/content.db.backup.YYYYMMDD_HHMMSS /srv/arandor/data/content.db
 
 # Start the service
 sudo systemctl start arandor.service
@@ -353,12 +353,12 @@ sudo systemctl start arandor.service
 
 ## Data Persistence
 
-- Database is stored at `/srv/arandor/.astro/content.db`
+- Database is stored at `/srv/arandor/data/content.db`
 - Data persists across application restarts and deployments
 - **Recommended:** Set up automated daily backups:
   ```bash
   # Add to crontab (crontab -e)
-  0 2 * * * cp /srv/arandor/.astro/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
+  0 2 * * * cp /srv/arandor/data/content.db /srv/arandor/.astro/backups/content.db.daily.$(date +\%Y\%m\%d).db
   ```
 
 ## Environment Variables
@@ -366,7 +366,7 @@ sudo systemctl start arandor.service
 The systemd service sets these environment variables:
 - `HOST=0.0.0.0` - Listen on all interfaces
 - `PORT=4321` - Application port
-- `ASTRO_DATABASE_FILE=/srv/arandor/.astro/content.db` - Database location
+- `ASTRO_DATABASE_FILE=/srv/arandor/data/content.db` - Database location
 
 You can customize these by editing `/etc/systemd/system/arandor.service` and running:
 ```bash
@@ -421,7 +421,7 @@ sudo chown -R deploy:deploy /srv/arandor/.astro
 
 # Ensure directory is writable
 chmod 755 /srv/arandor/.astro
-chmod 644 /srv/arandor/.astro/content.db
+chmod 644 /srv/arandor/data/content.db
 ```
 
 **Verify Database State:**
@@ -429,13 +429,13 @@ chmod 644 /srv/arandor/.astro/content.db
 Check if database exists and has data:
 ```bash
 # Check if database file exists
-ls -lh /srv/arandor/.astro/content.db
+ls -lh /srv/arandor/data/content.db
 
 # View tables
-sqlite3 /srv/arandor/.astro/content.db ".tables"
+sqlite3 /srv/arandor/data/content.db ".tables"
 
 # Check user count
-sqlite3 /srv/arandor/.astro/content.db "SELECT COUNT(*) FROM User;"
+sqlite3 /srv/arandor/data/content.db "SELECT COUNT(*) FROM User;"
 ```
 
 ### Permission Issues

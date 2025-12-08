@@ -16,7 +16,7 @@
 set -e
 
 # Configuration
-DB_PATH="${ASTRO_DATABASE_FILE:-/srv/arandor/.astro/content.db}"
+DB_PATH="${ASTRO_DATABASE_FILE:-/srv/arandor/data/content.db}"
 MIGRATE_SQL="$(dirname "$0")/migrate-db.sql"
 BACKUP_DIR="$(dirname "$DB_PATH")/backups"
 DRY_RUN=false

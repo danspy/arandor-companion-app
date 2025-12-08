@@ -19,10 +19,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Validate file type (images only)
-    const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'];
-    if (!validTypes.includes(file.type)) {
-      return new Response(JSON.stringify({ error: 'Invalid file type. Only images are allowed.' }), {
+    // Validate file type (images and videos)
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    
+    if (!isImage && !isVideo) {
+      return new Response(JSON.stringify({ error: 'Invalid file type. Only images and videos are allowed.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });

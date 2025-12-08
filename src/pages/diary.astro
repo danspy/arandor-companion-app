@@ -97,7 +97,16 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       return (
       <article class="diary-entry bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
-        {entry.coverImageUrl && (
+        {entry.coverVideoUrl ? (
+          <div class="mb-4 rounded-lg overflow-hidden">
+            <video 
+              src={entry.coverVideoUrl} 
+              controls
+              class="w-full h-48 object-cover"
+              aria-label={`Video for ${entry.title}`}
+            />
+          </div>
+        ) : entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
             <img 
               src={entry.coverImageUrl} 
@@ -241,6 +250,37 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
             <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
           </div>
         </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Video</label>
+          <div class="space-y-3">
+            <div>
+              <label for="coverVideoFile" class="block text-xs text-gray-600 mb-1">Upload Video (max 5MB)</label>
+              <input 
+                type="file" 
+                id="coverVideoFile" 
+                name="coverVideoFile" 
+                accept="video/*"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+            <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+            <div>
+              <label for="coverVideoUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Video URL</label>
+              <input 
+                type="text" 
+                id="coverVideoUrl" 
+                name="coverVideoUrl" 
+                placeholder="https://example.com/video.mp4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded video path</p>
+            </div>
+          </div>
+          <div id="videoPreview" class="mt-3 hidden">
+            <video id="previewVideo" src="" controls class="max-w-xs rounded-lg shadow-md" aria-label="Video preview"></video>
+          </div>
+        </div>
         
         <div>
           <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
@@ -356,6 +396,10 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     const urlInput = document.getElementById('coverImageUrl') as HTMLInputElement;
     const imagePreview = document.getElementById('imagePreview');
     const previewImg = document.getElementById('previewImg') as HTMLImageElement;
+    const videoFileInput = document.getElementById('coverVideoFile') as HTMLInputElement;
+    const videoUrlInput = document.getElementById('coverVideoUrl') as HTMLInputElement;
+    const videoPreview = document.getElementById('videoPreview');
+    const previewVideo = document.getElementById('previewVideo') as HTMLVideoElement;
 
   // Handle image file selection and preview
   fileInput?.addEventListener('change', (e) => {
@@ -391,6 +435,56 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     }
   });
 
+  // Handle video file selection and preview
+  videoFileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      // Validate file size (5MB limit)
+      const maxSize = 5 * 1024 * 1024;
+      if (file.size > maxSize) {
+        alert('Video file is too large. Maximum size is 5MB.');
+        (e.target as HTMLInputElement).value = '';
+        videoPreview?.classList.add('hidden');
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (previewVideo && videoPreview) {
+          previewVideo.src = e.target?.result as string;
+          videoPreview.classList.remove('hidden');
+        }
+        // Clear URL input when file is selected
+        if (videoUrlInput) videoUrlInput.value = '';
+      };
+      reader.readAsDataURL(file);
+    } else {
+      videoPreview?.classList.add('hidden');
+    }
+  });
+
+  // Handle video URL input and preview
+  videoUrlInput?.addEventListener('input', (e) => {
+    const url = (e.target as HTMLInputElement).value;
+    if (url) {
+      // Basic URL validation
+      try {
+        new URL(url);
+      } catch {
+        // Invalid URL, don't show preview
+        videoPreview?.classList.add('hidden');
+        return;
+      }
+      if (previewVideo && videoPreview) {
+        previewVideo.src = url;
+        videoPreview.classList.remove('hidden');
+      }
+      // Clear file input when URL is entered
+      if (videoFileInput) videoFileInput.value = '';
+    } else {
+      videoPreview?.classList.add('hidden');
+    }
+  });
+
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
     editingId = null;
@@ -398,6 +492,7 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     document.getElementById('entryId')?.setAttribute('value', '');
     if (modalTitle) modalTitle.textContent = 'New Diary Entry';
     imagePreview?.classList.add('hidden');
+    videoPreview?.classList.add('hidden');
     
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
@@ -464,6 +559,35 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         return;
       }
     }
+
+    // Handle video upload if file is selected
+    let coverVideoUrl = formData.get('coverVideoUrl') as string || null;
+    const videoFile = formData.get('coverVideoFile') as File;
+    
+    if (videoFile && videoFile.size > 0) {
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', videoFile);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          coverVideoUrl = uploadData.url;
+        } else {
+          const error = await uploadResponse.json();
+          alert(`Failed to upload video: ${error.error || 'Unknown error'}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload video. Please try again.');
+        return;
+      }
+    }
     
     const data = {
       title: formData.get('title'),
@@ -472,6 +596,7 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       content: formData.get('content'),
       tags,
       coverImageUrl,
+      coverVideoUrl,
       npcIds,
       locationIds,
       characterIds,
@@ -530,6 +655,9 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
       const imagePreview = document.getElementById('imagePreview');
       const previewImg = document.getElementById('previewImg') as HTMLImageElement;
       const fileInput = document.getElementById('coverImageFile') as HTMLInputElement;
+      const videoPreview = document.getElementById('videoPreview');
+      const previewVideo = document.getElementById('previewVideo') as HTMLVideoElement;
+      const videoFileInput = document.getElementById('coverVideoFile') as HTMLInputElement;
       
       try {
         console.log('Fetching diary entry with ID:', id);
@@ -552,8 +680,9 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         const contentEl = document.getElementById('content') as HTMLTextAreaElement;
         const tagsEl = document.getElementById('tags') as HTMLInputElement;
         const coverImageUrlEl = document.getElementById('coverImageUrl') as HTMLInputElement;
+        const coverVideoUrlEl = document.getElementById('coverVideoUrl') as HTMLInputElement;
         
-        if (!titleEl || !dateEl || !sessionEl || !contentEl || !tagsEl || !coverImageUrlEl) {
+        if (!titleEl || !dateEl || !sessionEl || !contentEl || !tagsEl || !coverImageUrlEl || !coverVideoUrlEl) {
           console.error('One or more form elements not found');
           throw new Error('Form elements not found');
         }
@@ -564,6 +693,7 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         contentEl.value = entry.content || '';
         tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
         coverImageUrlEl.value = entry.coverImageUrl || '';
+        coverVideoUrlEl.value = entry.coverVideoUrl || '';
         
         // Show image preview if there's a cover image
         if (entry.coverImageUrl && imagePreview && previewImg) {
@@ -572,9 +702,18 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         } else {
           imagePreview?.classList.add('hidden');
         }
+
+        // Show video preview if there's a cover video
+        if (entry.coverVideoUrl && videoPreview && previewVideo) {
+          previewVideo.src = entry.coverVideoUrl;
+          videoPreview.classList.remove('hidden');
+        } else {
+          videoPreview?.classList.add('hidden');
+        }
         
-        // Clear file input
+        // Clear file inputs
         if (fileInput) fileInput.value = '';
+        if (videoFileInput) videoFileInput.value = '';
         
         // Set selected values for multi-select fields
         const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
