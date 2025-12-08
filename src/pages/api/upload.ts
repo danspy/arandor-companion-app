@@ -20,11 +20,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     }
 
     // Validate file type (images and videos)
-    const validTypes = [
-      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-      'video/mp4', 'video/webm', 'video/quicktime'
-    ];
-    if (!validTypes.includes(file.type)) {
+    const isImage = file.type.startsWith('image/');
+    const isVideo = file.type.startsWith('video/');
+    
+    if (!isImage && !isVideo) {
       return new Response(JSON.stringify({ error: 'Invalid file type. Only images and videos are allowed.' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
