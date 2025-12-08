@@ -61,7 +61,7 @@ function isActiveLink(href: string): boolean {
     </script>
     <script is:inline>
       // Register service worker for PWA (only in production builds)
-      if ('serviceWorker' in navigator) {
+      if ('serviceWorker' in navigator && import.meta.env.PROD) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error) => {
             console.log('Service worker registration failed:', error);
