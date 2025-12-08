@@ -46,7 +46,7 @@ export default defineConfig({
       },
       workbox: {
         // Cache static assets only - don't cache HTML or API routes
-        globPatterns: ['**/*.{css,js,svg,png,ico,txt,woff,woff2}'],
+        globPatterns: ['**/*.{css,js,svg,png,ico,woff,woff2}'],
         // Don't use navigateFallback for SSR apps to prevent caching issues
         navigateFallback: undefined,
         // Simple runtime caching for external resources only
