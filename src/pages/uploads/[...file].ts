@@ -53,16 +53,11 @@ export const GET: APIRoute = async ({ params }) => {
     const resolvedUploadDir = resolve(uploadDir);
     
     // Security check: Prevent directory traversal and path manipulation attacks
-    // Fixed: Check if filepath is within uploadDir, allowing files directly in the directory
-    // or in subdirectories, but not the directory itself or parent directories
-    if (filepath !== resolvedUploadDir && !filepath.startsWith(resolvedUploadDir + sep)) {
+    // Ensures filepath is within uploadDir (either directly or in subdirectories)
+    // but not the directory itself, preventing both traversal and directory listing
+    if (filepath === resolvedUploadDir || !filepath.startsWith(resolvedUploadDir + sep)) {
       console.error('[uploads] Security check failed:', { filepath, resolvedUploadDir, file });
       return new Response('Invalid file path', { status: 400 });
-    }
-    
-    // Additional check: filepath must be different from resolvedUploadDir (not serving the directory)
-    if (filepath === resolvedUploadDir) {
-      return new Response('File not found', { status: 404 });
     }
     
     try {
