@@ -57,9 +57,9 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Markdown Support** - Rich text formatting in diary and library entries
 - **Mobile Responsive** - Optimized for all screen sizes
 - **Progressive Web App (PWA)** - Install as a native app on mobile and desktop devices
-  - Offline support with service worker caching
-  - App installation on home screen
+  - Installable on home screen
   - Standalone app experience
+  - Faster loading with cached assets
   - Automatic updates
 
 ## Tech Stack
@@ -70,7 +70,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **TypeScript** - Type-safe development with strict mode
 - **Node.js Adapter** - Standalone server deployment
 - **marked** - Markdown parsing for rich text content
-- **@vite-pwa/astro** - PWA support with service worker and offline capabilities
+- **@vite-pwa/astro** - PWA support with service worker and asset caching
 
 ## Getting Started
 
@@ -122,10 +122,11 @@ The Arandor Companion App is a fully featured Progressive Web App that can be in
 ### PWA Features
 
 - **Installable**: Add the app to your home screen on mobile devices or desktop
-- **Offline Support**: Service worker caches essential resources for offline access
-- **Automatic Updates**: The app automatically updates when new versions are available
 - **Standalone Mode**: Runs in its own window without browser UI
-- **Fast Loading**: Cached resources load instantly on repeat visits
+- **Fast Loading**: Cached static resources (CSS, JS, images) load instantly on repeat visits
+- **Automatic Updates**: The app automatically updates when new versions are available
+
+**Note**: As a server-rendered application with database operations, this app requires an active server connection to function. The PWA features provide installation capabilities and faster loading through asset caching, but full offline functionality is not supported.
 
 ### How to Install
 
@@ -145,15 +146,14 @@ The Arandor Companion App is a fully featured Progressive Web App that can be in
 2. Select "Install Arandor Companion App"
 3. Confirm the installation
 
-### Offline Functionality
+### Performance Benefits
 
 The PWA caches:
 - Static assets (CSS, JavaScript, images)
-- App shell for basic navigation
-- API responses (with a 5-minute expiration)
-- Map and favicon resources
+- External fonts (Google Fonts)
+- Icon and map resources
 
-This ensures the app remains functional even with poor or no internet connectivity.
+This ensures faster page loads on repeat visits. However, as this is a server-rendered application with a database backend, an active server connection is required for the app to function. The service worker improves performance but does not enable full offline functionality.
 
 ## Deployment
 

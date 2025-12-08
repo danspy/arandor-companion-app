@@ -59,6 +59,16 @@ function isActiveLink(href: string): boolean {
         document.documentElement.classList.add('dark');
       }
     </script>
+    <script is:inline>
+      // Register service worker for PWA (only in production builds)
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((error) => {
+            console.log('Service worker registration failed:', error);
+          });
+        });
+      }
+    </script>
   </head>
   <body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
     <!-- Loading indicator for page transitions -->

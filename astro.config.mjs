@@ -11,8 +11,8 @@ export default defineConfig({
     db({
       storage: '/srv/arandor/data/content.db', // set this path to your persistent server DB file!
     }),
-    AstroPWA({
-      mode: 'production',
+    // Only enable PWA in production builds to avoid dev performance issues
+    ...(process.env.NODE_ENV === 'production' ? [AstroPWA({
       base: '/',
       scope: '/',
       includeAssets: ['favicon.svg', 'map.png'],
@@ -45,8 +45,11 @@ export default defineConfig({
         ]
       },
       workbox: {
-        navigateFallback: '/',
-        globPatterns: ['**/*.{css,js,html,svg,png,ico,txt}'],
+        // Cache static assets only - don't cache HTML or API routes
+        globPatterns: ['**/*.{css,js,svg,png,ico,txt,woff,woff2}'],
+        // Don't use navigateFallback for SSR apps to prevent caching issues
+        navigateFallback: undefined,
+        // Simple runtime caching for external resources only
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -75,29 +78,10 @@ export default defineConfig({
                 statuses: [0, 200]
               }
             }
-          },
-          {
-            urlPattern: /\/api\/.*/i,
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 5 // 5 minutes
-              },
-              cacheableResponse: {
-                statuses: [0, 200]
-              },
-              networkTimeoutSeconds: 10
-            }
           }
         ]
-      },
-      devOptions: {
-        enabled: false,
-        navigateFallbackAllowlist: [/^\//]
       }
-    })
+    })] : [])
   ],
   output: 'server',
   adapter: node({
