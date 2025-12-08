@@ -116,6 +116,8 @@ For production deployment instructions (including Uberspace deployment), see [DE
 - Port configuration and data persistence
 - Production deployment best practices
 
+**Note:** In production, uploaded images and videos are stored in `/srv/arandor/uploads/` (outside the `dist/` folder) to ensure they persist across deployments.
+
 ## Project Structure
 
 ```
