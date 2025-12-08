@@ -101,7 +101,8 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
           <div class="mb-4 rounded-lg overflow-hidden">
             <video 
               src={entry.coverVideoUrl} 
-              controls
+              autoplay
+              loop
               muted
               class="w-full h-48 object-cover"
               aria-label={`Video for ${entry.title}`}
