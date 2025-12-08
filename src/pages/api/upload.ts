@@ -45,10 +45,15 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const buffer = Buffer.from(await file.arrayBuffer());
     
     // Ensure upload directory exists
-    const uploadDir = join(process.cwd(), 'public', 'uploads');
+    // In production (standalone mode), save to dist/client/uploads
+    // In development, save to public/uploads
+    const isDev = import.meta.env.DEV;
+    const uploadDir = isDev 
+      ? join(process.cwd(), 'public', 'uploads')
+      : join(process.cwd(), 'dist', 'client', 'uploads');
     await mkdir(uploadDir, { recursive: true });
     
-    // Save to public/uploads directory
+    // Save to uploads directory
     const filepath = join(uploadDir, filename);
     
     await writeFile(filepath, buffer);

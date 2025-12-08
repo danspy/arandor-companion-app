@@ -281,14 +281,38 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label for="avatarUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Avatar URL (optional)</label>
-            <input 
-              type="url" 
-              id="avatarUrl" 
-              name="avatarUrl" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Avatar (optional)</label>
+            <div class="space-y-2">
+              <div>
+                <label for="avatarFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+                <input 
+                  type="file" 
+                  id="avatarFile" 
+                  name="avatarFile" 
+                  accept="image/*"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+                >
+              </div>
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+                <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
+                <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              </div>
+              <div>
+                <label for="avatarUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Avatar URL</label>
+                <input 
+                  type="url" 
+                  id="avatarUrl" 
+                  name="avatarUrl" 
+                  placeholder="https://example.com/avatar.jpg"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                >
+              </div>
+            </div>
+            <div id="avatarPreview" class="hidden mt-2">
+              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+            </div>
           </div>
           
           <div>
@@ -549,6 +573,35 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         return;
       }
       
+      // Handle avatar upload
+      let avatarUrl = formData.get('avatarUrl') as string || undefined;
+      const avatarFile = formData.get('avatarFile') as File;
+      
+      if (avatarFile && avatarFile.size > 0) {
+        try {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', avatarFile);
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            avatarUrl = uploadData.url;
+          } else {
+            const error = await uploadResponse.json();
+            alert(`Failed to upload avatar: ${error.error || 'Unknown error'}`);
+            return;
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload avatar. Please try again.');
+          return;
+        }
+      }
+      
       const stats = {
         strength: parseInt(formData.get('strength') as string) || 10,
         dexterity: parseInt(formData.get('dexterity') as string) || 10,
@@ -565,7 +618,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         class: className,
         level: parseInt(level),
         isActive: (document.getElementById('isActive') as HTMLInputElement).checked,
-        avatarUrl: formData.get('avatarUrl') || undefined,
+        avatarUrl,
         dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
         stats,
         // Additional character details
@@ -597,6 +650,38 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
         }
       } catch (error) {
         alert('An error occurred. Please try again.');
+      }
+    });
+
+    // Handle avatar file preview
+    const avatarFileInput = document.getElementById('avatarFile') as HTMLInputElement;
+    const avatarUrlInput = document.getElementById('avatarUrl') as HTMLInputElement;
+    const avatarPreview = document.getElementById('avatarPreview');
+    const avatarPreviewImg = document.getElementById('avatarPreviewImg') as HTMLImageElement;
+
+    avatarFileInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && avatarPreview && avatarPreviewImg) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          avatarPreviewImg.src = e.target?.result as string;
+          avatarPreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        // Clear URL input when file is selected
+        if (avatarUrlInput) avatarUrlInput.value = '';
+      }
+    });
+
+    avatarUrlInput?.addEventListener('input', (e) => {
+      const url = (e.target as HTMLInputElement).value;
+      if (url && avatarPreview && avatarPreviewImg) {
+        avatarPreviewImg.src = url;
+        avatarPreview.classList.remove('hidden');
+        // Clear file input when URL is entered
+        if (avatarFileInput) avatarFileInput.value = '';
+      } else if (avatarPreview) {
+        avatarPreview.classList.add('hidden');
       }
     });
 
