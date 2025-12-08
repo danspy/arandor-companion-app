@@ -64,7 +64,7 @@ jobs:
 
       - name: Ensure remote directory exists
         run: |
-          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist || true'
+          ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist /srv/arandor/uploads || true'
 
       - name: Sync dist to server
         run: |
