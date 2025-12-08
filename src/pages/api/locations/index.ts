@@ -34,7 +34,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       region: body.region,
       visited: body.visited || false,
       notes: body.notes,
-      imageUrl: body.imageUrl || null,
       mapX: body.mapX,
       mapY: body.mapY,
       visibleOnMap: body.visibleOnMap !== undefined ? body.visibleOnMap : false, // Default to hidden

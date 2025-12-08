@@ -44,7 +44,6 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     if (body.region !== undefined) updateData.region = body.region;
     if (body.visited !== undefined) updateData.visited = body.visited;
     if (body.notes !== undefined) updateData.notes = body.notes;
-    if (body.imageUrl !== undefined) updateData.imageUrl = body.imageUrl;
     if (body.mapX !== undefined) updateData.mapX = body.mapX;
     if (body.mapY !== undefined) updateData.mapY = body.mapY;
     if (body.visibleOnMap !== undefined) updateData.visibleOnMap = body.visibleOnMap;

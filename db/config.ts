@@ -83,7 +83,6 @@ const Location = defineTable({
     region: column.text({ optional: true }),
     visited: column.boolean({ default: false }),
     notes: column.text({ optional: true }),
-    imageUrl: column.text({ optional: true }),
     // Map coordinates (percentage-based for responsive positioning)
     mapX: column.number({ optional: true }), // X coordinate (0-100)
     mapY: column.number({ optional: true }), // Y coordinate (0-100)
