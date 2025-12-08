@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { readFile } from 'node:fs/promises';
-import { join } from 'node:path';
+import { join, resolve, relative } from 'node:path';
 
 // Simple MIME type mapping for common image and video formats
 const MIME_TYPES: Record<string, string> = {
@@ -31,11 +31,6 @@ export const GET: APIRoute = async ({ params }) => {
       return new Response('File not found', { status: 404 });
     }
 
-    // Prevent directory traversal attacks
-    if (file.includes('..') || file.includes('/')) {
-      return new Response('Invalid file path', { status: 400 });
-    }
-
     // In development, serve from public/uploads
     // In production, serve from persistent uploads directory
     const isDev = import.meta.env.DEV;
@@ -43,7 +38,14 @@ export const GET: APIRoute = async ({ params }) => {
       ? join(process.cwd(), 'public', 'uploads')
       : '/srv/arandor/uploads';
     
-    const filepath = join(uploadDir, file);
+    // Resolve the full path and ensure it's within the uploads directory
+    const filepath = resolve(uploadDir, file);
+    const relativePath = relative(uploadDir, filepath);
+    
+    // Prevent directory traversal attacks - ensure the resolved path is within uploadDir
+    if (relativePath.startsWith('..') || resolve(uploadDir) !== resolve(uploadDir, relativePath)) {
+      return new Response('Invalid file path', { status: 400 });
+    }
     
     try {
       const buffer = await readFile(filepath);
