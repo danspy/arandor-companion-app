@@ -42,11 +42,14 @@ export const GET: APIRoute = async ({ params }) => {
     const filepath = resolve(uploadDir, file);
     const resolvedUploadDir = resolve(uploadDir);
     
-    // Prevent directory traversal attacks - ensure the resolved path is within uploadDir
-    // By checking if filepath starts with uploadDir + path separator, we ensure:
-    // 1. The file is within the upload directory
-    // 2. Similar directory names don't pass (e.g., /uploads-malicious/)
-    if (!filepath.startsWith(resolvedUploadDir + sep)) {
+    // Security check: Prevent directory traversal and path manipulation attacks
+    // By checking if filepath starts with uploadDir + path separator, we prevent:
+    // 1. Directory traversal attacks (e.g., ../../../etc/passwd)
+    // 2. Absolute path attempts (e.g., /etc/passwd)
+    // 3. Similar directory name attacks (e.g., /uploads-malicious/)
+    // Note: resolve() already normalizes paths, and we ensure trailing separator for exact matching
+    const expectedPrefix = resolvedUploadDir.endsWith(sep) ? resolvedUploadDir : resolvedUploadDir + sep;
+    if (!filepath.startsWith(expectedPrefix)) {
       return new Response('Invalid file path', { status: 400 });
     }
     
