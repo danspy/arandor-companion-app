@@ -358,27 +358,6 @@ const renderedContent = renderMarkdown(entry.content);
     padding: 0.5rem;
   }
   
-  /* Dark mode styling for audio player - match regenerate button color */
-  .dark audio#podcastAudio {
-    background-color: rgb(31, 41, 55); /* gray-800 */
-    color: white;
-  }
-  
-  /* Dark mode: Ensure text and controls are white/readable */
-  .dark audio#podcastAudio::-webkit-media-controls-panel {
-    background-color: rgb(31, 41, 55); /* gray-800 */
-  }
-  
-  .dark audio#podcastAudio::-webkit-media-controls-enclosure {
-    background-color: rgb(31, 41, 55); /* gray-800 */
-    border-radius: 0.5rem;
-  }
-  
-  .dark audio#podcastAudio::-webkit-media-controls-current-time-display,
-  .dark audio#podcastAudio::-webkit-media-controls-time-remaining-display {
-    color: white;
-  }
-  
   /* Light mode styling */
   audio#podcastAudio {
     background-color: #f3f4f6; /* gray-100 */
@@ -391,6 +370,38 @@ const renderedContent = renderMarkdown(entry.content);
   audio#podcastAudio::-webkit-media-controls-enclosure {
     background-color: #f3f4f6; /* gray-100 */
     border-radius: 0.5rem;
+  }
+  
+  /* Dark mode styling for audio player - match regenerate button color */
+  .dark audio#podcastAudio {
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    color: white;
+    filter: invert(1) hue-rotate(180deg);
+  }
+  
+  /* Dark mode: Ensure background stays gray-800 after filter */
+  .dark audio#podcastAudio::-webkit-media-controls-panel {
+    background-color: rgb(31, 41, 55); /* gray-800 */
+  }
+  
+  .dark audio#podcastAudio::-webkit-media-controls-enclosure {
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    border-radius: 0.5rem;
+  }
+  
+  /* Dark mode: White text for time displays */
+  .dark audio#podcastAudio::-webkit-media-controls-current-time-display,
+  .dark audio#podcastAudio::-webkit-media-controls-time-remaining-display {
+    color: white;
+    filter: invert(1) hue-rotate(180deg);
+  }
+  
+  /* Dark mode: White controls (play, pause, mute buttons) */
+  .dark audio#podcastAudio::-webkit-media-controls-play-button,
+  .dark audio#podcastAudio::-webkit-media-controls-mute-button,
+  .dark audio#podcastAudio::-webkit-media-controls-timeline,
+  .dark audio#podcastAudio::-webkit-media-controls-volume-slider {
+    filter: invert(1) hue-rotate(180deg);
   }
 </style>
 
