@@ -855,5 +855,16 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
   document.addEventListener('astro:page-load', () => {
     initializeDiaryModal();
     initializeFilters();
+
+    // Ensure videos play after View Transitions navigation
+    const videos = document.querySelectorAll('video');
+    videos.forEach(video => {
+      // Reset and play the video to ensure autoplay works after navigation
+      video.load();
+      video.play().catch(error => {
+        // Autoplay might be blocked, which is fine - user needs to interact first
+        console.debug('Video autoplay prevented:', error);
+      });
+    });
   });
 </script>
