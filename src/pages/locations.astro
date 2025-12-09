@@ -424,11 +424,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   // Close modal
   cancelButton?.addEventListener('click', () => {
+    if (imagePreview) imagePreview.classList.add('hidden');
     modal?.classList.add('hidden');
   });
 
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) {
+      if (imagePreview) imagePreview.classList.add('hidden');
       modal.classList.add('hidden');
     }
   });
@@ -529,6 +531,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
           
+          // Show image preview if location has an image
+          const imagePreview = document.getElementById('imagePreview');
+          const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+          const imageFileInput = document.getElementById('imageFile') as HTMLInputElement;
+          if (location.imageUrl && imagePreview && imagePreviewImg) {
+            imagePreviewImg.src = location.imageUrl;
+            imagePreview.classList.remove('hidden');
+            if (imageFileInput) imageFileInput.value = '';
+          } else if (imagePreview) {
+            imagePreview.classList.add('hidden');
+          }
+          
           modalTitle.textContent = 'Edit Location';
           modal.classList.remove('hidden');
           
@@ -572,6 +586,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
         (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
         (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+        
+        // Show image preview if location has an image
+        const imagePreview = document.getElementById('imagePreview');
+        const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+        const imageFileInput = document.getElementById('imageFile') as HTMLInputElement;
+        if (location.imageUrl && imagePreview && imagePreviewImg) {
+          imagePreviewImg.src = location.imageUrl;
+          imagePreview.classList.remove('hidden');
+          if (imageFileInput) imageFileInput.value = '';
+        } else if (imagePreview) {
+          imagePreview.classList.add('hidden');
+        }
         
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
