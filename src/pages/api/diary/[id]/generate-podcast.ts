@@ -32,14 +32,15 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
   try {
     // Get the diary entry
     const entries = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, id));
-    const entry = entries[0];
-
-    if (!entry) {
+    
+    if (!entries || entries.length === 0) {
       return new Response(JSON.stringify({ error: 'Diary entry not found' }), {
         status: 404,
         headers: { 'Content-Type': 'application/json' },
       });
     }
+    
+    const entry = entries[0];
 
     // Check if OpenAI API key is configured
     const apiKey = process.env.OPENAI_API_KEY;

@@ -11,7 +11,7 @@ The AI-powered podcast feature has been successfully implemented and is ready fo
 ### Steps to Secure Your Account:
 
 1. Go to https://platform.openai.com/api-keys
-2. Find the key starting with `sk-proj-vrDO-Nd...`
+2. Find the key that was shared in this session
 3. Click "Revoke" or "Delete" to deactivate it
 4. Create a NEW API key
 5. Keep the new key private - NEVER share it in conversations, code, or commits

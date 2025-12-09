@@ -9,7 +9,7 @@ This guide will help you deploy the new AI-powered podcast feature to your produ
 The API key you shared earlier has been exposed in this conversation. **You MUST revoke it immediately:**
 
 1. Go to https://platform.openai.com/api-keys
-2. Find the key starting with `sk-proj-vrDO-Nd...`
+2. Find the key that was shared in this session
 3. Click "Revoke" to deactivate it
 4. Create a new API key that you keep private
 
