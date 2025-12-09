@@ -110,42 +110,49 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     {locations.map(location => (
       <div class="location-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
         <a href={`/locations/${location.id}`} class="block">
-          <div class={`h-2 ${
-            location.type === 'city' ? 'bg-blue-500' :
-            location.type === 'dungeon' ? 'bg-purple-600' :
-            location.type === 'wilderness' ? 'bg-green-500' :
-            location.type === 'building' ? 'bg-amber-500' :
-            'bg-gray-500'
-          }`}></div>
+          <div class={`relative overflow-hidden ${location.imageUrl ? 'h-56' : 'h-12'}`}>
+            <!-- Background -->
+            {location.imageUrl ? (
+              <>
+                <img 
+                  src={location.imageUrl} 
+                  alt={location.name}
+                  class="absolute inset-0 w-full h-full object-cover"
+                />
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+              </>
+            ) : (
+              <div class={`absolute inset-0 ${
+                location.type === 'city' ? 'bg-gradient-to-br from-blue-600 to-blue-500' :
+                location.type === 'dungeon' ? 'bg-gradient-to-br from-purple-600 to-purple-500' :
+                location.type === 'wilderness' ? 'bg-gradient-to-br from-green-600 to-green-500' :
+                location.type === 'building' ? 'bg-gradient-to-br from-amber-600 to-amber-500' :
+                'bg-gradient-to-br from-gray-600 to-gray-500'
+              }`}></div>
+            )}
+            
+            <!-- Type badge -->
+            <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
+              location.type === 'city' ? 'bg-blue-600/90' :
+              location.type === 'dungeon' ? 'bg-purple-600/90' :
+              location.type === 'wilderness' ? 'bg-green-600/90' :
+              location.type === 'building' ? 'bg-amber-600/90' :
+              'bg-gray-600/90'
+            }`}>
+              {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
+            </div>
+          </div>
         </a>
         
         <div class="p-6">
-          <a href={`/locations/${location.id}`} class="block hover:text-primary-700 transition">
-            <div class="flex justify-between items-start mb-3">
-              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{location.name}</h2>
+          <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{location.name}</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              {location.region && `${location.region}`}
               {location.visited && (
-                <span class="bg-green-100 dark:bg-green-900/20 dark:border dark:border-green-800 text-green-700 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
-                  ✓ Visited
-                </span>
+                <span class="ml-2 text-green-600 dark:text-green-400">✓ Visited</span>
               )}
-            </div>
-
-            <div class="flex gap-2 mb-3">
-              <span class={`px-2 py-1 rounded text-xs font-medium ${
-                location.type === 'city' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' :
-                location.type === 'dungeon' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400' :
-                location.type === 'wilderness' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                location.type === 'building' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' :
-                'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-              }`}>
-                {location.type}
-              </span>
-              {location.region && (
-                <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
-                  {location.region}
-                </span>
-              )}
-            </div>
+            </p>
           </a>
 
           {location.notes && (
@@ -156,13 +163,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
           <a 
             href={`/locations/${location.id}`}
-            class="block mb-2 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
           >
             View Details →
           </a>
 
           {isLoggedIn && (
-            <div class="flex gap-2">
+            <div class="flex gap-2 mt-2">
               <button class="edit-location flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={location.id}>
                 Edit
               </button>
@@ -249,6 +256,41 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           ></textarea>
         </div>
         
+        <div class="space-y-2">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Header Image (optional)</label>
+          <div class="space-y-2">
+            <div>
+              <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+              <input 
+                type="file" 
+                id="imageFile" 
+                name="imageFile" 
+                accept="image/*"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+            </div>
+            <div>
+              <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+              <input 
+                type="text" 
+                id="imageUrl" 
+                name="imageUrl" 
+                placeholder="https://example.com/image.jpg or /uploads/image.jpg"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">An image to display in the location header. If not set, a gradient based on location type will be shown.</p>
+          <div id="imagePreview" class="hidden mt-2">
+            <img id="imagePreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+          </div>
+        </div>
+        
         <div>
           <label class="flex items-center">
             <input 
@@ -327,6 +369,23 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Shared state for editing location ID
   let editingId: string | null = null;
 
+  // Helper function to show image preview (accessible from event delegation)
+  function showImagePreview(imageUrl: string, clearFileInput: boolean = false) {
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+    const imageFileInput = document.getElementById('imageFile') as HTMLInputElement;
+    
+    if (imageUrl && imagePreview && imagePreviewImg) {
+      imagePreviewImg.src = imageUrl;
+      imagePreview.classList.remove('hidden');
+      if (clearFileInput && imageFileInput) {
+        imageFileInput.value = '';
+      }
+    } else if (imagePreview) {
+      imagePreview.classList.add('hidden');
+    }
+  }
+
   // Initialize location modal and form functionality
   function initializeLocationModal() {
     const modal = document.getElementById('locationModal');
@@ -335,21 +394,56 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const addButton = document.getElementById('addLocation');
     const cancelButton = document.getElementById('cancelModal');
 
+  // Image preview handlers
+    const imageFileInput = document.getElementById('imageFile') as HTMLInputElement;
+    const imageUrlInput = document.getElementById('imageUrl') as HTMLInputElement;
+    const imagePreview = document.getElementById('imagePreview');
+    const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
+
+    imageFileInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file && imagePreview && imagePreviewImg) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          imagePreviewImg.src = e.target?.result as string;
+          imagePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        // Clear URL input when file is selected
+        if (imageUrlInput) imageUrlInput.value = '';
+      }
+    });
+
+    imageUrlInput?.addEventListener('input', (e) => {
+      const url = (e.target as HTMLInputElement).value;
+      if (url && imagePreview && imagePreviewImg) {
+        imagePreviewImg.src = url;
+        imagePreview.classList.remove('hidden');
+        // Clear file input when URL is entered
+        if (imageFileInput) imageFileInput.value = '';
+      } else if (imagePreview) {
+        imagePreview.classList.add('hidden');
+      }
+    });
+
   // Open modal for new location
   addButton?.addEventListener('click', () => {
     editingId = null;
     form.reset();
     if (modalTitle) modalTitle.textContent = 'New Location';
+    if (imagePreview) imagePreview.classList.add('hidden');
     modal?.classList.remove('hidden');
   });
 
   // Close modal
   cancelButton?.addEventListener('click', () => {
+    if (imagePreview) imagePreview.classList.add('hidden');
     modal?.classList.add('hidden');
   });
 
   modal?.addEventListener('click', (e) => {
     if (e.target === modal) {
+      if (imagePreview) imagePreview.classList.add('hidden');
       modal.classList.add('hidden');
     }
   });
@@ -362,12 +456,49 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const mapX = formData.get('mapX');
     const mapY = formData.get('mapY');
     
+    // Handle image upload
+    let imageUrl = formData.get('imageUrl') as string || undefined;
+    const imageFile = formData.get('imageFile') as File;
+    
+    if (imageFile && imageFile.size > 0) {
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (imageFile.size > maxSize) {
+        alert('Image file is too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', imageFile);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          imageUrl = uploadData.url;
+        } else {
+          const error = await uploadResponse.json();
+          alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload image. Please try again.');
+        return;
+      }
+    }
+    
     const data = {
       name: formData.get('name'),
       type: formData.get('type'),
       region: formData.get('region') || undefined,
       description: formData.get('description'),
       notes: formData.get('notes') || undefined,
+      imageUrl: imageUrl,
       visited: formData.get('visited') === 'on',
       visibleOnMap: formData.get('visibleOnMap') === 'on',
       mapX: mapX ? parseFloat(mapX as string) : undefined,
@@ -414,10 +545,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           (document.getElementById('region') as HTMLInputElement).value = location.region || '';
           (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
           (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
+          (document.getElementById('imageUrl') as HTMLInputElement).value = location.imageUrl || '';
           (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
           (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
           (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+          
+          // Show image preview if location has an image
+          showImagePreview(location.imageUrl || '', true);
           
           modalTitle.textContent = 'Edit Location';
           modal.classList.remove('hidden');
@@ -457,10 +592,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         (document.getElementById('region') as HTMLInputElement).value = location.region || '';
         (document.getElementById('description') as HTMLTextAreaElement).value = location.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = location.notes || '';
+        (document.getElementById('imageUrl') as HTMLInputElement).value = location.imageUrl || '';
         (document.getElementById('visited') as HTMLInputElement).checked = location.visited;
         (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
         (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
         (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
+        
+        // Show image preview if location has an image
+        showImagePreview(location.imageUrl || '', true);
         
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
