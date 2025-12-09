@@ -2,11 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, NPC, Location, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 
 const npcs = await db.select().from(NPC);
 const locations = await db.select().from(Location);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 const alliedNPCs = npcs.filter(n => n.relationship === 'ally');
 const neutralNPCs = npcs.filter(n => n.relationship === 'neutral');
@@ -22,7 +24,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Non-Player Characters" 
     heroImageUrl={heroImageUrl}
     pageName="npcs"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEditHero}
   />
 
   {isLoggedIn && (

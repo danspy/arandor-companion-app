@@ -173,6 +173,7 @@ export default async function seed() {
       id: '1',
       username: 'admin',
       passwordHash: await hashPassword('admin'),
+      role: 'admin',
       createdAt: new Date(),
     }
   ]);

@@ -2,10 +2,14 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, Quest, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { getUserRole } from '../lib/auth';
+
+// Quests page is viewable by everyone, editable by dungeonmaster and admin
+const userRole = await getUserRole(Astro.cookies);
 
 const quests = await db.select().from(Quest);
-const isLoggedIn = isAuthenticated(Astro.cookies);
+const isLoggedIn = !!userRole;
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
 const activeQuests = quests.filter(q => q.status === 'active');
 const completedQuests = quests.filter(q => q.status === 'completed');
@@ -41,10 +45,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Quests" 
     heroImageUrl={heroImageUrl}
     pageName="quests"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEdit}
   />
 
-  {isLoggedIn && (
+  {canEdit && (
     <div class="flex justify-end mb-4">
       <button 
         id="addQuest"
@@ -136,7 +140,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
             <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
           </div>
-          {isLoggedIn && (
+          {canEdit && (
             <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
               {quest.status === 'active' && (
                 <>

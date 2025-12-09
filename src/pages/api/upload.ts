@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
-import { requireAuth } from '../../lib/middleware';
+import { requirePlayerOrAbove } from '../../lib/middleware';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import crypto from 'node:crypto';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {

@@ -3,10 +3,10 @@ interface Props {
   title: string;
   heroImageUrl?: string | null;
   pageName: string;
-  isLoggedIn: boolean;
+  canEditHero: boolean;
 }
 
-const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
+const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
 ---
 
 {heroImageUrl ? (
@@ -21,7 +21,7 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
         <h1 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">{title}</h1>
       </div>
     </div>
-    {isLoggedIn && (
+    {canEditHero && (
       <button 
         class="edit-hero-btn absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg"
         data-page-name={pageName}
@@ -34,7 +34,7 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
   <div class="mb-8">
     <div class="flex justify-between items-center">
       <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">{title}</h1>
-      {isLoggedIn && (
+      {canEditHero && (
         <button 
           class="edit-hero-btn px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
           data-page-name={pageName}
@@ -47,7 +47,7 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
 )}
 
 <!-- Hero Image Modal -->
-{isLoggedIn && (
+{canEditHero && (
   <div id={`heroModal-${pageName}`} class="hero-modal hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
       <div class="flex justify-between items-center mb-6">

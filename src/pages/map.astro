@@ -1,13 +1,17 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, Location, NPC, DiaryEntry, LibraryEntry } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { getUserRole } from '../lib/auth';
+
+// Map page is viewable by everyone, editable by dungeonmaster and admin
+const userRole = await getUserRole(Astro.cookies);
 
 const locations = await db.select().from(Location);
 const npcs = await db.select().from(NPC);
 const diaryEntries = await db.select().from(DiaryEntry);
 const libraryEntries = await db.select().from(LibraryEntry);
-const isLoggedIn = isAuthenticated(Astro.cookies);
+const isLoggedIn = !!userRole;
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Hard-coded, non-editable landmarks you can configure in code
 /*const configuredLandmarks = [
@@ -97,7 +101,7 @@ libraryEntries.forEach(entry => {
             <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path></svg>
             <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
           </button>
-          {isLoggedIn && (
+          {canEdit && (
             <>
               <button 
                 id="toggleEditMode"
@@ -208,7 +212,7 @@ libraryEntries.forEach(entry => {
         <div id="locationDetailsContent" class="hidden">
           <div id="detailsContent"></div>
           
-          {isLoggedIn && (
+          {canEdit && (
             <div id="coordinateEditor" class="hidden mt-6 pt-6 border-t border-gray-200 dark:border-gray-900">
               <h3 class="text-lg font-semibold mb-4 dark:text-gray-200">Map Coordinates</h3>
               <div class="grid grid-cols-2 gap-4 mb-4">
@@ -261,7 +265,7 @@ libraryEntries.forEach(entry => {
   window.renderMarkdown = renderMarkdown;
 </script>
 
-<script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), locationLibraryEntries: Object.fromEntries(locationLibraryEntries), isLoggedIn }}>
+<script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), locationLibraryEntries: Object.fromEntries(locationLibraryEntries), isLoggedIn: isLoggedIn, canEdit: canEdit }}>
   let editMode = false;
   let selectedLocationId = null;
   let draggedPin = null;
@@ -656,7 +660,7 @@ libraryEntries.forEach(entry => {
     });
 
     // Drag functionality in edit mode
-    if (isLoggedIn) {
+    if (canEdit) {
       g.addEventListener('mousedown', (e) => {
         if (editMode && location.visibleOnMap !== false) {
           e.preventDefault();
@@ -800,7 +804,7 @@ libraryEntries.forEach(entry => {
     html += '</div>';
     detailsContentDiv.innerHTML = html;
 
-    if (isLoggedIn && editMode && coordinateEditor) {
+    if (canEdit && editMode && coordinateEditor) {
       coordinateEditor.classList.remove('hidden');
       if (coordX && coordY) {
         coordX.value = location.mapX || 50;
@@ -864,7 +868,7 @@ libraryEntries.forEach(entry => {
   });
 
   // Drag handling
-  if (isLoggedIn) {
+  if (canEdit) {
     document.addEventListener('mousemove', (e) => {
       if (draggedPin && editMode) {
         const rect = mapSvg.getBoundingClientRect();
@@ -1225,7 +1229,7 @@ libraryEntries.forEach(entry => {
     updateTransform(); // Apply initial transform
     
     // Set up edit mode event listeners only once to prevent duplicates on re-navigation
-    if (!editModeListenersInitialized && isLoggedIn && toggleEditModeBtn) {
+    if (!editModeListenersInitialized && canEdit && toggleEditModeBtn) {
       toggleEditModeBtn.addEventListener('click', () => {
         setTimeout(() => {
           const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');

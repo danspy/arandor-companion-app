@@ -2,11 +2,13 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, LibraryEntry, Location, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 
 const libraryEntries = await db.select().from(LibraryEntry);
 const locations = await db.select().from(Location);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Get all unique tags from library entries
 const allTags = [...new Set(libraryEntries.flatMap(entry => 
@@ -31,7 +33,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Library" 
     heroImageUrl={heroImageUrl}
     pageName="library"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEditHero}
   />
 
   {isLoggedIn && (

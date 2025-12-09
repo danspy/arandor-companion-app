@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 import { getVideoMimeType } from '../utils/video';
 
 const diaryEntries = await db.select().from(DiaryEntry);
@@ -11,6 +11,8 @@ const locations = await db.select().from(Location);
 const characters = await db.select().from(Character);
 const quests = await db.select().from(Quest);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 const editId = Astro.url.searchParams.get('edit');
 
 const sortedEntries = diaryEntries.slice().sort((a, b) => 
@@ -35,7 +37,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Adventure Diary" 
     heroImageUrl={heroImageUrl}
     pageName="diary"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEditHero}
   />
 
   {isLoggedIn && (

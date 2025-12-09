@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, PageSettings, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
 
   try {

@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, LibraryEntry, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 export const GET: APIRoute = async () => {
   try {
@@ -18,7 +18,7 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {

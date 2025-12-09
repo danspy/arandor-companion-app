@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, NPC, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
@@ -26,7 +26,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {
@@ -63,7 +63,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {

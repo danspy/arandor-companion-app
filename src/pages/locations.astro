@@ -2,10 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, Location, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 
 const locations = await db.select().from(Location);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 const visitedLocations = locations.filter(l => l.visited);
 const unvisitedLocations = locations.filter(l => !l.visited);
@@ -23,7 +25,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Locations" 
     heroImageUrl={heroImageUrl}
     pageName="locations"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEditHero}
   />
 
   {isLoggedIn && (
