@@ -2,10 +2,12 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, Character, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 
 const characters = await db.select().from(Character);
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Get the edit parameter from URL if present
 const editCharacterId = Astro.url.searchParams.get('edit');
@@ -23,7 +25,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     title="Player Characters" 
     heroImageUrl={heroImageUrl}
     pageName="characters"
-    isLoggedIn={isLoggedIn}
+    canEditHero={canEditHero}
   />
 
   {isLoggedIn && (
