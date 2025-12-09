@@ -89,15 +89,6 @@ const renderedDescription = renderMarkdown(npc.description);
           }`}></div>
         )}
         
-        <!-- Relationship badge -->
-        <div class={`absolute top-4 right-4 text-white text-sm px-4 py-2 rounded-full shadow-lg z-10 ${
-          npc.relationship === 'ally' ? 'bg-green-600/90' :
-          npc.relationship === 'enemy' ? 'bg-red-600/90' :
-          'bg-gray-600/90'
-        }`}>
-          {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
-        </div>
-        
         <!-- Content container -->
         <div class="relative h-full flex flex-col justify-between p-8">
           <!-- Circular avatar centered -->
