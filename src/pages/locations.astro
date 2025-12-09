@@ -448,6 +448,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const imageFile = formData.get('imageFile') as File;
     
     if (imageFile && imageFile.size > 0) {
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (imageFile.size > maxSize) {
+        alert('Image file is too large. Maximum size is 5MB.');
+        return;
+      }
+      
       try {
         const uploadFormData = new FormData();
         uploadFormData.append('file', imageFile);
