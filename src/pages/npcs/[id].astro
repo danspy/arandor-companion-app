@@ -100,7 +100,7 @@ const renderedDescription = renderMarkdown(npc.description);
         
         <!-- Content container -->
         <div class="relative h-full flex flex-col justify-between p-8">
-          {/* Circular avatar centered */}
+          <!-- Circular avatar centered -->
           <div class="flex-1 flex items-center justify-center">
             {npc.avatarUrl ? (
               <img 
@@ -115,7 +115,7 @@ const renderedDescription = renderMarkdown(npc.description);
             )}
           </div>
           
-          {/* NPC name and info at bottom */}
+          <!-- NPC name and info at bottom -->
           <div class="text-center">
             <h1 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">{npc.name}</h1>
             <p class="text-xl md:text-2xl text-white/90 drop-shadow-md">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
