@@ -67,7 +67,7 @@ If you have another admin user with proper permissions, you can update roles thr
 The "Dashboard" navigation link was added back to the navigation menu when the role system was implemented. This happened in:
 - **Pull Request:** #82 - "Add role system for users"
 - **Commit:** 3159658
-- **Date:** December 9, 2025
+- **Date:** December 9, 2025 at 23:05:04 +0100
 
 ### What the Dashboard Navigation Does:
 - Links to the home page (`/`) 

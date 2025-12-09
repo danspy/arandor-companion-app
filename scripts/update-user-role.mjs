@@ -16,12 +16,7 @@
  * Roles: admin, dungeonmaster, player
  */
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
 import { createClient } from '@libsql/client';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 async function main() {
   // Parse command line arguments
@@ -111,7 +106,7 @@ async function main() {
   } catch (error) {
     console.error(`Error: ${error.message}`);
     
-    if (error.code === 'SQLITE_CANTOPEN' || error.message.includes('unable to open database')) {
+    if (error.code === 'SQLITE_CANTOPEN' || error.code === 'ENOENT') {
       console.error('');
       console.error('Database file not found. Please ensure:');
       console.error('1. The database has been created (run npm run build first)');
