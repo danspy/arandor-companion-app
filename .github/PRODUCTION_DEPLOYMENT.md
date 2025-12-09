@@ -192,6 +192,11 @@ server {
         proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
         proxy_cache_bypass $http_upgrade;
+        
+        # Required for video streaming on mobile devices
+        proxy_set_header Range $http_range;
+        proxy_set_header If-Range $http_if_range;
+        proxy_no_cache $http_range $http_if_range;
     }
 }
 ```
