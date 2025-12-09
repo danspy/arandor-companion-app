@@ -24,3 +24,19 @@ export function getVideoMimeType(url: string): string {
   
   return mimeTypes[extension || ''] || 'video/mp4'; // Default to mp4 if unknown
 }
+
+/**
+ * Initialize video autoplay for all videos on the page
+ * This is needed for Astro View Transitions to ensure videos play after navigation
+ */
+export function initializeVideoAutoplay(): void {
+  const videos = document.querySelectorAll('video');
+  videos.forEach(video => {
+    // Reset and play the video to ensure autoplay works after navigation
+    video.load();
+    video.play().catch(error => {
+      // Autoplay might be blocked, which is fine - user needs to interact first
+      console.debug('Video autoplay prevented:', error);
+    });
+  });
+}
