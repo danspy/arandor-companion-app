@@ -33,12 +33,17 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     const body = await request.json();
     const now = new Date();
     
+    // Build update object dynamically to only update provided fields
+    const updateData: any = {
+      updatedAt: now,
+    };
+    
+    if (body.currentLevel !== undefined) updateData.currentLevel = body.currentLevel;
+    if (body.progressPercent !== undefined) updateData.progressPercent = body.progressPercent;
+    if (body.heroImageUrl !== undefined) updateData.heroImageUrl = body.heroImageUrl;
+    
     await db.update(CampaignProgress)
-      .set({
-        currentLevel: body.currentLevel,
-        progressPercent: body.progressPercent,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(CampaignProgress.id, params.id!));
 
     const updatedProgress = await db.select().from(CampaignProgress).where(eq(CampaignProgress.id, params.id!));

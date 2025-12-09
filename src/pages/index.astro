@@ -51,7 +51,43 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 ---
 
 <Layout title="Dashboard">
-  <h1 class="text-4xl font-bold mb-8 text-primary-700 dark:text-primary-400">Dashboard</h1>
+  <!-- Hero Image Section -->
+  {campaignProgress.heroImageUrl ? (
+    <div class="relative mb-8 rounded-lg overflow-hidden shadow-lg">
+      <img 
+        src={campaignProgress.heroImageUrl} 
+        alt="Campaign Hero"
+        class="w-full h-64 md:h-80 lg:h-96 object-cover"
+      />
+      <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent flex items-end">
+        <div class="p-8">
+          <h1 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">Dashboard</h1>
+        </div>
+      </div>
+      {isLoggedIn && (
+        <button 
+          id="editHeroImageBtn"
+          class="absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg"
+        >
+          Edit Hero Image
+        </button>
+      )}
+    </div>
+  ) : (
+    <div class="mb-8">
+      <div class="flex justify-between items-center">
+        <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Dashboard</h1>
+        {isLoggedIn && (
+          <button 
+            id="editHeroImageBtn"
+            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
+          >
+            Add Hero Image
+          </button>
+        )}
+      </div>
+    </div>
+  )}
 
   <!-- Campaign Progress -->
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
@@ -210,28 +246,32 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Characters</h2>
       <div class="space-y-3">
         {characters.filter(char => char.isActive !== false).map(char => (
-          <a href={`/characters/${char.id}`} class="flex items-center gap-4 p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
-            {/* Character Avatar */}
-            <div class="flex-shrink-0">
+          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-lg hover:shadow-md transition cursor-pointer group">
+            <div class="relative h-24 overflow-hidden">
+              {/* Character teaser image */}
               {char.avatarUrl ? (
                 <img 
                   src={char.avatarUrl} 
                   alt={char.name}
-                  class="w-16 h-16 rounded-full object-cover border-2 border-primary-500 dark:border-primary-400 shadow-md"
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <div class="w-16 h-16 bg-gradient-to-br from-primary-500 to-secondary-500 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow-md border-2 border-primary-600 dark:border-primary-400">
-                  {char.name.charAt(0)}
+                <div class="w-full h-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
+                  <span class="text-4xl font-bold text-white opacity-40">{char.name.charAt(0)}</span>
                 </div>
               )}
-            </div>
-            {/* Character Info */}
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 truncate">{char.name}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400">{char.race} {char.class}</p>
-              <div class="flex items-center gap-2 mt-1">
-                <span class="text-xs font-medium text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 px-2 py-0.5 rounded">Level {char.level}</span>
-                <span class="text-xs text-gray-500 dark:text-gray-400">{char.player}</span>
+              {/* Overlay gradient */}
+              <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
+              {/* Character info overlay */}
+              <div class="absolute inset-0 flex items-center px-4">
+                <div class="flex-1">
+                  <h3 class="font-bold text-white text-lg drop-shadow-lg">{char.name}</h3>
+                  <p class="text-sm text-white/90 drop-shadow-md">{char.race} {char.class}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-medium text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded">Level {char.level}</span>
+                    <span class="text-xs text-white/80">{char.player}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </a>
@@ -364,6 +404,55 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
             <button 
               type="button" 
               id="cancelBtn"
+              class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )}
+
+  <!-- Hero Image Modal -->
+  {isLoggedIn && (
+    <div id="heroImageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
+        <div class="flex justify-between items-center mb-6">
+          <h3 class="text-xl font-semibold text-primary-700 dark:text-primary-400">Hero Image</h3>
+          <button id="closeHeroImageModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+        
+        <form id="heroImageForm" class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Hero Image URL
+            </label>
+            <input 
+              type="url" 
+              id="heroImageUrl" 
+              name="heroImageUrl" 
+              value={campaignProgress.heroImageUrl || ''}
+              placeholder="https://example.com/hero-image.jpg"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to remove hero image</p>
+          </div>
+          
+          <div class="flex gap-3 pt-4">
+            <button 
+              type="submit" 
+              class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
+            >
+              Save
+            </button>
+            <button 
+              type="button" 
+              id="cancelHeroImageBtn"
               class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
             >
               Cancel
@@ -519,6 +608,60 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         alert('Failed to update campaign progress');
       }
     });
+
+      // Hero Image Modal controls
+      const editHeroImageBtn = document.getElementById('editHeroImageBtn');
+      const heroImageModal = document.getElementById('heroImageModal');
+      const closeHeroImageModalBtn = document.getElementById('closeHeroImageModalBtn');
+      const cancelHeroImageBtn = document.getElementById('cancelHeroImageBtn');
+      const heroImageForm = document.getElementById('heroImageForm');
+
+      editHeroImageBtn?.addEventListener('click', () => {
+        heroImageModal?.classList.remove('hidden');
+      });
+
+      const closeHeroImageModal = () => {
+        heroImageModal?.classList.add('hidden');
+      };
+
+      closeHeroImageModalBtn?.addEventListener('click', closeHeroImageModal);
+      cancelHeroImageBtn?.addEventListener('click', closeHeroImageModal);
+
+      // Close modal on background click
+      heroImageModal?.addEventListener('click', (e) => {
+        if (e.target === heroImageModal) {
+          closeHeroImageModal();
+        }
+      });
+
+      // Handle hero image form submission
+      heroImageForm?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const formData = new FormData(e.target);
+        const data = {
+          heroImageUrl: formData.get('heroImageUrl') || null,
+        };
+
+        try {
+          const response = await fetch(`/api/campaign-progress/${campaignProgressId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+
+          if (response.ok) {
+            window.location.reload();
+          } else {
+            alert('Failed to update hero image');
+          }
+        } catch (error) {
+          console.error('Error updating hero image:', error);
+          alert('Failed to update hero image');
+        }
+      });
 
       // Faction Modal controls
       const addFactionBtn = document.getElementById('addFactionBtn');
