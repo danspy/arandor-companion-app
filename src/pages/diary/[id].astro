@@ -352,20 +352,44 @@ const renderedContent = renderMarkdown(entry.content);
     margin-top: 2rem;
   }
 
-  /* Dark mode styling for audio player - match regenerate button color */
-  .dark audio#podcastAudio {
-    background-color: rgb(31, 41, 55); /* gray-800 */
+  /* Audio player styling for both light and dark mode */
+  audio#podcastAudio {
     border-radius: 0.5rem;
     padding: 0.5rem;
   }
   
-  /* Remove default browser audio controls background in dark mode */
+  /* Dark mode styling for audio player - match regenerate button color */
+  .dark audio#podcastAudio {
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    color: white;
+  }
+  
+  /* Dark mode: Ensure text and controls are white/readable */
   .dark audio#podcastAudio::-webkit-media-controls-panel {
     background-color: rgb(31, 41, 55); /* gray-800 */
   }
   
   .dark audio#podcastAudio::-webkit-media-controls-enclosure {
     background-color: rgb(31, 41, 55); /* gray-800 */
+    border-radius: 0.5rem;
+  }
+  
+  .dark audio#podcastAudio::-webkit-media-controls-current-time-display,
+  .dark audio#podcastAudio::-webkit-media-controls-time-remaining-display {
+    color: white;
+  }
+  
+  /* Light mode styling */
+  audio#podcastAudio {
+    background-color: #f3f4f6; /* gray-100 */
+  }
+  
+  audio#podcastAudio::-webkit-media-controls-panel {
+    background-color: #f3f4f6; /* gray-100 */
+  }
+  
+  audio#podcastAudio::-webkit-media-controls-enclosure {
+    background-color: #f3f4f6; /* gray-100 */
     border-radius: 0.5rem;
   }
 </style>
