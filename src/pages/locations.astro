@@ -117,9 +117,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <img 
                   src={location.imageUrl} 
                   alt={location.name}
-                  class="absolute inset-0 w-full h-full object-cover blur-md scale-110"
+                  class="absolute inset-0 w-full h-full object-cover"
                 />
-                <div class="absolute inset-0 bg-black/30"></div>
+                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
               </>
             ) : (
               <div class={`absolute inset-0 ${
@@ -130,21 +130,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 'bg-gradient-to-br from-gray-600 to-gray-500'
               }`}></div>
             )}
-            
-            <!-- Centered icon/image -->
-            <div class="relative h-full flex items-center justify-center">
-              {location.imageUrl ? (
-                <img 
-                  src={location.imageUrl} 
-                  alt={location.name}
-                  class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
-                />
-              ) : (
-                <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-5xl font-bold text-primary-700 dark:text-primary-400 shadow-xl border-4 border-white dark:border-gray-700">
-                  {location.name.charAt(0)}
-                </div>
-              )}
-            </div>
             
             <!-- Type badge -->
             <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
