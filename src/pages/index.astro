@@ -163,9 +163,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
             <div class="flex items-center justify-between mb-2">
               <span class="font-medium text-gray-700 dark:text-gray-300">{faction.name}</span>
               <div class="flex items-center gap-2">
-                <span class={`px-2 py-0.5 text-xs rounded text-white ${statusToColor(faction.status)}`}>
-                  {statusLabel(faction.status)}
-                </span>
                 <span class="text-xs text-gray-500 dark:text-gray-400">{faction.progress}%</span>
                 {isLoggedIn && (
                   <button 
