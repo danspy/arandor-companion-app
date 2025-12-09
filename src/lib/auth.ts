@@ -52,3 +52,23 @@ export function clearSession(cookies: AstroCookies) {
 export function isAuthenticated(cookies: AstroCookies): boolean {
   return !!getSession(cookies);
 }
+
+export async function getUserRole(cookies: AstroCookies): Promise<string | null> {
+  const username = getSession(cookies);
+  if (!username) return null;
+  
+  const users = await db.select().from(User).where(eq(User.username, username));
+  if (users.length === 0) return null;
+  
+  return users[0].role || 'player';
+}
+
+export async function getCurrentUser(cookies: AstroCookies) {
+  const username = getSession(cookies);
+  if (!username) return null;
+  
+  const users = await db.select().from(User).where(eq(User.username, username));
+  if (users.length === 0) return null;
+  
+  return users[0];
+}

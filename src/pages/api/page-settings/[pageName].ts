@@ -38,7 +38,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireAdmin(cookies);
   if (authError) return authError;
 
   try {

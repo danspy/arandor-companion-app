@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, Character, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 export const GET: APIRoute = async () => {
   try {

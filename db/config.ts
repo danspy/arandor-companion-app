@@ -99,6 +99,7 @@ const User = defineTable({
     id: column.text({ primaryKey: true }),
     username: column.text({ unique: true }),
     passwordHash: column.text(),
+    role: column.text({ default: 'player' }), // 'admin' | 'dungeonmaster' | 'player'
     createdAt: column.date({ default: new Date() }),
   }
 });

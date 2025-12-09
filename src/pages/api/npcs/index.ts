@@ -18,7 +18,7 @@ export const GET: APIRoute = async () => {
 };
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {

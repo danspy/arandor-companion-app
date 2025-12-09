@@ -1,13 +1,19 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, Location, NPC, DiaryEntry, LibraryEntry } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { getUserRole } from '../lib/auth';
+
+// Only dungeonmaster and admin can access map
+const userRole = await getUserRole(Astro.cookies);
+if (!userRole || (userRole !== 'dungeonmaster' && userRole !== 'admin')) {
+  return Astro.redirect('/diary');
+}
 
 const locations = await db.select().from(Location);
 const npcs = await db.select().from(NPC);
 const diaryEntries = await db.select().from(DiaryEntry);
 const libraryEntries = await db.select().from(LibraryEntry);
-const isLoggedIn = isAuthenticated(Astro.cookies);
+const isLoggedIn = !!userRole;
 
 // Hard-coded, non-editable landmarks you can configure in code
 /*const configuredLandmarks = [

@@ -2,10 +2,16 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { db, Quest, PageSettings, eq } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { getUserRole } from '../lib/auth';
+
+// Only dungeonmaster and admin can access quests
+const userRole = await getUserRole(Astro.cookies);
+if (!userRole || (userRole !== 'dungeonmaster' && userRole !== 'admin')) {
+  return Astro.redirect('/diary');
+}
 
 const quests = await db.select().from(Quest);
-const isLoggedIn = isAuthenticated(Astro.cookies);
+const isLoggedIn = !!userRole;
 
 const activeQuests = quests.filter(q => q.status === 'active');
 const completedQuests = quests.filter(q => q.status === 'completed');

@@ -1,10 +1,10 @@
 import type { APIRoute } from 'astro';
 import { db, User, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requireAdmin } from '../../../lib/middleware';
 import { hashPassword, verifyPassword } from '../../../lib/auth';
 
 export const GET: APIRoute = async ({ params, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireAdmin(cookies);
   if (authError) return authError;
 
   try {
@@ -19,6 +19,7 @@ export const GET: APIRoute = async ({ params, cookies }) => {
     const user = await db.select({
       id: User.id,
       username: User.username,
+      role: User.role,
       createdAt: User.createdAt,
     }).from(User).where(eq(User.id, params.id));
     
@@ -43,7 +44,7 @@ export const GET: APIRoute = async ({ params, cookies }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireAdmin(cookies);
   if (authError) return authError;
 
   try {
@@ -56,29 +57,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword } = body;
-
-    // Validate input
-    if (!currentPassword) {
-      return new Response(JSON.stringify({ error: 'Current password is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (!newPassword) {
-      return new Response(JSON.stringify({ error: 'New password is required' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (newPassword.length < 6) {
-      return new Response(JSON.stringify({ error: 'New password must be at least 6 characters long' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
+    const { currentPassword, newPassword, role } = body;
 
     // Check if user exists before updating
     const existingUser = await db.select({
@@ -94,28 +73,54 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
-    // Verify current password
-    const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
-    
-    if (!isValid) {
-      return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
+    const updates: { passwordHash?: string; role?: string } = {};
+
+    // Handle password update if both current and new password provided
+    if (currentPassword && newPassword) {
+      if (newPassword.length < 6) {
+        return new Response(JSON.stringify({ error: 'New password must be at least 6 characters long' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Verify current password
+      const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
+      
+      if (!isValid) {
+        return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Hash new password
+      updates.passwordHash = await hashPassword(newPassword);
     }
 
-    // Hash new password
-    const passwordHash = await hashPassword(newPassword);
-    
-    await db.update(User)
-      .set({
-        passwordHash,
-      })
-      .where(eq(User.id, params.id));
+    // Handle role update if provided
+    if (role !== undefined) {
+      const validRoles = ['admin', 'dungeonmaster', 'player'];
+      if (!validRoles.includes(role)) {
+        return new Response(JSON.stringify({ error: 'Invalid role. Must be admin, dungeonmaster, or player' }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      updates.role = role;
+    }
+
+    // Update user if there are changes
+    if (Object.keys(updates).length > 0) {
+      await db.update(User)
+        .set(updates)
+        .where(eq(User.id, params.id));
+    }
 
     const updatedUser = await db.select({
       id: User.id,
       username: User.username,
+      role: User.role,
       createdAt: User.createdAt,
     }).from(User).where(eq(User.id, params.id));
     
@@ -133,7 +138,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireAdmin(cookies);
   if (authError) return authError;
 
   try {

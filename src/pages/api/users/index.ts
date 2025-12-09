@@ -1,20 +1,17 @@
 import type { APIRoute } from 'astro';
 import { db, User, eq } from 'astro:db';
-import { isAuthenticated, hashPassword } from '../../../lib/auth';
+import { hashPassword } from '../../../lib/auth';
+import { requireAdmin } from '../../../lib/middleware';
 
 // POST - Create a new user (admin-only)
 export const POST: APIRoute = async ({ request, cookies }) => {
-  // Check if user is authenticated
-  if (!isAuthenticated(cookies)) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  // Check if user is admin
+  const authError = await requireAdmin(cookies);
+  if (authError) return authError;
 
   try {
     const body = await request.json();
-    const { username, password } = body;
+    const { username, password, role } = body;
 
     // Validate input
     if (!username || !password) {
@@ -33,6 +30,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     if (password.length < 6) {
       return new Response(JSON.stringify({ error: 'Password must be at least 6 characters long' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate role
+    const validRoles = ['admin', 'dungeonmaster', 'player'];
+    const userRole = role && validRoles.includes(role) ? role : 'player';
+    if (role && !validRoles.includes(role)) {
+      return new Response(JSON.stringify({ error: 'Invalid role. Must be admin, dungeonmaster, or player' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -59,6 +66,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       id,
       username,
       passwordHash,
+      role: userRole,
       createdAt: new Date(),
     });
 
@@ -67,6 +75,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       user: {
         id,
         username,
+        role: userRole,
         createdAt: new Date().toISOString()
       }
     }), {
@@ -82,20 +91,17 @@ export const POST: APIRoute = async ({ request, cookies }) => {
   }
 };
 
-// GET - List all users (admin-only, returns usernames only)
+// GET - List all users (admin-only, returns usernames and roles)
 export const GET: APIRoute = async ({ cookies }) => {
-  // Check if user is authenticated
-  if (!isAuthenticated(cookies)) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' }
-    });
-  }
+  // Check if user is admin
+  const authError = await requireAdmin(cookies);
+  if (authError) return authError;
 
   try {
     const users = await db.select({
       id: User.id,
       username: User.username,
+      role: User.role,
       createdAt: User.createdAt,
     }).from(User);
 

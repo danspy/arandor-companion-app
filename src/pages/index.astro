@@ -1,7 +1,13 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction } from 'astro:db';
-import { isAuthenticated } from '../lib/auth';
+import { getUserRole } from '../lib/auth';
+
+// Only dungeonmaster and admin can access dashboard
+const userRole = await getUserRole(Astro.cookies);
+if (!userRole || (userRole !== 'dungeonmaster' && userRole !== 'admin')) {
+  return Astro.redirect('/diary');
+}
 
 const diaryEntries = await db.select().from(DiaryEntry);
 const quests = await db.select().from(Quest);
@@ -44,7 +50,7 @@ const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
   return dateB - dateA;
 }).slice(0, 3);
 
-const isLoggedIn = isAuthenticated(Astro.cookies);
+const isLoggedIn = !!userRole;
 
 // Use progressPercent directly (0-100)
 const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPercent));

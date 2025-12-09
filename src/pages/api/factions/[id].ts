@@ -36,7 +36,7 @@ export const GET: APIRoute = async ({ params }) => {
 };
 
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
 
   try {
@@ -94,7 +94,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ params, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
 
   try {
