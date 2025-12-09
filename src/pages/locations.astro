@@ -110,7 +110,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     {locations.map(location => (
       <div class="location-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
         <a href={`/locations/${location.id}`} class="block">
-          <div class="relative h-56 overflow-hidden">
+          <div class={`relative overflow-hidden ${location.imageUrl ? 'h-56' : 'h-12'}`}>
             <!-- Background -->
             {location.imageUrl ? (
               <>
