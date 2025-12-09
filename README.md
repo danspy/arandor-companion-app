@@ -10,7 +10,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Adventure Diary** - Document your campaign sessions with:
   - Markdown formatting support
   - Cover image uploads
-  - Podcast version with text-to-speech (on-demand, no files stored)
+  - AI-powered podcast narration with natural-sounding voices (OpenAI TTS)
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -87,12 +87,18 @@ cd arandor-companion-app
 npm install
 ```
 
-3. Start the development server:
+3. Set up environment variables (optional, for AI podcast feature):
+```bash
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser to [http://localhost:4321](http://localhost:4321)
+5. Open your browser to [http://localhost:4321](http://localhost:4321)
 
 ### Build for Production
 
@@ -237,6 +243,22 @@ The following REST API endpoints are available:
 
 **File Upload:**
 - `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
+
+## Configuration
+
+### Environment Variables
+
+The app supports the following optional environment variables:
+
+- `OPENAI_API_KEY` - Required for AI-powered podcast generation. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+**Note:** Without an OpenAI API key, the podcast feature will not work. Users will see a "Generate Podcast" button but will receive an error if they try to use it.
 
 ## Customization
 
