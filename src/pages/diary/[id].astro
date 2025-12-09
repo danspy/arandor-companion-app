@@ -359,7 +359,7 @@ const renderedContent = renderMarkdown(entry.content);
     width: 100%;
   }
   
-  /* Light mode styling */
+  /* Light mode styling - gray-100 background */
   audio#podcastAudio {
     background-color: #f3f4f6; /* gray-100 */
   }
@@ -373,41 +373,21 @@ const renderedContent = renderMarkdown(entry.content);
     border-radius: 0.5rem;
   }
   
-  /* Dark mode styling - gray-800 background matching regenerate button */
+  /* Dark mode - invert colors (black becomes white) with gray-800 background */
   .dark audio#podcastAudio {
-    background-color: rgb(31, 41, 55); /* gray-800 */
+    /* Apply filter to invert controls from black to white */
+    filter: invert(1) hue-rotate(180deg);
+    /* Set background color - will be affected by filter so use opposite color */
+    background-color: rgb(224, 214, 200); /* This inverts to approximately gray-800 */
   }
   
   .dark audio#podcastAudio::-webkit-media-controls-panel {
-    background-color: rgb(31, 41, 55); /* gray-800 */
+    background-color: rgb(224, 214, 200); /* Inverts to gray-800 */
   }
   
   .dark audio#podcastAudio::-webkit-media-controls-enclosure {
-    background-color: rgb(31, 41, 55); /* gray-800 */
+    background-color: rgb(224, 214, 200); /* Inverts to gray-800 */
     border-radius: 0.5rem;
-  }
-  
-  /* Dark mode: Make controls and text white/visible */
-  .dark audio#podcastAudio::-webkit-media-controls-play-button,
-  .dark audio#podcastAudio::-webkit-media-controls-mute-button {
-    background-color: white;
-    border-radius: 50%;
-  }
-  
-  .dark audio#podcastAudio::-webkit-media-controls-current-time-display,
-  .dark audio#podcastAudio::-webkit-media-controls-time-remaining-display {
-    color: white;
-    text-shadow: none;
-  }
-  
-  .dark audio#podcastAudio::-webkit-media-controls-timeline {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 0.25rem;
-  }
-  
-  .dark audio#podcastAudio::-webkit-media-controls-volume-slider {
-    background-color: rgba(255, 255, 255, 0.3);
-    border-radius: 0.25rem;
   }
 </style>
 
