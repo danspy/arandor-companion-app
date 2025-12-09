@@ -42,7 +42,7 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
     }
 
     // Check if OpenAI API key is configured
-    const apiKey = process.env.OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
       return new Response(
@@ -76,18 +76,9 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
 
     // Determine upload directory based on environment
     const isDev = import.meta.env.DEV;
-    let uploadsDir: string;
-    let publicPath: string;
-
-    if (isDev) {
-      // Development: use public/uploads
-      uploadsDir = join(process.cwd(), 'public', 'uploads');
-      publicPath = '/uploads';
-    } else {
-      // Production: use /srv/arandor/uploads
-      uploadsDir = '/srv/arandor/uploads';
-      publicPath = '/uploads';
-    }
+    const uploadsDir = process.env.UPLOADS_DIR || 
+      (isDev ? join(process.cwd(), 'public', 'uploads') : '/srv/arandor/uploads');
+    const publicPath = '/uploads';
 
     // Ensure uploads directory exists
     if (!existsSync(uploadsDir)) {
