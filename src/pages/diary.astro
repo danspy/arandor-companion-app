@@ -126,8 +126,16 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
           <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
             {entry.title}
           </a>
-          <div class="flex gap-4 text-sm text-gray-500 mt-1">
+          <div class="flex gap-3 items-center text-sm text-gray-500 mt-1">
             <span>Session {entry.session}</span>
+            {entry.podcastAudioUrl && (
+              <span class="inline-flex items-center gap-1 bg-green-100 dark:bg-green-900/20 dark:border dark:border-green-800 text-green-700 dark:text-green-400 px-2 py-0.5 rounded-full text-xs font-medium">
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Podcast
+              </span>
+            )}
           </div>
         </div>
         
