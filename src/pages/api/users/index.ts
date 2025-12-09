@@ -38,12 +38,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Validate role
     const validRoles = ['admin', 'dungeonmaster', 'player'];
     const userRole = role && validRoles.includes(role) ? role : 'player';
-    if (role && !validRoles.includes(role)) {
-      return new Response(JSON.stringify({ error: 'Invalid role. Must be admin, dungeonmaster, or player' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
 
     // Check if username already exists
     const existingUser = await db.select().from(User).where(eq(User.username, username));
