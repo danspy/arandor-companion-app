@@ -85,10 +85,10 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
     const podcastText = preparePodcastText(entry.title, entry.content);
 
     // Generate speech using OpenAI TTS
-    // Using 'alloy' voice with German language support
+    // Using 'onyx' voice for epic, deep narrator sound with German language support
     const mp3Response = await openai.audio.speech.create({
       model: 'tts-1',
-      voice: 'alloy', // Options: alloy, echo, fable, onyx, nova, shimmer
+      voice: 'onyx', // Deep, epic voice perfect for storytelling. Options: alloy, echo, fable, onyx, nova, shimmer
       input: podcastText,
       speed: 0.9,
     });

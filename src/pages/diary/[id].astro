@@ -151,7 +151,7 @@ const renderedContent = renderMarkdown(entry.content);
             <audio 
               id="podcastAudio"
               controls 
-              class="w-full"
+              class="w-full rounded-lg"
               preload="metadata"
             >
               <source src={entry.podcastAudioUrl} type="audio/mpeg" />
@@ -350,6 +350,16 @@ const renderedContent = renderMarkdown(entry.content);
 <style is:global>
   .diary-text p + p {
     margin-top: 2rem;
+  }
+
+  /* Dark mode styling for audio player */
+  .dark audio#podcastAudio {
+    filter: invert(0.85) hue-rotate(180deg);
+  }
+  
+  /* Keep the progress bar and time display readable in dark mode */
+  .dark audio#podcastAudio::-webkit-media-controls-panel {
+    background-color: transparent;
   }
 </style>
 
