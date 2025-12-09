@@ -77,18 +77,32 @@ This ensures only the deploy user can read your API key.
 
 ### Step 7: Update the Systemd Service File
 
+**CRITICAL**: The service file must be updated to load the `.env` file!
+
 ```bash
 # Copy the updated service file
 sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
+
+# Verify it was copied correctly
+grep EnvironmentFile /etc/systemd/system/arandor.service
+# Should output: EnvironmentFile=-/srv/arandor/.env
 
 # Reload systemd to recognize the changes
 sudo systemctl daemon-reload
 ```
 
+**If the grep command doesn't show the EnvironmentFile line, the copy failed!** Make sure you're in `/srv/arandor` directory.
+
 ### Step 8: Restart the Service
 
 ```bash
 sudo systemctl restart arandor.service
+
+# Wait a moment for it to start
+sleep 2
+
+# Verify it's running
+sudo systemctl status arandor.service
 ```
 
 ### Step 9: Verify the Service is Running
