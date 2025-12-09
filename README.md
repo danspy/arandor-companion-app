@@ -185,30 +185,49 @@ The database includes the following tables:
 
 ### User Management
 
-The app uses a simple authentication system with username/password. You can add new users in two ways:
+The app uses a role-based authentication system with three roles:
+- **Admin** - Full access including user management
+- **Dungeon Master** - Can edit all content (currently same as Player)
+- **Player** - Can edit diary, library, characters, NPCs, locations, and quests
+
+You can add new users in two ways:
 
 **Method 1: Web Interface (Recommended)**
 1. Login to the app at `/login` (default user: `admin` / password: `admin`)
-2. Navigate to the **Users** page in the navigation menu
-3. Click "Add User" and enter username and password
+2. Navigate to the **Users** page in the navigation menu (admin only)
+3. Click "Add User" and enter username, password, and role
 4. The new user can now login with their credentials
 
 **Method 2: Command Line**
 ```bash
-# Add a new user
-node scripts/add-user.mjs <username> <password>
+# Add a new user with role
+node scripts/add-user.mjs <username> <password> [role]
 
-# Example
-node scripts/add-user.mjs john secretpassword
+# Examples
+node scripts/add-user.mjs john secretpassword player
+node scripts/add-user.mjs dm_alice dmpass dungeonmaster
+node scripts/add-user.mjs superadmin adminpass admin
 
 # Using custom database location
-ASTRO_DATABASE_FILE=/path/to/db.db node scripts/add-user.mjs jane mypass
+ASTRO_DATABASE_FILE=/path/to/db.db node scripts/add-user.mjs jane mypass player
+```
+
+**Update User Roles:**
+```bash
+# Update an existing user's role
+node scripts/update-user-role.mjs <username> <role>
+
+# Example: Update admin user to have admin role
+node scripts/update-user-role.mjs admin admin
 ```
 
 **Default User:**
 - Username: `admin`
 - Password: `admin`
+- Role: `admin` (for new installations)
 - ⚠️ **Important:** Change the default admin password after first login for security
+
+**Migration Note:** If you created your admin user before the role system was added, see [MIGRATION_GUIDE_role_system.md](MIGRATION_GUIDE_role_system.md) for instructions on updating the role.
 
 ### Managing Content
 

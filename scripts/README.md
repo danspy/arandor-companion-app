@@ -50,6 +50,48 @@ ASTRO_DATABASE_FILE=/custom/path/db.db node scripts/add-user.mjs jane mypassword
 - The database must exist before adding users (run `npm run build` first if needed)
 - Users can also be added through the web interface at `/users` page (admin only)
 
+### update-user-role.mjs
+
+**Purpose:** Command-line script for updating the role of an existing user in the database.
+
+**Usage:**
+```bash
+node scripts/update-user-role.mjs <username> <role>
+```
+
+**Roles:**
+- `admin` - Full access to everything including user management
+- `dungeonmaster` - Can access dashboard, map, quests, and all player content
+- `player` - Can edit diary, library, characters, NPCs, and locations
+
+**Example:**
+```bash
+# Update admin user to have admin role
+node scripts/update-user-role.mjs admin admin
+
+# Update a user to dungeonmaster role
+node scripts/update-user-role.mjs john dungeonmaster
+
+# Using custom database location
+ASTRO_DATABASE_FILE=/srv/arandor/data/content.db node scripts/update-user-role.mjs admin admin
+```
+
+**When to use:**
+- When updating existing users that were created before the role system was implemented
+- To change a user's role after they've been created
+- To upgrade an existing admin user to have the 'admin' role
+
+**Features:**
+- Shows current and new role before updating
+- Lists all users if the specified user is not found
+- Validates role (admin, dungeonmaster, or player)
+- Works with the database specified in ASTRO_DATABASE_FILE environment variable
+
+**Notes:**
+- The database must exist before updating users
+- Changes take effect immediately - the user will see updated permissions on next login
+- Users can also be edited through the web interface at `/users` page (admin only)
+
 ## Database Update Script
 
 ### update-database.sh
