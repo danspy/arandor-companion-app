@@ -1,7 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, User, eq } from 'astro:db';
 import { requireAuth } from '../../../lib/middleware';
-import { hashPassword } from '../../../lib/auth';
+import { hashPassword, verifyPassword } from '../../../lib/auth';
 
 export const GET: APIRoute = async ({ params, cookies }) => {
   const authError = requireAuth(cookies);
@@ -95,12 +95,11 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
 
     // Verify current password
-    const { verifyPassword } = await import('../../../lib/auth');
     const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
     
     if (!isValid) {
       return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
-        status: 401,
+        status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
