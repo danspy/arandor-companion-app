@@ -48,15 +48,11 @@ export function preparePodcastText(title: string, content: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Add natural introduction and pauses
-  const intro = `Session recording: ${title}.`;
-  const outro = 'End of session recording.';
-  
   // Add pauses between paragraphs (split by double line breaks)
   const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
   const narration = paragraphs.join('... ');
   
-  return `${intro} ${narration} ${outro}`;
+  return narration;
 }
 
 /**
@@ -126,6 +122,54 @@ export function getAvailableVoices(): SpeechSynthesisVoice[] {
     return [];
   }
   return window.speechSynthesis.getVoices();
+}
+
+/**
+ * Get the best German voice available
+ * Prioritizes: Google voices > Microsoft voices > other German voices
+ */
+export function getBestGermanVoice(): SpeechSynthesisVoice | undefined {
+  if (!('speechSynthesis' in window)) {
+    return undefined;
+  }
+  
+  const voices = window.speechSynthesis.getVoices();
+  
+  // Filter for German voices (de-DE, de-AT, de-CH)
+  const germanVoices = voices.filter(voice => 
+    voice.lang.startsWith('de-') || voice.lang === 'de'
+  );
+  
+  if (germanVoices.length === 0) {
+    return undefined;
+  }
+  
+  // Prioritize Google voices (typically higher quality)
+  const googleVoice = germanVoices.find(voice => 
+    voice.name.toLowerCase().includes('google')
+  );
+  if (googleVoice) {
+    return googleVoice;
+  }
+  
+  // Then Microsoft voices
+  const microsoftVoice = germanVoices.find(voice => 
+    voice.name.toLowerCase().includes('microsoft')
+  );
+  if (microsoftVoice) {
+    return microsoftVoice;
+  }
+  
+  // Otherwise, prefer voices that are not marked as 'local' (usually better quality)
+  const nonLocalVoice = germanVoices.find(voice => 
+    !voice.localService
+  );
+  if (nonLocalVoice) {
+    return nonLocalVoice;
+  }
+  
+  // Fall back to first available German voice
+  return germanVoices[0];
 }
 
 /**

@@ -145,55 +145,29 @@ const renderedContent = renderMarkdown(entry.content);
       )}
 
       <!-- Podcast Player -->
-      <div class="mb-6 bg-secondary-50 dark:bg-secondary-900/10 border-2 border-secondary-200 dark:border-secondary-800 rounded-lg p-4">
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-lg font-semibold text-secondary-700 dark:text-secondary-400 flex items-center gap-2">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-            Podcast Version
-          </h3>
-          <div id="podcastVoiceSelect" class="hidden">
-            <select id="voiceSelector" class="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-              <option value="">Default Voice</option>
-            </select>
-          </div>
-        </div>
-        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
-          Listen to this diary entry as an audio podcast
-        </p>
-        <div class="flex gap-2">
-          <button
-            id="playPodcastBtn"
-            class="flex items-center gap-2 bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition font-medium text-sm"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M8 5v14l11-7z"/>
-            </svg>
-            Play Podcast
-          </button>
-          <button
-            id="pausePodcastBtn"
-            class="hidden items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-medium text-sm"
-            style="display: none;"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-            </svg>
-            Pause
-          </button>
-          <button
-            id="stopPodcastBtn"
-            class="hidden items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium text-sm"
-            style="display: none;"
-          >
-            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M6 6h12v12H6z"/>
-            </svg>
-            Stop
-          </button>
-        </div>
-        <div id="podcastStatus" class="mt-3 text-sm text-gray-600 dark:text-gray-400 hidden">
+      <div class="mb-6 flex items-center gap-3">
+        <button
+          id="playPauseBtn"
+          class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
+          title="Play"
+        >
+          <svg id="playIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg id="pauseIcon" class="hidden w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+          </svg>
+        </button>
+        <button
+          id="stopBtn"
+          class="hidden w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all"
+          title="Stop"
+        >
+          <svg class="w-4 h-4 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 6h12v12H6z"/>
+          </svg>
+        </button>
+        <div id="podcastStatus" class="text-xs text-gray-500 dark:text-gray-500 hidden">
           <span id="podcastStatusText"></span>
         </div>
       </div>
@@ -402,15 +376,14 @@ const renderedContent = renderMarkdown(entry.content);
 
 <script>
   function initializePodcast() {
-    const playBtn = document.getElementById('playPodcastBtn');
-    const pauseBtn = document.getElementById('pausePodcastBtn');
-    const stopBtn = document.getElementById('stopPodcastBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const stopBtn = document.getElementById('stopBtn');
     const statusDiv = document.getElementById('podcastStatus');
     const statusText = document.getElementById('podcastStatusText');
-    const voiceSelect = document.getElementById('voiceSelector') as HTMLSelectElement;
-    const voiceSelectDiv = document.getElementById('podcastVoiceSelect');
 
-    if (!playBtn || !pauseBtn || !stopBtn || !statusDiv || !statusText || !voiceSelect) {
+    if (!playPauseBtn || !playIcon || !pauseIcon || !stopBtn || !statusDiv || !statusText) {
       return;
     }
 
@@ -430,12 +403,54 @@ const renderedContent = renderMarkdown(entry.content);
         .replace(/\s+/g, ' ')
         .trim();
 
-      const intro = `Session recording: ${title}.`;
-      const outro = 'End of session recording.';
+      // Add pauses between paragraphs
       const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
       const narration = paragraphs.join('... ');
       
-      return `${intro} ${narration} ${outro}`;
+      return narration;
+    }
+
+    // Get the best German voice
+    // Note: This function is duplicated from src/utils/podcast.ts because
+    // client-side Astro script tags cannot import from TypeScript utility files
+    function getBestGermanVoice(): SpeechSynthesisVoice | undefined {
+      const voices = window.speechSynthesis.getVoices();
+      
+      // Filter for German voices (de-DE, de-AT, de-CH)
+      const germanVoices = voices.filter(voice => 
+        voice.lang.startsWith('de-') || voice.lang === 'de'
+      );
+      
+      if (germanVoices.length === 0) {
+        return undefined;
+      }
+      
+      // Prioritize Google voices (typically higher quality)
+      const googleVoice = germanVoices.find(voice => 
+        voice.name.toLowerCase().includes('google')
+      );
+      if (googleVoice) {
+        return googleVoice;
+      }
+      
+      // Then Microsoft voices
+      const microsoftVoice = germanVoices.find(voice => 
+        voice.name.toLowerCase().includes('microsoft')
+      );
+      if (microsoftVoice) {
+        return microsoftVoice;
+      }
+      
+      // Otherwise, prefer voices that are not marked as 'local' (usually better quality)
+      const nonLocalVoice = germanVoices.find(voice => 
+        !voice.localService
+      );
+      if (nonLocalVoice) {
+        return nonLocalVoice;
+      }
+      
+      // Fall back to first available German voice
+      return germanVoices[0];
     }
 
     // Get diary entry content from the page
@@ -452,112 +467,110 @@ const renderedContent = renderMarkdown(entry.content);
     const podcastText = preparePodcastText(title, content);
 
     let isPaused = false;
-    let selectedVoice: SpeechSynthesisVoice | undefined;
-
-    // Load available voices
-    function loadVoices() {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        voiceSelectDiv?.classList.remove('hidden');
-        voiceSelect.innerHTML = '<option value="">Default Voice</option>';
-        
-        // Add all voices with their actual index from the voices array
-        voices.forEach((voice, index) => {
-          const option = document.createElement('option');
-          option.value = index.toString();
-          option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' [Default]' : ''}`;
-          voiceSelect.appendChild(option);
-        });
-      }
-    }
+    let germanVoice: SpeechSynthesisVoice | undefined;
 
     // Initialize voices
-    if ('speechSynthesis' in window) {
-      loadVoices();
-      // Voices may load asynchronously
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = loadVoices;
+    function initializeVoice() {
+      germanVoice = getBestGermanVoice();
+      if (germanVoice) {
+        console.log('Using German voice:', germanVoice.name, '(' + germanVoice.lang + ')');
+      } else {
+        console.warn('No German voice found. Using default voice.');
       }
     }
 
-    // Voice selection handler
-    voiceSelect.addEventListener('change', () => {
-      const voices = window.speechSynthesis.getVoices();
-      const selectedIndex = parseInt(voiceSelect.value);
-      if (!isNaN(selectedIndex) && selectedIndex >= 0 && selectedIndex < voices.length) {
-        selectedVoice = voices[selectedIndex];
-      } else {
-        selectedVoice = undefined;
+    if ('speechSynthesis' in window) {
+      initializeVoice();
+      // Voices may load asynchronously
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = initializeVoice;
       }
-    });
+    }
 
-    // Play button handler
-    playBtn.addEventListener('click', () => {
-      if (isPaused) {
-        window.speechSynthesis.resume();
-        isPaused = false;
-        playBtn.style.display = 'none';
-        pauseBtn.style.display = 'flex';
-        stopBtn.style.display = 'flex';
-        statusDiv.classList.remove('hidden');
-        statusText.textContent = 'Playing podcast...';
+    let isPlaying = false;
+
+    // Play/Pause button handler
+    playPauseBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        if (isPaused) {
+          // Resume from pause
+          window.speechSynthesis.resume();
+          isPaused = false;
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          statusText.textContent = 'Wiedergabe...';
+        } else {
+          // Pause
+          window.speechSynthesis.pause();
+          isPaused = true;
+          playIcon.classList.remove('hidden');
+          pauseIcon.classList.add('hidden');
+          statusText.textContent = 'Pausiert';
+        }
       } else {
+        // Start playback
         try {
           window.speechSynthesis.cancel();
+          
+          // Re-initialize voice in case it wasn't loaded before
+          if (!germanVoice) {
+            germanVoice = getBestGermanVoice();
+          }
+          
           const utterance = new SpeechSynthesisUtterance(podcastText);
           utterance.rate = 0.9;
           utterance.pitch = 1.0;
           utterance.volume = 1.0;
           
-          if (selectedVoice) {
-            utterance.voice = selectedVoice;
+          if (germanVoice) {
+            utterance.voice = germanVoice;
           }
 
           utterance.onend = () => {
-            playBtn.style.display = 'flex';
-            pauseBtn.style.display = 'none';
-            stopBtn.style.display = 'none';
+            isPlaying = false;
+            isPaused = false;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            stopBtn.classList.add('hidden');
             statusDiv.classList.add('hidden');
+            playPauseBtn.title = 'Play';
           };
 
           window.speechSynthesis.speak(utterance);
-          playBtn.style.display = 'none';
-          pauseBtn.style.display = 'flex';
+          isPlaying = true;
+          isPaused = false;
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          stopBtn.classList.remove('hidden');
           stopBtn.style.display = 'flex';
           statusDiv.classList.remove('hidden');
-          statusText.textContent = 'Playing podcast...';
+          statusText.textContent = 'Wiedergabe...';
+          playPauseBtn.title = 'Pause';
         } catch (error) {
           console.error('Podcast playback error:', error);
-          statusText.textContent = 'Error: ' + (error instanceof Error ? error.message : 'Unknown error');
+          statusText.textContent = 'Fehler: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
           statusDiv.classList.remove('hidden');
         }
       }
     });
 
-    // Pause button handler
-    pauseBtn.addEventListener('click', () => {
-      window.speechSynthesis.pause();
-      isPaused = true;
-      playBtn.style.display = 'flex';
-      pauseBtn.style.display = 'none';
-      statusText.textContent = 'Podcast paused';
-    });
-
     // Stop button handler
     stopBtn.addEventListener('click', () => {
       window.speechSynthesis.cancel();
+      isPlaying = false;
       isPaused = false;
-      playBtn.style.display = 'flex';
-      pauseBtn.style.display = 'none';
-      stopBtn.style.display = 'none';
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+      stopBtn.classList.add('hidden');
       statusDiv.classList.add('hidden');
+      playPauseBtn.title = 'Play';
     });
 
     // Check if speech synthesis is supported
     if (!('speechSynthesis' in window)) {
-      playBtn.disabled = true;
-      playBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      statusText.textContent = 'Text-to-speech is not supported in your browser';
+      playPauseBtn.disabled = true;
+      playPauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      statusText.textContent = 'Text-zu-Sprache wird in diesem Browser nicht unterstützt';
       statusDiv.classList.remove('hidden');
     }
   }
