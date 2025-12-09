@@ -483,7 +483,9 @@ const renderedContent = renderMarkdown(entry.content);
           statusText.textContent = `Error: ${data.error || 'Failed to generate podcast'}`;
           if (data.details) {
             console.error('Podcast generation error details:', data.details);
-            statusText.textContent += ` - ${data.details}`;
+            // Only show safe, truncated error details to users
+            const safeDetails = data.details.substring(0, 100);
+            statusText.textContent += ` - ${safeDetails}${data.details.length > 100 ? '...' : ''}`;
           }
         }
       } catch (error) {
