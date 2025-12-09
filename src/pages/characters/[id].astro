@@ -60,7 +60,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
     <article class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-900">
       <!-- Character Hero Image -->
       <div class="relative h-80 md:h-96 overflow-hidden">
-        {/* Blurred background */}
+        <!-- Blurred background -->
         {character.avatarUrl ? (
           <>
             <img 
@@ -74,14 +74,14 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
           <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-primary-600 via-secondary-500 to-accent-600' : 'from-gray-600 via-gray-500 to-gray-600'}`}></div>
         )}
         
-        {/* Status badge */}
+        <!-- Status badge -->
         {!character.isActive && (
           <div class="absolute top-4 right-4 bg-gray-800/90 text-white text-sm px-4 py-2 rounded-full shadow-lg z-10">
             Inactive
           </div>
         )}
         
-        {/* Content container */}
+        <!-- Content container -->
         <div class="relative h-full flex flex-col justify-between p-8">
           {/* Circular avatar centered */}
           <div class="flex-1 flex items-center justify-center">

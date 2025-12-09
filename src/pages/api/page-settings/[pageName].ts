@@ -4,12 +4,20 @@ import { requireAuth } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
-    const settings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, params.pageName!));
+    const pageName = params.pageName;
+    if (!pageName) {
+      return new Response(JSON.stringify({ error: 'Page name is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const settings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, pageName));
     
     if (settings.length === 0) {
       // Return default empty settings if none exist
       return new Response(JSON.stringify({ 
-        pageName: params.pageName, 
+        pageName, 
         heroImageUrl: null 
       }), {
         status: 200,
@@ -34,9 +42,16 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (authError) return authError;
 
   try {
+    const pageName = params.pageName;
+    if (!pageName) {
+      return new Response(JSON.stringify({ error: 'Page name is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const body = await request.json();
     const now = new Date();
-    const pageName = params.pageName!;
     
     // Check if settings exist
     const existing = await db.select().from(PageSettings).where(eq(PageSettings.pageName, pageName));

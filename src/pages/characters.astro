@@ -103,7 +103,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} data-is-active={character.isActive ? "true" : "false"}>
         <a href={`/characters/${character.id}`} class="block">
           <div class="relative h-56 overflow-hidden">
-            {/* Blurred background */}
+            <!-- Blurred background -->
             {character.avatarUrl ? (
               <>
                 <img 
@@ -117,7 +117,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'}`}></div>
             )}
             
-            {/* Circular avatar on top */}
+            <!-- Circular avatar on top -->
             <div class="relative h-full flex items-center justify-center">
               {character.avatarUrl ? (
                 <img 
@@ -132,7 +132,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               )}
             </div>
             
-            {/* Status badge */}
+            <!-- Status badge -->
             {!character.isActive && (
               <div class="absolute top-3 right-3 bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full shadow-lg">
                 Inactive
