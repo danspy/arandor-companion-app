@@ -56,18 +56,25 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
 
     const body = await request.json();
-    const { password } = body;
+    const { currentPassword, newPassword } = body;
 
     // Validate input
-    if (!password) {
-      return new Response(JSON.stringify({ error: 'Password is required' }), {
+    if (!currentPassword) {
+      return new Response(JSON.stringify({ error: 'Current password is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
     }
 
-    if (password.length < 6) {
-      return new Response(JSON.stringify({ error: 'Password must be at least 6 characters long' }), {
+    if (!newPassword) {
+      return new Response(JSON.stringify({ error: 'New password is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return new Response(JSON.stringify({ error: 'New password must be at least 6 characters long' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -76,6 +83,8 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     // Check if user exists before updating
     const existingUser = await db.select({
       id: User.id,
+      username: User.username,
+      passwordHash: User.passwordHash,
     }).from(User).where(eq(User.id, params.id));
 
     if (existingUser.length === 0) {
@@ -85,8 +94,19 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
-    // Hash password
-    const passwordHash = await hashPassword(password);
+    // Verify current password
+    const { verifyPassword } = await import('../../../lib/auth');
+    const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
+    
+    if (!isValid) {
+      return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Hash new password
+    const passwordHash = await hashPassword(newPassword);
     
     await db.update(User)
       .set({
@@ -129,11 +149,20 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
     // Check if user exists before deleting
     const existingUser = await db.select({
       id: User.id,
+      username: User.username,
     }).from(User).where(eq(User.id, params.id));
 
     if (existingUser.length === 0) {
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Prevent deleting the admin user
+    if (existingUser[0].username === 'admin') {
+      return new Response(JSON.stringify({ error: 'Cannot delete the admin user' }), {
+        status: 403,
         headers: { 'Content-Type': 'application/json' }
       });
     }

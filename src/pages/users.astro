@@ -59,13 +59,15 @@ const users = await db.select({
                 >
                   Edit
                 </button>
-                <button 
-                  class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                  data-user-id={user.id}
-                  data-username={user.username}
-                >
-                  Delete
-                </button>
+                {user.username !== 'admin' && (
+                  <button 
+                    class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    data-user-id={user.id}
+                    data-username={user.username}
+                  >
+                    Delete
+                  </button>
+                )}
               </td>
             </tr>
           ))}
@@ -175,13 +177,28 @@ const users = await db.select({
         </div>
 
         <div>
-          <label for="editPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="editCurrentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Current Password
+          </label>
+          <input 
+            type="password" 
+            id="editCurrentPassword" 
+            name="currentPassword" 
+            required 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            placeholder="Enter current password"
+          >
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Required for verification</p>
+        </div>
+
+        <div>
+          <label for="editNewPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             New Password
           </label>
           <input 
             type="password" 
-            id="editPassword" 
-            name="password" 
+            id="editNewPassword" 
+            name="newPassword" 
             required 
             minlength="6"
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
@@ -405,6 +422,15 @@ const users = await db.select({
           const row = document.createElement('tr');
           row.className = 'hover:bg-gray-50 dark:hover:bg-gray-900 transition';
           row.setAttribute('data-user-id', result.user.id);
+          const deleteButton = result.user.username !== 'admin' ? `
+            <button 
+              class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+              data-user-id="${result.user.id}"
+              data-username="${result.user.username}"
+            >
+              Delete
+            </button>
+          ` : '';
           row.innerHTML = `
             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
               ${result.user.username}
@@ -420,13 +446,7 @@ const users = await db.select({
               >
                 Edit
               </button>
-              <button 
-                class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-                data-user-id="${result.user.id}"
-                data-username="${result.user.username}"
-              >
-                Delete
-              </button>
+              ${deleteButton}
             </td>
           `;
           usersTableBody.insertBefore(row, usersTableBody.firstChild);
@@ -454,7 +474,8 @@ const users = await db.select({
     const userId = editUserId?.value;
     const username = editUsername?.textContent;
     const data = {
-      password: formData.get('password'),
+      currentPassword: formData.get('currentPassword'),
+      newPassword: formData.get('newPassword'),
     };
 
     try {
