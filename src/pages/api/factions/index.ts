@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, Faction, eq } from 'astro:db';
-import { requireAuth } from '../../../lib/middleware';
+import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 const VALID_STATUSES = ['enemy', 'suspicious', 'neutral', 'friendly', 'respectful'];
 

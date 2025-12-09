@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { requireAuth } from '../../../lib/middleware';
+import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 interface DnDBeyondCharacterData {
   name?: string;
@@ -122,7 +122,7 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
 }
 
 export const POST: APIRoute = async ({ request, cookies }) => {
-  const authError = requireAuth(cookies);
+  const authError = await requirePlayerOrAbove(cookies);
   if (authError) return authError;
 
   try {
