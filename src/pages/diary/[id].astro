@@ -352,14 +352,21 @@ const renderedContent = renderMarkdown(entry.content);
     margin-top: 2rem;
   }
 
-  /* Dark mode styling for audio player */
+  /* Dark mode styling for audio player - match regenerate button color */
   .dark audio#podcastAudio {
-    filter: invert(0.85) hue-rotate(180deg);
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    border-radius: 0.5rem;
+    padding: 0.5rem;
   }
   
-  /* Keep the progress bar and time display readable in dark mode */
+  /* Remove default browser audio controls background in dark mode */
   .dark audio#podcastAudio::-webkit-media-controls-panel {
-    background-color: transparent;
+    background-color: rgb(31, 41, 55); /* gray-800 */
+  }
+  
+  .dark audio#podcastAudio::-webkit-media-controls-enclosure {
+    background-color: rgb(31, 41, 55); /* gray-800 */
+    border-radius: 0.5rem;
   }
 </style>
 
