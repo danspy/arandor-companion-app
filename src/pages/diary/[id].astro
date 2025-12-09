@@ -461,7 +461,17 @@ const renderedContent = renderMarkdown(entry.content);
           },
         });
 
-        const data = await response.json();
+        // Try to parse JSON response, but handle empty responses gracefully
+        let data;
+        try {
+          data = await response.json();
+        } catch (jsonError) {
+          console.error('Failed to parse JSON response:', jsonError);
+          data = { 
+            error: 'Server error - no response received', 
+            details: 'The server may have crashed. Check server logs for details.' 
+          };
+        }
 
         if (response.ok) {
           statusText.textContent = 'Podcast generated successfully! Reloading...';
@@ -473,6 +483,7 @@ const renderedContent = renderMarkdown(entry.content);
           statusText.textContent = `Error: ${data.error || 'Failed to generate podcast'}`;
           if (data.details) {
             console.error('Podcast generation error details:', data.details);
+            statusText.textContent += ` - ${data.details}`;
           }
         }
       } catch (error) {

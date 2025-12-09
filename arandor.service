@@ -10,6 +10,8 @@ Environment="NODE_ENV=production"
 Environment="HOST=0.0.0.0"
 Environment="PORT=4321"
 Environment="ASTRO_DATABASE_FILE=/srv/arandor/data/content.db"
+# Load environment variables from .env file (including OPENAI_API_KEY for podcast feature)
+EnvironmentFile=-/srv/arandor/.env
 ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
 Restart=always
 RestartSec=10

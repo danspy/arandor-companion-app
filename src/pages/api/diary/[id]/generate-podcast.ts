@@ -86,12 +86,27 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
 
     // Generate speech using OpenAI TTS
     // Using 'onyx' voice for epic, deep narrator sound with German language support
-    const mp3Response = await openai.audio.speech.create({
-      model: 'tts-1',
-      voice: 'onyx', // Deep, epic voice perfect for storytelling. Options: alloy, echo, fable, onyx, nova, shimmer
-      input: podcastText,
-      speed: 0.9,
-    });
+    let mp3Response;
+    try {
+      mp3Response = await openai.audio.speech.create({
+        model: 'tts-1',
+        voice: 'onyx', // Deep, epic voice perfect for storytelling. Options: alloy, echo, fable, onyx, nova, shimmer
+        input: podcastText,
+        speed: 0.9,
+      });
+    } catch (openaiError: any) {
+      console.error('OpenAI API error:', openaiError);
+      return new Response(
+        JSON.stringify({ 
+          error: 'Failed to generate podcast with OpenAI', 
+          details: openaiError.message || 'OpenAI API request failed. Check if your API key is valid and has credits.'
+        }),
+        {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+    }
 
     // Convert response to buffer
     const buffer = Buffer.from(await mp3Response.arrayBuffer());

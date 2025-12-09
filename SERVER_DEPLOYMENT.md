@@ -48,34 +48,43 @@ This will install all dependencies including the OpenAI SDK.
 
 ## Step 3: Set Up Environment Variables
 
-Create or edit your `.env` file in the project root (this file should NEVER be committed to git):
+The systemd service reads environment variables from `/srv/arandor/.env`. Create this file:
 
 ```bash
+# Copy the production template
+cp .env.production .env
+
+# Edit the file to add your API key
 nano .env  # or use your preferred editor
 ```
 
-Add your OpenAI API key:
+Update the file with your OpenAI API key. **IMPORTANT**: Do NOT use quotes around the value (systemd EnvironmentFile format):
 
 ```
-# OpenAI API Key for podcast generation
-OPENAI_API_KEY=your-new-api-key-here
+# Correct format for systemd EnvironmentFile:
+OPENAI_API_KEY=sk-proj-abc123xyz...
 
 # Optional: Custom uploads directory (defaults to /srv/arandor/uploads in production)
 # UPLOADS_DIR=/custom/path/to/uploads
 ```
 
-**Important**: Replace `your-new-api-key-here` with your actual API key from https://platform.openai.com/api-keys
+**Important**: 
+- Replace `your-openai-api-key-here` with your actual API key from https://platform.openai.com/api-keys
+- No quotes around the value
+- No spaces around the = sign
 
 Save and exit the editor.
 
 ## Step 4: Set File Permissions
 
-Make sure the .env file is readable only by your application user:
+**CRITICAL**: Make sure the .env file is readable only by your application user:
 
 ```bash
-chmod 600 .env
-chown $(whoami):$(whoami) .env
+chmod 600 /srv/arandor/.env
+chown deploy:deploy /srv/arandor/.env
 ```
+
+This prevents other users from reading your API key.
 
 ## Step 5: Ensure Uploads Directory Exists
 
@@ -153,25 +162,76 @@ sudo journalctl -u arandor.service -n 50 -f
 
 ### "OpenAI API key not configured" Error
 
-**Cause**: The API key environment variable is not set or not being read.
+**This is the most common issue!**
+
+**Cause**: The API key environment variable is not set or not being read by the systemd service.
 
 **Solution**:
-```bash
-# Verify the .env file exists and contains the key:
-cat .env | grep OPENAI_API_KEY
 
-# For PRODUCTION - make sure the service is restarted after creating/updating .env:
-sudo systemctl restart arandor.service
+1. **Verify the .env file exists in /srv/arandor:**
+   ```bash
+   ls -la /srv/arandor/.env
+   ```
+   If it doesn't exist, create it using the template:
+   ```bash
+   cd /srv/arandor
+   cp .env.production .env
+   nano .env  # Add your API key
+   ```
 
-# For DEVELOPMENT - stop and restart the dev server:
-# Press Ctrl+C to stop, then run:
-npm run dev
-```
+2. **Check the file format** - systemd EnvironmentFile requires no quotes:
+   ```bash
+   cat /srv/arandor/.env
+   ```
+   Should show:
+   ```
+   OPENAI_API_KEY=sk-proj-abc123xyz...
+   ```
+   NOT:
+   ```
+   OPENAI_API_KEY="sk-proj-abc123xyz..."  # WRONG - has quotes
+   OPENAI_API_KEY = sk-proj-abc123xyz...  # WRONG - has spaces
+   ```
+
+3. **Check file permissions:**
+   ```bash
+   ls -l /srv/arandor/.env
+   ```
+   Should show: `-rw------- 1 deploy deploy` (600 permissions)
+   
+   If not, fix it:
+   ```bash
+   chmod 600 /srv/arandor/.env
+   chown deploy:deploy /srv/arandor/.env
+   ```
+
+4. **Verify the systemd service file is updated:**
+   ```bash
+   sudo cat /etc/systemd/system/arandor.service | grep EnvironmentFile
+   ```
+   Should show: `EnvironmentFile=-/srv/arandor/.env`
+   
+   If not, update the service file:
+   ```bash
+   sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
+   sudo systemctl daemon-reload
+   ```
+
+5. **Restart the service** after creating/updating .env:
+   ```bash
+   sudo systemctl restart arandor.service
+   ```
+
+6. **Check the service logs** for errors:
+   ```bash
+   sudo journalctl -u arandor.service -n 50 --no-pager
+   ```
 
 **Important Notes:**
-- The `.env` file must exist BEFORE starting the server
-- Changes to `.env` require a server restart to take effect
-- The dev server does NOT automatically reload when `.env` changes
+- The `.env` file must be at `/srv/arandor/.env` (same directory as the project)
+- Changes to `.env` require a service restart to take effect (`sudo systemctl restart arandor.service`)
+- The systemd service loads the file via `EnvironmentFile=-/srv/arandor/.env` directive
+- The `-` prefix makes the file optional (service starts even if file doesn't exist, but podcast will fail)
 - Check server logs for "OpenAI API key not found" debug messages
 
 ### "Failed to generate podcast" Error

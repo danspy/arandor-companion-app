@@ -381,12 +381,48 @@ sudo systemctl start arandor.service
 
 ## Environment Variables
 
+### Built-in Environment Variables
+
 The systemd service sets these environment variables:
 - `HOST=0.0.0.0` - Listen on all interfaces
 - `PORT=4321` - Application port
 - `ASTRO_DATABASE_FILE=/srv/arandor/data/content.db` - Database location
 
-You can customize these by editing `/etc/systemd/system/arandor.service` and running:
+### Custom Environment Variables (Optional)
+
+For features requiring API keys (like the AI podcast feature), create a `.env` file at `/srv/arandor/.env`:
+
+```bash
+# On your server
+cd /srv/arandor
+nano .env
+```
+
+Add your environment variables in systemd EnvironmentFile format (no quotes):
+
+```
+# Example: OpenAI API key for podcast generation
+OPENAI_API_KEY=sk-proj-abc123xyz...
+
+# Optional: Custom uploads directory
+UPLOADS_DIR=/custom/path/to/uploads
+```
+
+**Important**: 
+- No quotes around values (systemd format)
+- No spaces around the `=` sign
+- Set proper permissions: `chmod 600 /srv/arandor/.env && chown deploy:deploy /srv/arandor/.env`
+
+The systemd service automatically loads this file via the `EnvironmentFile` directive.
+
+### Updating Environment Variables
+
+After creating or modifying environment variables, restart the service:
+```bash
+sudo systemctl restart arandor.service
+```
+
+You can also customize the built-in variables by editing `/etc/systemd/system/arandor.service` and running:
 ```bash
 sudo systemctl daemon-reload
 sudo systemctl restart arandor.service
