@@ -103,7 +103,7 @@ export const GET: APIRoute = async ({ params, request }) => {
           const webStream = new ReadableStream({
             start(controller) {
               stream.on('data', (chunk: Buffer) => {
-                // Efficiently convert Buffer to Uint8Array without copying
+                // Create Uint8Array view without copying underlying buffer data
                 controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
               });
               stream.on('end', () => controller.close());
