@@ -459,30 +459,13 @@ const renderedContent = renderMarkdown(entry.content);
         voiceSelectDiv?.classList.remove('hidden');
         voiceSelect.innerHTML = '<option value="">Default Voice</option>';
         
-        // Prefer English voices
-        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-        const otherVoices = voices.filter(v => !v.lang.startsWith('en'));
-        
-        englishVoices.forEach((voice, index) => {
+        // Add all voices with their actual index from the voices array
+        voices.forEach((voice, index) => {
           const option = document.createElement('option');
           option.value = index.toString();
-          option.textContent = `${voice.name} (${voice.lang})`;
+          option.textContent = `${voice.name} (${voice.lang})${voice.default ? ' [Default]' : ''}`;
           voiceSelect.appendChild(option);
         });
-        
-        if (otherVoices.length > 0) {
-          const separator = document.createElement('option');
-          separator.disabled = true;
-          separator.textContent = '--- Other Languages ---';
-          voiceSelect.appendChild(separator);
-          
-          otherVoices.forEach((voice, index) => {
-            const option = document.createElement('option');
-            option.value = (englishVoices.length + index).toString();
-            option.textContent = `${voice.name} (${voice.lang})`;
-            voiceSelect.appendChild(option);
-          });
-        }
       }
     }
 
@@ -499,7 +482,11 @@ const renderedContent = renderMarkdown(entry.content);
     voiceSelect.addEventListener('change', () => {
       const voices = window.speechSynthesis.getVoices();
       const selectedIndex = parseInt(voiceSelect.value);
-      selectedVoice = voices[selectedIndex];
+      if (!isNaN(selectedIndex) && selectedIndex >= 0 && selectedIndex < voices.length) {
+        selectedVoice = voices[selectedIndex];
+      } else {
+        selectedVoice = undefined;
+      }
     });
 
     // Play button handler

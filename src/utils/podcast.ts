@@ -48,46 +48,10 @@ export function preparePodcastText(title: string, content: string): string {
 }
 
 /**
- * Generate podcast audio using Web Speech API
+ * Note: The Web Speech API doesn't provide direct audio file generation.
+ * For actual audio file generation, a server-side TTS service would be needed.
+ * The functions below provide real-time speech synthesis instead.
  */
-export async function generatePodcast(
-  text: string,
-  options: PodcastOptions = {}
-): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    if (!('speechSynthesis' in window)) {
-      reject(new Error('Text-to-speech is not supported in this browser'));
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    
-    // Configure voice settings
-    utterance.rate = options.rate ?? 0.9; // Slightly slower for better comprehension
-    utterance.pitch = options.pitch ?? 1.0;
-    utterance.volume = options.volume ?? 1.0;
-    
-    if (options.voice) {
-      utterance.voice = options.voice;
-    }
-
-    // Note: Web Speech API doesn't provide direct audio output
-    // We can only trigger speech synthesis, not capture it as a file
-    // For actual audio file generation, we would need a server-side solution
-    
-    utterance.onend = () => {
-      // Since we can't capture audio directly, return empty blob
-      // In a real implementation, you'd use a server-side TTS service
-      resolve(new Blob([], { type: 'audio/mpeg' }));
-    };
-    
-    utterance.onerror = (event) => {
-      reject(new Error(`Speech synthesis failed: ${event.error}`));
-    };
-
-    window.speechSynthesis.speak(utterance);
-  });
-}
 
 /**
  * Play podcast audio using Web Speech API
