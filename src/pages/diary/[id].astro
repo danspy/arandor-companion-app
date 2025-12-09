@@ -3,6 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest, eq, inArray } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
+import { getVideoMimeType } from '../../utils/video';
 
 const { id } = Astro.params;
 
@@ -99,14 +100,18 @@ const renderedContent = renderMarkdown(entry.content);
     {entry.coverVideoUrl ? (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
         <video 
-          src={entry.coverVideoUrl} 
           autoplay
           muted
-          playsInline
+          playsinline
           loop
+          preload="auto"
+          disablePictureInPicture
           class="w-full h-96 object-cover"
           aria-label={`Cover video for ${entry.title}`}
-        />
+        >
+          <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
+          Your browser does not support the video tag.
+        </video>
       </div>
     ) : entry.coverImageUrl && (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
@@ -332,4 +337,11 @@ const renderedContent = renderMarkdown(entry.content);
 
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
+</script>
+
+<script>
+  import { initializeVideoAutoplay } from '../../utils/video';
+  
+  // Ensure videos play after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeVideoAutoplay);
 </script>

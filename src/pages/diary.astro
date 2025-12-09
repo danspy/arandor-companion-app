@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
+import { getVideoMimeType } from '../utils/video';
 
 const diaryEntries = await db.select().from(DiaryEntry);
 const npcs = await db.select().from(NPC);
@@ -100,15 +101,18 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
         {entry.coverVideoUrl ? (
           <div class="mb-4 rounded-lg overflow-hidden">
             <video 
-              src={entry.coverVideoUrl} 
               autoplay
               muted
-              playsInline
+              playsinline
               loop
-              preload="metadata"
+              preload="auto"
+              disablePictureInPicture
               class="w-full h-48 object-cover"
               aria-label={`Video for ${entry.title}`}
-            />
+            >
+              <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
+              Your browser does not support the video tag.
+            </video>
           </div>
         ) : entry.coverImageUrl && (
           <div class="mb-4 rounded-lg overflow-hidden">
@@ -282,7 +286,18 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
             </div>
           </div>
           <div id="videoPreview" class="mt-3 hidden">
-            <video id="previewVideo" src="" controls class="max-w-xs rounded-lg shadow-md" aria-label="Video preview"></video>
+            <video 
+              id="previewVideo" 
+              src="" 
+              autoplay
+              muted
+              playsinline
+              loop
+              preload="auto"
+              disablePictureInPicture
+              class="max-w-xs rounded-lg shadow-md" 
+              aria-label="Video preview"
+            ></video>
           </div>
         </div>
         
@@ -841,4 +856,11 @@ const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e
     initializeDiaryModal();
     initializeFilters();
   });
+</script>
+
+<script>
+  import { initializeVideoAutoplay } from '../utils/video';
+  
+  // Ensure videos play after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeVideoAutoplay);
 </script>
