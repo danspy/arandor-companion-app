@@ -17,7 +17,27 @@ cd /srv/arandor
 git pull origin main  # or the branch name
 ```
 
-### Step 2: Create the `.env` File
+### Step 2: Install Dependencies
+
+**CRITICAL**: The podcast feature requires the `openai` npm package. You must install dependencies:
+
+```bash
+cd /srv/arandor
+npm install
+```
+
+This will install the `openai` package and any other new dependencies.
+
+### Step 3: Build the Application
+
+```bash
+cd /srv/arandor
+npm run build
+```
+
+This compiles the application with the new dependencies.
+
+### Step 4: Create the `.env` File
 
 The systemd service now looks for environment variables in `/srv/arandor/.env`.
 
@@ -31,7 +51,7 @@ cp .env.production .env
 nano .env
 ```
 
-### Step 3: Add Your OpenAI API Key
+### Step 5: Add Your OpenAI API Key
 
 In the `.env` file, replace `REPLACE_WITH_YOUR_ACTUAL_OPENAI_API_KEY` with your actual API key:
 
@@ -46,7 +66,7 @@ OPENAI_API_KEY=sk-proj-abc123xyz...
 
 Save and exit (Ctrl+X, then Y, then Enter in nano).
 
-### Step 4: Set Proper File Permissions
+### Step 6: Set Proper File Permissions
 
 ```bash
 chmod 600 /srv/arandor/.env
@@ -55,7 +75,7 @@ chown deploy:deploy /srv/arandor/.env
 
 This ensures only the deploy user can read your API key.
 
-### Step 5: Update the Systemd Service File
+### Step 7: Update the Systemd Service File
 
 ```bash
 # Copy the updated service file
@@ -65,13 +85,13 @@ sudo cp /srv/arandor/arandor.service /etc/systemd/system/arandor.service
 sudo systemctl daemon-reload
 ```
 
-### Step 6: Restart the Service
+### Step 8: Restart the Service
 
 ```bash
 sudo systemctl restart arandor.service
 ```
 
-### Step 7: Verify the Service is Running
+### Step 9: Verify the Service is Running
 
 ```bash
 sudo systemctl status arandor.service
@@ -79,15 +99,17 @@ sudo systemctl status arandor.service
 
 You should see "Active: active (running)".
 
-### Step 8: Check the Logs
+### Step 10: Check the Logs
 
 ```bash
 sudo journalctl -u arandor.service -n 50 --no-pager
 ```
 
-Look for any errors. If you see "OpenAI API key not found", double-check your `.env` file.
+Look for any errors:
+- If you see "Cannot find package 'openai'", you need to run `npm install` (Step 2)
+- If you see "OpenAI API key not found", double-check your `.env` file (Step 4-6)
 
-### Step 9: Test the Podcast Feature
+### Step 11: Test the Podcast Feature
 
 1. Go to your website
 2. Log in
@@ -99,6 +121,8 @@ Look for any errors. If you see "OpenAI API key not found", double-check your `.
 ## Verification Checklist
 
 - [ ] Code pulled from repository
+- [ ] **Dependencies installed with `npm install`** ← CRITICAL!
+- [ ] **Application rebuilt with `npm run build`** ← CRITICAL!
 - [ ] `.env` file created at `/srv/arandor/.env`
 - [ ] OpenAI API key added (without quotes)
 - [ ] File permissions set to 600
@@ -107,6 +131,7 @@ Look for any errors. If you see "OpenAI API key not found", double-check your `.
 - [ ] Systemd daemon reloaded
 - [ ] Service restarted
 - [ ] Service is running (check with `systemctl status`)
+- [ ] Logs show no "Cannot find package 'openai'" errors
 - [ ] Logs show no "OpenAI API key not found" errors
 - [ ] Podcast generation works in browser
 
@@ -118,29 +143,89 @@ Look for any errors. If you see "OpenAI API key not found", double-check your `.
 
 ## Troubleshooting
 
+### Getting "Cannot find package 'openai'" error?
+
+**This means you didn't install the dependencies!**
+
+The podcast feature requires the `openai` npm package. You MUST run:
+
+```bash
+cd /srv/arandor
+npm install
+npm run build
+sudo systemctl restart arandor.service
+```
+
+**Why this happens:**
+- The `openai` package was added in this update
+- `npm install` downloads and installs it to `node_modules/`
+- Without it, the server crashes when trying to import the package
+
+After running these commands, check the logs again:
+```bash
+sudo journalctl -u arandor.service -n 20
+```
+
+The "Cannot find package 'openai'" error should be gone.
+
 ### Still getting "OpenAI API key not configured" error?
 
-1. Verify the file exists:
+**This means the environment variable is NOT being loaded by systemd.**
+
+1. **Verify the .env file exists:**
    ```bash
    ls -la /srv/arandor/.env
    ```
+   If it doesn't exist, you skipped Step 4. Create it now.
 
-2. Check the content:
+2. **Check the .env file content:**
    ```bash
    cat /srv/arandor/.env
    ```
+   Should show something like:
+   ```
+   OPENAI_API_KEY=sk-proj-abc123...
+   ```
+   
+   **Common mistakes:**
+   - ❌ File is empty or has placeholder text
+   - ❌ Has quotes: `OPENAI_API_KEY="sk-proj..."` (REMOVE QUOTES!)
+   - ❌ Has spaces: `OPENAI_API_KEY = sk-proj...` (REMOVE SPACES!)
+   - ❌ Has export: `export OPENAI_API_KEY=...` (REMOVE export!)
 
-3. Verify the systemd service file has the EnvironmentFile line:
+3. **Verify file permissions:**
+   ```bash
+   ls -l /srv/arandor/.env
+   ```
+   Should show: `-rw------- 1 deploy deploy` (600 permissions)
+
+4. **Verify the systemd service file is updated:**
    ```bash
    grep EnvironmentFile /etc/systemd/system/arandor.service
    ```
    Should show: `EnvironmentFile=-/srv/arandor/.env`
+   
+   If NOT shown, run Step 7 again to copy the service file.
 
-4. Check the service logs for detailed error messages:
+5. **Verify systemd was reloaded:**
    ```bash
-   sudo journalctl -u arandor.service -f
+   sudo systemctl daemon-reload
+   sudo systemctl restart arandor.service
    ```
-   Then try generating a podcast again and watch the logs.
+
+6. **Test if environment variable is visible to the service:**
+   ```bash
+   # Check what environment variables the service can see
+   sudo systemctl show arandor.service | grep -i environment
+   ```
+   
+   If the .env file is correctly formatted, you should see your OPENAI_API_KEY listed.
+
+7. **Check the service logs:**
+   ```bash
+   sudo journalctl -u arandor.service -n 50
+   ```
+   Look for the debug output showing where it checked for the API key.
 
 ### Getting "Failed to generate podcast with OpenAI" error?
 
