@@ -29,13 +29,20 @@ Create a `.env` file in the project root:
 cp .env.example .env
 ```
 
-Edit `.env` and add your OpenAI API key:
+Edit `.env` and add your OpenAI API key (no quotes):
 
 ```
 OPENAI_API_KEY=sk-proj-xxxxxxxxxxxx
 ```
 
+**Important formatting:**
+- No quotes around the value
+- No spaces around the `=` sign
+- Key on a single line
+
 ### 3. Restart the Application
+
+**CRITICAL:** You must restart the dev server after creating `.env` for changes to take effect.
 
 For development:
 ```bash
@@ -138,7 +145,39 @@ Generated audio files are stored and reused, so you only pay once per entry unle
 
 ### "OpenAI API key not configured" Error
 
-**Solution**: Make sure you've created a `.env` file with a valid `OPENAI_API_KEY`.
+**This is the most common issue!** The API endpoint now includes automatic `.env` file loading as a fallback.
+
+**Step-by-step solution:**
+
+1. **Verify `.env` file exists and has correct content:**
+   ```bash
+   cat .env
+   ```
+   Should show: `OPENAI_API_KEY=sk-proj-...` (no quotes, no extra spaces)
+
+2. **Check file location:**
+   The `.env` file MUST be in the project root directory (same folder as `package.json`)
+
+3. **Verify format is correct:**
+   - ✅ Correct: `OPENAI_API_KEY=sk-proj-abc123`
+   - ❌ Wrong: `OPENAI_API_KEY="sk-proj-abc123"` (has quotes)
+   - ❌ Wrong: `OPENAI_API_KEY = sk-proj-abc123` (spaces around =)
+   - ❌ Wrong: `export OPENAI_API_KEY=sk-proj-abc123` (has export)
+
+4. **Restart dev server (CRITICAL):**
+   ```bash
+   # Press Ctrl+C to stop, then:
+   npm run dev
+   ```
+
+5. **Check server logs for debug info:**
+   The API endpoint now logs detailed information about environment variables when the key is not found.
+
+6. **Try explicit environment variable (troubleshooting):**
+   ```bash
+   OPENAI_API_KEY=your-actual-key npm run dev
+   ```
+   If this works but `.env` doesn't, there may be a file format issue.
 
 ### Generation Takes Too Long
 

@@ -334,10 +334,13 @@ If you see this error when trying to generate a podcast:
 - Typo in the variable name (must be exactly `OPENAI_API_KEY`)
 - Missing or invalid API key
 - Whitespace or quotes around the key value (use: `OPENAI_API_KEY=sk-...` not `OPENAI_API_KEY="sk-..."`)
+- `.env` file in wrong location (must be in project root with `package.json`)
 
-**Verify it's working:**
-- Check server logs for: "OpenAI API key not found" error messages
-- The API endpoint will log available OPENAI* environment variables to help debug
+**Still not working? Advanced troubleshooting:**
+1. Check server logs for detailed debug information about environment variables
+2. Verify `.env` file format: `cat .env` should show `OPENAI_API_KEY=sk-...` (one line, no quotes)
+3. Try running with explicit env var: `OPENAI_API_KEY=your-key npm run dev`
+4. The API endpoint now includes a dotenv fallback that will automatically load `.env` files
 
 For more detailed troubleshooting, see `PODCAST_FEATURE.md` and `SERVER_DEPLOYMENT.md`.
 

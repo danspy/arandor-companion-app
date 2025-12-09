@@ -7,6 +7,17 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { preparePodcastText } from '../../../../utils/podcast';
 
+// Load environment variables from .env file as fallback
+// This ensures compatibility if Astro doesn't load them automatically
+if (typeof process !== 'undefined' && !process.env.OPENAI_API_KEY) {
+  try {
+    const { config } = await import('dotenv');
+    config();
+  } catch (error) {
+    console.warn('dotenv not available, relying on Astro env loading');
+  }
+}
+
 /**
  * Generate podcast audio for a diary entry using OpenAI TTS
  * POST /api/diary/[id]/generate-podcast
@@ -43,16 +54,22 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
     const entry = entries[0];
 
     // Check if OpenAI API key is configured
-    const apiKey = process.env.OPENAI_API_KEY;
+    // Try both process.env and import.meta.env
+    const apiKey = process.env.OPENAI_API_KEY || import.meta.env.OPENAI_API_KEY;
     
     if (!apiKey) {
-      console.error('OpenAI API key not found. Checked process.env.OPENAI_API_KEY');
+      // Debug logging to help troubleshoot
+      console.error('OpenAI API key not found.');
+      console.error('Checked locations:');
+      console.error('  - process.env.OPENAI_API_KEY:', process.env.OPENAI_API_KEY ? 'Found' : 'Not found');
+      console.error('  - import.meta.env.OPENAI_API_KEY:', import.meta.env.OPENAI_API_KEY ? 'Found' : 'Not found');
       console.error('Available environment variables starting with OPENAI:', 
         Object.keys(process.env).filter(k => k.startsWith('OPENAI')));
+      console.error('All import.meta.env keys:', Object.keys(import.meta.env));
       
       return new Response(
         JSON.stringify({ 
-          error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable in .env file and restart the dev server.' 
+          error: 'OpenAI API key not configured. Please set OPENAI_API_KEY in .env file and restart dev server. Check server logs for debug info.' 
         }),
         {
           status: 500,
