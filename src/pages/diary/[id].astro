@@ -378,15 +378,15 @@ const renderedContent = renderMarkdown(entry.content);
     /* Apply filter to invert controls from black to white */
     filter: invert(1) hue-rotate(180deg);
     /* Set background color - will be affected by filter so use opposite color */
-    background-color: rgb(224, 214, 200); /* This inverts to approximately gray-800 */
+    background-color: rgb(255, 255, 255); /* This inverts to approximately gray-800 */
   }
   
   .dark audio#podcastAudio::-webkit-media-controls-panel {
-    background-color: rgb(224, 214, 200); /* Inverts to gray-800 */
+    background-color: rgb(255, 255, 255); /* Inverts to gray-800 */
   }
   
   .dark audio#podcastAudio::-webkit-media-controls-enclosure {
-    background-color: rgb(224, 214, 200); /* Inverts to gray-800 */
+    background-color: rgb(255, 255, 255); /* Inverts to gray-800 */
     border-radius: 0.5rem;
   }
 </style>
