@@ -108,6 +108,7 @@ CREATE TABLE IF NOT EXISTS "User" (
   "id" text PRIMARY KEY,
   "username" text NOT NULL UNIQUE,
   "passwordHash" text NOT NULL,
+  "role" text NOT NULL DEFAULT 'player',
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
 
@@ -150,6 +151,12 @@ ALTER TABLE "CampaignProgress" ADD COLUMN "heroImageUrl" text;
 -- This is safe to run even if the column already exists
 -- SQLite will silently ignore the error if the column exists
 ALTER TABLE "Location" ADD COLUMN "imageUrl" text;
+
+-- Add role column to existing User table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+-- All existing users will default to 'player' role
+ALTER TABLE "User" ADD COLUMN "role" text NOT NULL DEFAULT 'player';
 
 -- Create PageSettings table for storing hero images per page
 CREATE TABLE IF NOT EXISTS "PageSettings" (
