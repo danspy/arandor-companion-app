@@ -110,7 +110,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
       <!-- Character Info -->
       <div class="px-8 py-8">
         <!-- Quick Stats -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">
             <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Level</div>
             <div class="text-3xl font-bold text-primary-700 dark:text-primary-400">{character.level}</div>
@@ -128,22 +128,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
             <div class="text-3xl font-bold text-green-700 dark:text-green-400">{sessionCount}</div>
           </div>
         </div>
-
-        {/* D&D Beyond Link */}
-        {character.dndbeyondUrl && (
-          <div class="mb-6">
-            <a 
-              href={character.dndbeyondUrl}
-              target="_blank"
-              class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
-            >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              View on D&D Beyond
-            </a>
-          </div>
-        )}
       </div>
     </article>
 
@@ -260,6 +244,22 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         </div>
       </div>
     )}
+
+    {/* D&D Beyond Link */}
+        {character.dndbeyondUrl && (
+          <div class="mb-6">
+            <a 
+              href={character.dndbeyondUrl}
+              target="_blank"
+              class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+              View on D&D Beyond
+            </a>
+          </div>
+        )}
 
     <!-- Info Box about D&D Beyond Integration -->
     {isLoggedIn && (
