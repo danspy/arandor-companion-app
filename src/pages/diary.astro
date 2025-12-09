@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
+import { getVideoMimeType } from '../utils/video';
 
 const diaryEntries = await db.select().from(DiaryEntry);
 const npcs = await db.select().from(NPC);
@@ -22,21 +23,6 @@ const allTags = [...new Set(diaryEntries.flatMap(entry =>
 
 // Get max session number
 const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e.session)) : 0;
-
-// Helper function to get video MIME type from URL
-function getVideoMimeType(url: string): string {
-  const extension = url.split('.').pop()?.toLowerCase();
-  const mimeTypes: Record<string, string> = {
-    'mp4': 'video/mp4',
-    'webm': 'video/webm',
-    'ogg': 'video/ogg',
-    'ogv': 'video/ogg',
-    'mov': 'video/quicktime',
-    'avi': 'video/x-msvideo',
-    'm4v': 'video/x-m4v',
-  };
-  return mimeTypes[extension || ''] || 'video/mp4'; // Default to mp4 if unknown
-}
 ---
 
 <Layout title="Adventure Diary">
