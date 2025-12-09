@@ -56,7 +56,7 @@ If you have another admin user with proper permissions, you can update roles thr
 
 ### Detailed Documentation:
 - See [MIGRATION_GUIDE_role_system.md](MIGRATION_GUIDE_role_system.md) for complete migration instructions
-- See [scripts/README.md](scripts/README.md) for script documentation
+- See [../scripts/README.md](../scripts/README.md) for script documentation
 
 ---
 
@@ -105,7 +105,7 @@ This solution provides:
 - Shows before/after role information
 - Lists all users if the specified user doesn't exist
 
-### 2. Migration Guide: `MIGRATION_GUIDE_role_system.md`
+### 2. Migration Guide: `docs/MIGRATION_GUIDE_role_system.md`
 - Complete migration instructions for production
 - Explains the role system and its permissions
 - Multiple methods for updating roles
@@ -144,6 +144,7 @@ If you encounter any issues:
 ## Files Added/Modified
 
 - ✅ Added: `scripts/update-user-role.mjs` - Script to update user roles
-- ✅ Added: `MIGRATION_GUIDE_role_system.md` - Complete migration documentation
+- ✅ Added: `docs/MIGRATION_GUIDE_role_system.md` - Complete migration documentation
+- ✅ Added: `docs/SOLUTION_SUMMARY.md` - Quick reference answering both questions
 - ✅ Updated: `README.md` - User management section with role system info
 - ✅ Updated: `scripts/README.md` - Documentation for the new script

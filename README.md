@@ -227,7 +227,7 @@ node scripts/update-user-role.mjs admin admin
 - Role: `admin` (for new installations)
 - ⚠️ **Important:** Change the default admin password after first login for security
 
-**Migration Note:** If you created your admin user before the role system was added, see [MIGRATION_GUIDE_role_system.md](MIGRATION_GUIDE_role_system.md) for instructions on updating the role.
+**Migration Note:** If you created your admin user before the role system was added, see [docs/MIGRATION_GUIDE_role_system.md](docs/MIGRATION_GUIDE_role_system.md) for instructions on updating the role.
 
 ### Managing Content
 
