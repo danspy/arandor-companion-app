@@ -352,10 +352,11 @@ const renderedContent = renderMarkdown(entry.content);
     margin-top: 2rem;
   }
 
-  /* Audio player styling for both light and dark mode */
+  /* Audio player base styling */
   audio#podcastAudio {
     border-radius: 0.5rem;
     padding: 0.5rem;
+    width: 100%;
   }
   
   /* Light mode styling */
@@ -372,14 +373,11 @@ const renderedContent = renderMarkdown(entry.content);
     border-radius: 0.5rem;
   }
   
-  /* Dark mode styling for audio player - match regenerate button color */
+  /* Dark mode styling - gray-800 background matching regenerate button */
   .dark audio#podcastAudio {
     background-color: rgb(31, 41, 55); /* gray-800 */
-    color: white;
-    filter: invert(1) hue-rotate(180deg);
   }
   
-  /* Dark mode: Ensure background stays gray-800 after filter */
   .dark audio#podcastAudio::-webkit-media-controls-panel {
     background-color: rgb(31, 41, 55); /* gray-800 */
   }
@@ -389,19 +387,27 @@ const renderedContent = renderMarkdown(entry.content);
     border-radius: 0.5rem;
   }
   
-  /* Dark mode: White text for time displays */
+  /* Dark mode: Make controls and text white/visible */
+  .dark audio#podcastAudio::-webkit-media-controls-play-button,
+  .dark audio#podcastAudio::-webkit-media-controls-mute-button {
+    background-color: white;
+    border-radius: 50%;
+  }
+  
   .dark audio#podcastAudio::-webkit-media-controls-current-time-display,
   .dark audio#podcastAudio::-webkit-media-controls-time-remaining-display {
     color: white;
-    filter: invert(1) hue-rotate(180deg);
+    text-shadow: none;
   }
   
-  /* Dark mode: White controls (play, pause, mute buttons) */
-  .dark audio#podcastAudio::-webkit-media-controls-play-button,
-  .dark audio#podcastAudio::-webkit-media-controls-mute-button,
-  .dark audio#podcastAudio::-webkit-media-controls-timeline,
+  .dark audio#podcastAudio::-webkit-media-controls-timeline {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0.25rem;
+  }
+  
   .dark audio#podcastAudio::-webkit-media-controls-volume-slider {
-    filter: invert(1) hue-rotate(180deg);
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 0.25rem;
   }
 </style>
 
