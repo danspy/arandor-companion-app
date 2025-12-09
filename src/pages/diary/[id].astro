@@ -424,6 +424,8 @@ const renderedContent = renderMarkdown(entry.content);
     }
 
     // Get the best German voice
+    // Note: This function is duplicated from src/utils/podcast.ts because
+    // client-side Astro script tags cannot import from TypeScript utility files
     function getBestGermanVoice(): SpeechSynthesisVoice | undefined {
       const voices = window.speechSynthesis.getVoices();
       
