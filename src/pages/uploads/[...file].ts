@@ -78,52 +78,54 @@ export const GET: APIRoute = async ({ params, request }) => {
       
       if (rangeHeader && isVideoMimeType(mimeType)) {
         // Parse Range header (format: "bytes=start-end")
+        // Note: This handles standard ranges (e.g., "bytes=0-1023", "bytes=1024-")
+        // Suffix ranges (e.g., "bytes=-500") are not common for video streaming
+        // and will fall back to serving the complete file
         const parts = rangeHeader.replace(/bytes=/, '').split('-');
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
         
         // Validate range - check for NaN, negative values, and out-of-bounds
-        if (isNaN(start) || isNaN(end) || start < 0 || end < 0 || 
-            start >= fileSize || end >= fileSize || start > end) {
-          return new Response('Range Not Satisfiable', { 
-            status: 416,
+        // If validation fails (including suffix ranges), fall through to serve complete file
+        const isValidRange = !isNaN(start) && !isNaN(end) && start >= 0 && end >= 0 && 
+                             start < fileSize && end < fileSize && start <= end;
+        
+        if (!isValidRange) {
+          // Invalid range - fall through to serve complete file instead of returning 416
+          // This provides better compatibility with various clients
+        } else {
+          const chunkSize = (end - start) + 1;
+          
+          // Create readable stream for the requested range
+          const stream = createReadStream(filepath, { start, end });
+          
+          // Convert Node.js stream to Web Stream
+          const webStream = new ReadableStream({
+            start(controller) {
+              stream.on('data', (chunk: Buffer) => {
+                // Efficiently convert Buffer to Uint8Array without copying
+                controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+              });
+              stream.on('end', () => controller.close());
+              stream.on('error', (err) => controller.error(err));
+            },
+            cancel() {
+              stream.destroy();
+            }
+          });
+          
+          // Return partial content response (206)
+          return new Response(webStream, {
+            status: 206,
             headers: {
-              'Content-Range': `bytes */${fileSize}`
+              'Content-Type': mimeType,
+              'Content-Length': chunkSize.toString(),
+              'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=31536000, immutable'
             }
           });
         }
-        
-        const chunkSize = (end - start) + 1;
-        
-        // Create readable stream for the requested range
-        const stream = createReadStream(filepath, { start, end });
-        
-        // Convert Node.js stream to Web Stream
-        const webStream = new ReadableStream({
-          start(controller) {
-            stream.on('data', (chunk: Buffer) => {
-              // Efficiently convert Buffer to Uint8Array without copying
-              controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
-            });
-            stream.on('end', () => controller.close());
-            stream.on('error', (err) => controller.error(err));
-          },
-          cancel() {
-            stream.destroy();
-          }
-        });
-        
-        // Return partial content response (206)
-        return new Response(webStream, {
-          status: 206,
-          headers: {
-            'Content-Type': mimeType,
-            'Content-Length': chunkSize.toString(),
-            'Content-Range': `bytes ${start}-${end}/${fileSize}`,
-            'Accept-Ranges': 'bytes',
-            'Cache-Control': 'public, max-age=31536000, immutable'
-          }
-        });
       }
       
       // For non-Range requests or non-video files, serve the complete file
