@@ -3,11 +3,9 @@ import Layout from '../layouts/Layout.astro';
 import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
-// Only dungeonmaster and admin can access dashboard
+// Dashboard is viewable by everyone, editable by dungeonmaster and admin
 const userRole = await getUserRole(Astro.cookies);
-if (!userRole || (userRole !== 'dungeonmaster' && userRole !== 'admin')) {
-  return Astro.redirect('/diary');
-}
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
 const diaryEntries = await db.select().from(DiaryEntry);
 const quests = await db.select().from(Quest);
@@ -65,7 +63,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         alt="Campaign Hero"
         class="w-full h-64 md:h-80 lg:h-96 object-cover"
       />
-      {isLoggedIn && (
+      {canEdit && (
         <button 
           class="edit-hero-image-btn absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg"
         >
@@ -77,7 +75,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     <div class="mb-8">
       <div class="flex justify-between items-center">
         <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Dashboard</h1>
-        {isLoggedIn && (
+        {canEdit && (
           <button 
             class="edit-hero-image-btn px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
           >
@@ -92,7 +90,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Campaign Progress</h2>
-      {isLoggedIn && (
+      {canEdit && (
         <button 
           id="editProgressBtn"
           class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
@@ -141,7 +139,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Faction Standings</h2>
-      {isLoggedIn && (
+      {canEdit && (
         <button 
           id="addFactionBtn"
           class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
@@ -170,7 +168,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               <span class="font-medium text-gray-700 dark:text-gray-300">{faction.name}</span>
               <div class="flex items-center gap-2">
                 <span class="text-xs text-gray-500 dark:text-gray-400">{faction.progress}%</span>
-                {isLoggedIn && (
+                {canEdit && (
                   <button 
                     class="edit-faction-btn text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                     data-faction-id={faction.id}
@@ -183,7 +181,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
                     </svg>
                   </button>
                 )}
-                {isLoggedIn && (
+                {canEdit && (
                   <button 
                     class="delete-faction-btn text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                     data-faction-id={faction.id}
@@ -343,7 +341,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   </div>
 
   <!-- Edit Progress Modal -->
-  {isLoggedIn && (
+  {canEdit && (
     <div id="editProgressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
         <div class="flex justify-between items-center mb-6">
@@ -411,7 +409,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   )}
 
   <!-- Hero Image Modal -->
-  {isLoggedIn && (
+  {canEdit && (
     <div id="heroImageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
         <div class="flex justify-between items-center mb-6">
@@ -490,7 +488,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   )}
 
   <!-- Faction Modal (Add/Edit) -->
-  {isLoggedIn && (
+  {canEdit && (
     <div id="factionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
       <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700">
         <div class="flex justify-between items-center mb-6">
