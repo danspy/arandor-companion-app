@@ -668,9 +668,9 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       heroImageForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const fileInput = document.getElementById('heroImageFile') as HTMLInputElement;
-        const urlInput = document.getElementById('heroImageUrl') as HTMLInputElement;
-        const submitBtn = document.getElementById('heroImageSubmitBtn') as HTMLButtonElement;
+        const fileInput = document.getElementById('heroImageFile');
+        const urlInput = document.getElementById('heroImageUrl');
+        const submitBtn = document.getElementById('heroImageSubmitBtn');
         const submitText = document.getElementById('heroImageSubmitText');
         const submitLoading = document.getElementById('heroImageSubmitLoading');
         

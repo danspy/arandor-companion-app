@@ -169,9 +169,9 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
         e.preventDefault();
         
         const pageName = form.getAttribute('data-page-name');
-        const urlInput = form.querySelector('.hero-url-input') as HTMLInputElement;
-        const fileInput = form.querySelector('.hero-file-input') as HTMLInputElement;
-        const submitBtn = form.querySelector('.hero-submit-btn') as HTMLButtonElement;
+        const urlInput = form.querySelector('.hero-url-input');
+        const fileInput = form.querySelector('.hero-file-input');
+        const submitBtn = form.querySelector('.hero-submit-btn');
         const submitText = submitBtn?.querySelector('.hero-submit-text');
         const submitLoading = submitBtn?.querySelector('.hero-submit-loading');
         
