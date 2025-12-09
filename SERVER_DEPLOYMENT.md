@@ -160,9 +160,19 @@ sudo journalctl -u arandor.service -n 50 -f
 # Verify the .env file exists and contains the key:
 cat .env | grep OPENAI_API_KEY
 
-# Make sure the service is restarted after creating/updating .env:
+# For PRODUCTION - make sure the service is restarted after creating/updating .env:
 sudo systemctl restart arandor.service
+
+# For DEVELOPMENT - stop and restart the dev server:
+# Press Ctrl+C to stop, then run:
+npm run dev
 ```
+
+**Important Notes:**
+- The `.env` file must exist BEFORE starting the server
+- Changes to `.env` require a server restart to take effect
+- The dev server does NOT automatically reload when `.env` changes
+- Check server logs for "OpenAI API key not found" debug messages
 
 ### "Failed to generate podcast" Error
 

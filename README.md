@@ -91,12 +91,15 @@ npm install
 ```bash
 cp .env.example .env
 # Edit .env and add your OpenAI API key
+# IMPORTANT: The dev server must be started AFTER creating .env
 ```
 
 4. Start the development server:
 ```bash
 npm run dev
 ```
+
+**Note:** If you add or modify `.env` after starting the dev server, you must restart it (Ctrl+C, then `npm run dev` again) for changes to take effect.
 
 5. Open your browser to [http://localhost:4321](http://localhost:4321)
 
@@ -307,6 +310,36 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [ ] Session scheduling and reminders
 - [ ] Dice roller integration
 - [ ] Initiative tracker
+
+## Troubleshooting
+
+### Podcast Feature: "OpenAI API key not configured" Error
+
+If you see this error when trying to generate a podcast:
+
+**Problem:** The `.env` file is not being loaded or the dev server hasn't been restarted.
+
+**Solution:**
+1. Ensure `.env` file exists in the project root (same directory as `package.json`)
+2. Verify the file contains: `OPENAI_API_KEY=your-actual-api-key`
+3. **Restart the dev server:**
+   ```bash
+   # Press Ctrl+C to stop the server
+   npm run dev
+   ```
+4. Try generating the podcast again
+
+**Common mistakes:**
+- Creating `.env` while the dev server is running (must restart)
+- Typo in the variable name (must be exactly `OPENAI_API_KEY`)
+- Missing or invalid API key
+- Whitespace or quotes around the key value (use: `OPENAI_API_KEY=sk-...` not `OPENAI_API_KEY="sk-..."`)
+
+**Verify it's working:**
+- Check server logs for: "OpenAI API key not found" error messages
+- The API endpoint will log available OPENAI* environment variables to help debug
+
+For more detailed troubleshooting, see `PODCAST_FEATURE.md` and `SERVER_DEPLOYMENT.md`.
 
 ## Contributing
 

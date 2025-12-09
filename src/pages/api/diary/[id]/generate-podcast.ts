@@ -46,9 +46,13 @@ export const POST: APIRoute = async ({ params, cookies, request }) => {
     const apiKey = process.env.OPENAI_API_KEY;
     
     if (!apiKey) {
+      console.error('OpenAI API key not found. Checked process.env.OPENAI_API_KEY');
+      console.error('Available environment variables starting with OPENAI:', 
+        Object.keys(process.env).filter(k => k.startsWith('OPENAI')));
+      
       return new Response(
         JSON.stringify({ 
-          error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.' 
+          error: 'OpenAI API key not configured. Please set OPENAI_API_KEY environment variable in .env file and restart the dev server.' 
         }),
         {
           status: 500,
