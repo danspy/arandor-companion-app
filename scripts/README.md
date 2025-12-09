@@ -14,28 +14,41 @@ This directory contains database migration scripts, user management tools, and s
 
 **Usage:**
 ```bash
-node scripts/add-user.mjs <username> <password>
+node scripts/add-user.mjs <username> <password> [role]
 ```
+
+**Roles:**
+- `admin` - Full access to everything including user management
+- `dungeonmaster` - Can access dashboard, map, quests, and all player content
+- `player` - Can edit diary, library, characters, NPCs, and locations
+- Default role if not specified: `player`
 
 **Example:**
 ```bash
-# Add a new user named 'john' with password 'secretpassword'
-node scripts/add-user.mjs john secretpassword
+# Add a player user
+node scripts/add-user.mjs john secretpassword player
+
+# Add a dungeon master
+node scripts/add-user.mjs dm_alice dmpassword dungeonmaster
+
+# Add an admin (defaults to player if role not specified)
+node scripts/add-user.mjs superadmin adminpass admin
 
 # Using custom database location
-ASTRO_DATABASE_FILE=/custom/path/db.db node scripts/add-user.mjs jane mypassword
+ASTRO_DATABASE_FILE=/custom/path/db.db node scripts/add-user.mjs jane mypassword player
 ```
 
 **Features:**
 - Validates username (minimum 3 characters)
 - Validates password (minimum 6 characters)
+- Validates role (admin, dungeonmaster, or player)
 - Checks for duplicate usernames
 - Uses the same password hashing as the app
 - Works with the database specified in ASTRO_DATABASE_FILE environment variable
 
 **Notes:**
 - The database must exist before adding users (run `npm run build` first if needed)
-- Users can also be added through the web interface at `/users` page (requires login)
+- Users can also be added through the web interface at `/users` page (admin only)
 
 ## Database Update Script
 

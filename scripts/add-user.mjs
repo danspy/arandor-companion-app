@@ -7,10 +7,12 @@
  * It uses the same database connection and password hashing as the app.
  * 
  * Usage:
- *   node scripts/add-user.mjs <username> <password>
+ *   node scripts/add-user.mjs <username> <password> [role]
  *   
  * Example:
- *   node scripts/add-user.mjs newuser mypassword
+ *   node scripts/add-user.mjs newuser mypassword player
+ * 
+ * Roles: admin, dungeonmaster, player (default: player)
  */
 
 import { fileURLToPath } from 'url';
@@ -41,18 +43,28 @@ async function main() {
   // Parse command line arguments
   const args = process.argv.slice(2);
   
-  if (args.length !== 2) {
+  if (args.length < 2 || args.length > 3) {
     console.error('Error: Invalid arguments');
     console.error('');
     console.error('Usage:');
-    console.error('  node scripts/add-user.mjs <username> <password>');
+    console.error('  node scripts/add-user.mjs <username> <password> [role]');
     console.error('');
     console.error('Example:');
-    console.error('  node scripts/add-user.mjs john secretpassword');
+    console.error('  node scripts/add-user.mjs john secretpassword player');
+    console.error('');
+    console.error('Roles: admin, dungeonmaster, player (default: player)');
     process.exit(1);
   }
 
-  const [username, password] = args;
+  const [username, password, role = 'player'] = args;
+
+  // Validate role
+  const validRoles = ['admin', 'dungeonmaster', 'player'];
+  if (!validRoles.includes(role)) {
+    console.error(`Error: Invalid role '${role}'`);
+    console.error('Valid roles: admin, dungeonmaster, player');
+    process.exit(1);
+  }
 
   // Validate username
   if (username.length < 3) {
@@ -97,14 +109,15 @@ async function main() {
     const createdAt = new Date().getTime(); // Unix timestamp in milliseconds
     
     const result = await client.execute({
-      sql: 'INSERT INTO User (id, username, passwordHash, createdAt) VALUES (?, ?, ?, ?)',
-      args: [userId, username, passwordHash, createdAt]
+      sql: 'INSERT INTO User (id, username, passwordHash, role, createdAt) VALUES (?, ?, ?, ?, ?)',
+      args: [userId, username, passwordHash, role, createdAt]
     });
     
     if (result.rowsAffected === 1) {
       console.log('');
       console.log('✅ User created successfully!');
       console.log(`   Username: ${username}`);
+      console.log(`   Role:     ${role}`);
       console.log(`   User ID:  ${userId}`);
       console.log('');
       console.log('The user can now login at the /login page');
