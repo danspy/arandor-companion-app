@@ -174,7 +174,8 @@ const renderedContent = renderMarkdown(entry.content);
           </button>
           <button
             id="pausePodcastBtn"
-            class="hidden flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-medium text-sm"
+            class="hidden items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-medium text-sm"
+            style="display: none;"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
@@ -183,7 +184,8 @@ const renderedContent = renderMarkdown(entry.content);
           </button>
           <button
             id="stopPodcastBtn"
-            class="hidden flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium text-sm"
+            class="hidden items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium text-sm"
+            style="display: none;"
           >
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
               <path d="M6 6h12v12H6z"/>
@@ -494,9 +496,9 @@ const renderedContent = renderMarkdown(entry.content);
       if (isPaused) {
         window.speechSynthesis.resume();
         isPaused = false;
-        playBtn.classList.add('hidden');
-        pauseBtn.classList.remove('hidden');
-        stopBtn.classList.remove('hidden');
+        playBtn.style.display = 'none';
+        pauseBtn.style.display = 'flex';
+        stopBtn.style.display = 'flex';
         statusDiv.classList.remove('hidden');
         statusText.textContent = 'Playing podcast...';
       } else {
@@ -512,16 +514,16 @@ const renderedContent = renderMarkdown(entry.content);
           }
 
           utterance.onend = () => {
-            playBtn.classList.remove('hidden');
-            pauseBtn.classList.add('hidden');
-            stopBtn.classList.add('hidden');
+            playBtn.style.display = 'flex';
+            pauseBtn.style.display = 'none';
+            stopBtn.style.display = 'none';
             statusDiv.classList.add('hidden');
           };
 
           window.speechSynthesis.speak(utterance);
-          playBtn.classList.add('hidden');
-          pauseBtn.classList.remove('hidden');
-          stopBtn.classList.remove('hidden');
+          playBtn.style.display = 'none';
+          pauseBtn.style.display = 'flex';
+          stopBtn.style.display = 'flex';
           statusDiv.classList.remove('hidden');
           statusText.textContent = 'Playing podcast...';
         } catch (error) {
@@ -536,8 +538,8 @@ const renderedContent = renderMarkdown(entry.content);
     pauseBtn.addEventListener('click', () => {
       window.speechSynthesis.pause();
       isPaused = true;
-      playBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
+      playBtn.style.display = 'flex';
+      pauseBtn.style.display = 'none';
       statusText.textContent = 'Podcast paused';
     });
 
@@ -545,9 +547,9 @@ const renderedContent = renderMarkdown(entry.content);
     stopBtn.addEventListener('click', () => {
       window.speechSynthesis.cancel();
       isPaused = false;
-      playBtn.classList.remove('hidden');
-      pauseBtn.classList.add('hidden');
-      stopBtn.classList.add('hidden');
+      playBtn.style.display = 'flex';
+      pauseBtn.style.display = 'none';
+      stopBtn.style.display = 'none';
       statusDiv.classList.add('hidden');
     });
 
