@@ -110,83 +110,82 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     {locations.map(location => (
       <div class="location-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
         <a href={`/locations/${location.id}`} class="block">
-          {location.imageUrl ? (
-            <div class="relative h-32 overflow-hidden">
-              <img 
-                src={location.imageUrl} 
-                alt={location.name}
-                class="w-full h-full object-cover"
-              />
-              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-              
-              <!-- Type badge on image -->
-              <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
-                location.type === 'city' ? 'bg-blue-600/90' :
-                location.type === 'dungeon' ? 'bg-purple-600/90' :
-                location.type === 'wilderness' ? 'bg-green-600/90' :
-                location.type === 'building' ? 'bg-amber-600/90' :
-                'bg-gray-600/90'
-              }`}>
-                {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
-              </div>
+          <div class="relative h-40 overflow-hidden">
+            <!-- Background -->
+            {location.imageUrl ? (
+              <>
+                <img 
+                  src={location.imageUrl} 
+                  alt={location.name}
+                  class="absolute inset-0 w-full h-full object-cover blur-md scale-110"
+                />
+                <div class="absolute inset-0 bg-black/30"></div>
+              </>
+            ) : (
+              <div class={`absolute inset-0 ${
+                location.type === 'city' ? 'bg-gradient-to-br from-blue-600 to-blue-500' :
+                location.type === 'dungeon' ? 'bg-gradient-to-br from-purple-600 to-purple-500' :
+                location.type === 'wilderness' ? 'bg-gradient-to-br from-green-600 to-green-500' :
+                location.type === 'building' ? 'bg-gradient-to-br from-amber-600 to-amber-500' :
+                'bg-gradient-to-br from-gray-600 to-gray-500'
+              }`}></div>
+            )}
+            
+            <!-- Centered icon/image -->
+            <div class="relative h-full flex items-center justify-center">
+              {location.imageUrl ? (
+                <img 
+                  src={location.imageUrl} 
+                  alt={location.name}
+                  class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                />
+              ) : (
+                <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-5xl font-bold text-primary-700 dark:text-primary-400 shadow-xl border-4 border-white dark:border-gray-700">
+                  {location.name.charAt(0)}
+                </div>
+              )}
             </div>
-          ) : (
-            <div class={`h-2 ${
-              location.type === 'city' ? 'bg-blue-500' :
-              location.type === 'dungeon' ? 'bg-purple-600' :
-              location.type === 'wilderness' ? 'bg-green-500' :
-              location.type === 'building' ? 'bg-amber-500' :
-              'bg-gray-500'
-            }`}></div>
-          )}
+            
+            <!-- Type badge -->
+            <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
+              location.type === 'city' ? 'bg-blue-600/90' :
+              location.type === 'dungeon' ? 'bg-purple-600/90' :
+              location.type === 'wilderness' ? 'bg-green-600/90' :
+              location.type === 'building' ? 'bg-amber-600/90' :
+              'bg-gray-600/90'
+            }`}>
+              {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
+            </div>
+          </div>
         </a>
         
         <div class="p-6">
-          <a href={`/locations/${location.id}`} class="block hover:text-primary-700 transition">
-            <div class="flex justify-between items-start mb-3">
-              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">{location.name}</h2>
+          <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
+            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{location.name}</h2>
+            <p class="text-gray-600 dark:text-gray-400 mb-4">
+              {location.region && `${location.region}`}
               {location.visited && (
-                <span class="bg-green-100 dark:bg-green-900/20 dark:border dark:border-green-800 text-green-700 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
-                  ✓ Visited
-                </span>
+                <span class="ml-2 text-green-600 dark:text-green-400">✓ Visited</span>
               )}
-            </div>
-
-            <div class="flex gap-2 mb-3">
-              {!location.imageUrl && (
-                <span class={`px-2 py-1 rounded text-xs font-medium ${
-                  location.type === 'city' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-400' :
-                  location.type === 'dungeon' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/20 dark:text-purple-400' :
-                  location.type === 'wilderness' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                  location.type === 'building' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-400' :
-                  'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300'
-                }`}>
-                  {location.type}
-                </span>
-              )}
-              {location.region && (
-                <span class="bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-1 rounded text-xs">
-                  {location.region}
-                </span>
-              )}
-            </div>
+            </p>
           </a>
 
           {location.notes && (
-            <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-3 mb-4 dark:border dark:border-blue-800">
-              <p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> {location.notes}</p>
+            <div class="mb-3">
+              <span class="text-sm text-gray-500 dark:text-gray-400">📝 </span>
+              <span class="text-sm text-gray-700 dark:text-gray-300">{location.notes}</span>
             </div>
           )}
 
           <a 
             href={`/locations/${location.id}`}
-            class="block mb-2 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
           >
             View Details →
           </a>
 
           {isLoggedIn && (
-            <div class="flex gap-2">
+            <div class="flex gap-2 mt-2">
               <button class="edit-location flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={location.id}>
                 Edit
               </button>
