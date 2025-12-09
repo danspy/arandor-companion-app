@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, Quest } from 'astro:db';
+import PageHero from '../components/PageHero.astro';
+import { db, Quest, PageSettings, eq } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const quests = await db.select().from(Quest);
@@ -29,20 +30,30 @@ const sortedQuests = [...quests].sort((a, b) => {
   const priorityB = priorityOrder[b.priority] ?? 3;
   return priorityA - priorityB;
 });
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'quests'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
 <Layout title="Quests">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Quests</h1>
-    {isLoggedIn && (
+  <PageHero 
+    title="Quests" 
+    heroImageUrl={heroImageUrl}
+    pageName="quests"
+    isLoggedIn={isLoggedIn}
+  />
+
+  {isLoggedIn && (
+    <div class="flex justify-end mb-4">
       <button 
         id="addQuest"
         class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
         + Add Quest
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">

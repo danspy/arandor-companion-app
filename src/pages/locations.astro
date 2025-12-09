@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, Location } from 'astro:db';
+import PageHero from '../components/PageHero.astro';
+import { db, Location, PageSettings, eq } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const locations = await db.select().from(Location);
@@ -11,20 +12,30 @@ const unvisitedLocations = locations.filter(l => !l.visited);
 
 // Get unique types for filtering
 const allTypes = [...new Set(locations.map(l => l.type).filter(Boolean))].sort();
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'locations'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
 <Layout title="Locations">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Locations</h1>
-    {isLoggedIn && (
+  <PageHero 
+    title="Locations" 
+    heroImageUrl={heroImageUrl}
+    pageName="locations"
+    isLoggedIn={isLoggedIn}
+  />
+
+  {isLoggedIn && (
+    <div class="flex justify-end mb-4">
       <button 
         id="addLocation"
         class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
         + Add Location
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">

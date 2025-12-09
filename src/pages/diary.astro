@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, DiaryEntry, NPC, Location, Character, Quest } from 'astro:db';
+import PageHero from '../components/PageHero.astro';
+import { db, DiaryEntry, NPC, Location, Character, Quest, PageSettings, eq } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 import { getVideoMimeType } from '../utils/video';
 
@@ -23,20 +24,30 @@ const allTags = [...new Set(diaryEntries.flatMap(entry =>
 
 // Get max session number
 const maxSession = diaryEntries.length > 0 ? Math.max(...diaryEntries.map(e => e.session)) : 0;
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'diary'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
 <Layout title="Adventure Diary">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Adventure Diary</h1>
-    {isLoggedIn && (
+  <PageHero 
+    title="Adventure Diary" 
+    heroImageUrl={heroImageUrl}
+    pageName="diary"
+    isLoggedIn={isLoggedIn}
+  />
+
+  {isLoggedIn && (
+    <div class="flex justify-end mb-4">
       <button 
         id="addEntry"
         class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
-        + New Entry
+        + Add Entry
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">

@@ -84,6 +84,7 @@ const Location = defineTable({
     region: column.text({ optional: true }),
     visited: column.boolean({ default: false }),
     notes: column.text({ optional: true }),
+    imageUrl: column.text({ optional: true }), // Optional image for the location
     // Map coordinates (percentage-based for responsive positioning)
     mapX: column.number({ optional: true }), // X coordinate (0-100)
     mapY: column.number({ optional: true }), // Y coordinate (0-100)
@@ -107,6 +108,7 @@ const CampaignProgress = defineTable({
     id: column.text({ primaryKey: true }),
     currentLevel: column.number(),
     progressPercent: column.number(), // 0-100 in steps of 10
+    heroImageUrl: column.text({ optional: true }), // Optional hero/banner image for dashboard
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
@@ -135,6 +137,16 @@ const Faction = defineTable({
   }
 });
 
+const PageSettings = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    pageName: column.text({ unique: true }), // 'dashboard' | 'characters' | 'diary' | 'library' | 'locations' | 'npcs' | 'quests'
+    heroImageUrl: column.text({ optional: true }), // Optional hero/banner image for the page
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -146,5 +158,6 @@ export default defineDb({
     CampaignProgress,
     LibraryEntry,
     Faction,
+    PageSettings,
   }
 });
