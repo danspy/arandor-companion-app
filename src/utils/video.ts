@@ -27,15 +27,20 @@ export function getVideoMimeType(url: string): string {
 
 /**
  * Initialize video autoplay for all videos on the page
- * This is needed for Astro View Transitions to ensure videos play after navigation
+ * This is needed for Astro View Transitions to ensure videos with the autoplay attribute play after navigation
+ * Note: Only reloads videos that aren't already loaded to avoid unnecessary resource reloading
  */
 export function initializeVideoAutoplay(): void {
   const videos = document.querySelectorAll('video');
   videos.forEach(video => {
-    // Reset and play the video to ensure autoplay works after navigation
-    video.load();
+    // Only reload if video hasn't loaded yet (prevents unnecessary resource reloading)
+    if (video.readyState === 0) {
+      video.load();
+    }
+    
+    // Attempt to play the video (required after View Transitions navigation)
     video.play().catch(error => {
-      // Autoplay might be blocked, which is fine - user needs to interact first
+      // Autoplay might be blocked by browser policy, which is expected behavior
       console.debug('Video autoplay prevented:', error);
     });
   });
