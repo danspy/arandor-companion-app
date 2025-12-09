@@ -101,7 +101,10 @@ export const GET: APIRoute = async ({ params, request }) => {
         // Convert Node.js stream to Web Stream
         const webStream = new ReadableStream({
           start(controller) {
-            stream.on('data', (chunk) => controller.enqueue(new Uint8Array(chunk)));
+            stream.on('data', (chunk: Buffer) => {
+              // Efficiently convert Buffer to Uint8Array without copying
+              controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+            });
             stream.on('end', () => controller.close());
             stream.on('error', (err) => controller.error(err));
           },
