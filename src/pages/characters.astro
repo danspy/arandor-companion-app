@@ -91,7 +91,7 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     {characters.map(character => (
       <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} data-is-active={character.isActive ? "true" : "false"}>
         <a href={`/characters/${character.id}`} class="block">
-          <div class={`bg-gradient-to-r ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'} h-24 flex items-center justify-center relative`}>
+          <div class={`bg-gradient-to-r ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'} h-40 flex items-center justify-center relative`}>
             {!character.isActive && (
               <div class="absolute top-2 right-2 bg-gray-800 text-white text-xs px-2 py-1 rounded">
                 Inactive
@@ -101,10 +101,10 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
               <img 
                 src={character.avatarUrl} 
                 alt={character.name}
-                class="w-16 h-16 rounded-full object-cover border-2 border-white"
+                class="w-28 h-28 rounded-full object-cover border-4 border-white shadow-lg"
               />
             ) : (
-              <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-3xl">
+              <div class="w-28 h-28 bg-white rounded-full flex items-center justify-center text-4xl font-bold text-primary-700 shadow-lg border-4 border-white">
                 {character.name.charAt(0)}
               </div>
             )}
