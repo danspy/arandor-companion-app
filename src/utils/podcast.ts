@@ -1,18 +1,17 @@
 /**
- * Podcast generation utilities using Web Speech API
- * Provides text-to-speech functionality for diary entries
+ * Podcast generation utilities for diary entries
  * 
- * IMPORTANT: This implementation generates audio ON-DEMAND in real-time.
- * - NO audio files are created or stored
- * - NO database fields needed for storing audio URLs
- * - NO server-side processing required
- * - Audio is synthesized by the browser each time the user clicks "Play"
+ * This utility provides text preprocessing for podcast generation.
+ * The actual audio generation is done server-side using OpenAI TTS API.
  * 
- * For future enhancement: If you want to pre-generate and store audio files,
- * you would need to:
- * 1. Add a podcastAudioUrl column to the DiaryEntry table
- * 2. Implement a server-side TTS service to generate audio files
- * 3. Store generated files and save their URLs to the database
+ * Architecture:
+ * - Text preprocessing happens here (removing markdown, adding pauses)
+ * - Audio generation happens in /api/diary/[id]/generate-podcast endpoint
+ * - Generated MP3 files are stored in /uploads directory
+ * - Database stores the podcast URL in the podcastAudioUrl field
+ * 
+ * Legacy Web Speech API functions are kept below for backward compatibility
+ * but are no longer used in the main application.
  */
 
 export interface PodcastOptions {

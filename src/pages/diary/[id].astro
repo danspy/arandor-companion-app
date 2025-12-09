@@ -145,31 +145,58 @@ const renderedContent = renderMarkdown(entry.content);
       )}
 
       <!-- Podcast Player -->
-      <div class="mb-6 flex items-center gap-3">
-        <button
-          id="playPauseBtn"
-          class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
-          title="Play"
-        >
-          <svg id="playIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <svg id="pauseIcon" class="hidden w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-          </svg>
-        </button>
-        <button
-          id="stopBtn"
-          class="hidden w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all"
-          title="Stop"
-        >
-          <svg class="w-4 h-4 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 6h12v12H6z"/>
-          </svg>
-        </button>
-        <div id="podcastStatus" class="text-xs text-gray-500 dark:text-gray-500 hidden">
-          <span id="podcastStatusText"></span>
-        </div>
+      <div class="mb-6">
+        {entry.podcastAudioUrl ? (
+          <div class="flex flex-col gap-3">
+            <audio 
+              id="podcastAudio"
+              controls 
+              class="w-full rounded-lg"
+              preload="metadata"
+            >
+              <source src={entry.podcastAudioUrl} type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+            {isLoggedIn && (
+              <button
+                id="regeneratePodcast"
+                data-entry-id={entry.id}
+                class="text-sm px-4 py-2 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 rounded-lg transition flex items-center gap-2 w-fit"
+                title="Regenerate podcast audio"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Regenerate Podcast
+              </button>
+            )}
+          </div>
+        ) : (
+          <div class="flex flex-col gap-2">
+            {isLoggedIn ? (
+              <button
+                id="generatePodcast"
+                data-entry-id={entry.id}
+                class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition flex items-center gap-2 w-fit"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                </svg>
+                Generate Podcast
+              </button>
+            ) : (
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                <svg class="w-4 h-4 inline-block mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Podcast not yet generated
+              </p>
+            )}
+            <div id="podcastStatus" class="text-sm text-gray-600 dark:text-gray-400 hidden">
+              <span id="podcastStatusText"></span>
+            </div>
+          </div>
+        )}
       </div>
 
       <!-- Content -->
@@ -324,6 +351,44 @@ const renderedContent = renderMarkdown(entry.content);
   .diary-text p + p {
     margin-top: 2rem;
   }
+
+  /* Audio player base styling */
+  audio#podcastAudio {
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    width: 100%;
+  }
+  
+  /* Light mode styling - gray-100 background */
+  audio#podcastAudio {
+    background-color: #f3f4f6; /* gray-100 */
+  }
+  
+  audio#podcastAudio::-webkit-media-controls-panel {
+    background-color: #f3f4f6; /* gray-100 */
+  }
+  
+  audio#podcastAudio::-webkit-media-controls-enclosure {
+    background-color: #f3f4f6; /* gray-100 */
+    border-radius: 0.5rem;
+  }
+  
+  /* Dark mode - invert colors (black becomes white) with gray-800 background */
+  .dark audio#podcastAudio {
+    /* Apply filter to invert controls from black to white */
+    filter: invert(1) hue-rotate(180deg);
+    /* Set background color - will be affected by filter so use opposite color */
+    background-color: rgb(255, 255, 255); /* This inverts to approximately gray-800 */
+  }
+  
+  .dark audio#podcastAudio::-webkit-media-controls-panel {
+    background-color: rgb(255, 255, 255); /* Inverts to gray-800 */
+  }
+  
+  .dark audio#podcastAudio::-webkit-media-controls-enclosure {
+    background-color: rgb(255, 255, 255); /* Inverts to gray-800 */
+    border-radius: 0.5rem;
+  }
 </style>
 
 <script>
@@ -376,203 +441,63 @@ const renderedContent = renderMarkdown(entry.content);
 
 <script>
   function initializePodcast() {
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
-    const stopBtn = document.getElementById('stopBtn');
+    const generateBtn = document.getElementById('generatePodcast');
+    const regenerateBtn = document.getElementById('regeneratePodcast');
     const statusDiv = document.getElementById('podcastStatus');
     const statusText = document.getElementById('podcastStatusText');
 
-    if (!playPauseBtn || !playIcon || !pauseIcon || !stopBtn || !statusDiv || !statusText) {
-      return;
-    }
+    async function generatePodcast(entryId: string, isRegenerate: boolean = false) {
+      if (!statusDiv || !statusText) return;
 
-    // Helper function to prepare podcast text
-    function preparePodcastText(title: string, content: string): string {
-      // Remove markdown formatting
-      let text = content
-        .replace(/#{1,6}\s+/g, '')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/__([^_]+)__/g, '$1')
-        .replace(/_([^_]+)_/g, '$1')
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-        .replace(/`([^`]+)`/g, '$1')
-        .replace(/---+/g, '')
-        .replace(/>\s+/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+      try {
+        // Show loading status
+        statusDiv.classList.remove('hidden');
+        statusText.textContent = isRegenerate ? 'Regenerating podcast...' : 'Generating podcast...';
 
-      // Add pauses between paragraphs
-      const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
-      const narration = paragraphs.join('... ');
-      
-      return narration;
-    }
+        const response = await fetch(`/api/diary/${entryId}/generate-podcast`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
 
-    // Get the best German voice
-    // Note: This function is duplicated from src/utils/podcast.ts because
-    // client-side Astro script tags cannot import from TypeScript utility files
-    function getBestGermanVoice(): SpeechSynthesisVoice | undefined {
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Filter for German voices (de-DE, de-AT, de-CH)
-      const germanVoices = voices.filter(voice => 
-        voice.lang.startsWith('de-') || voice.lang === 'de'
-      );
-      
-      if (germanVoices.length === 0) {
-        return undefined;
-      }
-      
-      // Prioritize Google voices (typically higher quality)
-      const googleVoice = germanVoices.find(voice => 
-        voice.name.toLowerCase().includes('google')
-      );
-      if (googleVoice) {
-        return googleVoice;
-      }
-      
-      // Then Microsoft voices
-      const microsoftVoice = germanVoices.find(voice => 
-        voice.name.toLowerCase().includes('microsoft')
-      );
-      if (microsoftVoice) {
-        return microsoftVoice;
-      }
-      
-      // Otherwise, prefer voices that are not marked as 'local' (usually better quality)
-      const nonLocalVoice = germanVoices.find(voice => 
-        !voice.localService
-      );
-      if (nonLocalVoice) {
-        return nonLocalVoice;
-      }
-      
-      // Fall back to first available German voice
-      return germanVoices[0];
-    }
+        const data = await response.json();
 
-    // Get diary entry content from the page
-    const titleElement = document.querySelector('h1');
-    const contentElement = document.querySelector('.diary-text');
-    
-    if (!titleElement || !contentElement) {
-      console.error('Could not find diary entry content');
-      return;
-    }
-
-    const title = titleElement.textContent || '';
-    const content = contentElement.textContent || '';
-    const podcastText = preparePodcastText(title, content);
-
-    let isPaused = false;
-    let germanVoice: SpeechSynthesisVoice | undefined;
-
-    // Initialize voices
-    function initializeVoice() {
-      germanVoice = getBestGermanVoice();
-      if (germanVoice) {
-        console.log('Using German voice:', germanVoice.name, '(' + germanVoice.lang + ')');
-      } else {
-        console.warn('No German voice found. Using default voice.');
-      }
-    }
-
-    if ('speechSynthesis' in window) {
-      initializeVoice();
-      // Voices may load asynchronously
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = initializeVoice;
-      }
-    }
-
-    let isPlaying = false;
-
-    // Play/Pause button handler
-    playPauseBtn.addEventListener('click', () => {
-      if (isPlaying) {
-        if (isPaused) {
-          // Resume from pause
-          window.speechSynthesis.resume();
-          isPaused = false;
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-          statusText.textContent = 'Wiedergabe...';
+        if (response.ok) {
+          statusText.textContent = 'Podcast generated successfully! Reloading...';
+          // Reload the page to show the new audio player
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } else {
-          // Pause
-          window.speechSynthesis.pause();
-          isPaused = true;
-          playIcon.classList.remove('hidden');
-          pauseIcon.classList.add('hidden');
-          statusText.textContent = 'Pausiert';
-        }
-      } else {
-        // Start playback
-        try {
-          window.speechSynthesis.cancel();
-          
-          // Re-initialize voice in case it wasn't loaded before
-          if (!germanVoice) {
-            germanVoice = getBestGermanVoice();
+          statusText.textContent = `Error: ${data.error || 'Failed to generate podcast'}`;
+          if (data.details) {
+            console.error('Podcast generation error details:', data.details);
           }
-          
-          const utterance = new SpeechSynthesisUtterance(podcastText);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
-          
-          if (germanVoice) {
-            utterance.voice = germanVoice;
-          }
-
-          utterance.onend = () => {
-            isPlaying = false;
-            isPaused = false;
-            playIcon.classList.remove('hidden');
-            pauseIcon.classList.add('hidden');
-            stopBtn.classList.add('hidden');
-            statusDiv.classList.add('hidden');
-            playPauseBtn.title = 'Play';
-          };
-
-          window.speechSynthesis.speak(utterance);
-          isPlaying = true;
-          isPaused = false;
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-          stopBtn.classList.remove('hidden');
-          stopBtn.style.display = 'flex';
-          statusDiv.classList.remove('hidden');
-          statusText.textContent = 'Wiedergabe...';
-          playPauseBtn.title = 'Pause';
-        } catch (error) {
-          console.error('Podcast playback error:', error);
-          statusText.textContent = 'Fehler: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
-          statusDiv.classList.remove('hidden');
         }
+      } catch (error) {
+        console.error('Error generating podcast:', error);
+        if (statusText) {
+          statusText.textContent = 'Error: Failed to generate podcast. Please try again.';
+        }
+      }
+    }
+
+    // Handle generate button click
+    generateBtn?.addEventListener('click', () => {
+      const entryId = generateBtn.getAttribute('data-entry-id');
+      if (entryId) {
+        generatePodcast(entryId, false);
       }
     });
 
-    // Stop button handler
-    stopBtn.addEventListener('click', () => {
-      window.speechSynthesis.cancel();
-      isPlaying = false;
-      isPaused = false;
-      playIcon.classList.remove('hidden');
-      pauseIcon.classList.add('hidden');
-      stopBtn.classList.add('hidden');
-      statusDiv.classList.add('hidden');
-      playPauseBtn.title = 'Play';
+    // Handle regenerate button click
+    regenerateBtn?.addEventListener('click', () => {
+      const entryId = regenerateBtn.getAttribute('data-entry-id');
+      if (entryId && confirm('Are you sure you want to regenerate the podcast? This will replace the current audio.')) {
+        generatePodcast(entryId, true);
+      }
     });
-
-    // Check if speech synthesis is supported
-    if (!('speechSynthesis' in window)) {
-      playPauseBtn.disabled = true;
-      playPauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      statusText.textContent = 'Text-zu-Sprache wird in diesem Browser nicht unterstützt';
-      statusDiv.classList.remove('hidden');
-    }
   }
 
   // Initialize on page load

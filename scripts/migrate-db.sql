@@ -71,6 +71,12 @@ ALTER TABLE "Character" ADD COLUMN "isActive" integer NOT NULL DEFAULT 1;
 -- SQLite will silently ignore the error if the column exists
 ALTER TABLE "DiaryEntry" ADD COLUMN "coverVideoUrl" text;
 
+-- Add podcastAudioUrl column to existing DiaryEntry table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+-- Stores URL/path to generated podcast MP3 file
+ALTER TABLE "DiaryEntry" ADD COLUMN "podcastAudioUrl" text;
+
 -- Create NPC table
 CREATE TABLE IF NOT EXISTS "NPC" (
   "id" text PRIMARY KEY,

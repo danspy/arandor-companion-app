@@ -10,7 +10,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Adventure Diary** - Document your campaign sessions with:
   - Markdown formatting support
   - Cover image uploads
-  - Podcast version with text-to-speech (on-demand, no files stored)
+  - AI-powered podcast narration with natural-sounding voices (OpenAI TTS)
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -87,12 +87,21 @@ cd arandor-companion-app
 npm install
 ```
 
-3. Start the development server:
+3. Set up environment variables (optional, for AI podcast feature):
+```bash
+cp .env.example .env
+# Edit .env and add your OpenAI API key
+# IMPORTANT: The dev server must be started AFTER creating .env
+```
+
+4. Start the development server:
 ```bash
 npm run dev
 ```
 
-4. Open your browser to [http://localhost:4321](http://localhost:4321)
+**Note:** If you add or modify `.env` after starting the dev server, you must restart it (Ctrl+C, then `npm run dev` again) for changes to take effect.
+
+5. Open your browser to [http://localhost:4321](http://localhost:4321)
 
 ### Build for Production
 
@@ -238,6 +247,22 @@ The following REST API endpoints are available:
 **File Upload:**
 - `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
 
+## Configuration
+
+### Environment Variables
+
+The app supports the following optional environment variables:
+
+- `OPENAI_API_KEY` - Required for AI-powered podcast generation. Get your API key from [OpenAI Platform](https://platform.openai.com/api-keys)
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+**Note:** Without an OpenAI API key, the podcast feature will not work. Users will see a "Generate Podcast" button but will receive an error if they try to use it.
+
 ## Customization
 
 ### Colors
@@ -285,6 +310,39 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [ ] Session scheduling and reminders
 - [ ] Dice roller integration
 - [ ] Initiative tracker
+
+## Troubleshooting
+
+### Podcast Feature: "OpenAI API key not configured" Error
+
+If you see this error when trying to generate a podcast:
+
+**Problem:** The `.env` file is not being loaded or the dev server hasn't been restarted.
+
+**Solution:**
+1. Ensure `.env` file exists in the project root (same directory as `package.json`)
+2. Verify the file contains: `OPENAI_API_KEY=your-actual-api-key`
+3. **Restart the dev server:**
+   ```bash
+   # Press Ctrl+C to stop the server
+   npm run dev
+   ```
+4. Try generating the podcast again
+
+**Common mistakes:**
+- Creating `.env` while the dev server is running (must restart)
+- Typo in the variable name (must be exactly `OPENAI_API_KEY`)
+- Missing or invalid API key
+- Whitespace or quotes around the key value (use: `OPENAI_API_KEY=sk-...` not `OPENAI_API_KEY="sk-..."`)
+- `.env` file in wrong location (must be in project root with `package.json`)
+
+**Still not working? Advanced troubleshooting:**
+1. Check server logs for detailed debug information about environment variables
+2. Verify `.env` file format: `cat .env` should show `OPENAI_API_KEY=sk-...` (one line, no quotes)
+3. Try running with explicit env var: `OPENAI_API_KEY=your-key npm run dev`
+4. The API endpoint now includes a dotenv fallback that will automatically load `.env` files
+
+For more detailed troubleshooting, see `PODCAST_FEATURE.md` and `SERVER_DEPLOYMENT.md`.
 
 ## Contributing
 
