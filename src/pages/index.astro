@@ -17,7 +17,7 @@ const statusToColor = (status: string): string => {
     case 'suspicious': return 'bg-orange-500';
     case 'neutral': return 'bg-yellow-500';
     case 'friendly': return 'bg-green-500';
-    case 'respectful': return 'bg-emerald-500';
+    case 'respectful': return 'bg-teal-500';
     default: return 'bg-gray-500';
   }
 };
@@ -151,7 +151,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       <span class="flex items-center gap-1"><span class="w-3 h-3 bg-orange-500 rounded"></span> Suspicious</span>
       <span class="flex items-center gap-1"><span class="w-3 h-3 bg-yellow-500 rounded"></span> Neutral</span>
       <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded"></span> Friendly</span>
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-emerald-500 rounded"></span> Respectful</span>
+      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-teal-500 rounded"></span> Respectful</span>
     </div>
     
     {factions.length === 0 ? (
