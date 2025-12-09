@@ -453,22 +453,30 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               Hero Image URL
             </label>
             <input 
-              type="url" 
+              type="text" 
               id="heroImageUrl" 
               name="heroImageUrl" 
               value={campaignProgress.heroImageUrl || ''}
-              placeholder="https://example.com/hero-image.jpg"
+              placeholder="https://example.com/hero-image.jpg or /uploads/image.jpg"
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL (absolute or relative)</p>
           </div>
           
           <div class="flex gap-3 pt-4">
             <button 
-              type="submit" 
+              type="submit"
+              id="heroImageSubmitBtn"
               class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
             >
-              Save
+              <span id="heroImageSubmitText">Save</span>
+              <span id="heroImageSubmitLoading" class="hidden">
+                <svg class="animate-spin inline-block h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Uploading...
+              </span>
             </button>
             <button 
               type="button" 
@@ -662,8 +670,16 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         
         const fileInput = document.getElementById('heroImageFile') as HTMLInputElement;
         const urlInput = document.getElementById('heroImageUrl') as HTMLInputElement;
+        const submitBtn = document.getElementById('heroImageSubmitBtn') as HTMLButtonElement;
+        const submitText = document.getElementById('heroImageSubmitText');
+        const submitLoading = document.getElementById('heroImageSubmitLoading');
         
         let heroImageUrl = urlInput?.value || null;
+
+        // Show loading state
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitText) submitText.classList.add('hidden');
+        if (submitLoading) submitLoading.classList.remove('hidden');
 
         try {
           // If a file was selected, upload it first
@@ -698,10 +714,18 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
             window.location.reload();
           } else {
             alert('Failed to update hero image');
+            // Reset button state on error
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.classList.remove('hidden');
+            if (submitLoading) submitLoading.classList.add('hidden');
           }
         } catch (error) {
           console.error('Error updating hero image:', error);
           alert('Failed to update hero image');
+          // Reset button state on error
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.classList.remove('hidden');
+          if (submitLoading) submitLoading.classList.add('hidden');
         }
       });
 

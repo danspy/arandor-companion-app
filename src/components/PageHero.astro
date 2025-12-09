@@ -87,21 +87,29 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
             Hero Image URL
           </label>
           <input 
-            type="url" 
+            type="text" 
             class="hero-url-input w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
             value={heroImageUrl || ''}
-            placeholder="https://example.com/hero-image.jpg"
+            placeholder="https://example.com/hero-image.jpg or /uploads/image.jpg"
             data-page-name={pageName}
           />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL (absolute or relative)</p>
         </div>
         
         <div class="flex gap-3 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
+            class="hero-submit-btn flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
+            data-page-name={pageName}
           >
-            Save
+            <span class="hero-submit-text">Save</span>
+            <span class="hero-submit-loading hidden">
+              <svg class="animate-spin inline-block h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              Uploading...
+            </span>
           </button>
           <button 
             type="button" 
@@ -163,8 +171,16 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
         const pageName = form.getAttribute('data-page-name');
         const urlInput = form.querySelector('.hero-url-input') as HTMLInputElement;
         const fileInput = form.querySelector('.hero-file-input') as HTMLInputElement;
+        const submitBtn = form.querySelector('.hero-submit-btn') as HTMLButtonElement;
+        const submitText = submitBtn?.querySelector('.hero-submit-text');
+        const submitLoading = submitBtn?.querySelector('.hero-submit-loading');
         
         let heroImageUrl = urlInput?.value || null;
+
+        // Show loading state
+        if (submitBtn) submitBtn.disabled = true;
+        if (submitText) submitText.classList.add('hidden');
+        if (submitLoading) submitLoading.classList.remove('hidden');
 
         try {
           // If a file was selected, upload it first
@@ -179,6 +195,10 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
 
             if (!uploadResponse.ok) {
               alert('Failed to upload image');
+              // Reset button state on error
+              if (submitBtn) submitBtn.disabled = false;
+              if (submitText) submitText.classList.remove('hidden');
+              if (submitLoading) submitLoading.classList.add('hidden');
               return;
             }
 
@@ -199,10 +219,18 @@ const { title, heroImageUrl, pageName, isLoggedIn } = Astro.props;
             window.location.reload();
           } else {
             alert('Failed to update hero image');
+            // Reset button state on error
+            if (submitBtn) submitBtn.disabled = false;
+            if (submitText) submitText.classList.remove('hidden');
+            if (submitLoading) submitLoading.classList.add('hidden');
           }
         } catch (error) {
           console.error('Error updating hero image:', error);
           alert('Failed to update hero image');
+          // Reset button state on error
+          if (submitBtn) submitBtn.disabled = false;
+          if (submitText) submitText.classList.remove('hidden');
+          if (submitLoading) submitLoading.classList.add('hidden');
         }
       });
     });
