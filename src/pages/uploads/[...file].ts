@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { createReadStream } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
 
 // Simple MIME type mapping for common image and video formats
@@ -33,7 +34,11 @@ function getMimeType(filename: string): string {
   return MIME_TYPES[ext] || 'application/octet-stream';
 }
 
-export const GET: APIRoute = async ({ params }) => {
+function isVideoMimeType(mimeType: string): boolean {
+  return mimeType.startsWith('video/');
+}
+
+export const GET: APIRoute = async ({ params, request }) => {
   try {
     const file = params.file || '';
     
@@ -61,15 +66,77 @@ export const GET: APIRoute = async ({ params }) => {
     }
     
     try {
-      const buffer = await readFile(filepath);
+      // Get file stats for size information
+      const fileStats = await stat(filepath);
+      const fileSize = fileStats.size;
       
       // Determine content type from file extension
       const mimeType = getMimeType(file);
+      
+      // Handle Range requests for video streaming (required for mobile browsers)
+      const rangeHeader = request.headers.get('range');
+      
+      if (rangeHeader && isVideoMimeType(mimeType)) {
+        // Parse Range header (format: "bytes=start-end")
+        // Note: This handles standard ranges (e.g., "bytes=0-1023", "bytes=1024-")
+        // Suffix ranges (e.g., "bytes=-500") are not common for video streaming
+        // and will fall back to serving the complete file
+        const parts = rangeHeader.replace(/bytes=/, '').split('-');
+        const start = parseInt(parts[0], 10);
+        const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
+        
+        // Validate range - check for NaN, negative values, and out-of-bounds
+        // If validation fails (including suffix ranges), fall through to serve complete file
+        const isValidRange = !isNaN(start) && !isNaN(end) && start >= 0 && end >= 0 && 
+                             start < fileSize && end < fileSize && start <= end;
+        
+        if (!isValidRange) {
+          // Invalid range - fall through to serve complete file instead of returning 416
+          // This provides better compatibility with various clients
+        } else {
+          const chunkSize = (end - start) + 1;
+          
+          // Create readable stream for the requested range
+          const stream = createReadStream(filepath, { start, end });
+          
+          // Convert Node.js stream to Web Stream
+          const webStream = new ReadableStream({
+            start(controller) {
+              stream.on('data', (chunk: Buffer) => {
+                // Create Uint8Array view without copying underlying buffer data
+                controller.enqueue(new Uint8Array(chunk.buffer, chunk.byteOffset, chunk.byteLength));
+              });
+              stream.on('end', () => controller.close());
+              stream.on('error', (err) => controller.error(err));
+            },
+            cancel() {
+              stream.destroy();
+            }
+          });
+          
+          // Return partial content response (206)
+          return new Response(webStream, {
+            status: 206,
+            headers: {
+              'Content-Type': mimeType,
+              'Content-Length': chunkSize.toString(),
+              'Content-Range': `bytes ${start}-${end}/${fileSize}`,
+              'Accept-Ranges': 'bytes',
+              'Cache-Control': 'public, max-age=31536000, immutable'
+            }
+          });
+        }
+      }
+      
+      // For non-Range requests or non-video files, serve the complete file
+      const buffer = await readFile(filepath);
       
       return new Response(buffer, {
         status: 200,
         headers: {
           'Content-Type': mimeType,
+          'Content-Length': fileSize.toString(),
+          'Accept-Ranges': isVideoMimeType(mimeType) ? 'bytes' : 'none',
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       });
