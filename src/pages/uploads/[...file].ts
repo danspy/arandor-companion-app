@@ -82,8 +82,9 @@ export const GET: APIRoute = async ({ params, request }) => {
         const start = parseInt(parts[0], 10);
         const end = parts[1] ? parseInt(parts[1], 10) : fileSize - 1;
         
-        // Validate range
-        if (start >= fileSize || end >= fileSize || start > end) {
+        // Validate range - check for NaN, negative values, and out-of-bounds
+        if (isNaN(start) || isNaN(end) || start < 0 || end < 0 || 
+            start >= fileSize || end >= fileSize || start > end) {
           return new Response('Range Not Satisfiable', { 
             status: 416,
             headers: {
