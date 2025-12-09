@@ -156,9 +156,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </a>
 
           {location.notes && (
-            <div class="mb-3">
-              <span class="text-sm text-gray-500 dark:text-gray-400">📝 </span>
-              <span class="text-sm text-gray-700 dark:text-gray-300">{location.notes}</span>
+            <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-3 mb-4 dark:border dark:border-blue-800">
+              <p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> {location.notes}</p>
             </div>
           )}
 
