@@ -91,10 +91,6 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 
       <!-- Character Info -->
       <div class="px-8 py-8">
-        <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-2">{character.name}</h1>
-        <p class="text-xl text-gray-600 dark:text-gray-400 mb-1">{character.race} {character.class}</p>
-        <p class="text-lg text-gray-500 dark:text-gray-400 mb-6">Played by {character.player}</p>
-
         <!-- Quick Stats -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">

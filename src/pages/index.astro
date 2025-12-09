@@ -66,8 +66,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       </div>
       {isLoggedIn && (
         <button 
-          id="editHeroImageBtn"
-          class="absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg"
+          class="edit-hero-image-btn absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg"
         >
           Edit Hero Image
         </button>
@@ -79,8 +78,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Dashboard</h1>
         {isLoggedIn && (
           <button 
-            id="editHeroImageBtn"
-            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
+            class="edit-hero-image-btn px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition text-sm"
           >
             Add Hero Image
           </button>
@@ -610,14 +608,16 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     });
 
       // Hero Image Modal controls
-      const editHeroImageBtn = document.getElementById('editHeroImageBtn');
+      const editHeroImageBtns = document.querySelectorAll('.edit-hero-image-btn');
       const heroImageModal = document.getElementById('heroImageModal');
       const closeHeroImageModalBtn = document.getElementById('closeHeroImageModalBtn');
       const cancelHeroImageBtn = document.getElementById('cancelHeroImageBtn');
       const heroImageForm = document.getElementById('heroImageForm');
 
-      editHeroImageBtn?.addEventListener('click', () => {
-        heroImageModal?.classList.remove('hidden');
+      editHeroImageBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          heroImageModal?.classList.remove('hidden');
+        });
       });
 
       const closeHeroImageModal = () => {
