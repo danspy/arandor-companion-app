@@ -23,7 +23,7 @@ export interface PodcastOptions {
 }
 
 /**
- * Prepares diary entry content for podcast narration
+ * Prepares diary entry content for podcast narration (German)
  * Strips markdown formatting and adds natural pauses
  */
 export function preparePodcastText(title: string, content: string): string {
@@ -48,9 +48,9 @@ export function preparePodcastText(title: string, content: string): string {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // Add natural introduction and pauses
-  const intro = `Session recording: ${title}.`;
-  const outro = 'End of session recording.';
+  // Add natural introduction and pauses (German)
+  const intro = `Sitzungsaufzeichnung: ${title}.`;
+  const outro = 'Ende der Sitzungsaufzeichnung.';
   
   // Add pauses between paragraphs (split by double line breaks)
   const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
