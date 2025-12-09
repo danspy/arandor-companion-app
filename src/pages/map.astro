@@ -131,7 +131,7 @@ libraryEntries.forEach(entry => {
       </div>
 
       <!-- Map container with panning and zooming -->
-      <div class="relative bg-[#bdd2f0] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
+      <div class="relative bg-[rgb(208,208,208)] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
           <div id="mapContainer" class="absolute" style="min-width: 100vw; min-height: 100vh;">
@@ -139,7 +139,7 @@ libraryEntries.forEach(entry => {
             <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
               <g id="mapGroup">
                 <!-- raster map image as SVG image so pins and path share the same coordinate system -->
-                <image id="mapImage" href="/map.png" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"></image>
+                <image id="mapImage" class="grayscale" href="/map.png" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"></image>
 
                 <!-- path layer -->
                 <g id="pathGroup" pointer-events="none">
