@@ -144,6 +144,58 @@ const renderedContent = renderMarkdown(entry.content);
         </div>
       )}
 
+      <!-- Podcast Player -->
+      <div class="mb-6 bg-secondary-50 dark:bg-secondary-900/10 border-2 border-secondary-200 dark:border-secondary-800 rounded-lg p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h3 class="text-lg font-semibold text-secondary-700 dark:text-secondary-400 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            Podcast Version
+          </h3>
+          <div id="podcastVoiceSelect" class="hidden">
+            <select id="voiceSelector" class="text-sm px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+              <option value="">Default Voice</option>
+            </select>
+          </div>
+        </div>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+          Listen to this diary entry as an audio podcast
+        </p>
+        <div class="flex gap-2">
+          <button
+            id="playPodcastBtn"
+            class="flex items-center gap-2 bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition font-medium text-sm"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M8 5v14l11-7z"/>
+            </svg>
+            Play Podcast
+          </button>
+          <button
+            id="pausePodcastBtn"
+            class="hidden flex items-center gap-2 bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition font-medium text-sm"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+            </svg>
+            Pause
+          </button>
+          <button
+            id="stopPodcastBtn"
+            class="hidden flex items-center gap-2 bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition font-medium text-sm"
+          >
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M6 6h12v12H6z"/>
+            </svg>
+            Stop
+          </button>
+        </div>
+        <div id="podcastStatus" class="mt-3 text-sm text-gray-600 dark:text-gray-400 hidden">
+          <span id="podcastStatusText"></span>
+        </div>
+      </div>
+
       <!-- Content -->
       <div class="prose dark:prose-invert max-w-none mb-6">
         <div 
@@ -344,4 +396,183 @@ const renderedContent = renderMarkdown(entry.content);
   
   // Ensure videos play after View Transitions navigation
   document.addEventListener('astro:page-load', initializeVideoAutoplay);
+</script>
+
+<script>
+  function initializePodcast() {
+    const playBtn = document.getElementById('playPodcastBtn');
+    const pauseBtn = document.getElementById('pausePodcastBtn');
+    const stopBtn = document.getElementById('stopPodcastBtn');
+    const statusDiv = document.getElementById('podcastStatus');
+    const statusText = document.getElementById('podcastStatusText');
+    const voiceSelect = document.getElementById('voiceSelector') as HTMLSelectElement;
+    const voiceSelectDiv = document.getElementById('podcastVoiceSelect');
+
+    if (!playBtn || !pauseBtn || !stopBtn || !statusDiv || !statusText || !voiceSelect) {
+      return;
+    }
+
+    // Helper function to prepare podcast text
+    function preparePodcastText(title: string, content: string): string {
+      // Remove markdown formatting
+      let text = content
+        .replace(/#{1,6}\s+/g, '')
+        .replace(/\*\*([^*]+)\*\*/g, '$1')
+        .replace(/\*([^*]+)\*/g, '$1')
+        .replace(/__([^_]+)__/g, '$1')
+        .replace(/_([^_]+)_/g, '$1')
+        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+        .replace(/`([^`]+)`/g, '$1')
+        .replace(/---+/g, '')
+        .replace(/>\s+/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const intro = `Session recording: ${title}.`;
+      const outro = 'End of session recording.';
+      const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
+      const narration = paragraphs.join('... ');
+      
+      return `${intro} ${narration} ${outro}`;
+    }
+
+    // Get diary entry content from the page
+    const titleElement = document.querySelector('h1');
+    const contentElement = document.querySelector('.diary-text');
+    
+    if (!titleElement || !contentElement) {
+      console.error('Could not find diary entry content');
+      return;
+    }
+
+    const title = titleElement.textContent || '';
+    const content = contentElement.textContent || '';
+    const podcastText = preparePodcastText(title, content);
+
+    let isPaused = false;
+    let selectedVoice: SpeechSynthesisVoice | undefined;
+
+    // Load available voices
+    function loadVoices() {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        voiceSelectDiv?.classList.remove('hidden');
+        voiceSelect.innerHTML = '<option value="">Default Voice</option>';
+        
+        // Prefer English voices
+        const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+        const otherVoices = voices.filter(v => !v.lang.startsWith('en'));
+        
+        englishVoices.forEach((voice, index) => {
+          const option = document.createElement('option');
+          option.value = index.toString();
+          option.textContent = `${voice.name} (${voice.lang})`;
+          voiceSelect.appendChild(option);
+        });
+        
+        if (otherVoices.length > 0) {
+          const separator = document.createElement('option');
+          separator.disabled = true;
+          separator.textContent = '--- Other Languages ---';
+          voiceSelect.appendChild(separator);
+          
+          otherVoices.forEach((voice, index) => {
+            const option = document.createElement('option');
+            option.value = (englishVoices.length + index).toString();
+            option.textContent = `${voice.name} (${voice.lang})`;
+            voiceSelect.appendChild(option);
+          });
+        }
+      }
+    }
+
+    // Initialize voices
+    if ('speechSynthesis' in window) {
+      loadVoices();
+      // Voices may load asynchronously
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
+    // Voice selection handler
+    voiceSelect.addEventListener('change', () => {
+      const voices = window.speechSynthesis.getVoices();
+      const selectedIndex = parseInt(voiceSelect.value);
+      selectedVoice = voices[selectedIndex];
+    });
+
+    // Play button handler
+    playBtn.addEventListener('click', () => {
+      if (isPaused) {
+        window.speechSynthesis.resume();
+        isPaused = false;
+        playBtn.classList.add('hidden');
+        pauseBtn.classList.remove('hidden');
+        stopBtn.classList.remove('hidden');
+        statusDiv.classList.remove('hidden');
+        statusText.textContent = 'Playing podcast...';
+      } else {
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(podcastText);
+          utterance.rate = 0.9;
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
+          
+          if (selectedVoice) {
+            utterance.voice = selectedVoice;
+          }
+
+          utterance.onend = () => {
+            playBtn.classList.remove('hidden');
+            pauseBtn.classList.add('hidden');
+            stopBtn.classList.add('hidden');
+            statusDiv.classList.add('hidden');
+          };
+
+          window.speechSynthesis.speak(utterance);
+          playBtn.classList.add('hidden');
+          pauseBtn.classList.remove('hidden');
+          stopBtn.classList.remove('hidden');
+          statusDiv.classList.remove('hidden');
+          statusText.textContent = 'Playing podcast...';
+        } catch (error) {
+          console.error('Podcast playback error:', error);
+          statusText.textContent = 'Error: ' + (error instanceof Error ? error.message : 'Unknown error');
+          statusDiv.classList.remove('hidden');
+        }
+      }
+    });
+
+    // Pause button handler
+    pauseBtn.addEventListener('click', () => {
+      window.speechSynthesis.pause();
+      isPaused = true;
+      playBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      statusText.textContent = 'Podcast paused';
+    });
+
+    // Stop button handler
+    stopBtn.addEventListener('click', () => {
+      window.speechSynthesis.cancel();
+      isPaused = false;
+      playBtn.classList.remove('hidden');
+      pauseBtn.classList.add('hidden');
+      stopBtn.classList.add('hidden');
+      statusDiv.classList.add('hidden');
+    });
+
+    // Check if speech synthesis is supported
+    if (!('speechSynthesis' in window)) {
+      playBtn.disabled = true;
+      playBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      statusText.textContent = 'Text-to-speech is not supported in your browser';
+      statusDiv.classList.remove('hidden');
+    }
+  }
+
+  // Initialize on page load
+  document.addEventListener('astro:page-load', initializePodcast);
 </script>
