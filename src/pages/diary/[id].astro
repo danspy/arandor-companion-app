@@ -145,43 +145,30 @@ const renderedContent = renderMarkdown(entry.content);
       )}
 
       <!-- Podcast Player -->
-      <div class="mb-6 border border-gray-200 dark:border-gray-800 rounded-lg p-3">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-2">
-            <button
-              id="playPodcastBtn"
-              class="flex items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition text-sm"
-              title="Listen to this entry"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z"/>
-              </svg>
-              <span>Listen</span>
-            </button>
-            <button
-              id="pausePodcastBtn"
-              class="hidden items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition text-sm"
-              style="display: none;"
-              title="Pause"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-              </svg>
-            </button>
-            <button
-              id="stopPodcastBtn"
-              class="hidden items-center gap-2 text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100 transition text-sm"
-              style="display: none;"
-              title="Stop"
-            >
-              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M6 6h12v12H6z"/>
-              </svg>
-            </button>
-          </div>
-          <div id="podcastStatus" class="text-xs text-gray-500 dark:text-gray-500 hidden">
-            <span id="podcastStatusText"></span>
-          </div>
+      <div class="mb-6 flex items-center gap-3">
+        <button
+          id="playPauseBtn"
+          class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
+          title="Play"
+        >
+          <svg id="playIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M8 5v14l11-7z"/>
+          </svg>
+          <svg id="pauseIcon" class="hidden w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
+          </svg>
+        </button>
+        <button
+          id="stopBtn"
+          class="hidden w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all"
+          title="Stop"
+        >
+          <svg class="w-4 h-4 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M6 6h12v12H6z"/>
+          </svg>
+        </button>
+        <div id="podcastStatus" class="text-xs text-gray-500 dark:text-gray-500 hidden">
+          <span id="podcastStatusText"></span>
         </div>
       </div>
 
@@ -389,13 +376,14 @@ const renderedContent = renderMarkdown(entry.content);
 
 <script>
   function initializePodcast() {
-    const playBtn = document.getElementById('playPodcastBtn');
-    const pauseBtn = document.getElementById('pausePodcastBtn');
-    const stopBtn = document.getElementById('stopPodcastBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const playIcon = document.getElementById('playIcon');
+    const pauseIcon = document.getElementById('pauseIcon');
+    const stopBtn = document.getElementById('stopBtn');
     const statusDiv = document.getElementById('podcastStatus');
     const statusText = document.getElementById('podcastStatusText');
 
-    if (!playBtn || !pauseBtn || !stopBtn || !statusDiv || !statusText) {
+    if (!playPauseBtn || !playIcon || !pauseIcon || !stopBtn || !statusDiv || !statusText) {
       return;
     }
 
@@ -415,12 +403,11 @@ const renderedContent = renderMarkdown(entry.content);
         .replace(/\s+/g, ' ')
         .trim();
 
-      const intro = `Sitzungsaufzeichnung: ${title}.`;
-      const outro = 'Ende der Sitzungsaufzeichnung.';
+      // Add pauses between paragraphs
       const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
       const narration = paragraphs.join('... ');
       
-      return `${intro} ${narration} ${outro}`;
+      return narration;
     }
 
     // Get the best German voice
@@ -500,17 +487,28 @@ const renderedContent = renderMarkdown(entry.content);
       }
     }
 
-    // Play button handler
-    playBtn.addEventListener('click', () => {
-      if (isPaused) {
-        window.speechSynthesis.resume();
-        isPaused = false;
-        playBtn.style.display = 'none';
-        pauseBtn.style.display = 'flex';
-        stopBtn.style.display = 'flex';
-        statusDiv.classList.remove('hidden');
-        statusText.textContent = 'Wiedergabe...';
+    let isPlaying = false;
+
+    // Play/Pause button handler
+    playPauseBtn.addEventListener('click', () => {
+      if (isPlaying) {
+        if (isPaused) {
+          // Resume from pause
+          window.speechSynthesis.resume();
+          isPaused = false;
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          statusText.textContent = 'Wiedergabe...';
+        } else {
+          // Pause
+          window.speechSynthesis.pause();
+          isPaused = true;
+          playIcon.classList.remove('hidden');
+          pauseIcon.classList.add('hidden');
+          statusText.textContent = 'Pausiert';
+        }
       } else {
+        // Start playback
         try {
           window.speechSynthesis.cancel();
           
@@ -529,18 +527,25 @@ const renderedContent = renderMarkdown(entry.content);
           }
 
           utterance.onend = () => {
-            playBtn.style.display = 'flex';
-            pauseBtn.style.display = 'none';
-            stopBtn.style.display = 'none';
+            isPlaying = false;
+            isPaused = false;
+            playIcon.classList.remove('hidden');
+            pauseIcon.classList.add('hidden');
+            stopBtn.classList.add('hidden');
             statusDiv.classList.add('hidden');
+            playPauseBtn.title = 'Play';
           };
 
           window.speechSynthesis.speak(utterance);
-          playBtn.style.display = 'none';
-          pauseBtn.style.display = 'flex';
+          isPlaying = true;
+          isPaused = false;
+          playIcon.classList.add('hidden');
+          pauseIcon.classList.remove('hidden');
+          stopBtn.classList.remove('hidden');
           stopBtn.style.display = 'flex';
           statusDiv.classList.remove('hidden');
           statusText.textContent = 'Wiedergabe...';
+          playPauseBtn.title = 'Pause';
         } catch (error) {
           console.error('Podcast playback error:', error);
           statusText.textContent = 'Fehler: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
@@ -549,29 +554,22 @@ const renderedContent = renderMarkdown(entry.content);
       }
     });
 
-    // Pause button handler
-    pauseBtn.addEventListener('click', () => {
-      window.speechSynthesis.pause();
-      isPaused = true;
-      playBtn.style.display = 'flex';
-      pauseBtn.style.display = 'none';
-      statusText.textContent = 'Pausiert';
-    });
-
     // Stop button handler
     stopBtn.addEventListener('click', () => {
       window.speechSynthesis.cancel();
+      isPlaying = false;
       isPaused = false;
-      playBtn.style.display = 'flex';
-      pauseBtn.style.display = 'none';
-      stopBtn.style.display = 'none';
+      playIcon.classList.remove('hidden');
+      pauseIcon.classList.add('hidden');
+      stopBtn.classList.add('hidden');
       statusDiv.classList.add('hidden');
+      playPauseBtn.title = 'Play';
     });
 
     // Check if speech synthesis is supported
     if (!('speechSynthesis' in window)) {
-      playBtn.disabled = true;
-      playBtn.classList.add('opacity-50', 'cursor-not-allowed');
+      playPauseBtn.disabled = true;
+      playPauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
       statusText.textContent = 'Text-zu-Sprache wird in diesem Browser nicht unterstützt';
       statusDiv.classList.remove('hidden');
     }
