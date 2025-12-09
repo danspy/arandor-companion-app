@@ -183,6 +183,33 @@ The database includes the following tables:
 ✅ **Markdown Support** - Rich text formatting for diary and library entries
 ✅ **Image Uploads** - Upload and store images for diary entries
 
+### User Management
+
+The app uses a simple authentication system with username/password. You can add new users in two ways:
+
+**Method 1: Web Interface (Recommended)**
+1. Login to the app at `/login` (default user: `admin` / password: `admin`)
+2. Navigate to the **Users** page in the navigation menu
+3. Click "Add User" and enter username and password
+4. The new user can now login with their credentials
+
+**Method 2: Command Line**
+```bash
+# Add a new user
+node scripts/add-user.mjs <username> <password>
+
+# Example
+node scripts/add-user.mjs john secretpassword
+
+# Using custom database location
+ASTRO_DATABASE_FILE=/path/to/db.db node scripts/add-user.mjs jane mypass
+```
+
+**Default User:**
+- Username: `admin`
+- Password: `admin`
+- ⚠️ **Important:** Change the default admin password after first login for security
+
 ### Managing Content
 
 All content can be managed directly from the web interface (login required for editing):
@@ -195,6 +222,7 @@ All content can be managed directly from the web interface (login required for e
 6. **NPCs** - Organize non-player characters by relationship
 7. **Locations** - Catalog places and set map coordinates
 8. **Map** - Interactive map with draggable pins and hero path visualization
+9. **Users** - Add new users to the app (admin-only)
 
 ### API Endpoints
 
@@ -203,6 +231,10 @@ The following REST API endpoints are available:
 **Authentication:**
 - `POST /api/auth/login` - Login
 - `POST /api/auth/logout` - Logout
+
+**Users:**
+- `GET /api/users` - List all users (admin-only)
+- `POST /api/users` - Create new user (admin-only)
 
 **Diary:**
 - `GET/POST /api/diary` - Diary entries
