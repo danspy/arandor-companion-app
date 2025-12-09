@@ -8,11 +8,19 @@ export const GET: APIRoute = async ({ params, cookies }) => {
   if (authError) return authError;
 
   try {
+    // Validate params.id
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Invalid user ID' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const user = await db.select({
       id: User.id,
       username: User.username,
       createdAt: User.createdAt,
-    }).from(User).where(eq(User.id, params.id!));
+    }).from(User).where(eq(User.id, params.id));
     
     if (user.length === 0) {
       return new Response(JSON.stringify({ error: 'User not found' }), {
@@ -39,6 +47,14 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   if (authError) return authError;
 
   try {
+    // Validate params.id
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Invalid user ID' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const body = await request.json();
     const { password } = body;
 
@@ -57,6 +73,18 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
+    // Check if user exists before updating
+    const existingUser = await db.select({
+      id: User.id,
+    }).from(User).where(eq(User.id, params.id));
+
+    if (existingUser.length === 0) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     // Hash password
     const passwordHash = await hashPassword(password);
     
@@ -64,13 +92,13 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       .set({
         passwordHash,
       })
-      .where(eq(User.id, params.id!));
+      .where(eq(User.id, params.id));
 
     const updatedUser = await db.select({
       id: User.id,
       username: User.username,
       createdAt: User.createdAt,
-    }).from(User).where(eq(User.id, params.id!));
+    }).from(User).where(eq(User.id, params.id));
     
     return new Response(JSON.stringify(updatedUser[0]), {
       status: 200,
@@ -90,7 +118,27 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
   if (authError) return authError;
 
   try {
-    await db.delete(User).where(eq(User.id, params.id!));
+    // Validate params.id
+    if (!params.id || typeof params.id !== 'string' || params.id.trim() === '') {
+      return new Response(JSON.stringify({ error: 'Invalid user ID' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Check if user exists before deleting
+    const existingUser = await db.select({
+      id: User.id,
+    }).from(User).where(eq(User.id, params.id));
+
+    if (existingUser.length === 0) {
+      return new Response(JSON.stringify({ error: 'User not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    await db.delete(User).where(eq(User.id, params.id));
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
