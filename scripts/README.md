@@ -1,10 +1,41 @@
 # Database Migration and Deployment Scripts
 
-This directory contains database migration scripts and server management tools.
+This directory contains database migration scripts, user management tools, and server management utilities.
 
 ## Overview
 
 **Important:** Database migrations are **MANUAL ONLY**. The deployment workflow never touches your production database automatically.
+
+## User Management
+
+### add-user.mjs
+
+**Purpose:** Command-line script for adding new users to the Arandor Companion App.
+
+**Usage:**
+```bash
+node scripts/add-user.mjs <username> <password>
+```
+
+**Example:**
+```bash
+# Add a new user named 'john' with password 'secretpassword'
+node scripts/add-user.mjs john secretpassword
+
+# Using custom database location
+ASTRO_DATABASE_FILE=/custom/path/db.db node scripts/add-user.mjs jane mypassword
+```
+
+**Features:**
+- Validates username (minimum 3 characters)
+- Validates password (minimum 6 characters)
+- Checks for duplicate usernames
+- Uses the same password hashing as the app
+- Works with the database specified in ASTRO_DATABASE_FILE environment variable
+
+**Notes:**
+- The database must exist before adding users (run `npm run build` first if needed)
+- Users can also be added through the web interface at `/users` page (requires login)
 
 ## Database Update Script
 
