@@ -137,6 +137,16 @@ const Faction = defineTable({
   }
 });
 
+const PageSettings = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    pageName: column.text({ unique: true }), // 'dashboard' | 'characters' | 'diary' | 'library' | 'locations' | 'npcs' | 'quests'
+    heroImageUrl: column.text({ optional: true }), // Optional hero/banner image for the page
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -148,5 +158,6 @@ export default defineDb({
     CampaignProgress,
     LibraryEntry,
     Faction,
+    PageSettings,
   }
 });

@@ -141,5 +141,24 @@ CREATE TABLE IF NOT EXISTS "Faction" (
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
 
+-- Add heroImageUrl column to existing CampaignProgress table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+ALTER TABLE "CampaignProgress" ADD COLUMN "heroImageUrl" text;
+
+-- Add imageUrl column to existing Location table (if it doesn't exist)
+-- This is safe to run even if the column already exists
+-- SQLite will silently ignore the error if the column exists
+ALTER TABLE "Location" ADD COLUMN "imageUrl" text;
+
+-- Create PageSettings table for storing hero images per page
+CREATE TABLE IF NOT EXISTS "PageSettings" (
+  "id" text PRIMARY KEY,
+  "pageName" text NOT NULL UNIQUE,
+  "heroImageUrl" text,
+  "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
+  "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
+);
+
 -- Verify the migration completed
 SELECT 'Database migration complete - all tables ensured' as status;

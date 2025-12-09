@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
-import { db, Character } from 'astro:db';
+import PageHero from '../components/PageHero.astro';
+import { db, Character, PageSettings, eq } from 'astro:db';
 import { isAuthenticated } from '../lib/auth';
 
 const characters = await db.select().from(Character);
@@ -11,20 +12,30 @@ const editCharacterId = Astro.url.searchParams.get('edit');
 
 // Get unique classes for filtering
 const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].sort();
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'characters'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
 <Layout title="Player Characters">
-  <div class="flex justify-between items-center mb-8">
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Player Characters</h1>
-    {isLoggedIn && (
+  <PageHero 
+    title="Player Characters" 
+    heroImageUrl={heroImageUrl}
+    pageName="characters"
+    isLoggedIn={isLoggedIn}
+  />
+
+  {isLoggedIn && (
+    <div class="flex justify-end mb-4">
       <button 
         id="addCharacter"
         class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
         + Add Character
       </button>
-    )}
-  </div>
+    </div>
+  )}
 
   <!-- Stats -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
@@ -91,20 +102,36 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
     {characters.map(character => (
       <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} data-is-active={character.isActive ? "true" : "false"}>
         <a href={`/characters/${character.id}`} class="block">
-          <div class="relative h-48 overflow-hidden">
+          <div class="relative h-56 overflow-hidden">
+            {/* Blurred background */}
             {character.avatarUrl ? (
-              <img 
-                src={character.avatarUrl} 
-                alt={character.name}
-                class="w-full h-full object-cover"
-              />
+              <>
+                <img 
+                  src={character.avatarUrl} 
+                  alt={character.name}
+                  class="absolute inset-0 w-full h-full object-cover blur-md scale-110"
+                />
+                <div class="absolute inset-0 bg-black/30"></div>
+              </>
             ) : (
-              <div class={`w-full h-full bg-gradient-to-br ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'} flex items-center justify-center`}>
-                <span class="text-6xl font-bold text-white opacity-50">{character.name.charAt(0)}</span>
-              </div>
+              <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'}`}></div>
             )}
-            {/* Overlay gradient for better text readability */}
-            <div class="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent"></div>
+            
+            {/* Circular avatar on top */}
+            <div class="relative h-full flex items-center justify-center">
+              {character.avatarUrl ? (
+                <img 
+                  src={character.avatarUrl} 
+                  alt={character.name}
+                  class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                />
+              ) : (
+                <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-5xl font-bold text-primary-700 dark:text-primary-400 shadow-xl border-4 border-white dark:border-gray-700">
+                  {character.name.charAt(0)}
+                </div>
+              )}
+            </div>
+            
             {/* Status badge */}
             {!character.isActive && (
               <div class="absolute top-3 right-3 bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full shadow-lg">

@@ -428,6 +428,28 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         <form id="heroImageForm" class="space-y-4">
           <div>
             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              Upload Hero Image
+            </label>
+            <input 
+              type="file" 
+              accept="image/*"
+              id="heroImageFile"
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/20 dark:file:text-primary-400"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload an image file (max 5MB)</p>
+          </div>
+          
+          <div class="relative">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+            </div>
+            <div class="relative flex justify-center text-sm">
+              <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">OR</span>
+            </div>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Hero Image URL
             </label>
             <input 
@@ -438,7 +460,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               placeholder="https://example.com/hero-image.jpg"
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave empty to remove hero image</p>
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL</p>
           </div>
           
           <div class="flex gap-3 pt-4">
@@ -638,18 +660,38 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       heroImageForm?.addEventListener('submit', async (e) => {
         e.preventDefault();
         
-        const formData = new FormData(e.target);
-        const data = {
-          heroImageUrl: formData.get('heroImageUrl') || null,
-        };
+        const fileInput = document.getElementById('heroImageFile') as HTMLInputElement;
+        const urlInput = document.getElementById('heroImageUrl') as HTMLInputElement;
+        
+        let heroImageUrl = urlInput?.value || null;
 
         try {
+          // If a file was selected, upload it first
+          if (fileInput?.files && fileInput.files.length > 0) {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', fileInput.files[0]);
+
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: uploadFormData,
+            });
+
+            if (!uploadResponse.ok) {
+              alert('Failed to upload image');
+              return;
+            }
+
+            const uploadData = await uploadResponse.json();
+            heroImageUrl = uploadData.url;
+          }
+
+          // Update campaign progress with the image URL
           const response = await fetch(`/api/campaign-progress/${campaignProgressId}`, {
             method: 'PUT',
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(data),
+            body: JSON.stringify({ heroImageUrl }),
           });
 
           if (response.ok) {
