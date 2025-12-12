@@ -11,6 +11,8 @@ export const GET: APIRoute = async ({ cookies }) => {
   try {
     const user = await getCurrentUser(cookies);
     
+    // Defense in depth: verify user exists even though requireAuth passed
+    // This protects against edge cases where session exists but user was deleted
     if (!user) {
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
@@ -45,6 +47,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
   try {
     const user = await getCurrentUser(cookies);
     
+    // Defense in depth: verify user exists even though requireAuth passed
+    // This protects against edge cases where session exists but user was deleted
     if (!user) {
       return new Response(JSON.stringify({ error: 'User not found' }), {
         status: 404,
