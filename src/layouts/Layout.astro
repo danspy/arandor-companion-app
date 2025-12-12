@@ -91,6 +91,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
             {canAccessUsers && <a href="/users" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/users') }]}>Users</a>}
+            {isLoggedIn && <a href="/profile" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/profile') }]}>Profile</a>}
             
             <!-- Dark mode toggle -->
             <button 
@@ -132,6 +133,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
             {canAccessUsers && <a href="/users" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/users') }]}>Users</a>}
+            {isLoggedIn && <a href="/profile" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/profile') }]}>Profile</a>}
             
             <!-- Dark mode toggle for mobile -->
             <button 
