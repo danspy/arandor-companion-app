@@ -317,340 +317,346 @@ const users = await db.select({
 </Layout>
 
 <script>
-  const addUserBtn = document.getElementById('addUserBtn');
-  const addUserModal = document.getElementById('addUserModal');
-  const closeModalBtn = document.getElementById('closeModalBtn');
-  const cancelModalBtn = document.getElementById('cancelModalBtn');
-  const addUserForm = document.getElementById('addUserForm') as HTMLFormElement;
-  const modalErrorMessage = document.getElementById('modalErrorMessage');
-  const messageContainer = document.getElementById('messageContainer');
-  const usersTableBody = document.getElementById('usersTableBody');
+  // Initialize users page functionality
+  function initUsersPage() {
+    const addUserBtn = document.getElementById('addUserBtn');
+    const addUserModal = document.getElementById('addUserModal');
+    const closeModalBtn = document.getElementById('closeModalBtn');
+    const cancelModalBtn = document.getElementById('cancelModalBtn');
+    const addUserForm = document.getElementById('addUserForm') as HTMLFormElement;
+    const modalErrorMessage = document.getElementById('modalErrorMessage');
+    const messageContainer = document.getElementById('messageContainer');
+    const usersTableBody = document.getElementById('usersTableBody');
 
-  // Edit User Modal
-  const editUserModal = document.getElementById('editUserModal');
-  const closeEditModalBtn = document.getElementById('closeEditModalBtn');
-  const cancelEditModalBtn = document.getElementById('cancelEditModalBtn');
-  const editUserForm = document.getElementById('editUserForm') as HTMLFormElement;
-  const editModalErrorMessage = document.getElementById('editModalErrorMessage');
-  const editUserId = document.getElementById('editUserId') as HTMLInputElement;
-  const editUsername = document.getElementById('editUsername');
-  const editRole = document.getElementById('editRole') as HTMLSelectElement;
+    // Edit User Modal
+    const editUserModal = document.getElementById('editUserModal');
+    const closeEditModalBtn = document.getElementById('closeEditModalBtn');
+    const cancelEditModalBtn = document.getElementById('cancelEditModalBtn');
+    const editUserForm = document.getElementById('editUserForm') as HTMLFormElement;
+    const editModalErrorMessage = document.getElementById('editModalErrorMessage');
+    const editUserId = document.getElementById('editUserId') as HTMLInputElement;
+    const editUsername = document.getElementById('editUsername');
+    const editRole = document.getElementById('editRole') as HTMLSelectElement;
 
-  // Delete User Modal
-  const deleteUserModal = document.getElementById('deleteUserModal');
-  const closeDeleteModalBtn = document.getElementById('closeDeleteModalBtn');
-  const cancelDeleteModalBtn = document.getElementById('cancelDeleteModalBtn');
-  const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-  const deleteModalErrorMessage = document.getElementById('deleteModalErrorMessage');
-  const deleteUserId = document.getElementById('deleteUserId') as HTMLInputElement;
-  const deleteUsername = document.getElementById('deleteUsername');
+    // Delete User Modal
+    const deleteUserModal = document.getElementById('deleteUserModal');
+    const closeDeleteModalBtn = document.getElementById('closeDeleteModalBtn');
+    const cancelDeleteModalBtn = document.getElementById('cancelDeleteModalBtn');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const deleteModalErrorMessage = document.getElementById('deleteModalErrorMessage');
+    const deleteUserId = document.getElementById('deleteUserId') as HTMLInputElement;
+    const deleteUsername = document.getElementById('deleteUsername');
 
-  // HTML escape function to prevent XSS
-  function escapeHtml(text: string): string {
-    if (typeof text !== 'string') {
-      text = String(text);
+    // HTML escape function to prevent XSS
+    function escapeHtml(text: string): string {
+      if (typeof text !== 'string') {
+        text = String(text);
+      }
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
     }
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-  }
 
-  // Show Add User modal
-  addUserBtn?.addEventListener('click', () => {
-    addUserModal?.classList.remove('hidden');
-    addUserForm?.reset();
-    modalErrorMessage?.classList.add('hidden');
-  });
+    // Show Add User modal
+    addUserBtn?.addEventListener('click', () => {
+      addUserModal?.classList.remove('hidden');
+      addUserForm?.reset();
+      modalErrorMessage?.classList.add('hidden');
+    });
 
-  // Close Add User modal
-  const closeModal = () => {
-    addUserModal?.classList.add('hidden');
-    addUserForm?.reset();
-    modalErrorMessage?.classList.add('hidden');
-  };
-
-  closeModalBtn?.addEventListener('click', closeModal);
-  cancelModalBtn?.addEventListener('click', closeModal);
-
-  // Close Add User modal on background click
-  addUserModal?.addEventListener('click', (e) => {
-    if (e.target === addUserModal) {
-      closeModal();
-    }
-  });
-
-  // Show Edit User modal
-  const showEditModal = (userId: string, username: string, userRole: string) => {
-    if (editUserId && editUsername && editRole) {
-      editUserId.value = userId;
-      editUsername.textContent = username;
-      editRole.value = userRole || 'player';
-    }
-    editUserModal?.classList.remove('hidden');
-    // Clear password fields but keep role
-    const currentPasswordField = document.getElementById('editCurrentPassword') as HTMLInputElement;
-    const newPasswordField = document.getElementById('editNewPassword') as HTMLInputElement;
-    if (currentPasswordField) currentPasswordField.value = '';
-    if (newPasswordField) newPasswordField.value = '';
-    editModalErrorMessage?.classList.add('hidden');
-  };
-
-  // Close Edit User modal
-  const closeEditModal = () => {
-    editUserModal?.classList.add('hidden');
-    editUserForm?.reset();
-    editModalErrorMessage?.classList.add('hidden');
-  };
-
-  closeEditModalBtn?.addEventListener('click', closeEditModal);
-  cancelEditModalBtn?.addEventListener('click', closeEditModal);
-
-  // Close Edit User modal on background click
-  editUserModal?.addEventListener('click', (e) => {
-    if (e.target === editUserModal) {
-      closeEditModal();
-    }
-  });
-
-  // Show Delete User modal
-  const showDeleteModal = (userId: string, username: string) => {
-    if (deleteUserId && deleteUsername) {
-      deleteUserId.value = userId;
-      deleteUsername.textContent = username;
-    }
-    deleteUserModal?.classList.remove('hidden');
-    deleteModalErrorMessage?.classList.add('hidden');
-  };
-
-  // Close Delete User modal
-  const closeDeleteModal = () => {
-    deleteUserModal?.classList.add('hidden');
-    deleteModalErrorMessage?.classList.add('hidden');
-  };
-
-  closeDeleteModalBtn?.addEventListener('click', closeDeleteModal);
-  cancelDeleteModalBtn?.addEventListener('click', closeDeleteModal);
-
-  // Close Delete User modal on background click
-  deleteUserModal?.addEventListener('click', (e) => {
-    if (e.target === deleteUserModal) {
-      closeDeleteModal();
-    }
-  });
-
-  // Show message
-  function showMessage(message: string, type: 'success' | 'error') {
-    if (!messageContainer) return;
-    
-    const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800';
-    const textColor = type === 'success' ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400';
-    
-    messageContainer.className = `${bgColor} border rounded-lg p-4 ${textColor} mb-6`;
-    messageContainer.textContent = message;
-    messageContainer.classList.remove('hidden');
-
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      messageContainer.classList.add('hidden');
-    }, 5000);
-  }
-
-  // Handle Add User form submission
-  addUserForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(addUserForm);
-    const data = {
-      username: formData.get('username'),
-      password: formData.get('password'),
-      role: formData.get('role'),
+    // Close Add User modal
+    const closeModal = () => {
+      addUserModal?.classList.add('hidden');
+      addUserForm?.reset();
+      modalErrorMessage?.classList.add('hidden');
     };
 
-    try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    closeModalBtn?.addEventListener('click', closeModal);
+    cancelModalBtn?.addEventListener('click', closeModal);
 
-      const result = await response.json();
-
-      if (response.ok) {
+    // Close Add User modal on background click
+    addUserModal?.addEventListener('click', (e) => {
+      if (e.target === addUserModal) {
         closeModal();
-        showMessage(`User '${data.username}' created successfully!`, 'success');
-        
-        // Add new user to table
-        if (usersTableBody && result.user) {
-          const row = document.createElement('tr');
-          row.className = 'hover:bg-gray-50 dark:hover:bg-gray-900 transition';
-          row.setAttribute('data-user-id', escapeHtml(result.user.id));
-          const escapedId = escapeHtml(result.user.id);
-          const escapedUsername = escapeHtml(result.user.username);
-          const escapedRole = escapeHtml(result.user.role || 'player');
-          const roleBadgeClass = escapedRole === 'admin' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                                 escapedRole === 'dungeonmaster' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-                                 'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
-          const deleteButton = result.user.username !== 'admin' ? `
-            <button 
-              class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
-              data-user-id="${escapedId}"
-              data-username="${escapedUsername}"
-            >
-              Delete
-            </button>
-          ` : '';
-          row.innerHTML = `
-            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-              ${escapedUsername}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-              <span class="px-2 py-1 rounded-full text-xs font-medium ${roleBadgeClass}">
-                ${escapedRole}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-              ${escapeHtml(new Date(result.user.createdAt).toLocaleString())}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+      }
+    });
+
+    // Show Edit User modal
+    const showEditModal = (userId: string, username: string, userRole: string) => {
+      if (editUserId && editUsername && editRole) {
+        editUserId.value = userId;
+        editUsername.textContent = username;
+        editRole.value = userRole || 'player';
+      }
+      editUserModal?.classList.remove('hidden');
+      // Clear password fields but keep role
+      const currentPasswordField = document.getElementById('editCurrentPassword') as HTMLInputElement;
+      const newPasswordField = document.getElementById('editNewPassword') as HTMLInputElement;
+      if (currentPasswordField) currentPasswordField.value = '';
+      if (newPasswordField) newPasswordField.value = '';
+      editModalErrorMessage?.classList.add('hidden');
+    };
+
+    // Close Edit User modal
+    const closeEditModal = () => {
+      editUserModal?.classList.add('hidden');
+      editUserForm?.reset();
+      editModalErrorMessage?.classList.add('hidden');
+    };
+
+    closeEditModalBtn?.addEventListener('click', closeEditModal);
+    cancelEditModalBtn?.addEventListener('click', closeEditModal);
+
+    // Close Edit User modal on background click
+    editUserModal?.addEventListener('click', (e) => {
+      if (e.target === editUserModal) {
+        closeEditModal();
+      }
+    });
+
+    // Show Delete User modal
+    const showDeleteModal = (userId: string, username: string) => {
+      if (deleteUserId && deleteUsername) {
+        deleteUserId.value = userId;
+        deleteUsername.textContent = username;
+      }
+      deleteUserModal?.classList.remove('hidden');
+      deleteModalErrorMessage?.classList.add('hidden');
+    };
+
+    // Close Delete User modal
+    const closeDeleteModal = () => {
+      deleteUserModal?.classList.add('hidden');
+      deleteModalErrorMessage?.classList.add('hidden');
+    };
+
+    closeDeleteModalBtn?.addEventListener('click', closeDeleteModal);
+    cancelDeleteModalBtn?.addEventListener('click', closeDeleteModal);
+
+    // Close Delete User modal on background click
+    deleteUserModal?.addEventListener('click', (e) => {
+      if (e.target === deleteUserModal) {
+        closeDeleteModal();
+      }
+    });
+
+    // Show message
+    function showMessage(message: string, type: 'success' | 'error') {
+      if (!messageContainer) return;
+      
+      const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800';
+      const textColor = type === 'success' ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400';
+      
+      messageContainer.className = `${bgColor} border rounded-lg p-4 ${textColor} mb-6`;
+      messageContainer.textContent = message;
+      messageContainer.classList.remove('hidden');
+
+      // Auto-hide after 5 seconds
+      setTimeout(() => {
+        messageContainer.classList.add('hidden');
+      }, 5000);
+    }
+
+    // Handle Add User form submission
+    addUserForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(addUserForm);
+      const data = {
+        username: formData.get('username'),
+        password: formData.get('password'),
+        role: formData.get('role'),
+      };
+
+      try {
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          closeModal();
+          showMessage(`User '${data.username}' created successfully!`, 'success');
+          
+          // Add new user to table
+          if (usersTableBody && result.user) {
+            const row = document.createElement('tr');
+            row.className = 'hover:bg-gray-50 dark:hover:bg-gray-900 transition';
+            row.setAttribute('data-user-id', escapeHtml(result.user.id));
+            const escapedId = escapeHtml(result.user.id);
+            const escapedUsername = escapeHtml(result.user.username);
+            const escapedRole = escapeHtml(result.user.role || 'player');
+            const roleBadgeClass = escapedRole === 'admin' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                                   escapedRole === 'dungeonmaster' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
+                                   'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
+            const deleteButton = result.user.username !== 'admin' ? `
               <button 
-                class="edit-user-btn text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"
+                class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
                 data-user-id="${escapedId}"
                 data-username="${escapedUsername}"
-                data-user-role="${escapedRole}"
               >
-                Edit
+                Delete
               </button>
-              ${deleteButton}
-            </td>
-          `;
-          usersTableBody.insertBefore(row, usersTableBody.firstChild);
-          attachButtonListeners(row);
+            ` : '';
+            row.innerHTML = `
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
+                ${escapedUsername}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
+                <span class="px-2 py-1 rounded-full text-xs font-medium ${roleBadgeClass}">
+                  ${escapedRole}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                ${escapeHtml(new Date(result.user.createdAt).toLocaleString())}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                <button 
+                  class="edit-user-btn text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"
+                  data-user-id="${escapedId}"
+                  data-username="${escapedUsername}"
+                  data-user-role="${escapedRole}"
+                >
+                  Edit
+                </button>
+                ${deleteButton}
+              </td>
+            `;
+            usersTableBody.insertBefore(row, usersTableBody.firstChild);
+            attachButtonListeners(row);
+          }
+        } else {
+          if (modalErrorMessage) {
+            modalErrorMessage.textContent = result.error || 'Failed to create user. Please try again.';
+            modalErrorMessage.classList.remove('hidden');
+          }
         }
-      } else {
+      } catch (error) {
         if (modalErrorMessage) {
-          modalErrorMessage.textContent = result.error || 'Failed to create user. Please try again.';
+          modalErrorMessage.textContent = 'An error occurred. Please try again.';
           modalErrorMessage.classList.remove('hidden');
         }
       }
-    } catch (error) {
-      if (modalErrorMessage) {
-        modalErrorMessage.textContent = 'An error occurred. Please try again.';
-        modalErrorMessage.classList.remove('hidden');
+    });
+
+    // Handle Edit User form submission
+    editUserForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(editUserForm);
+      const userId = editUserId?.value;
+      const username = editUsername?.textContent;
+      const data: { currentPassword?: string; newPassword?: string; role: string } = {
+        role: formData.get('role') as string,
+      };
+
+      // Only include password fields if both are provided
+      const currentPassword = formData.get('currentPassword') as string;
+      const newPassword = formData.get('newPassword') as string;
+      if (currentPassword && newPassword) {
+        data.currentPassword = currentPassword;
+        data.newPassword = newPassword;
       }
-    }
-  });
 
-  // Handle Edit User form submission
-  editUserForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(editUserForm);
-    const userId = editUserId?.value;
-    const username = editUsername?.textContent;
-    const data: { currentPassword?: string; newPassword?: string; role: string } = {
-      role: formData.get('role') as string,
-    };
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
 
-    // Only include password fields if both are provided
-    const currentPassword = formData.get('currentPassword') as string;
-    const newPassword = formData.get('newPassword') as string;
-    if (currentPassword && newPassword) {
-      data.currentPassword = currentPassword;
-      data.newPassword = newPassword;
-    }
+        const result = await response.json();
 
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        closeEditModal();
-        showMessage(`User '${username}' updated successfully!`, 'success');
-        // Reload page to show updated role
-        setTimeout(() => window.location.reload(), 1000);
-      } else {
+        if (response.ok) {
+          closeEditModal();
+          showMessage(`User '${username}' updated successfully!`, 'success');
+          // Reload page to show updated role
+          setTimeout(() => window.location.reload(), 1000);
+        } else {
+          if (editModalErrorMessage) {
+            editModalErrorMessage.textContent = result.error || 'Failed to update user. Please try again.';
+            editModalErrorMessage.classList.remove('hidden');
+          }
+        }
+      } catch (error) {
         if (editModalErrorMessage) {
-          editModalErrorMessage.textContent = result.error || 'Failed to update user. Please try again.';
+          editModalErrorMessage.textContent = 'An error occurred. Please try again.';
           editModalErrorMessage.classList.remove('hidden');
         }
       }
-    } catch (error) {
-      if (editModalErrorMessage) {
-        editModalErrorMessage.textContent = 'An error occurred. Please try again.';
-        editModalErrorMessage.classList.remove('hidden');
-      }
-    }
-  });
+    });
 
-  // Handle Delete User confirmation
-  confirmDeleteBtn?.addEventListener('click', async () => {
-    const userId = deleteUserId?.value;
-    const username = deleteUsername?.textContent;
+    // Handle Delete User confirmation
+    confirmDeleteBtn?.addEventListener('click', async () => {
+      const userId = deleteUserId?.value;
+      const username = deleteUsername?.textContent;
 
-    try {
-      const response = await fetch(`/api/users/${userId}`, {
-        method: 'DELETE',
-      });
+      try {
+        const response = await fetch(`/api/users/${userId}`, {
+          method: 'DELETE',
+        });
 
-      const result = await response.json();
+        const result = await response.json();
 
-      if (response.ok) {
-        closeDeleteModal();
-        showMessage(`User '${username}' deleted successfully!`, 'success');
-        
-        // Remove user row from table using escaped selector
-        const row = document.querySelector(`tr[data-user-id="${CSS.escape(userId || '')}"]`);
-        if (row) {
-          row.remove();
+        if (response.ok) {
+          closeDeleteModal();
+          showMessage(`User '${username}' deleted successfully!`, 'success');
+          
+          // Remove user row from table using escaped selector
+          const row = document.querySelector(`tr[data-user-id="${CSS.escape(userId || '')}"]`);
+          if (row) {
+            row.remove();
+          }
+        } else {
+          if (deleteModalErrorMessage) {
+            deleteModalErrorMessage.textContent = result.error || 'Failed to delete user. Please try again.';
+            deleteModalErrorMessage.classList.remove('hidden');
+          }
         }
-      } else {
+      } catch (error) {
         if (deleteModalErrorMessage) {
-          deleteModalErrorMessage.textContent = result.error || 'Failed to delete user. Please try again.';
+          deleteModalErrorMessage.textContent = 'An error occurred. Please try again.';
           deleteModalErrorMessage.classList.remove('hidden');
         }
       }
-    } catch (error) {
-      if (deleteModalErrorMessage) {
-        deleteModalErrorMessage.textContent = 'An error occurred. Please try again.';
-        deleteModalErrorMessage.classList.remove('hidden');
-      }
+    });
+
+    // Attach event listeners to Edit and Delete buttons
+    function attachButtonListeners(container: HTMLElement | Document = document) {
+      const editButtons = container.querySelectorAll('.edit-user-btn');
+      const deleteButtons = container.querySelectorAll('.delete-user-btn');
+
+      editButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const userId = target.getAttribute('data-user-id');
+          const username = target.getAttribute('data-username');
+          const userRole = target.getAttribute('data-user-role');
+          if (userId && username) {
+            showEditModal(userId, username, userRole || 'player');
+          }
+        });
+      });
+
+      deleteButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+          const target = e.currentTarget as HTMLElement;
+          const userId = target.getAttribute('data-user-id');
+          const username = target.getAttribute('data-username');
+          if (userId && username) {
+            showDeleteModal(userId, username);
+          }
+        });
+      });
     }
-  });
 
-  // Attach event listeners to Edit and Delete buttons
-  function attachButtonListeners(container: HTMLElement | Document = document) {
-    const editButtons = container.querySelectorAll('.edit-user-btn');
-    const deleteButtons = container.querySelectorAll('.delete-user-btn');
-
-    editButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-        const userId = target.getAttribute('data-user-id');
-        const username = target.getAttribute('data-username');
-        const userRole = target.getAttribute('data-user-role');
-        if (userId && username) {
-          showEditModal(userId, username, userRole || 'player');
-        }
-      });
-    });
-
-    deleteButtons.forEach(button => {
-      button.addEventListener('click', (e) => {
-        const target = e.currentTarget as HTMLElement;
-        const userId = target.getAttribute('data-user-id');
-        const username = target.getAttribute('data-username');
-        if (userId && username) {
-          showDeleteModal(userId, username);
-        }
-      });
-    });
+    // Initialize button listeners on page load
+    attachButtonListeners();
   }
 
-  // Initialize button listeners on page load
-  attachButtonListeners();
+  // Run on initial page load and after view transitions
+  document.addEventListener('astro:page-load', initUsersPage);
 </script>
