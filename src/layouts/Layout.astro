@@ -90,8 +90,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <a href="/locations" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/locations') }]}>Locations</a>
             <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
-            {canAccessUsers && <a href="/users" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/users') }]}>Users</a>}
-            {isLoggedIn && <a href="/profile" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/profile') }]}>Profile</a>}
             
             <!-- Dark mode toggle -->
             <button 
@@ -107,18 +105,47 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               </svg>
             </button>
             
-            {isLoggedIn ? (
+            <!-- User/Auth Dropdown -->
+            <div class="relative">
               <button 
-                id="logoutBtn"
-                class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition"
+                id="userMenuBtn"
+                class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+                aria-label="User menu"
               >
-                Logout
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                </svg>
               </button>
-            ) : (
-              <a href="/login" class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition">
-                Login
-              </a>
-            )}
+              
+              <!-- Dropdown menu -->
+              <div 
+                id="userDropdown"
+                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+              >
+                {!isLoggedIn ? (
+                  <a href="/login" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    Login
+                  </a>
+                ) : (
+                  <>
+                    <a href="/profile" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                      Profile
+                    </a>
+                    {canAccessUsers && (
+                      <a href="/users" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                        Users
+                      </a>
+                    )}
+                    <button 
+                      id="logoutBtn"
+                      class="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                    >
+                      Logout
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
         
@@ -132,8 +159,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <a href="/locations" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/locations') }]}>Locations</a>
             <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
             <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
-            {canAccessUsers && <a href="/users" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/users') }]}>Users</a>}
-            {isLoggedIn && <a href="/profile" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/profile') }]}>Profile</a>}
             
             <!-- Dark mode toggle for mobile -->
             <button 
@@ -151,18 +176,51 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               <span id="themeTextMobile2" class="hidden dark:block">Light Mode</span>
             </button>
             
-            {isLoggedIn ? (
+            <!-- User/Auth Accordion for mobile -->
+            <div class="border-t border-primary-700 dark:border-gray-700 pt-3 mt-3">
               <button 
-                id="logoutBtnMobile"
-                class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition text-left"
+                id="userMenuBtnMobile"
+                class="flex items-center justify-between w-full py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
+                aria-label="User menu"
               >
-                Logout
+                <span class="flex items-center gap-2">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                  </svg>
+                  <span>Account</span>
+                </span>
+                <svg id="accordionIconMobile" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
               </button>
-            ) : (
-              <a href="/login" class="bg-primary-800 hover:bg-primary-900 dark:bg-primary-900 dark:hover:bg-primary-800 px-4 py-2 rounded-lg transition">
-                Login
-              </a>
-            )}
+              
+              <!-- Accordion content -->
+              <div id="userAccordionMobile" class="hidden pl-4 mt-2 space-y-2">
+                {!isLoggedIn ? (
+                  <a href="/login" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
+                    Login
+                  </a>
+                ) : (
+                  <>
+                    <a href="/profile" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
+                      Profile
+                    </a>
+                    {canAccessUsers && (
+                      <a href="/users" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
+                        Users
+                      </a>
+                    )}
+                    <button 
+                      id="logoutBtnMobile"
+                      class="w-full text-left py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+                    >
+                      Logout
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          </div>
           </div>
         </div>
       </div>
@@ -280,6 +338,32 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
         
         themeToggle?.addEventListener('click', toggleTheme);
         themeToggleMobile?.addEventListener('click', toggleTheme);
+        
+        // Desktop user menu dropdown
+        const userMenuBtn = document.getElementById('userMenuBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        
+        userMenuBtn?.addEventListener('click', (e) => {
+          e.stopPropagation();
+          userDropdown?.classList.toggle('hidden');
+        });
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (userDropdown && !userDropdown.contains(e.target as Node) && e.target !== userMenuBtn) {
+            userDropdown.classList.add('hidden');
+          }
+        });
+        
+        // Mobile user menu accordion
+        const userMenuBtnMobile = document.getElementById('userMenuBtnMobile');
+        const userAccordionMobile = document.getElementById('userAccordionMobile');
+        const accordionIconMobile = document.getElementById('accordionIconMobile');
+        
+        userMenuBtnMobile?.addEventListener('click', () => {
+          userAccordionMobile?.classList.toggle('hidden');
+          accordionIconMobile?.classList.toggle('rotate-180');
+        });
         
         // Mobile menu toggle
         const mobileMenuBtn = document.getElementById('mobileMenuBtn');
