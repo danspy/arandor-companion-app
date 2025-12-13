@@ -350,7 +350,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
         
         // Close dropdown when clicking outside
         document.addEventListener('click', (e) => {
-          if (userDropdown && !userDropdown.contains(e.target as Node) && e.target !== userMenuBtn) {
+          if (userDropdown && !userDropdown.contains(e.target as Node) && !userMenuBtn?.contains(e.target as Node)) {
             userDropdown.classList.add('hidden');
           }
         });
