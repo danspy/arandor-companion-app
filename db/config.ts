@@ -148,6 +148,17 @@ const PageSettings = defineTable({
   }
 });
 
+const DiaryNote = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    diaryEntryId: column.text(), // Foreign key to DiaryEntry
+    userId: column.text(), // Foreign key to User - ensures notes are user-specific
+    content: column.text(),
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -160,5 +171,6 @@ export default defineDb({
     LibraryEntry,
     Faction,
     PageSettings,
+    DiaryNote,
   }
 });

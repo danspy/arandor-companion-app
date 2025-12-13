@@ -224,6 +224,68 @@ const renderedContent = renderMarkdown(entry.content);
       </div>
     </article>
 
+    <!-- Player Notes Section (only visible when logged in) -->
+    {isLoggedIn && (
+      <div id="playerNotesSection" class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
+        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4 flex items-center gap-2">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          My Notes
+        </h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Private notes only you can see
+        </p>
+        
+        <!-- Note Display/Edit Area -->
+        <div id="noteDisplay" class="hidden">
+          <div class="prose dark:prose-invert max-w-none mb-4">
+            <div 
+              id="noteContent"
+              class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-800"
+            ></div>
+          </div>
+          <div class="flex gap-2">
+            <button 
+              id="editNoteBtn"
+              class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            >
+              Edit Note
+            </button>
+            <button 
+              id="deleteNoteBtn"
+              class="border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 px-4 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
+            >
+              Delete Note
+            </button>
+          </div>
+        </div>
+
+        <!-- Note Editor -->
+        <div id="noteEditor">
+          <textarea 
+            id="noteTextarea"
+            class="w-full min-h-[200px] p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y"
+            placeholder="Add your private notes here..."
+          ></textarea>
+          <div class="flex gap-2 mt-4">
+            <button 
+              id="saveNoteBtn"
+              class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            >
+              Save Note
+            </button>
+            <button 
+              id="cancelNoteBtn"
+              class="hidden border-2 border-gray-300 dark:border-gray-700 text-gray-700 dark:text-gray-300 px-4 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
+
     <!-- Related Entities -->
     {(relatedNPCs.length > 0 || relatedLocations.length > 0 || relatedCharacters.length > 0 || relatedQuests.length > 0) && (
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -577,4 +639,156 @@ const renderedContent = renderMarkdown(entry.content);
 
   // Initialize on page load
   document.addEventListener('astro:page-load', initializePodcast);
+</script>
+
+<script define:vars={{ entryId: id }}>
+  function initializePlayerNotes() {
+    const noteDisplay = document.getElementById('noteDisplay');
+    const noteEditor = document.getElementById('noteEditor');
+    const noteContent = document.getElementById('noteContent');
+    const noteTextarea = document.getElementById('noteTextarea');
+    const saveNoteBtn = document.getElementById('saveNoteBtn');
+    const cancelNoteBtn = document.getElementById('cancelNoteBtn');
+    const editNoteBtn = document.getElementById('editNoteBtn');
+    const deleteNoteBtn = document.getElementById('deleteNoteBtn');
+
+    if (!noteDisplay || !noteEditor || !noteContent || !noteTextarea) {
+      return; // Not logged in, elements don't exist
+    }
+
+    let currentNote = null;
+    let isEditing = false;
+
+    // Fetch existing note
+    async function fetchNote() {
+      try {
+        const response = await fetch(`/api/diary-notes/${entryId}`);
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Not authenticated, hide notes section
+            const section = document.getElementById('playerNotesSection');
+            if (section) section.style.display = 'none';
+            return;
+          }
+          throw new Error('Failed to fetch note');
+        }
+
+        const data = await response.json();
+        currentNote = data.note;
+
+        if (currentNote && currentNote.content) {
+          // Show existing note
+          noteContent.textContent = currentNote.content;
+          noteDisplay.classList.remove('hidden');
+          noteEditor.classList.add('hidden');
+        } else {
+          // No note yet, show editor
+          noteDisplay.classList.add('hidden');
+          noteEditor.classList.remove('hidden');
+          cancelNoteBtn.classList.add('hidden');
+        }
+      } catch (error) {
+        console.error('Error fetching note:', error);
+      }
+    }
+
+    // Save or update note
+    async function saveNote() {
+      const content = noteTextarea.value.trim();
+      
+      if (!content) {
+        alert('Please enter some content for your note.');
+        return;
+      }
+
+      try {
+        const method = currentNote ? 'PUT' : 'POST';
+        const response = await fetch(`/api/diary-notes/${entryId}`, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ content }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+          throw new Error(error.error || 'Failed to save note');
+        }
+
+        const data = await response.json();
+        currentNote = data.note;
+
+        // Update display
+        noteContent.textContent = currentNote.content;
+        noteDisplay.classList.remove('hidden');
+        noteEditor.classList.add('hidden');
+        isEditing = false;
+      } catch (error) {
+        console.error('Error saving note:', error);
+        alert(`Failed to save note: ${error.message}`);
+      }
+    }
+
+    // Edit note
+    function editNote() {
+      if (currentNote) {
+        noteTextarea.value = currentNote.content;
+      }
+      noteDisplay.classList.add('hidden');
+      noteEditor.classList.remove('hidden');
+      cancelNoteBtn.classList.remove('hidden');
+      isEditing = true;
+    }
+
+    // Cancel editing
+    function cancelEdit() {
+      if (currentNote) {
+        noteDisplay.classList.remove('hidden');
+        noteEditor.classList.add('hidden');
+      } else {
+        noteTextarea.value = '';
+      }
+      cancelNoteBtn.classList.add('hidden');
+      isEditing = false;
+    }
+
+    // Delete note
+    async function deleteNote() {
+      if (!confirm('Are you sure you want to delete this note?')) {
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/diary-notes/${entryId}`, {
+          method: 'DELETE',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to delete note');
+        }
+
+        currentNote = null;
+        noteTextarea.value = '';
+        noteDisplay.classList.add('hidden');
+        noteEditor.classList.remove('hidden');
+        cancelNoteBtn.classList.add('hidden');
+      } catch (error) {
+        console.error('Error deleting note:', error);
+        alert('Failed to delete note. Please try again.');
+      }
+    }
+
+    // Event listeners
+    saveNoteBtn?.addEventListener('click', saveNote);
+    cancelNoteBtn?.addEventListener('click', cancelEdit);
+    editNoteBtn?.addEventListener('click', editNote);
+    deleteNoteBtn?.addEventListener('click', deleteNote);
+
+    // Load note on page load
+    fetchNote();
+  }
+
+  // Initialize on page load
+  document.addEventListener('astro:page-load', initializePlayerNotes);
 </script>
