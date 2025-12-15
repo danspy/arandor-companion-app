@@ -272,7 +272,7 @@ libraryEntries.forEach(entry => {
   let currentMapImage = null;
   let isSidebarOpen = false;
   
-  // Constants for pin opacity
+  // Constants for pin opacity (strings because SVG setAttribute expects strings)
   const VISITED_OPACITY = '1.0';
   const UNVISITED_OPACITY = '0.5';
   
@@ -690,6 +690,8 @@ libraryEntries.forEach(entry => {
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
       // Only render pins that are explicitly marked as visible on map
+      // Uses strict equality (=== true) to require explicit opt-in;
+      // undefined/null/false all result in pin not being rendered (secure by default)
       if (location.visibleOnMap === true) {
         const pinEl = createPin(location);
         pinsGroup.appendChild(pinEl);
