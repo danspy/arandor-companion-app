@@ -38,7 +38,7 @@ Location {
 
 ### Code Changes (src/pages/map.astro)
 
-1. **renderPins() function**: Filters out locations where `visibleOnMap !== false` before rendering
+1. **renderPins() function**: Only renders locations where `visibleOnMap === true`
 2. **createPin() function**: Sets opacity based on `visited` status:
    - `visited = true`: opacity = 1.0 (full)
    - `visited = false`: opacity = 0.5 (semi-transparent)

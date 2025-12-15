@@ -684,8 +684,8 @@ libraryEntries.forEach(entry => {
     document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
-      // Only render pins that are marked as visible on map
-      if (location.visibleOnMap !== false) {
+      // Only render pins that are explicitly marked as visible on map
+      if (location.visibleOnMap === true) {
         const pinEl = createPin(location);
         pinsGroup.appendChild(pinEl);
       }
