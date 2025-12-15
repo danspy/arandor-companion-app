@@ -570,9 +570,12 @@ libraryEntries.forEach(entry => {
     const y = location.mapY != null ? Number(location.mapY) : 50;
     g.setAttribute('transform', `translate(${x}, ${y})`);
 
-    if (location.visibleOnMap === false) {
-      g.setAttribute('opacity', '0.3');
-      g.setAttribute('data-hidden', 'true');
+    // Set opacity based on visited status (only for visible pins)
+    // visited = true: full opacity (1.0), visited = false: 50% opacity (0.5)
+    if (location.visited) {
+      g.setAttribute('opacity', '1.0');
+    } else {
+      g.setAttribute('opacity', '0.5');
     }
 
     // visual: circle above a small tip so that the provided (x,y) is the bottom-center anchor
@@ -681,8 +684,11 @@ libraryEntries.forEach(entry => {
     document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
-      const pinEl = createPin(location);
-      pinsGroup.appendChild(pinEl);
+      // Only render pins that are marked as visible on map
+      if (location.visibleOnMap !== false) {
+        const pinEl = createPin(location);
+        pinsGroup.appendChild(pinEl);
+      }
     });
     // ensure SVG sizing
     try { ensureMapSvgFillsContainer(); } catch (e) {}
@@ -1228,26 +1234,8 @@ libraryEntries.forEach(entry => {
     fitToViewport();
     updateTransform(); // Apply initial transform
     
-    // Set up edit mode event listeners only once to prevent duplicates on re-navigation
-    if (!editModeListenersInitialized && canEdit && toggleEditModeBtn) {
-      toggleEditModeBtn.addEventListener('click', () => {
-        setTimeout(() => {
-          const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
-          hiddenPins.forEach(pin => {
-            if (editMode) {
-              pin.style.opacity = '0.5';
-              pin.style.pointerEvents = 'auto';
-              pin.style.border = '2px dashed orange';
-            } else {
-              pin.style.opacity = '0.3';
-              pin.style.pointerEvents = 'none';
-              pin.style.border = 'none';
-            }
-          });
-        }, 100);
-      });
-      editModeListenersInitialized = true;
-    }
+    // Edit mode listeners no longer needed since hidden pins are not rendered
+    editModeListenersInitialized = true;
   }
   
   // Initialize map on page load (works with both initial load and view transitions)
