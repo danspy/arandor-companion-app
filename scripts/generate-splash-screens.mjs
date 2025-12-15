@@ -11,6 +11,10 @@ const publicDir = join(__dirname, '..', 'public');
 const splashDir = join(publicDir, 'splash');
 const iconsDir = join(publicDir, 'icons');
 
+// Configuration
+const ICON_SIZE_RATIO = 0.2; // Icon will be 20% of screen width
+const MAX_ICON_SIZE = 200;   // Maximum icon size in pixels
+
 // Read icon SVG
 const iconSvg = readFileSync(join(iconsDir, 'icon.svg'));
 
@@ -44,8 +48,8 @@ async function createSplashScreen(width, height, deviceName, isDark = false) {
   const suffix = isDark ? '-dark' : '';
   const outputPath = join(splashDir, `apple-splash-${deviceName}${suffix}.png`);
   
-  // Calculate icon size (20% of screen width, max 200px)
-  const iconSize = Math.min(Math.floor(width * 0.2), 200);
+  // Calculate icon size using configured ratio and max size
+  const iconSize = Math.min(Math.floor(width * ICON_SIZE_RATIO), MAX_ICON_SIZE);
   
   // Create background
   const background = await sharp({

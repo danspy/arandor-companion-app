@@ -58,17 +58,17 @@ await sharp(iconSvg)
   .toFile(defaultAppleIcon);
 console.log(`✓ Generated apple-touch-icon.png (180x180)`);
 
-// Generate favicon.ico (32x32)
-const faviconPath = join(publicDir, 'favicon.ico');
+// Generate favicon.png (32x32) - browsers support PNG favicons
+const faviconPath = join(publicDir, 'favicon.png');
 await sharp(iconSvg)
   .resize(32, 32)
   .png()
   .toFile(faviconPath);
-console.log(`✓ Generated favicon.ico (32x32)`);
+console.log(`✓ Generated favicon.png (32x32)`);
 
 console.log('\n✅ All icons generated successfully!');
 console.log('\nGenerated icons:');
 console.log('  - PWA icons: 72x72 to 512x512');
 console.log('  - Maskable icons: 192x192, 512x512');
 console.log('  - Apple Touch Icons: 120x120 to 180x180');
-console.log('  - Favicon: 32x32');
+console.log('  - Favicon: 32x32 (PNG format)');
