@@ -239,12 +239,10 @@ const renderedContent = renderMarkdown(entry.content);
         
         <!-- Note Display/Edit Area -->
         <div id="noteDisplay" class="hidden">
-          <div class="prose dark:prose-invert max-w-none mb-4">
-            <div 
-              id="noteContent"
-              class="text-gray-700 dark:text-gray-300 whitespace-pre-wrap bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-800"
-            ></div>
-          </div>
+          <div 
+            id="noteContent"
+            class="prose dark:prose-invert max-w-none mb-4 bg-gray-50 dark:bg-gray-900 p-4 rounded-lg border border-gray-200 dark:border-gray-800"
+          ></div>
           <div class="flex gap-2">
             <button 
               id="editNoteBtn"
@@ -266,7 +264,7 @@ const renderedContent = renderMarkdown(entry.content);
           <textarea 
             id="noteTextarea"
             class="w-full min-h-[200px] p-4 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-y"
-            placeholder="Add your private notes here..."
+            placeholder="Add your private notes here... (Markdown supported)"
           ></textarea>
           <div class="flex gap-2 mt-4">
             <button 
@@ -641,8 +639,20 @@ const renderedContent = renderMarkdown(entry.content);
   document.addEventListener('astro:page-load', initializePodcast);
 </script>
 
-<script define:vars={{ entryId: id }}>
+<script>
+  // Import marked for markdown rendering
+  import { marked } from 'marked';
+
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+
   function initializePlayerNotes() {
+    // Get entry ID from the page URL
+    const pathParts = window.location.pathname.split('/');
+    const entryId = pathParts[pathParts.length - 1];
     const noteDisplay = document.getElementById('noteDisplay');
     const noteEditor = document.getElementById('noteEditor');
     const noteContent = document.getElementById('noteContent');
@@ -677,8 +687,8 @@ const renderedContent = renderMarkdown(entry.content);
         currentNote = data.note;
 
         if (currentNote && currentNote.content) {
-          // Show existing note
-          noteContent.textContent = currentNote.content;
+          // Show existing note with markdown rendering
+          noteContent.innerHTML = marked.parse(currentNote.content);
           noteDisplay.classList.remove('hidden');
           noteEditor.classList.add('hidden');
         } else {
@@ -719,8 +729,8 @@ const renderedContent = renderMarkdown(entry.content);
         const data = await response.json();
         currentNote = data.note;
 
-        // Update display
-        noteContent.textContent = currentNote.content;
+        // Update display with markdown rendering
+        noteContent.innerHTML = marked.parse(currentNote.content);
         noteDisplay.classList.remove('hidden');
         noteEditor.classList.add('hidden');
         isEditing = false;
