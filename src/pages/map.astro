@@ -571,11 +571,12 @@ libraryEntries.forEach(entry => {
     g.setAttribute('transform', `translate(${x}, ${y})`);
 
     // Set opacity based on visited status (only for visible pins)
-    // visited = true: full opacity (1.0), visited = false: 50% opacity (0.5)
+    const VISITED_OPACITY = '1.0';
+    const UNVISITED_OPACITY = '0.5';
     if (location.visited) {
-      g.setAttribute('opacity', '1.0');
+      g.setAttribute('opacity', VISITED_OPACITY);
     } else {
-      g.setAttribute('opacity', '0.5');
+      g.setAttribute('opacity', UNVISITED_OPACITY);
     }
 
     // visual: circle above a small tip so that the provided (x,y) is the bottom-center anchor
@@ -663,9 +664,10 @@ libraryEntries.forEach(entry => {
     });
 
     // Drag functionality in edit mode
+    // Note: This handler is only attached to pins that are already rendered (visibleOnMap === true)
     if (canEdit) {
       g.addEventListener('mousedown', (e) => {
-        if (editMode && location.visibleOnMap !== false) {
+        if (editMode) {
           e.preventDefault();
           draggedPin = { element: g, location: location };
           // bring to front
@@ -1219,9 +1221,6 @@ libraryEntries.forEach(entry => {
     e.preventDefault();
   });
 
-  // Track if edit mode event listeners have been set up to prevent duplicates
-  let editModeListenersInitialized = false;
-  
   // Initial render and setup function
   function initializeMap() {
     // Apply configured map size and initial fitting
@@ -1233,9 +1232,6 @@ libraryEntries.forEach(entry => {
     buildHeroPath();
     fitToViewport();
     updateTransform(); // Apply initial transform
-    
-    // Edit mode listeners no longer needed since hidden pins are not rendered
-    editModeListenersInitialized = true;
   }
   
   // Initialize map on page load (works with both initial load and view transitions)
