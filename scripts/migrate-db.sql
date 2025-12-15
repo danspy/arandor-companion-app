@@ -60,17 +60,6 @@ CREATE TABLE IF NOT EXISTS "Character" (
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
 
--- Add isActive column to existing Character table (if it doesn't exist)
--- This is safe to run even if the column already exists
--- SQLite will silently ignore the error if the column exists
--- All existing characters will default to active (1 = true)
-ALTER TABLE "Character" ADD COLUMN "isActive" integer NOT NULL DEFAULT 1;
-
--- Add coverVideoUrl column to existing DiaryEntry table (if it doesn't exist)
--- This is safe to run even if the column already exists
--- SQLite will silently ignore the error if the column exists
-ALTER TABLE "DiaryEntry" ADD COLUMN "coverVideoUrl" text;
-
 -- Create NPC table
 CREATE TABLE IF NOT EXISTS "NPC" (
   "id" text PRIMARY KEY,
@@ -96,6 +85,7 @@ CREATE TABLE IF NOT EXISTS "Location" (
   "region" text,
   "visited" integer NOT NULL DEFAULT 0,
   "notes" text,
+  "imageUrl" text,
   "mapX" real,
   "mapY" real,
   "visibleOnMap" integer NOT NULL DEFAULT 0,
@@ -117,6 +107,7 @@ CREATE TABLE IF NOT EXISTS "CampaignProgress" (
   "id" text PRIMARY KEY,
   "currentLevel" integer NOT NULL,
   "progressPercent" integer NOT NULL,
+  "heroImageUrl" text,
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
@@ -142,27 +133,21 @@ CREATE TABLE IF NOT EXISTS "Faction" (
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
 
--- Add heroImageUrl column to existing CampaignProgress table (if it doesn't exist)
--- This is safe to run even if the column already exists
--- SQLite will silently ignore the error if the column exists
-ALTER TABLE "CampaignProgress" ADD COLUMN "heroImageUrl" text;
-
--- Add imageUrl column to existing Location table (if it doesn't exist)
--- This is safe to run even if the column already exists
--- SQLite will silently ignore the error if the column exists
-ALTER TABLE "Location" ADD COLUMN "imageUrl" text;
-
--- Add role column to existing User table (if it doesn't exist)
--- This is safe to run even if the column already exists
--- SQLite will silently ignore the error if the column exists
--- All existing users will default to 'player' role
-ALTER TABLE "User" ADD COLUMN "role" text NOT NULL DEFAULT 'player';
-
 -- Create PageSettings table for storing hero images per page
 CREATE TABLE IF NOT EXISTS "PageSettings" (
   "id" text PRIMARY KEY,
   "pageName" text NOT NULL UNIQUE,
   "heroImageUrl" text,
+  "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
+  "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
+);
+
+-- Create DiaryNote table for player-specific notes on diary entries
+CREATE TABLE IF NOT EXISTS "DiaryNote" (
+  "id" text PRIMARY KEY,
+  "diaryEntryId" text NOT NULL,
+  "userId" text NOT NULL,
+  "content" text NOT NULL,
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
