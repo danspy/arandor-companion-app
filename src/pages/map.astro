@@ -272,6 +272,10 @@ libraryEntries.forEach(entry => {
   let currentMapImage = null;
   let isSidebarOpen = false;
   
+  // Constants for pin opacity
+  const VISITED_OPACITY = '1.0';
+  const UNVISITED_OPACITY = '0.5';
+  
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
@@ -571,8 +575,6 @@ libraryEntries.forEach(entry => {
     g.setAttribute('transform', `translate(${x}, ${y})`);
 
     // Set opacity based on visited status (only for visible pins)
-    const VISITED_OPACITY = '1.0';
-    const UNVISITED_OPACITY = '0.5';
     if (location.visited) {
       g.setAttribute('opacity', VISITED_OPACITY);
     } else {
@@ -664,7 +666,8 @@ libraryEntries.forEach(entry => {
     });
 
     // Drag functionality in edit mode
-    // Note: This handler is only attached to pins that are already rendered (visibleOnMap === true)
+    // This handler is only attached to visible pins (visibleOnMap === true), 
+    // but only activates when editMode is enabled
     if (canEdit) {
       g.addEventListener('mousedown', (e) => {
         if (editMode) {
