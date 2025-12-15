@@ -272,6 +272,10 @@ libraryEntries.forEach(entry => {
   let currentMapImage = null;
   let isSidebarOpen = false;
   
+  // Constants for pin opacity (strings because SVG setAttribute expects strings)
+  const VISITED_OPACITY = '1.0';
+  const UNVISITED_OPACITY = '0.5';
+  
   // Debounce time to prevent click event immediately after drag
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
@@ -570,9 +574,11 @@ libraryEntries.forEach(entry => {
     const y = location.mapY != null ? Number(location.mapY) : 50;
     g.setAttribute('transform', `translate(${x}, ${y})`);
 
-    if (location.visibleOnMap === false) {
-      g.setAttribute('opacity', '0.3');
-      g.setAttribute('data-hidden', 'true');
+    // Set opacity based on visited status (only for visible pins)
+    if (location.visited) {
+      g.setAttribute('opacity', VISITED_OPACITY);
+    } else {
+      g.setAttribute('opacity', UNVISITED_OPACITY);
     }
 
     // visual: circle above a small tip so that the provided (x,y) is the bottom-center anchor
@@ -660,9 +666,11 @@ libraryEntries.forEach(entry => {
     });
 
     // Drag functionality in edit mode
+    // This handler is only attached to visible pins (visibleOnMap === true), 
+    // but only activates when editMode is enabled
     if (canEdit) {
       g.addEventListener('mousedown', (e) => {
-        if (editMode && location.visibleOnMap !== false) {
+        if (editMode) {
           e.preventDefault();
           draggedPin = { element: g, location: location };
           // bring to front
@@ -681,8 +689,13 @@ libraryEntries.forEach(entry => {
     document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
     pinsGroup.innerHTML = '';
     locations.forEach(location => {
-      const pinEl = createPin(location);
-      pinsGroup.appendChild(pinEl);
+      // Only render pins that are explicitly marked as visible on map
+      // Uses strict equality (=== true) to require explicit opt-in;
+      // undefined/null/false all result in pin not being rendered (secure by default)
+      if (location.visibleOnMap === true) {
+        const pinEl = createPin(location);
+        pinsGroup.appendChild(pinEl);
+      }
     });
     // ensure SVG sizing
     try { ensureMapSvgFillsContainer(); } catch (e) {}
@@ -731,6 +744,7 @@ libraryEntries.forEach(entry => {
             ${capitalizeType(location.type)}
           </span>
           ${location.region ? `<span class="text-sm text-gray-600 dark:text-gray-400">📍 ${location.region}</span>` : ''}
+          ${location.visited ? `<span class="text-sm text-green-600 dark:text-green-400">✓ Visited</span>` : ''}
         </div>
         <div class="prose dark:prose-invert max-w-none text-gray-700 dark:text-gray-300">${renderedDescription}</div>
         ${location.notes ? `<div class="bg-blue-50 dark:bg-blue-900 dark:bg-opacity-30 border-l-4 border-blue-500 p-3"><p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
@@ -1213,9 +1227,6 @@ libraryEntries.forEach(entry => {
     e.preventDefault();
   });
 
-  // Track if edit mode event listeners have been set up to prevent duplicates
-  let editModeListenersInitialized = false;
-  
   // Initial render and setup function
   function initializeMap() {
     // Apply configured map size and initial fitting
@@ -1227,27 +1238,6 @@ libraryEntries.forEach(entry => {
     buildHeroPath();
     fitToViewport();
     updateTransform(); // Apply initial transform
-    
-    // Set up edit mode event listeners only once to prevent duplicates on re-navigation
-    if (!editModeListenersInitialized && canEdit && toggleEditModeBtn) {
-      toggleEditModeBtn.addEventListener('click', () => {
-        setTimeout(() => {
-          const hiddenPins = document.querySelectorAll('.location-pin[data-hidden="true"]');
-          hiddenPins.forEach(pin => {
-            if (editMode) {
-              pin.style.opacity = '0.5';
-              pin.style.pointerEvents = 'auto';
-              pin.style.border = '2px dashed orange';
-            } else {
-              pin.style.opacity = '0.3';
-              pin.style.pointerEvents = 'none';
-              pin.style.border = 'none';
-            }
-          });
-        }, 100);
-      });
-      editModeListenersInitialized = true;
-    }
   }
   
   // Initialize map on page load (works with both initial load and view transitions)
