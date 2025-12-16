@@ -39,7 +39,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   {isLoggedIn && (
     <div class="flex justify-end mb-4">
       <button 
-        id="addEntry"
+        id="addLibraryEntry"
         class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
       >
         + New Entry
@@ -163,11 +163,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   )}
 
   <!-- Modal for Add/Edit Entry -->
-  <div id="entryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+  <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
     <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Library Entry</h2>
-      <form id="entryForm" class="space-y-4">
-        <input type="hidden" id="entryId" name="id">
+      <h2 id="libraryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Library Entry</h2>
+      <form id="libraryEntryForm" class="space-y-4">
+        <input type="hidden" id="libraryEntryId" name="id">
         
         <div>
           <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
@@ -239,7 +239,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </button>
           <button 
             type="button" 
-            id="cancelModal"
+            id="cancelLibraryModal"
             class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
           >
             Cancel
@@ -310,11 +310,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   // Initialize library modal and form functionality
   function initializeLibraryModal() {
-    const modal = document.getElementById('entryModal');
-    const form = document.getElementById('entryForm') as HTMLFormElement;
-    const modalTitle = document.getElementById('modalTitle');
-    const addButton = document.getElementById('addEntry');
-    const cancelButton = document.getElementById('cancelModal');
+    const modal = document.getElementById('libraryEntryModal');
+    const form = document.getElementById('libraryEntryForm') as HTMLFormElement;
+    const modalTitle = document.getElementById('libraryModalTitle');
+    const addButton = document.getElementById('addLibraryEntry');
+    const cancelButton = document.getElementById('cancelLibraryModal');
     const contentTextarea = document.getElementById('content') as HTMLTextAreaElement;
     const togglePreviewBtn = document.getElementById('togglePreview');
     const previewDiv = document.getElementById('markdownPreview');
@@ -346,7 +346,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   addButton?.addEventListener('click', () => {
     editingId = null;
     form.reset();
-    document.getElementById('entryId')?.setAttribute('value', '');
+    document.getElementById('libraryEntryId')?.setAttribute('value', '');
     if (modalTitle) modalTitle.textContent = 'New Library Entry';
     previewDiv?.classList.add('hidden');
     modal?.classList.remove('hidden');
@@ -454,8 +454,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       if (!id) return;
       
       // Get DOM elements fresh
-      const modal = document.getElementById('entryModal');
-      const modalTitle = document.getElementById('modalTitle');
+      const modal = document.getElementById('libraryEntryModal');
+      const modalTitle = document.getElementById('libraryModalTitle');
       const previewDiv = document.getElementById('markdownPreview');
       
       try {
