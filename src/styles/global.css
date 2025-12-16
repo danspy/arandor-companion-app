@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html, body {
+  overflow-x: clip;
+}
+
+body {
+  padding-top: var(--safe-top);
+}
+
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;

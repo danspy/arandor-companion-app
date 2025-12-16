@@ -1,7 +1,7 @@
 ---
 import '../styles/global.css';
 import { isAuthenticated, getUserRole } from '../lib/auth';
-import { ViewTransitions } from 'astro:transitions';
+import { ClientRouter } from 'astro:transitions';
 
 interface Props {
   title: string;
@@ -91,7 +91,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <meta name="mobile-web-app-capable" content="yes" />
     
     <title>{title} - Arandor Companion</title>
-    <ViewTransitions />
+    <ClientRouter />
     <script is:inline>
       // Initialize dark mode before page renders to avoid flash
       const getThemePreference = () => {
