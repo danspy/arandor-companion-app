@@ -144,18 +144,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               data-is-active={entry.isActive}
               data-entry-id={entry.id}
             >
-              {isCurrentTurn && (
-                <div class="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-0.5 text-xs font-bold tracking-wider">
-                  <span class="turn-indicator">CURRENT TURN</span>
-                </div>
-              )}
-              
-              <div class:list={[
-                "p-3",
-                { 'pt-6': isCurrentTurn }
-              ]}>
-                <!-- Compact horizontal layout -->
-                <div class="flex items-center gap-3">
+              <div class="p-3">
+                <!-- Compact layout: Desktop horizontal, Mobile stacked -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
                   <!-- Initiative number -->
                   <div class="flex-shrink-0 text-4xl font-bold text-primary-600 dark:text-primary-400 w-16">
                     {entry.initiative}
@@ -171,10 +162,66 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                         {entry.type}
                       </span>
                     </div>
+                    
+                    <!-- HP, AC & Actions on mobile (below name) -->
+                    <div class="flex items-center gap-3 mt-2 sm:hidden">
+                      <div class="text-center min-w-[60px]">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
+                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {canEdit ? (
+                            entry.hp !== null && entry.maxHp !== null ? (
+                              <span>{entry.hp}/{entry.maxHp}</span>
+                            ) : entry.hp !== null ? (
+                              <span>{entry.hp}</span>
+                            ) : (
+                              <span class="text-gray-400">-</span>
+                            )
+                          ) : (
+                            (() => {
+                              const status = getHealthStatus(entry.hp, entry.maxHp);
+                              return status.text === '-' ? (
+                                <span class={status.classes}>{status.text}</span>
+                              ) : (
+                                <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`}>
+                                  {status.text}
+                                </span>
+                              );
+                            })()
+                          )}
+                        </div>
+                      </div>
+
+                      {canEdit && (
+                        <div class="text-center min-w-[40px]">
+                          <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
+                          <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                          </div>
+                        </div>
+                      )}
+                      
+                      {canEdit && (
+                        <div class="flex gap-2 ml-auto">
+                          <button 
+                            class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
+                            data-id={entry.id}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
+                            data-id={entry.id}
+                            data-name={entry.name}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
-                  <!-- HP & AC inline -->
-                  <div class="flex items-center gap-3 flex-shrink-0">
+                  <!-- HP & AC inline (desktop only) -->
+                  <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
                     <div class="text-center min-w-[60px]">
                       <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
                       <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
@@ -211,9 +258,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     )}
                   </div>
                   
-                  <!-- Actions -->
+                  <!-- Actions (desktop only) -->
                   {canEdit && (
-                    <div class="flex gap-2 flex-shrink-0">
+                    <div class="hidden sm:flex gap-2 flex-shrink-0">
                       <button 
                         class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
                         data-id={entry.id}
@@ -464,7 +511,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
   )}
 
   <style>
-    /* Cards already have border styling via Tailwind classes, no additional CSS needed for turn indicator */
+    /* Turn indicator - thicker yellow border */
+    .initiative-card.border-yellow-500 {
+      border-width: 3px !important;
+    }
     
     /* Loading spinner animation */
     @keyframes spin {
@@ -799,35 +849,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             // Remove yellow border and add gray border
             card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
             card.classList.add('border-gray-200', 'dark:border-gray-700');
-            
-            // Remove "CURRENT TURN" banner if it exists
-            const banner = card.querySelector('.turn-indicator')?.parentElement;
-            if (banner) {
-              banner.remove();
-            }
           });
           
-          // Add turn styling to the active card
+          // Add turn styling to the active card (yellow border only)
           if (activeCards.length > 0 && newIndex >= 0 && newIndex < activeCards.length) {
             const targetCard = activeCards[newIndex];
             if (targetCard) {
               // Add yellow border
               targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
               targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
-              
-              // Add "CURRENT TURN" banner
-              const cardContent = targetCard.querySelector('[class*="p-4"]');
-              if (cardContent) {
-                const banner = document.createElement('div');
-                banner.className = 'absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider';
-                banner.innerHTML = '<span class="turn-indicator">CURRENT TURN</span>';
-                targetCard.insertBefore(banner, targetCard.firstChild);
-                
-                // Adjust padding if banner is added
-                if (!cardContent.classList.contains('pt-8')) {
-                  cardContent.classList.add('pt-8');
-                }
-              }
               
               // Scroll into view
               targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -957,33 +987,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             cards.forEach(card => {
               card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
               card.classList.add('border-gray-200', 'dark:border-gray-700');
-              
-              const banner = card.querySelector('.turn-indicator')?.parentElement;
-              if (banner) {
-                banner.remove();
-              }
-              
-              const cardContent = card.querySelector('[class*="p-4"]');
-              if (cardContent) {
-                cardContent.classList.remove('pt-8');
-              }
             });
             
-            // Add turn styling to active card
+            // Add turn styling to active card (yellow border only)
             if (activeCards.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeCards.length) {
               const targetCard = activeCards[state.currentTurnIndex];
               if (targetCard) {
                 targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
                 targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
-                
-                const cardContent = targetCard.querySelector('[class*="p-4"]');
-                if (cardContent && !targetCard.querySelector('.turn-indicator')) {
-                  const banner = document.createElement('div');
-                  banner.className = 'absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider';
-                  banner.innerHTML = '<span class="turn-indicator">CURRENT TURN</span>';
-                  targetCard.insertBefore(banner, targetCard.firstChild);
-                  cardContent.classList.add('pt-8');
-                }
               }
             }
           }
