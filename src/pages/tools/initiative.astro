@@ -180,7 +180,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 <!-- Compact layout: Desktop horizontal, Mobile stacked -->
                 <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
                   <!-- Initiative number -->
-                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold text-primary-600 dark:text-primary-400 w-12 sm:w-16">
+                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold text-primary-600 dark:text-primary-400 min-w-12 sm:min-w-16">
                     {entry.initiative}
                   </div>
                   
@@ -197,7 +197,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     
                     <!-- HP, AC & Actions on mobile (below name) -->
                     <div class="flex items-center gap-2 mt-1.5 sm:hidden">
-                      <div class="text-center min-w-[50px]">
+                      <div class="text-center min-w-12">
                         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
                         <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
                           {canEdit ? (
@@ -224,7 +224,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                       </div>
 
                       {canEdit && (
-                        <div class="text-center min-w-[35px]">
+                        <div class="text-center min-w-8">
                           <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
                           <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
                             <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
@@ -254,7 +254,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   
                   <!-- HP & AC inline (desktop only) -->
                   <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
-                    <div class="text-center min-w-[60px]">
+                    <div class="text-center min-w-16">
                       <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
                       <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {canEdit ? (
@@ -281,7 +281,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     </div>
 
                     {canEdit && (
-                      <div class="text-center min-w-[40px]">
+                      <div class="text-center min-w-10">
                         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
                         <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
