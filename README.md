@@ -329,10 +329,10 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Faction tracking system
 - [x] Campaign level progress tracking
 - [x] Image uploads for diary entries
+- [x] Multi-user support with role-based permissions
 - [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
 - [ ] Image uploads for characters/NPCs
-- [ ] Multi-user support with role-based permissions
 - [ ] Session scheduling and reminders
 - [ ] Dice roller integration
 - [ ] Initiative tracker
