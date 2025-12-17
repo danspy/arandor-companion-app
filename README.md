@@ -49,10 +49,18 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Campaign Progress** - Track party level progression:
   - Current party level
   - Progress percentage to next level
+- **Tools** - Game master utilities and player aids:
+  - **Initiative Tracker** - Track combat initiative order for characters, NPCs, and monsters
+    - Initiative order with HP, AC, and notes
+    - Type badges (character, NPC, monster, other)
+    - Editable by DM/admin only, viewable by all logged-in users
+    - Quick add/edit/delete functionality
+  - Coming soon: Dice Roller, Session Timer
 
 ### Additional Features
 
 - **Authentication** - Login system to protect editing functionality
+  - Role-based permissions (admin, dungeonmaster, player)
 - **Dark Mode** - Toggle between light and dark themes
 - **Image Uploads** - Upload cover images for diary entries
 - **Markdown Support** - Rich text formatting in diary and library entries
@@ -171,7 +179,8 @@ The database includes the following tables:
 - **LibraryEntry** - Lore and knowledge entries
 - **Faction** - Faction standings and progress
 - **CampaignProgress** - Party level tracking
-- **User** - Authentication credentials
+- **InitiativeTracker** - Combat initiative tracking with HP, AC, and notes
+- **User** - Authentication credentials with role-based permissions
 
 ### Features
 
@@ -286,6 +295,10 @@ The following REST API endpoints are available:
 **Campaign Progress:**
 - `GET/PUT /api/campaign-progress/[id]` - Campaign progress
 
+**Initiative Tracker:**
+- `GET/POST /api/initiative` - Initiative entries (GET: all users, POST: DM/admin only)
+- `GET/PUT/DELETE /api/initiative/[id]` - Single initiative entry (GET: all users, PUT/DELETE: DM/admin only)
+
 **File Upload:**
 - `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
 
@@ -330,12 +343,12 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Campaign level progress tracking
 - [x] Image uploads for diary entries
 - [x] Multi-user support with role-based permissions
+- [x] Initiative tracker (DM/admin can edit, players can view)
 - [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
 - [ ] Image uploads for characters/NPCs
 - [ ] Session scheduling and reminders
 - [ ] Dice roller integration
-- [ ] Initiative tracker
 
 ## Contributing
 
