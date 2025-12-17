@@ -23,8 +23,10 @@ const sortedInitiatives = initiatives.sort((a, b) => {
   return a.name.localeCompare(b.name);
 });
 
-// Fetch active characters for dropdown
+// Fetch active characters and NPCs for dropdown
 const activeCharacters = await db.select().from(Character).where(eq(Character.isActive, true));
+const { NPC } = await import('astro:db');
+const activeNPCs = await db.select().from(NPC);
 
 // Get combat state (round and turn tracking)
 const { CombatState } = await import('astro:db');
@@ -346,6 +348,44 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               </select>
             </div>
 
+            <div id="npcSelectContainer" class="hidden">
+              <label for="npcSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select NPC
+              </label>
+              <select 
+                id="npcSelect" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select an NPC --</option>
+                {activeNPCs.map(npc => (
+                  <option 
+                    value={npc.id}
+                    data-name={npc.name}
+                  >
+                    {npc.name} ({npc.occupation || npc.race})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div id="monsterGroupContainer" class="hidden">
+              <label for="monsterCount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Number of Monsters
+              </label>
+              <input 
+                type="number" 
+                id="monsterCount" 
+                min="1"
+                max="20"
+                value="1"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="1"
+              />
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Creates multiple monsters with individual initiatives (rolled automatically)
+              </p>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -429,6 +469,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     </div>
   )}
 
+  <style>
+    /* Force yellow border to show with !important */
+    .initiative-row.turn-active {
+      border-left: 4px solid #eab308 !important;
+      background-color: #fefce8 !important;
+    }
+    
+    .dark .initiative-row.turn-active {
+      background-color: rgba(234, 179, 8, 0.2) !important;
+    }
+  </style>
+
   <script>
     let initialized = false;
     
@@ -463,16 +515,34 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const isActiveInput = document.getElementById('isActive');
       const characterSelectContainer = document.getElementById('characterSelectContainer');
       const characterSelect = document.getElementById('characterSelect');
+      const npcSelectContainer = document.getElementById('npcSelectContainer');
+      const npcSelect = document.getElementById('npcSelect');
+      const monsterGroupContainer = document.getElementById('monsterGroupContainer');
+      const monsterCountInput = document.getElementById('monsterCount');
 
-      // Show/hide character dropdown based on type selection
-      typeSelect?.addEventListener('change', () => {
+      // Show/hide dropdowns based on type selection
+      const handleTypeChange = () => {
+        // Hide all special containers first
+        characterSelectContainer?.classList.add('hidden');
+        npcSelectContainer?.classList.add('hidden');
+        monsterGroupContainer?.classList.add('hidden');
+        
+        // Show relevant container
         if (typeSelect.value === 'character') {
           characterSelectContainer?.classList.remove('hidden');
-        } else {
-          characterSelectContainer?.classList.add('hidden');
-          if (characterSelect) characterSelect.value = '';
+        } else if (typeSelect.value === 'npc') {
+          npcSelectContainer?.classList.remove('hidden');
+        } else if (typeSelect.value === 'monster') {
+          monsterGroupContainer?.classList.remove('hidden');
         }
-      });
+        
+        // Reset selections
+        if (characterSelect) characterSelect.value = '';
+        if (npcSelect) npcSelect.value = '';
+        if (monsterCountInput) monsterCountInput.value = '1';
+      };
+      
+      typeSelect?.addEventListener('change', handleTypeChange);
 
       // Auto-fill fields when a character is selected
       characterSelect?.addEventListener('change', () => {
@@ -489,6 +559,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       });
 
+      // Auto-fill fields when an NPC is selected
+      npcSelect?.addEventListener('change', () => {
+        const selectedOption = npcSelect.options[npcSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          nameInput.value = selectedOption.getAttribute('data-name') || '';
+        }
+      });
+
       // Open modal for adding
       addBtn?.addEventListener('click', () => {
         if (modalTitle) modalTitle.textContent = 'Add Initiative Entry';
@@ -496,12 +574,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         entryIdInput.value = '';
         isActiveInput.checked = true;
         
-        // Check if default type is "character" and show dropdown accordingly
-        if (typeSelect && typeSelect.value === 'character') {
-          characterSelectContainer?.classList.remove('hidden');
-        } else {
-          characterSelectContainer?.classList.add('hidden');
-        }
+        // Trigger type change to show correct dropdown
+        handleTypeChange();
         
         modal?.classList.remove('hidden');
         modal?.classList.add('flex');
@@ -513,6 +587,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         modal?.classList.remove('flex');
         form.reset();
         characterSelectContainer?.classList.add('hidden');
+        npcSelectContainer?.classList.add('hidden');
+        monsterGroupContainer?.classList.add('hidden');
       };
 
       closeModalBtn?.addEventListener('click', closeModal);
@@ -541,11 +617,17 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             notesInput.value = entry.notes || '';
             isActiveInput.checked = entry.isActive;
             
-            // Show character dropdown if type is character
+            // Show correct dropdown based on type
+            characterSelectContainer?.classList.add('hidden');
+            npcSelectContainer?.classList.add('hidden');
+            monsterGroupContainer?.classList.add('hidden');
+            
             if (entry.type === 'character') {
               characterSelectContainer?.classList.remove('hidden');
-            } else {
-              characterSelectContainer?.classList.add('hidden');
+            } else if (entry.type === 'npc') {
+              npcSelectContainer?.classList.remove('hidden');
+            } else if (entry.type === 'monster') {
+              monsterGroupContainer?.classList.remove('hidden');
             }
             
             modal?.classList.remove('hidden');
@@ -601,14 +683,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       });
 
-      // Form submission
-      form?.addEventListener('submit', async (e) => {
+      // Form submission handler (defined once)
+      const handleFormSubmit = async (e) => {
         e.preventDefault();
 
         const id = entryIdInput.value;
         const isEdit = !!id;
 
-        const data = {
+        const baseData = {
           name: nameInput.value.trim(),
           initiative: parseInt(initiativeInput.value),
           type: typeSelect.value,
@@ -620,18 +702,45 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         };
 
         try {
-          const response = await fetch(
-            isEdit ? `/api/initiative/${id}` : '/api/initiative',
-            {
-              method: isEdit ? 'PUT' : 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            }
-          );
+          // Handle monster groups (create multiple entries)
+          if (!isEdit && typeSelect.value === 'monster' && monsterCountInput && parseInt(monsterCountInput.value) > 1) {
+            const count = parseInt(monsterCountInput.value);
+            const baseInitiative = baseData.initiative;
+            
+            // Create multiple monsters with individual initiatives
+            for (let i = 1; i <= count; i++) {
+              const monsterData = {
+                ...baseData,
+                name: `${baseData.name} ${i}`,
+                initiative: baseInitiative + Math.floor(Math.random() * 5) - 2, // Vary by +/-2
+              };
+              
+              const response = await fetch('/api/initiative', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(monsterData),
+              });
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to save entry');
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to save entry');
+              }
+            }
+          } else {
+            // Single entry creation or edit
+            const response = await fetch(
+              isEdit ? `/api/initiative/${id}` : '/api/initiative',
+              {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(baseData),
+              }
+            );
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to save entry');
+            }
           }
 
           window.location.reload();
@@ -639,7 +748,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           console.error('Error saving entry:', error);
           alert(error instanceof Error ? error.message : 'Failed to save entry');
         }
-      });
+      };
+      
+      // Remove old listener if exists, add new one
+      form?.removeEventListener('submit', handleFormSubmit);
+      form?.addEventListener('submit', handleFormSubmit);
 
       // Next/Prev turn functionality with server sync
       const nextTurnBtn = document.getElementById('nextTurnBtn');
@@ -650,7 +763,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           // Remove all turn indicators and highlights
           document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
           document.querySelectorAll('.initiative-row').forEach(row => {
-            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
           });
           
           // Update round display
@@ -666,8 +779,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           if (activeRows.length > 0 && newIndex >= 0 && newIndex < activeRows.length) {
             const targetRow = activeRows[newIndex];
             if (targetRow) {
-              // Add highlight
-              targetRow.classList.add('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+              // Add highlight with !important CSS class
+              targetRow.classList.add('turn-active');
               
               // Add turn badge
               const initiativeCell = targetRow.querySelector('td:first-child > div');
@@ -778,7 +891,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             // Update turn indicator
             document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
             document.querySelectorAll('.initiative-row').forEach(row => {
-              row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+              row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
             });
             
             const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
@@ -788,7 +901,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             if (activeRows.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeRows.length) {
               const targetRow = activeRows[state.currentTurnIndex];
               if (targetRow) {
-                targetRow.classList.add('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+                targetRow.classList.add('turn-active');
                 const initiativeCell = targetRow.querySelector('td:first-child > div');
                 if (initiativeCell && !initiativeCell.querySelector('.turn-indicator')) {
                   const badge = document.createElement('span');
