@@ -148,6 +148,22 @@ const PageSettings = defineTable({
   }
 });
 
+const InitiativeTracker = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    name: column.text(),
+    initiative: column.number(),
+    type: column.text(), // 'character' | 'npc' | 'monster' | 'other'
+    hp: column.number({ optional: true }), // Current HP
+    maxHp: column.number({ optional: true }), // Max HP
+    ac: column.number({ optional: true }), // Armor Class
+    notes: column.text({ optional: true }),
+    isActive: column.boolean({ default: true }), // Whether this entry is in current combat
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -160,5 +176,6 @@ export default defineDb({
     LibraryEntry,
     Faction,
     PageSettings,
+    InitiativeTracker,
   }
 });

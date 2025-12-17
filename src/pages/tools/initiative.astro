@@ -1,0 +1,469 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { db, InitiativeTracker } from 'astro:db';
+
+// Initiative tracker is only accessible to logged-in users
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect('/login');
+}
+
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Fetch all initiative entries
+const initiatives = await db.select().from(InitiativeTracker);
+// Sort by initiative (descending) and then by name
+const sortedInitiatives = initiatives.sort((a, b) => {
+  if (b.initiative !== a.initiative) {
+    return b.initiative - a.initiative;
+  }
+  return a.name.localeCompare(b.name);
+});
+
+// Type badge colors
+const getTypeBadgeColor = (type: string) => {
+  switch (type) {
+    case 'character':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    case 'npc':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    case 'monster':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+  }
+};
+---
+
+<Layout title="Initiative Tracker">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+          <p class="text-gray-600 dark:text-gray-400 mt-2">Track combat initiative order</p>
+        </div>
+        {canEdit && (
+          <button 
+            id="addInitiativeBtn"
+            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
+          >
+            Add Entry
+          </button>
+        )}
+      </div>
+    </div>
+
+    {sortedInitiatives.length === 0 ? (
+      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-8 text-center">
+        <p class="text-gray-600 dark:text-gray-400">
+          No initiative entries yet. {canEdit ? 'Add your first entry to start tracking combat!' : 'The DM will add entries when combat starts.'}
+        </p>
+      </div>
+    ) : (
+      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 overflow-hidden">
+        <table class="w-full">
+          <thead class="bg-gray-50 dark:bg-gray-900">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Initiative
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Name
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Type
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                HP
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                AC
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                Notes
+              </th>
+              {canEdit && (
+                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
+            {sortedInitiatives.map((entry) => (
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition" class:list={[{ 'opacity-50': !entry.isActive }]}>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                    {entry.initiative}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    {entry.name}
+                  </div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class:list={["px-2 inline-flex text-xs leading-5 font-semibold rounded-full", getTypeBadgeColor(entry.type)]}>
+                    {entry.type}
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  {entry.hp !== null && entry.maxHp !== null ? (
+                    <span>{entry.hp} / {entry.maxHp}</span>
+                  ) : entry.hp !== null ? (
+                    <span>{entry.hp}</span>
+                  ) : (
+                    <span class="text-gray-400">-</span>
+                  )}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                  {entry.notes || '-'}
+                </td>
+                {canEdit && (
+                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <button 
+                      class="edit-initiative-btn text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 mr-3"
+                      data-id={entry.id}
+                    >
+                      Edit
+                    </button>
+                    <button 
+                      class="delete-initiative-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                      data-id={entry.id}
+                      data-name={entry.name}
+                    >
+                      Delete
+                    </button>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    {canEdit && sortedInitiatives.length > 0 && (
+      <div class="mt-6 flex gap-4">
+        <button 
+          id="clearAllBtn"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition"
+        >
+          Clear All
+        </button>
+      </div>
+    )}
+  </div>
+
+  <!-- Add/Edit Initiative Modal -->
+  {canEdit && (
+    <div id="initiativeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Initiative Entry</h2>
+            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <form id="initiativeForm" class="space-y-4">
+            <input type="hidden" id="entryId" />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Name *
+                </label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Character or monster name"
+                />
+              </div>
+
+              <div>
+                <label for="initiative" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Initiative *
+                </label>
+                <input 
+                  type="number" 
+                  id="initiative" 
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Initiative roll"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Type *
+              </label>
+              <select 
+                id="type" 
+                required
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="character">Character</option>
+                <option value="npc">NPC</option>
+                <option value="monster">Monster</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Current HP
+                </label>
+                <input 
+                  type="number" 
+                  id="hp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Current HP"
+                />
+              </div>
+
+              <div>
+                <label for="maxHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max HP
+                </label>
+                <input 
+                  type="number" 
+                  id="maxHp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Max HP"
+                />
+              </div>
+
+              <div>
+                <label for="ac" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  AC
+                </label>
+                <input 
+                  type="number" 
+                  id="ac" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Armor Class"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Notes
+              </label>
+              <textarea 
+                id="notes" 
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Optional notes (conditions, effects, etc.)"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="isActive" 
+                checked
+                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+              />
+              <label for="isActive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Active in combat
+              </label>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button 
+                type="submit"
+                class="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
+              >
+                Save
+              </button>
+              <button 
+                type="button"
+                id="cancelBtn"
+                class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <script>
+    const canEdit = {canEdit};
+    
+    if (canEdit) {
+      const modal = document.getElementById('initiativeModal');
+      const form = document.getElementById('initiativeForm') as HTMLFormElement;
+      const modalTitle = document.getElementById('modalTitle');
+      const addBtn = document.getElementById('addInitiativeBtn');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+
+      // Form fields
+      const entryIdInput = document.getElementById('entryId') as HTMLInputElement;
+      const nameInput = document.getElementById('name') as HTMLInputElement;
+      const initiativeInput = document.getElementById('initiative') as HTMLInputElement;
+      const typeSelect = document.getElementById('type') as HTMLSelectElement;
+      const hpInput = document.getElementById('hp') as HTMLInputElement;
+      const maxHpInput = document.getElementById('maxHp') as HTMLInputElement;
+      const acInput = document.getElementById('ac') as HTMLInputElement;
+      const notesInput = document.getElementById('notes') as HTMLTextAreaElement;
+      const isActiveInput = document.getElementById('isActive') as HTMLInputElement;
+
+      // Open modal for adding
+      addBtn?.addEventListener('click', () => {
+        modalTitle!.textContent = 'Add Initiative Entry';
+        form.reset();
+        entryIdInput.value = '';
+        isActiveInput.checked = true;
+        modal?.classList.remove('hidden');
+        modal?.classList.add('flex');
+      });
+
+      // Close modal
+      const closeModal = () => {
+        modal?.classList.add('hidden');
+        modal?.classList.remove('flex');
+        form.reset();
+      };
+
+      closeModalBtn?.addEventListener('click', closeModal);
+      cancelBtn?.addEventListener('click', closeModal);
+
+      // Edit buttons
+      document.querySelectorAll('.edit-initiative-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          if (!id) return;
+
+          try {
+            const response = await fetch(`/api/initiative/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch entry');
+            
+            const entry = await response.json();
+            
+            modalTitle!.textContent = 'Edit Initiative Entry';
+            entryIdInput.value = entry.id;
+            nameInput.value = entry.name;
+            initiativeInput.value = entry.initiative;
+            typeSelect.value = entry.type;
+            hpInput.value = entry.hp || '';
+            maxHpInput.value = entry.maxHp || '';
+            acInput.value = entry.ac || '';
+            notesInput.value = entry.notes || '';
+            isActiveInput.checked = entry.isActive;
+            
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+          } catch (error) {
+            console.error('Error fetching entry:', error);
+            alert('Failed to load entry');
+          }
+        });
+      });
+
+      // Delete buttons
+      document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          const name = btn.getAttribute('data-name');
+          
+          if (!id || !confirm(`Delete "${name}" from initiative?`)) return;
+
+          try {
+            const response = await fetch(`/api/initiative/${id}`, {
+              method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to delete entry');
+            
+            window.location.reload();
+          } catch (error) {
+            console.error('Error deleting entry:', error);
+            alert('Failed to delete entry');
+          }
+        });
+      });
+
+      // Clear all button
+      clearAllBtn?.addEventListener('click', async () => {
+        if (!confirm('Clear all initiative entries? This cannot be undone.')) return;
+
+        try {
+          const response = await fetch('/api/initiative');
+          const entries = await response.json();
+          
+          await Promise.all(
+            entries.map((entry: any) => 
+              fetch(`/api/initiative/${entry.id}`, { method: 'DELETE' })
+            )
+          );
+          
+          window.location.reload();
+        } catch (error) {
+          console.error('Error clearing entries:', error);
+          alert('Failed to clear entries');
+        }
+      });
+
+      // Form submission
+      form?.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const id = entryIdInput.value;
+        const isEdit = !!id;
+
+        const data = {
+          name: nameInput.value.trim(),
+          initiative: parseInt(initiativeInput.value),
+          type: typeSelect.value,
+          hp: hpInput.value ? parseInt(hpInput.value) : null,
+          maxHp: maxHpInput.value ? parseInt(maxHpInput.value) : null,
+          ac: acInput.value ? parseInt(acInput.value) : null,
+          notes: notesInput.value.trim() || null,
+          isActive: isActiveInput.checked,
+        };
+
+        try {
+          const response = await fetch(
+            isEdit ? `/api/initiative/${id}` : '/api/initiative',
+            {
+              method: isEdit ? 'PUT' : 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            }
+          );
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to save entry');
+          }
+
+          window.location.reload();
+        } catch (error) {
+          console.error('Error saving entry:', error);
+          alert(error instanceof Error ? error.message : 'Failed to save entry');
+        }
+      });
+    }
+  </script>
+</Layout>
