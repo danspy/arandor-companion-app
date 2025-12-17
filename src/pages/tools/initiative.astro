@@ -433,19 +433,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let initialized = false;
     
     function initializeInitiativeTracker() {
-      // Prevent multiple initializations
-      if (initialized) return;
-      
       const container = document.querySelector('[data-can-edit]');
       const canEdit = container?.getAttribute('data-can-edit') === 'true';
       
       if (!canEdit) {
-        // Set initialized flag even for non-edit users to prevent re-running polling setup
-        initialized = true;
         return;
       }
       
-      // Only set initialized after we've confirmed canEdit is true
+      // Prevent multiple initializations in same page load
+      if (initialized) return;
       initialized = true;
       const modal = document.getElementById('initiativeModal');
       const form = document.getElementById('initiativeForm');
@@ -812,20 +808,32 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       setInterval(pollCombatState, 2000);
     }
 
+    // Reset initialization flags on page navigation
+    document.addEventListener('astro:before-preparation', () => {
+      initialized = false;
+      pollingInitialized = false;
+    });
+    
     // Run on initial page load
     document.addEventListener('DOMContentLoaded', () => {
+      initialized = false;
+      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     });
     
     // Run after Astro view transitions
     document.addEventListener('astro:page-load', () => {
+      initialized = false;
+      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     });
     
     // If already loaded (hot reload), run immediately
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initialized = false;
+      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     }

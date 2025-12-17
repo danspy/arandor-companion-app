@@ -173,6 +173,22 @@ const CombatState = defineTable({
   }
 });
 
+// Export tables for use in other modules
+export { 
+  DiaryEntry, 
+  Quest, 
+  Character, 
+  NPC, 
+  Location, 
+  User, 
+  CampaignProgress, 
+  LibraryEntry, 
+  Faction, 
+  PageSettings,
+  InitiativeTracker,
+  CombatState,
+};
+
 export default defineDb({
   tables: {
     DiaryEntry,
