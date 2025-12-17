@@ -577,6 +577,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let nextTurnHandler = null;
     let prevTurnHandler = null;
     let combatStateInterval = null;
+    let deleteHandlers = new Map(); // Store delete button handlers
+    let clearAllHandler = null; // Store clear all button handler
+    let combatControlHandlers = new Map(); // Store combat control button handlers
     
     function initializeInitiativeTracker() {
       const container = document.querySelector('[data-can-edit]');
@@ -729,12 +732,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         });
       });
 
-      // Delete buttons
+      // Delete buttons - remove old handlers first
       document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
-        btn.addEventListener('click', async () => {
-          const id = btn.getAttribute('data-id');
-          const name = btn.getAttribute('data-name');
-          
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        
+        // Remove old handler if exists
+        if (deleteHandlers.has(id)) {
+          btn.removeEventListener('click', deleteHandlers.get(id));
+        }
+        
+        // Create new handler
+        const handler = async () => {
           if (!id || !confirm(`Delete "${name}" from initiative?`)) return;
 
           try {
@@ -749,29 +758,41 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             console.error('Error deleting entry:', error);
             alert('Failed to delete entry');
           }
-        });
+        };
+        
+        // Store and attach handler
+        deleteHandlers.set(id, handler);
+        btn.addEventListener('click', handler);
       });
 
-      // Clear all button
-      clearAllBtn?.addEventListener('click', async () => {
-        if (!confirm('Clear all initiative entries? This cannot be undone.')) return;
-
-        try {
-          const response = await fetch('/api/initiative');
-          const entries = await response.json();
-          
-          await Promise.all(
-            entries.map((entry: any) => 
-              fetch(`/api/initiative/${entry.id}`, { method: 'DELETE' })
-            )
-          );
-          
-          window.location.reload();
-        } catch (error) {
-          console.error('Error clearing entries:', error);
-          alert('Failed to clear entries');
+      // Clear all button - remove old handler first
+      if (clearAllBtn) {
+        if (clearAllHandler) {
+          clearAllBtn.removeEventListener('click', clearAllHandler);
         }
-      });
+        
+        clearAllHandler = async () => {
+          if (!confirm('Clear all initiative entries? This cannot be undone.')) return;
+
+          try {
+            const response = await fetch('/api/initiative');
+            const entries = await response.json();
+            
+            await Promise.all(
+              entries.map((entry: any) => 
+                fetch(`/api/initiative/${entry.id}`, { method: 'DELETE' })
+              )
+            );
+            
+            window.location.reload();
+          } catch (error) {
+            console.error('Error clearing entries:', error);
+            alert('Failed to clear entries');
+          }
+        };
+        
+        clearAllBtn.addEventListener('click', clearAllHandler);
+      }
 
       // Form submission handler - remove old handler first if it exists
       if (formSubmitHandler && form) {
@@ -1090,13 +1111,38 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       };
       
-      startCombatBtn?.addEventListener('click', () => updateCombatStatus('active'));
-      pauseCombatBtn?.addEventListener('click', () => updateCombatStatus('paused'));
-      stopCombatBtn?.addEventListener('click', () => {
+      // Remove old combat control handlers
+      if (startCombatBtn && combatControlHandlers.has('start')) {
+        startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
+      }
+      if (pauseCombatBtn && combatControlHandlers.has('pause')) {
+        pauseCombatBtn.removeEventListener('click', combatControlHandlers.get('pause'));
+      }
+      if (stopCombatBtn && combatControlHandlers.has('stop')) {
+        stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
+      }
+      
+      // Create and store new handlers
+      const startHandler = () => updateCombatStatus('active');
+      const pauseHandler = () => updateCombatStatus('paused');
+      const stopHandler = () => {
         if (confirm('Stop combat? This will disable real-time tracking.')) {
           updateCombatStatus('stopped');
         }
-      });
+      };
+      
+      if (startCombatBtn) {
+        combatControlHandlers.set('start', startHandler);
+        startCombatBtn.addEventListener('click', startHandler);
+      }
+      if (pauseCombatBtn) {
+        combatControlHandlers.set('pause', pauseHandler);
+        pauseCombatBtn.addEventListener('click', pauseHandler);
+      }
+      if (stopCombatBtn) {
+        combatControlHandlers.set('stop', stopHandler);
+        stopCombatBtn.addEventListener('click', stopHandler);
+      }
     }
     
     // Setup polling for non-edit users (players)
@@ -1263,6 +1309,37 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         prevTurnBtn.removeEventListener('click', prevTurnHandler);
         prevTurnHandler = null;
       }
+      
+      // Remove delete button handlers
+      document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        if (deleteHandlers.has(id)) {
+          btn.removeEventListener('click', deleteHandlers.get(id));
+        }
+      });
+      deleteHandlers.clear();
+      
+      // Remove clear all button handler
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      if (clearAllHandler && clearAllBtn) {
+        clearAllBtn.removeEventListener('click', clearAllHandler);
+        clearAllHandler = null;
+      }
+      
+      // Remove combat control handlers
+      const startCombatBtn = document.getElementById('startCombatBtn');
+      const pauseCombatBtn = document.getElementById('pauseCombatBtn');
+      const stopCombatBtn = document.getElementById('stopCombatBtn');
+      if (startCombatBtn && combatControlHandlers.has('start')) {
+        startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
+      }
+      if (pauseCombatBtn && combatControlHandlers.has('pause')) {
+        pauseCombatBtn.removeEventListener('click', combatControlHandlers.get('pause'));
+      }
+      if (stopCombatBtn && combatControlHandlers.has('stop')) {
+        stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
+      }
+      combatControlHandlers.clear();
       
       // Clear polling interval
       if (combatStateInterval) {
