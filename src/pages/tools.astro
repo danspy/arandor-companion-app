@@ -1,0 +1,67 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { isAuthenticated, getUserRole } from '../lib/auth';
+
+// Tools page is only accessible to logged-in users
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect('/login');
+}
+
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+---
+
+<Layout title="Tools">
+  <div class="container mx-auto px-4 py-8">
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Tools</h1>
+      <p class="text-gray-600 dark:text-gray-400 mt-2">Game master utilities and player tools</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <!-- Initiative Tracker Card -->
+      <a 
+        href="/tools/initiative"
+        class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
+      >
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-primary-100 dark:bg-primary-900 rounded-lg group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition">
+            <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+              Initiative Tracker
+            </h2>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+              Track combat initiative order for characters, NPCs, and monsters.
+              {canEdit ? 'You can edit the tracker.' : 'View-only access.'}
+            </p>
+          </div>
+        </div>
+      </a>
+
+      <!-- Placeholder for future tools -->
+      <div class="bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md dark:border dark:border-gray-800 p-6 opacity-50">
+        <div class="flex items-start gap-4">
+          <div class="p-3 bg-gray-200 dark:bg-gray-800 rounded-lg">
+            <svg class="w-6 h-6 text-gray-500 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-semibold text-gray-500 dark:text-gray-600 mb-2">
+              Dice Roller
+            </h2>
+            <p class="text-gray-500 dark:text-gray-600 text-sm">
+              Coming soon - Roll dice for attacks, saves, and skill checks.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</Layout>

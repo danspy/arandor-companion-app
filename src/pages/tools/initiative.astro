@@ -1,0 +1,1378 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { db, InitiativeTracker, Character, eq } from 'astro:db';
+
+// Initiative tracker is only accessible to logged-in users
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect('/login');
+}
+
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Fetch all initiative entries
+const initiatives = await db.select().from(InitiativeTracker);
+// Sort by initiative (descending) and then by name
+const sortedInitiatives = initiatives.sort((a, b) => {
+  if (b.initiative !== a.initiative) {
+    return b.initiative - a.initiative;
+  }
+  return a.name.localeCompare(b.name);
+});
+
+// Fetch active characters and NPCs for dropdown
+const activeCharacters = await db.select().from(Character).where(eq(Character.isActive, true));
+const { NPC } = await import('astro:db');
+const activeNPCs = await db.select().from(NPC);
+
+// Get combat state (round and turn tracking)
+const { CombatState } = await import('astro:db');
+const COMBAT_STATE_ID = 'current-combat';
+let combatState = await db.select().from(CombatState).where(eq(CombatState.id, COMBAT_STATE_ID)).get();
+
+// Create default state if it doesn't exist
+if (!combatState) {
+  await db.insert(CombatState).values({
+    id: COMBAT_STATE_ID,
+    currentRound: 1,
+    currentTurnIndex: 0,
+    status: 'stopped',
+    updatedAt: new Date(),
+  });
+  combatState = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, status: 'stopped', updatedAt: new Date() };
+}
+
+// Type badge colors
+const getTypeBadgeColor = (type: string) => {
+  switch (type) {
+    case 'character':
+      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+    case 'npc':
+      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+    case 'monster':
+      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+    default:
+      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+  }
+};
+
+// Health status for players
+const getHealthStatus = (hp: number | null, maxHp: number | null) => {
+  if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
+  if (hp === 0) return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-800' };
+  const percent = hp / maxHp;
+  if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+  if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
+  if (percent <= 0.75) return { text: 'Injured', classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' };
+  return { text: 'Healthy', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+};
+---
+
+<Layout title="Initiative Tracker">
+  <div class="container mx-auto px-4 py-8" data-can-edit={canEdit}>
+    <div class="mb-6">
+      <!-- Mobile: Title, Round, then Buttons below -->
+      <!-- Desktop: Title with buttons on the right (consistent with app layout) -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <h1 class="text-2xl sm:text-3xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+          {sortedInitiatives.length > 0 && (
+            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-2.5 py-1 rounded-lg w-fit">
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
+              <span id="currentRoundDisplay" class="text-lg font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
+            </div>
+          )}
+        </div>
+        
+        <!-- Action Buttons -->
+        {canEdit && (
+          <div class="flex flex-col flex-wrap sm:flex-row gap-2">
+            {sortedInitiatives.length > 0 && (
+              <>
+                <!-- Combat Control Buttons -->
+                <div class="flex gap-2">
+                  <button 
+                    id="startCombatBtn"
+                    class="flex-1 whitespace-nowrap sm:flex-initial px-3 py-2 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Start combat and enable real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'active' ? '▶ Active' : 'Start'}
+                  </button>
+                  <button 
+                    id="pauseCombatBtn"
+                    class="flex-1 whitespace-nowrap sm:flex-initial px-3 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Pause combat and real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'paused' ? 'Paused' : 'Pause'}
+                  </button>
+                  <button 
+                    id="stopCombatBtn"
+                    class="flex-1 whitespace-nowrap sm:flex-initial px-3 py-2 text-sm bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Stop combat and disable real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'stopped' ? 'Stopped' : 'Stop'}
+                  </button>
+                </div>
+                
+                <!-- Turn Navigation -->
+                <div class="flex gap-2">
+                  <button 
+                    id="prevTurnBtn"
+                    class="flex-1 whitespace-nowrap sm:flex-initial px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
+                    title="Previous turn"
+                  >
+                    ← Prev
+                  </button>
+                  <button 
+                    id="nextTurnBtn"
+                    class="flex-1 whitespace-nowrap sm:flex-initial px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg transition font-medium"
+                    title="Next turn"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </>
+            )}
+            <button 
+              id="addInitiativeBtn"
+              class="w-full whitespace-nowrap sm:w-auto px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition font-medium"
+            >
+              Add Entry
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+
+    {sortedInitiatives.length === 0 ? (
+      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-8 text-center">
+        <p class="text-gray-600 dark:text-gray-400">
+          No initiative entries yet. {canEdit ? 'Add your first entry to start tracking combat!' : 'The DM will add entries when combat starts.'}
+        </p>
+      </div>
+    ) : (
+      <div class="grid grid-cols-1 gap-3">
+        {sortedInitiatives.map((entry, index) => {
+          const activeEntries = sortedInitiatives.filter(e => e.isActive);
+          const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
+          const isCurrentTurn = entry.isActive && activeIndex === combatState.currentTurnIndex;
+          
+          return (
+            <div 
+              class:list={[
+                "initiative-card relative bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border",
+                { 'opacity-60': !entry.isActive },
+                { 'border-gray-200 dark:border-gray-700': !isCurrentTurn },
+                { 'border-yellow-500 dark:border-yellow-500': isCurrentTurn }
+              ]}
+              data-index={index}
+              data-active-index={activeIndex}
+              data-is-active={entry.isActive}
+              data-entry-id={entry.id}
+            >
+              <div class="p-3">
+                <!-- Compact layout: Desktop horizontal, Mobile stacked -->
+                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+                  <!-- Initiative number -->
+                  <div class="flex-shrink-0 text-4xl font-bold text-primary-600 dark:text-primary-400 w-16">
+                    {entry.initiative}
+                  </div>
+                  
+                  <!-- Name & Type -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                        {entry.name}
+                      </h3>
+                      <span class:list={["inline-block px-2 py-0.5 text-xs font-semibold rounded-full", getTypeBadgeColor(entry.type)]}>
+                        {entry.type}
+                      </span>
+                    </div>
+                    
+                    <!-- HP, AC & Actions on mobile (below name) -->
+                    <div class="flex items-center gap-3 mt-2 sm:hidden">
+                      <div class="text-center min-w-[60px]">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
+                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {canEdit ? (
+                            entry.hp !== null && entry.maxHp !== null ? (
+                              <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
+                            ) : entry.hp !== null ? (
+                              <span data-hp-display>{entry.hp}</span>
+                            ) : (
+                              <span class="text-gray-400" data-hp-display>-</span>
+                            )
+                          ) : (
+                            (() => {
+                              const status = getHealthStatus(entry.hp, entry.maxHp);
+                              return status.text === '-' ? (
+                                <span class={status.classes} data-hp-display>{status.text}</span>
+                              ) : (
+                                <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
+                                  {status.text}
+                                </span>
+                              );
+                            })()
+                          )}
+                        </div>
+                      </div>
+
+                      {canEdit && (
+                        <div class="text-center min-w-[40px]">
+                          <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
+                          <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                            <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {canEdit && (
+                        <div class="flex gap-2 ml-auto">
+                          <button 
+                            class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
+                            data-id={entry.id}
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
+                            data-id={entry.id}
+                            data-name={entry.name}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <!-- HP & AC inline (desktop only) -->
+                  <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
+                    <div class="text-center min-w-[60px]">
+                      <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
+                      <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {canEdit ? (
+                          entry.hp !== null && entry.maxHp !== null ? (
+                            <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
+                          ) : entry.hp !== null ? (
+                            <span data-hp-display>{entry.hp}</span>
+                          ) : (
+                            <span class="text-gray-400" data-hp-display>-</span>
+                          )
+                        ) : (
+                          (() => {
+                            const status = getHealthStatus(entry.hp, entry.maxHp);
+                            return status.text === '-' ? (
+                              <span class={status.classes} data-hp-display>{status.text}</span>
+                            ) : (
+                              <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
+                                {status.text}
+                              </span>
+                            );
+                          })()
+                        )}
+                      </div>
+                    </div>
+
+                    {canEdit && (
+                      <div class="text-center min-w-[40px]">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
+                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <!-- Actions (desktop only) -->
+                  {canEdit && (
+                    <div class="hidden sm:flex gap-2 flex-shrink-0">
+                      <button 
+                        class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
+                        data-id={entry.id}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
+                        data-id={entry.id}
+                        data-name={entry.name}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                <!-- Notes (if present, shown below) -->
+                {canEdit && entry.notes && (
+                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display>{entry.notes}</div>
+                  </div>
+                )}
+                {canEdit && !entry.notes && (
+                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {canEdit && sortedInitiatives.length > 0 && (
+      <div class="mt-6 flex gap-4">
+        <button 
+          id="clearAllBtn"
+          class="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition"
+        >
+          Clear All
+        </button>
+      </div>
+    )}
+  </div>
+
+  <!-- Add/Edit Initiative Modal -->
+  {canEdit && (
+    <div id="initiativeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4">
+      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        <div class="p-6">
+          <div class="flex justify-between items-center mb-6">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Initiative Entry</h2>
+            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+
+          <form id="initiativeForm" class="space-y-4">
+            <input type="hidden" id="entryId" />
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Name *
+                </label>
+                <input 
+                  type="text" 
+                  id="name" 
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Character or monster name"
+                />
+              </div>
+
+              <div>
+                <label for="initiative" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Initiative *
+                </label>
+                <input 
+                  type="number" 
+                  id="initiative" 
+                  required
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Initiative roll"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Type *
+              </label>
+              <select 
+                id="type" 
+                required
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="character">Character</option>
+                <option value="npc">NPC</option>
+                <option value="monster">Monster</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+
+            <div id="characterSelectContainer" class="hidden">
+              <label for="characterSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Character
+              </label>
+              <select 
+                id="characterSelect" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select a character --</option>
+                {activeCharacters.map(char => (
+                  <option 
+                    value={char.id}
+                    data-name={char.name}
+                    data-hp={char.stats?.hp || ''}
+                    data-max-hp={char.stats?.maxHp || ''}
+                    data-ac={char.stats?.ac || ''}
+                  >
+                    {char.name} ({char.class} {char.level})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div id="npcSelectContainer" class="hidden">
+              <label for="npcSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select NPC
+              </label>
+              <select 
+                id="npcSelect" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select an NPC --</option>
+                {activeNPCs.map(npc => (
+                  <option 
+                    value={npc.id}
+                    data-name={npc.name}
+                  >
+                    {npc.name} ({npc.occupation || npc.race})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div id="monsterGroupContainer" class="hidden">
+              <label for="monsterCount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Number of Monsters
+              </label>
+              <input 
+                type="number" 
+                id="monsterCount" 
+                min="1"
+                max="20"
+                value="1"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="1"
+              />
+              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Creates multiple monsters with individual initiatives (rolled automatically)
+              </p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Current HP
+                </label>
+                <input 
+                  type="number" 
+                  id="hp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Current HP"
+                />
+              </div>
+
+              <div>
+                <label for="maxHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Max HP
+                </label>
+                <input 
+                  type="number" 
+                  id="maxHp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Max HP"
+                />
+              </div>
+
+              <div>
+                <label for="ac" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  AC
+                </label>
+                <input 
+                  type="number" 
+                  id="ac" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Armor Class"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Notes
+              </label>
+              <textarea 
+                id="notes" 
+                rows="3"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Optional notes (conditions, effects, etc.)"
+              ></textarea>
+            </div>
+
+            <div class="flex items-center">
+              <input 
+                type="checkbox" 
+                id="isActive" 
+                checked
+                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+              />
+              <label for="isActive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                Active in combat
+              </label>
+            </div>
+
+            <div class="flex gap-4 mt-6">
+              <button 
+                type="submit"
+                id="saveBtn"
+                class="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <span id="saveBtnText">Save</span>
+              </button>
+              <button 
+                type="button"
+                id="cancelBtn"
+                class="flex-1 px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-500 text-gray-700 dark:text-gray-200 rounded-lg transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  )}
+
+  <style>
+    /* Turn indicator - thicker yellow border */
+    .initiative-card.border-yellow-500 {
+      border-width: 3px !important;
+    }
+    
+    /* Loading spinner animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+  </style>
+
+  <script>
+    // Store handler references globally so we can properly remove them
+    let formSubmitHandler = null;
+    let nextTurnHandler = null;
+    let prevTurnHandler = null;
+    let combatStateInterval = null;
+    let deleteHandlers = new Map(); // Store delete button handlers
+    let clearAllHandler = null; // Store clear all button handler
+    let combatControlHandlers = new Map(); // Store combat control button handlers
+    
+    function initializeInitiativeTracker() {
+      const container = document.querySelector('[data-can-edit]');
+      const canEdit = container?.getAttribute('data-can-edit') === 'true';
+      
+      if (!canEdit) {
+        return;
+      }
+      const modal = document.getElementById('initiativeModal');
+      const form = document.getElementById('initiativeForm');
+      const modalTitle = document.getElementById('modalTitle');
+      const addBtn = document.getElementById('addInitiativeBtn');
+      const closeModalBtn = document.getElementById('closeModalBtn');
+      const cancelBtn = document.getElementById('cancelBtn');
+      const clearAllBtn = document.getElementById('clearAllBtn');
+
+      // Form fields
+      const entryIdInput = document.getElementById('entryId');
+      const nameInput = document.getElementById('name');
+      const initiativeInput = document.getElementById('initiative');
+      const typeSelect = document.getElementById('type');
+      const hpInput = document.getElementById('hp');
+      const maxHpInput = document.getElementById('maxHp');
+      const acInput = document.getElementById('ac');
+      const notesInput = document.getElementById('notes');
+      const isActiveInput = document.getElementById('isActive');
+      const characterSelectContainer = document.getElementById('characterSelectContainer');
+      const characterSelect = document.getElementById('characterSelect');
+      const npcSelectContainer = document.getElementById('npcSelectContainer');
+      const npcSelect = document.getElementById('npcSelect');
+      const monsterGroupContainer = document.getElementById('monsterGroupContainer');
+      const monsterCountInput = document.getElementById('monsterCount');
+
+      // Show/hide dropdowns based on type selection
+      const handleTypeChange = () => {
+        // Hide all special containers first
+        characterSelectContainer?.classList.add('hidden');
+        npcSelectContainer?.classList.add('hidden');
+        monsterGroupContainer?.classList.add('hidden');
+        
+        // Show relevant container
+        if (typeSelect.value === 'character') {
+          characterSelectContainer?.classList.remove('hidden');
+        } else if (typeSelect.value === 'npc') {
+          npcSelectContainer?.classList.remove('hidden');
+        } else if (typeSelect.value === 'monster') {
+          monsterGroupContainer?.classList.remove('hidden');
+        }
+        
+        // Reset selections
+        if (characterSelect) characterSelect.value = '';
+        if (npcSelect) npcSelect.value = '';
+        if (monsterCountInput) monsterCountInput.value = '1';
+      };
+      
+      typeSelect?.addEventListener('change', handleTypeChange);
+
+      // Auto-fill fields when a character is selected
+      characterSelect?.addEventListener('change', () => {
+        const selectedOption = characterSelect.options[characterSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          nameInput.value = selectedOption.getAttribute('data-name') || '';
+          const hp = selectedOption.getAttribute('data-hp');
+          const maxHp = selectedOption.getAttribute('data-max-hp');
+          const ac = selectedOption.getAttribute('data-ac');
+          
+          if (hp) hpInput.value = hp;
+          if (maxHp) maxHpInput.value = maxHp;
+          if (ac) acInput.value = ac;
+        }
+      });
+
+      // Auto-fill fields when an NPC is selected
+      npcSelect?.addEventListener('change', () => {
+        const selectedOption = npcSelect.options[npcSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          nameInput.value = selectedOption.getAttribute('data-name') || '';
+        }
+      });
+
+      // Open modal for adding
+      addBtn?.addEventListener('click', () => {
+        if (modalTitle) modalTitle.textContent = 'Add Initiative Entry';
+        form.reset();
+        entryIdInput.value = '';
+        isActiveInput.checked = true;
+        
+        // Trigger type change to show correct dropdown
+        handleTypeChange();
+        
+        modal?.classList.remove('hidden');
+        modal?.classList.add('flex');
+      });
+
+      // Close modal
+      const closeModal = () => {
+        modal?.classList.add('hidden');
+        modal?.classList.remove('flex');
+        form.reset();
+        characterSelectContainer?.classList.add('hidden');
+        npcSelectContainer?.classList.add('hidden');
+        monsterGroupContainer?.classList.add('hidden');
+      };
+
+      closeModalBtn?.addEventListener('click', closeModal);
+      cancelBtn?.addEventListener('click', closeModal);
+
+      // Edit buttons
+      document.querySelectorAll('.edit-initiative-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-id');
+          if (!id) return;
+
+          try {
+            const response = await fetch(`/api/initiative/${id}`);
+            if (!response.ok) throw new Error('Failed to fetch entry');
+            
+            const entry = await response.json();
+            
+            if (modalTitle) modalTitle.textContent = 'Edit Initiative Entry';
+            entryIdInput.value = entry.id;
+            nameInput.value = entry.name;
+            initiativeInput.value = entry.initiative;
+            typeSelect.value = entry.type;
+            hpInput.value = entry.hp || '';
+            maxHpInput.value = entry.maxHp || '';
+            acInput.value = entry.ac || '';
+            notesInput.value = entry.notes || '';
+            isActiveInput.checked = entry.isActive;
+            
+            // Show correct dropdown based on type
+            characterSelectContainer?.classList.add('hidden');
+            npcSelectContainer?.classList.add('hidden');
+            monsterGroupContainer?.classList.add('hidden');
+            
+            if (entry.type === 'character') {
+              characterSelectContainer?.classList.remove('hidden');
+            } else if (entry.type === 'npc') {
+              npcSelectContainer?.classList.remove('hidden');
+            } else if (entry.type === 'monster') {
+              monsterGroupContainer?.classList.remove('hidden');
+            }
+            
+            modal?.classList.remove('hidden');
+            modal?.classList.add('flex');
+          } catch (error) {
+            console.error('Error fetching entry:', error);
+            alert('Failed to load entry');
+          }
+        });
+      });
+
+      // Delete buttons - remove old handlers first
+      document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        const name = btn.getAttribute('data-name');
+        
+        // Remove old handler if exists
+        if (deleteHandlers.has(id)) {
+          btn.removeEventListener('click', deleteHandlers.get(id));
+        }
+        
+        // Create new handler
+        const handler = async () => {
+          if (!id || !confirm(`Delete "${name}" from initiative?`)) return;
+
+          try {
+            const response = await fetch(`/api/initiative/${id}`, {
+              method: 'DELETE',
+            });
+
+            if (!response.ok) throw new Error('Failed to delete entry');
+            
+            window.location.reload();
+          } catch (error) {
+            console.error('Error deleting entry:', error);
+            alert('Failed to delete entry');
+          }
+        };
+        
+        // Store and attach handler
+        deleteHandlers.set(id, handler);
+        btn.addEventListener('click', handler);
+      });
+
+      // Clear all button - remove old handler first
+      if (clearAllBtn) {
+        if (clearAllHandler) {
+          clearAllBtn.removeEventListener('click', clearAllHandler);
+        }
+        
+        clearAllHandler = async () => {
+          if (!confirm('Clear all initiative entries? This cannot be undone.')) return;
+
+          try {
+            const response = await fetch('/api/initiative');
+            const entries = await response.json();
+            
+            await Promise.all(
+              entries.map((entry: any) => 
+                fetch(`/api/initiative/${entry.id}`, { method: 'DELETE' })
+              )
+            );
+            
+            window.location.reload();
+          } catch (error) {
+            console.error('Error clearing entries:', error);
+            alert('Failed to clear entries');
+          }
+        };
+        
+        clearAllBtn.addEventListener('click', clearAllHandler);
+      }
+
+      // Form submission handler - remove old handler first if it exists
+      if (formSubmitHandler && form) {
+        form.removeEventListener('submit', formSubmitHandler);
+        formSubmitHandler = null;
+      }
+      
+      // Create new handler
+      formSubmitHandler = async (e) => {
+        e.preventDefault();
+        e.stopImmediatePropagation(); // Prevent any duplicate handlers
+
+        // Get save button and add loading state
+        const saveBtn = document.getElementById('saveBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const originalText = saveBtnText?.textContent || 'Save';
+        
+        if (saveBtn) saveBtn.disabled = true;
+        if (saveBtnText) {
+          saveBtnText.innerHTML = '<span class="spinner"></span>Saving...';
+        }
+
+        const id = entryIdInput.value;
+        const isEdit = !!id;
+
+        const baseData = {
+          name: nameInput.value.trim(),
+          initiative: parseInt(initiativeInput.value),
+          type: typeSelect.value,
+          hp: hpInput.value ? parseInt(hpInput.value) : null,
+          maxHp: maxHpInput.value ? parseInt(maxHpInput.value) : null,
+          ac: acInput.value ? parseInt(acInput.value) : null,
+          notes: notesInput.value.trim() || null,
+          isActive: isActiveInput.checked,
+        };
+
+        try {
+          // Handle monster groups (create multiple entries)
+          if (!isEdit && typeSelect.value === 'monster' && monsterCountInput && parseInt(monsterCountInput.value) > 1) {
+            const count = parseInt(monsterCountInput.value);
+            const baseInitiative = baseData.initiative;
+            
+            // Create multiple monsters with individual initiatives
+            for (let i = 1; i <= count; i++) {
+              const monsterData = {
+                ...baseData,
+                name: `${baseData.name} ${i}`,
+                initiative: baseInitiative + Math.floor(Math.random() * 5) - 2, // Vary by +/-2
+              };
+              
+              const response = await fetch('/api/initiative', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(monsterData),
+              });
+
+              if (!response.ok) {
+                const error = await response.json();
+                throw new Error(error.error || 'Failed to save entry');
+              }
+            }
+          } else {
+            // Single entry creation or edit
+            const response = await fetch(
+              isEdit ? `/api/initiative/${id}` : '/api/initiative',
+              {
+                method: isEdit ? 'PUT' : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(baseData),
+              }
+            );
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to save entry');
+              }
+          }
+
+          window.location.reload();
+        } catch (error) {
+          console.error('Error saving entry:', error);
+          alert(error instanceof Error ? error.message : 'Failed to save entry');
+          
+          // Restore button state on error
+          if (saveBtn) saveBtn.disabled = false;
+          if (saveBtnText) {
+            saveBtnText.textContent = originalText;
+          }
+        }
+      };
+      
+      // Add the new handler
+      form?.addEventListener('submit', formSubmitHandler, { once: false });
+
+      // Next/Prev turn functionality with server sync
+      const nextTurnBtn = document.getElementById('nextTurnBtn');
+      const prevTurnBtn = document.getElementById('prevTurnBtn');
+      
+      if (nextTurnBtn && prevTurnBtn) {
+        const updateTurnIndicator = (newIndex, newRound) => {
+          // Update round display
+          const roundDisplay = document.getElementById('currentRoundDisplay');
+          if (roundDisplay) {
+            roundDisplay.textContent = newRound;
+          }
+          
+          // Find all cards and active cards
+          const cards = Array.from(document.querySelectorAll('.initiative-card'));
+          const activeCards = cards.filter(card => card.getAttribute('data-is-active') === 'true');
+          
+          // Remove turn styling from all cards
+          cards.forEach(card => {
+            // Remove yellow border and add gray border
+            card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
+            card.classList.add('border-gray-200', 'dark:border-gray-700');
+          });
+          
+          // Add turn styling to the active card (yellow border only)
+          if (activeCards.length > 0 && newIndex >= 0 && newIndex < activeCards.length) {
+            const targetCard = activeCards[newIndex];
+            if (targetCard) {
+              // Add yellow border
+              targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+              targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
+              
+              // Scroll into view
+              targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        };
+        
+        const saveState = async (round, turnIndex) => {
+          try {
+            await fetch('/api/combat-state', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentRound: round, currentTurnIndex: turnIndex }),
+            });
+          } catch (error) {
+            console.error('Error saving combat state:', error);
+          }
+        };
+        
+        const activeCards = Array.from(document.querySelectorAll('.initiative-card')).filter(
+          card => card.getAttribute('data-is-active') === 'true'
+        );
+        const maxIndex = activeCards.length - 1;
+        
+        let currentRound = parseInt(document.getElementById('currentRoundDisplay')?.textContent || '1');
+        let currentTurnIndex = 0;
+        
+        // Find current turn from server state by looking for banner
+        const currentTurnCard = document.querySelector('.initiative-card .turn-indicator')?.closest('.initiative-card');
+        if (currentTurnCard) {
+          const idx = parseInt(currentTurnCard.getAttribute('data-active-index') || '0');
+          if (!isNaN(idx)) {
+            currentTurnIndex = idx;
+          }
+        } else {
+          // Fallback: get from first active card
+          currentTurnIndex = parseInt(activeCards[0]?.getAttribute('data-active-index') || '0');
+        }
+        
+        // Remove old handlers if they exist
+        if (nextTurnHandler) {
+          nextTurnBtn.removeEventListener('click', nextTurnHandler);
+        }
+        if (prevTurnHandler) {
+          prevTurnBtn.removeEventListener('click', prevTurnHandler);
+        }
+        
+        // Create new handlers
+        nextTurnHandler = async () => {
+          currentTurnIndex++;
+          if (currentTurnIndex > maxIndex) {
+            currentTurnIndex = 0;
+            currentRound++;
+          }
+          updateTurnIndicator(currentTurnIndex, currentRound);
+          await saveState(currentRound, currentTurnIndex);
+        };
+        
+        prevTurnHandler = async () => {
+          currentTurnIndex--;
+          if (currentTurnIndex < 0) {
+            currentTurnIndex = maxIndex;
+            if (currentRound > 1) currentRound--;
+          }
+          updateTurnIndicator(currentTurnIndex, currentRound);
+          await saveState(currentRound, currentTurnIndex);
+        };
+        
+        // Attach new handlers
+        nextTurnBtn.addEventListener('click', nextTurnHandler);
+        prevTurnBtn.addEventListener('click', prevTurnHandler);
+        
+        // Clear old polling interval if it exists
+        if (combatStateInterval) {
+          clearInterval(combatStateInterval);
+        }
+        
+        // Poll for combat state and initiative data updates every 2 seconds
+        combatStateInterval = setInterval(async () => {
+          try {
+            const [stateResponse, initiativeResponse] = await Promise.all([
+              fetch('/api/combat-state'),
+              fetch('/api/initiative')
+            ]);
+            
+            if (stateResponse.ok) {
+              const state = await stateResponse.json();
+              
+              // Stop polling if combat is not active
+              if (state.status !== 'active') {
+                if (combatStateInterval) {
+                  clearInterval(combatStateInterval);
+                  combatStateInterval = null;
+                }
+                return;
+              }
+              
+              // Sync turn indicator and round
+              if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
+                currentRound = state.currentRound;
+                currentTurnIndex = state.currentTurnIndex;
+                updateTurnIndicator(currentTurnIndex, currentRound);
+              }
+              
+              // Update round display
+              const roundDisplay = document.getElementById('currentRoundDisplay');
+              if (roundDisplay) {
+                roundDisplay.textContent = state.currentRound;
+              }
+              
+              // Sync HP/AC/Notes data for all users
+              if (initiativeResponse.ok) {
+                const initiatives = await initiativeResponse.json();
+                const cards = Array.from(document.querySelectorAll('.initiative-card'));
+                
+                cards.forEach(card => {
+                  const entryId = card.getAttribute('data-entry-id');
+                  const entry = initiatives.find(i => i.id === entryId);
+                  
+                  if (!entry) {
+                    // Entry was deleted, trigger reload
+                    window.location.reload();
+                    return;
+                  }
+                  
+                  // Update HP display
+                  const hpElement = card.querySelector('[data-hp-display]');
+                  if (hpElement && entry.hp !== null && entry.maxHp !== null) {
+                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                  }
+                  
+                  // Update AC display
+                  const acElement = card.querySelector('[data-ac-display]');
+                  if (acElement) {
+                    acElement.textContent = entry.ac !== null ? entry.ac : '-';
+                  }
+                  
+                  // Update notes display
+                  const notesElement = card.querySelector('[data-notes-display]');
+                  if (notesElement) {
+                    if (entry.notes) {
+                      notesElement.textContent = entry.notes;
+                      notesElement.parentElement?.classList.remove('hidden');
+                    } else {
+                      notesElement.parentElement?.classList.add('hidden');
+                    }
+                  }
+                  
+                  // Update active status
+                  card.setAttribute('data-is-active', entry.isActive);
+                  if (entry.isActive) {
+                    card.classList.remove('opacity-60');
+                  } else {
+                    card.classList.add('opacity-60');
+                  }
+                });
+                
+                // Check if initiative order changed (entry added/deleted)
+                if (cards.length !== initiatives.length) {
+                  window.location.reload();
+                }
+              }
+            }
+          } catch (error) {
+            console.error('Error polling combat state:', error);
+          }
+        }, 2000);
+      }
+      
+      // Combat control buttons - Start/Pause/Stop
+      const startCombatBtn = document.getElementById('startCombatBtn');
+      const pauseCombatBtn = document.getElementById('pauseCombatBtn');
+      const stopCombatBtn = document.getElementById('stopCombatBtn');
+      
+      const updateCombatStatus = async (status) => {
+        try {
+          const response = await fetch('/api/combat-state', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          });
+          
+          if (response.ok) {
+            // Reload to update button states and polling behavior
+            window.location.reload();
+          } else {
+            throw new Error('Failed to update combat status');
+          }
+        } catch (error) {
+          console.error('Error updating combat status:', error);
+          alert('Failed to update combat status');
+        }
+      };
+      
+      // Remove old combat control handlers
+      if (startCombatBtn && combatControlHandlers.has('start')) {
+        startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
+      }
+      if (pauseCombatBtn && combatControlHandlers.has('pause')) {
+        pauseCombatBtn.removeEventListener('click', combatControlHandlers.get('pause'));
+      }
+      if (stopCombatBtn && combatControlHandlers.has('stop')) {
+        stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
+      }
+      
+      // Create and store new handlers
+      const startHandler = () => updateCombatStatus('active');
+      const pauseHandler = () => updateCombatStatus('paused');
+      const stopHandler = () => {
+        if (confirm('Stop combat? This will disable real-time tracking.')) {
+          updateCombatStatus('stopped');
+        }
+      };
+      
+      if (startCombatBtn) {
+        combatControlHandlers.set('start', startHandler);
+        startCombatBtn.addEventListener('click', startHandler);
+      }
+      if (pauseCombatBtn) {
+        combatControlHandlers.set('pause', pauseHandler);
+        pauseCombatBtn.addEventListener('click', pauseHandler);
+      }
+      if (stopCombatBtn) {
+        combatControlHandlers.set('stop', stopHandler);
+        stopCombatBtn.addEventListener('click', stopHandler);
+      }
+    }
+    
+    // Setup polling for non-edit users (players)
+    let pollingInitialized = false;
+    let pollInterval = null;
+    
+    function setupPollingForPlayers() {
+      if (pollingInitialized) return;
+      
+      const container = document.querySelector('[data-can-edit]');
+      const canEdit = container?.getAttribute('data-can-edit') === 'true';
+      
+      if (canEdit) return; // Only run for non-edit users (players)
+      
+      pollingInitialized = true;
+      
+      const pollCombatData = async () => {
+        try {
+          // Fetch both combat state and initiative entries
+          const [stateResponse, initiativeResponse] = await Promise.all([
+            fetch('/api/combat-state'),
+            fetch('/api/initiative')
+          ]);
+          
+          if (stateResponse.ok && initiativeResponse.ok) {
+            const state = await stateResponse.json();
+            
+            // Stop polling if combat is not active
+            if (state.status !== 'active') {
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                pollingInitialized = false;
+              }
+              return;
+            }
+            
+            const initiatives = await initiativeResponse.json();
+            
+            // Update round display
+            const roundDisplay = document.getElementById('currentRoundDisplay');
+            if (roundDisplay) {
+              roundDisplay.textContent = state.currentRound;
+            }
+            
+            // Update each card with fresh data
+            const cards = Array.from(document.querySelectorAll('.initiative-card'));
+            
+            cards.forEach(card => {
+              const entryId = card.getAttribute('data-entry-id');
+              const entry = initiatives.find(i => i.id === entryId);
+              
+              if (!entry) {
+                // Entry was deleted, trigger reload
+                window.location.reload();
+                return;
+              }
+              
+              // Update HP display
+              const hpElement = card.querySelector('[data-hp-display]');
+              if (hpElement) {
+                if (canEdit) {
+                  if (entry.hp !== null && entry.maxHp !== null) {
+                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                  } else if (entry.hp !== null) {
+                    hpElement.textContent = entry.hp;
+                  } else {
+                    hpElement.textContent = '-';
+                  }
+                } else {
+                  // Update health status for players
+                  const getHealthStatus = (hp, maxHp) => {
+                    if (!hp || !maxHp || hp <= 0) {
+                      if (hp === 0) return { text: 'Dead', classes: 'bg-gray-800 text-white' };
+                      return { text: '-', classes: 'text-gray-400' };
+                    }
+                    const percentage = (hp / maxHp) * 100;
+                    if (percentage > 75) return { text: 'Healthy', classes: 'bg-green-500 text-white' };
+                    if (percentage > 50) return { text: 'Injured', classes: 'bg-yellow-500 text-white' };
+                    if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
+                    return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
+                  };
+                  const status = getHealthStatus(entry.hp, entry.maxHp);
+                  hpElement.textContent = status.text;
+                  hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
+                }
+              }
+              
+              // Update AC display (DM/Admin only)
+              const acElement = card.querySelector('[data-ac-display]');
+              if (acElement && canEdit) {
+                acElement.textContent = entry.ac !== null ? entry.ac : '-';
+              }
+              
+              // Update notes display (DM/Admin only)
+              const notesElement = card.querySelector('[data-notes-display]');
+              if (notesElement && canEdit) {
+                if (entry.notes) {
+                  notesElement.textContent = entry.notes;
+                  notesElement.parentElement?.classList.remove('hidden');
+                } else {
+                  notesElement.parentElement?.classList.add('hidden');
+                }
+              }
+              
+              // Update active status
+              card.setAttribute('data-is-active', entry.isActive);
+              if (entry.isActive) {
+                card.classList.remove('opacity-60');
+              } else {
+                card.classList.add('opacity-60');
+              }
+            });
+            
+            // Update turn indicator on cards
+            const activeCards = cards.filter(card => card.getAttribute('data-is-active') === 'true');
+            
+            // Remove turn styling from all cards
+            cards.forEach(card => {
+              card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
+              card.classList.add('border-gray-200', 'dark:border-gray-700');
+            });
+            
+            // Add turn styling to active card (yellow border only)
+            if (activeCards.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeCards.length) {
+              const targetCard = activeCards[state.currentTurnIndex];
+              if (targetCard) {
+                targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+                targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
+              }
+            }
+            
+            // Check if initiative order changed (entry added/deleted)
+            if (cards.length !== initiatives.length) {
+              window.location.reload();
+            }
+          }
+        } catch (error) {
+          console.error('Error polling combat data:', error);
+        }
+      };
+      
+      // Poll every 2 seconds
+      pollInterval = setInterval(pollCombatData, 2000);
+    }
+
+    // Reset and cleanup on page navigation for View Transitions
+    document.addEventListener('astro:before-preparation', () => {
+      // Remove form handler before navigation
+      const form = document.getElementById('initiativeForm');
+      if (formSubmitHandler && form) {
+        form.removeEventListener('submit', formSubmitHandler);
+        formSubmitHandler = null;
+      }
+      
+      // Remove turn navigation handlers
+      const nextTurnBtn = document.getElementById('nextTurnBtn');
+      const prevTurnBtn = document.getElementById('prevTurnBtn');
+      if (nextTurnHandler && nextTurnBtn) {
+        nextTurnBtn.removeEventListener('click', nextTurnHandler);
+        nextTurnHandler = null;
+      }
+      if (prevTurnHandler && prevTurnBtn) {
+        prevTurnBtn.removeEventListener('click', prevTurnHandler);
+        prevTurnHandler = null;
+      }
+      
+      // Remove delete button handlers
+      document.querySelectorAll('.delete-initiative-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        if (deleteHandlers.has(id)) {
+          btn.removeEventListener('click', deleteHandlers.get(id));
+        }
+      });
+      deleteHandlers.clear();
+      
+      // Remove clear all button handler
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      if (clearAllHandler && clearAllBtn) {
+        clearAllBtn.removeEventListener('click', clearAllHandler);
+        clearAllHandler = null;
+      }
+      
+      // Remove combat control handlers
+      const startCombatBtn = document.getElementById('startCombatBtn');
+      const pauseCombatBtn = document.getElementById('pauseCombatBtn');
+      const stopCombatBtn = document.getElementById('stopCombatBtn');
+      if (startCombatBtn && combatControlHandlers.has('start')) {
+        startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
+      }
+      if (pauseCombatBtn && combatControlHandlers.has('pause')) {
+        pauseCombatBtn.removeEventListener('click', combatControlHandlers.get('pause'));
+      }
+      if (stopCombatBtn && combatControlHandlers.has('stop')) {
+        stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
+      }
+      combatControlHandlers.clear();
+      
+      // Clear polling interval
+      if (combatStateInterval) {
+        clearInterval(combatStateInterval);
+        combatStateInterval = null;
+      }
+      
+      // Clear player polling interval
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      
+      // Reset polling flag
+      pollingInitialized = false;
+    });
+    
+    // Run on initial page load
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeInitiativeTracker();
+      setupPollingForPlayers();
+    });
+    
+    // Run after Astro view transitions
+    document.addEventListener('astro:page-load', () => {
+      initializeInitiativeTracker();
+      setupPollingForPlayers();
+    });
+    
+    // If already loaded (hot reload), run immediately
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initializeInitiativeTracker();
+      setupPollingForPlayers();
+    }
+  </script>
+</Layout>

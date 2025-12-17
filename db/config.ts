@@ -148,6 +148,48 @@ const PageSettings = defineTable({
   }
 });
 
+const InitiativeTracker = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    name: column.text(),
+    initiative: column.number(),
+    type: column.text(), // 'character' | 'npc' | 'monster' | 'other'
+    hp: column.number({ optional: true }), // Current HP
+    maxHp: column.number({ optional: true }), // Max HP
+    ac: column.number({ optional: true }), // Armor Class
+    notes: column.text({ optional: true }),
+    isActive: column.boolean({ default: true }), // Whether this entry is in current combat
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
+const CombatState = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    currentRound: column.number({ default: 1 }),
+    currentTurnIndex: column.number({ default: 0 }),
+    status: column.text({ default: 'stopped' }), // 'active' | 'paused' | 'stopped'
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
+// Export tables for use in other modules
+export { 
+  DiaryEntry, 
+  Quest, 
+  Character, 
+  NPC, 
+  Location, 
+  User, 
+  CampaignProgress, 
+  LibraryEntry, 
+  Faction, 
+  PageSettings,
+  InitiativeTracker,
+  CombatState,
+};
+
 const DiaryNote = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
@@ -171,6 +213,8 @@ export default defineDb({
     LibraryEntry,
     Faction,
     PageSettings,
+    InitiativeTracker,
+    CombatState,
     DiaryNote,
   }
 });
