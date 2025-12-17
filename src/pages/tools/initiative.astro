@@ -72,17 +72,17 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 ---
 
 <Layout title="Initiative Tracker">
-  <div class="container mx-auto px-4 py-8" data-can-edit={canEdit}>
-    <div class="mb-6">
+  <div class="container mx-auto px-3 py-4 sm:px-4 sm:py-8" data-can-edit={canEdit}>
+    <div class="mb-4 sm:mb-6">
       <!-- Mobile: Title, Round, then Buttons below -->
       <!-- Desktop: Title with buttons on the right (consistent with app layout) -->
-      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-          <h1 class="text-2xl sm:text-3xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+      <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <h1 class="text-xl sm:text-3xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
           {sortedInitiatives.length > 0 && (
-            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-2.5 py-1 rounded-lg w-fit">
+            <div class="flex items-center gap-1.5 sm:gap-2 bg-primary-100 dark:bg-primary-900 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg w-fit">
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
-              <span id="currentRoundDisplay" class="text-lg font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
+              <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
             </div>
           )}
         </div>
@@ -151,13 +151,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     </div>
 
     {sortedInitiatives.length === 0 ? (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-8 text-center">
-        <p class="text-gray-600 dark:text-gray-400">
+      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 sm:p-8 text-center">
+        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
           No initiative entries yet. {canEdit ? 'Add your first entry to start tracking combat!' : 'The DM will add entries when combat starts.'}
         </p>
       </div>
     ) : (
-      <div class="grid grid-cols-1 gap-3">
+      <div class="grid grid-cols-1 gap-2 sm:gap-3">
         {sortedInitiatives.map((entry, index) => {
           const activeEntries = sortedInitiatives.filter(e => e.isActive);
           const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
@@ -176,135 +176,80 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               data-is-active={entry.isActive}
               data-entry-id={entry.id}
             >
-              <div class="p-3">
-                <!-- Compact layout: Desktop horizontal, Mobile stacked -->
-                <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+              <div class="p-2 sm:p-3">
+                <!-- Compact layout: Single line on mobile and desktop -->
+                <div class="flex items-center gap-2 sm:gap-3">
                   <!-- Initiative number -->
-                  <div class="flex-shrink-0 text-4xl font-bold text-primary-600 dark:text-primary-400 w-16">
+                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold text-primary-600 dark:text-primary-400 min-w-12 sm:min-w-16">
                     {entry.initiative}
                   </div>
                   
-                  <!-- Name & Type -->
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
-                        {entry.name}
-                      </h3>
-                      <span class:list={["inline-block px-2 py-0.5 text-xs font-semibold rounded-full", getTypeBadgeColor(entry.type)]}>
-                        {entry.type}
-                      </span>
-                    </div>
-                    
-                    <!-- HP, AC & Actions on mobile (below name) -->
-                    <div class="flex items-center gap-3 mt-2 sm:hidden">
-                      <div class="text-center min-w-[60px]">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {canEdit ? (
-                            entry.hp !== null && entry.maxHp !== null ? (
-                              <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
-                            ) : entry.hp !== null ? (
-                              <span data-hp-display>{entry.hp}</span>
-                            ) : (
-                              <span class="text-gray-400" data-hp-display>-</span>
-                            )
-                          ) : (
-                            (() => {
-                              const status = getHealthStatus(entry.hp, entry.maxHp);
-                              return status.text === '-' ? (
-                                <span class={status.classes} data-hp-display>{status.text}</span>
-                              ) : (
-                                <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
-                                  {status.text}
-                                </span>
-                              );
-                            })()
-                          )}
-                        </div>
-                      </div>
-
-                      {canEdit && (
-                        <div class="text-center min-w-[40px]">
-                          <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
-                          <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {canEdit && (
-                        <div class="flex gap-2 ml-auto">
-                          <button 
-                            class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
-                            data-id={entry.id}
-                          >
-                            Edit
-                          </button>
-                          <button 
-                            class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
-                            data-id={entry.id}
-                            data-name={entry.name}
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      )}
-                    </div>
+                  <!-- Name & Type (mobile: very compact, desktop: normal) -->
+                  <div class="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
+                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                      {entry.name}
+                    </h3>
+                    <span class:list={["inline-block px-1.5 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap", getTypeBadgeColor(entry.type)]}>
+                      {entry.type}
+                    </span>
                   </div>
                   
-                  <!-- HP & AC inline (desktop only) -->
-                  <div class="hidden sm:flex items-center gap-3 flex-shrink-0">
-                    <div class="text-center min-w-[60px]">
-                      <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
-                      <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        {canEdit ? (
-                          entry.hp !== null && entry.maxHp !== null ? (
-                            <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
-                          ) : entry.hp !== null ? (
-                            <span data-hp-display>{entry.hp}</span>
-                          ) : (
-                            <span class="text-gray-400" data-hp-display>-</span>
-                          )
+                  <!-- HP display (inline for all) -->
+                  <div class="flex-shrink-0">
+                    {canEdit ? (
+                      <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {entry.hp !== null && entry.maxHp !== null ? (
+                          <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
+                        ) : entry.hp !== null ? (
+                          <span data-hp-display>{entry.hp}</span>
                         ) : (
-                          (() => {
-                            const status = getHealthStatus(entry.hp, entry.maxHp);
-                            return status.text === '-' ? (
-                              <span class={status.classes} data-hp-display>{status.text}</span>
-                            ) : (
-                              <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
-                                {status.text}
-                              </span>
-                            );
-                          })()
+                          <span class="text-gray-400" data-hp-display>-</span>
                         )}
                       </div>
-                    </div>
-
-                    {canEdit && (
-                      <div class="text-center min-w-[40px]">
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
-                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
-                        </div>
-                      </div>
+                    ) : (
+                      (() => {
+                        const status = getHealthStatus(entry.hp, entry.maxHp);
+                        return status.text === '-' ? (
+                          <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
+                        ) : (
+                          <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
+                            {status.text}
+                          </span>
+                        );
+                      })()
                     )}
                   </div>
                   
-                  <!-- Actions (desktop only) -->
+                  <!-- AC display (DM/Admin only, inline) -->
                   {canEdit && (
-                    <div class="hidden sm:flex gap-2 flex-shrink-0">
+                    <div class="hidden sm:block text-center min-w-10">
+                      <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <!-- Action buttons (icon buttons for all screens) -->
+                  {canEdit && (
+                    <div class="flex gap-1 sm:gap-2 flex-shrink-0">
                       <button 
-                        class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
+                        class="edit-initiative-btn text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
                         data-id={entry.id}
+                        title="Edit"
                       >
-                        Edit
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
                       </button>
                       <button 
-                        class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
+                        class="delete-initiative-btn text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
                         data-id={entry.id}
                         data-name={entry.name}
+                        title="Delete"
                       >
-                        Delete
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                        </svg>
                       </button>
                     </div>
                   )}
@@ -312,15 +257,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 
                 <!-- Notes (if present, shown below) -->
                 {canEdit && entry.notes && (
-                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
-                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display>{entry.notes}</div>
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-0.5 sm:mb-1">Notes</div>
+                    <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300" data-notes-display>{entry.notes}</div>
                   </div>
                 )}
                 {canEdit && !entry.notes && (
-                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
-                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-0.5 sm:mb-1">Notes</div>
+                    <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
                   </div>
                 )}
               </div>
@@ -331,10 +276,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     )}
 
     {canEdit && sortedInitiatives.length > 0 && (
-      <div class="mt-6 flex gap-4">
+      <div class="mt-4 sm:mt-6 flex gap-2 sm:gap-4">
         <button 
           id="clearAllBtn"
-          class="px-4 py-2 bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition"
+          class="px-3 py-1.5 sm:px-4 sm:py-2 text-sm sm:text-base bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition"
         >
           Clear All
         </button>
