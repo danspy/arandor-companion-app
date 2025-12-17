@@ -804,8 +804,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           // Remove all turn indicators and highlights
           document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
           document.querySelectorAll('.initiative-row').forEach(row => {
-            // Only remove the turn-active class - let CSS handle all styling
-            row.classList.remove('turn-active');
+            // Remove both server-rendered Tailwind classes and turn-active class
+            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
           });
           
           // Update round display
