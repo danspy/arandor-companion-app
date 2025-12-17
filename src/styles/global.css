@@ -2,6 +2,44 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --safe-top: env(safe-area-inset-top, 0px);
+}
+
+html, body {
+  overflow-x: clip;
+}
+
+body {
+  padding-top: var(--safe-top);
+}
+
+/* PWA Status Bar Gradient Overlay */
+.pwa-status-bar-gradient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--safe-top);
+  pointer-events: none;
+  z-index: 9998;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7) 50%, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+/* Show gradient only when running as PWA */
+@media (display-mode: standalone) {
+  .pwa-status-bar-gradient {
+    opacity: 1;
+  }
+}
+
+/* Dark mode gradient */
+.dark .pwa-status-bar-gradient {
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.7) 50%, transparent);
+}
+
 .line-clamp-2 {
   overflow: hidden;
   display: -webkit-box;
