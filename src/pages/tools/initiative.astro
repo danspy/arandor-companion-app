@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
-import { db, InitiativeTracker } from 'astro:db';
+import { db, InitiativeTracker, Character } from 'astro:db';
 
 // Initiative tracker is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -22,6 +22,9 @@ const sortedInitiatives = initiatives.sort((a, b) => {
   }
   return a.name.localeCompare(b.name);
 });
+
+// Fetch active characters for dropdown
+const activeCharacters = await db.select().from(Character).where({ isActive: true });
 
 // Type badge colors
 const getTypeBadgeColor = (type: string) => {
@@ -94,12 +97,19 @@ const getTypeBadgeColor = (type: string) => {
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            {sortedInitiatives.map((entry) => (
-              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition" class:list={[{ 'opacity-50': !entry.isActive }]}>
+            {sortedInitiatives.map((entry, index) => (
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition" class:list={[{ 'opacity-50': !entry.isActive }, { 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500': index === 0 && entry.isActive }]}>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
-                    {entry.initiative}
-                  </span>
+                  <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
+                      {entry.initiative}
+                    </span>
+                    {index === 0 && entry.isActive && (
+                      <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
+                        TURN
+                      </span>
+                    )}
+                  </div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
@@ -223,6 +233,29 @@ const getTypeBadgeColor = (type: string) => {
               </select>
             </div>
 
+            <div id="characterSelectContainer" class="hidden">
+              <label for="characterSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Select Character
+              </label>
+              <select 
+                id="characterSelect" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select a character --</option>
+                {activeCharacters.map(char => (
+                  <option 
+                    value={char.id}
+                    data-name={char.name}
+                    data-hp={char.stats?.hp || ''}
+                    data-max-hp={char.stats?.maxHp || ''}
+                    data-ac={char.stats?.ac || ''}
+                  >
+                    {char.name} ({char.class} {char.level})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
@@ -307,10 +340,11 @@ const getTypeBadgeColor = (type: string) => {
   )}
 
   <script>
-    const container = document.querySelector('[data-can-edit]');
-    const canEdit = container?.getAttribute('data-can-edit') === 'true';
-    
-    if (canEdit) {
+    function initializeInitiativeTracker() {
+      const container = document.querySelector('[data-can-edit]');
+      const canEdit = container?.getAttribute('data-can-edit') === 'true';
+      
+      if (!canEdit) return;
       const modal = document.getElementById('initiativeModal');
       const form = document.getElementById('initiativeForm');
       const modalTitle = document.getElementById('modalTitle');
@@ -329,6 +363,33 @@ const getTypeBadgeColor = (type: string) => {
       const acInput = document.getElementById('ac');
       const notesInput = document.getElementById('notes');
       const isActiveInput = document.getElementById('isActive');
+      const characterSelectContainer = document.getElementById('characterSelectContainer');
+      const characterSelect = document.getElementById('characterSelect');
+
+      // Show/hide character dropdown based on type selection
+      typeSelect?.addEventListener('change', () => {
+        if (typeSelect.value === 'character') {
+          characterSelectContainer?.classList.remove('hidden');
+        } else {
+          characterSelectContainer?.classList.add('hidden');
+          if (characterSelect) characterSelect.value = '';
+        }
+      });
+
+      // Auto-fill fields when a character is selected
+      characterSelect?.addEventListener('change', () => {
+        const selectedOption = characterSelect.options[characterSelect.selectedIndex];
+        if (selectedOption && selectedOption.value) {
+          nameInput.value = selectedOption.getAttribute('data-name') || '';
+          const hp = selectedOption.getAttribute('data-hp');
+          const maxHp = selectedOption.getAttribute('data-max-hp');
+          const ac = selectedOption.getAttribute('data-ac');
+          
+          if (hp) hpInput.value = hp;
+          if (maxHp) maxHpInput.value = maxHp;
+          if (ac) acInput.value = ac;
+        }
+      });
 
       // Open modal for adding
       addBtn?.addEventListener('click', () => {
@@ -336,6 +397,7 @@ const getTypeBadgeColor = (type: string) => {
         form.reset();
         entryIdInput.value = '';
         isActiveInput.checked = true;
+        characterSelectContainer?.classList.add('hidden');
         modal?.classList.remove('hidden');
         modal?.classList.add('flex');
       });
@@ -345,6 +407,7 @@ const getTypeBadgeColor = (type: string) => {
         modal?.classList.add('hidden');
         modal?.classList.remove('flex');
         form.reset();
+        characterSelectContainer?.classList.add('hidden');
       };
 
       closeModalBtn?.addEventListener('click', closeModal);
@@ -372,6 +435,13 @@ const getTypeBadgeColor = (type: string) => {
             acInput.value = entry.ac || '';
             notesInput.value = entry.notes || '';
             isActiveInput.checked = entry.isActive;
+            
+            // Show character dropdown if type is character
+            if (entry.type === 'character') {
+              characterSelectContainer?.classList.remove('hidden');
+            } else {
+              characterSelectContainer?.classList.add('hidden');
+            }
             
             modal?.classList.remove('hidden');
             modal?.classList.add('flex');
@@ -465,6 +535,17 @@ const getTypeBadgeColor = (type: string) => {
           alert(error instanceof Error ? error.message : 'Failed to save entry');
         }
       });
+    }
+
+    // Run on initial page load
+    document.addEventListener('DOMContentLoaded', initializeInitiativeTracker);
+    
+    // Run after Astro view transitions
+    document.addEventListener('astro:page-load', initializeInitiativeTracker);
+    
+    // If already loaded (hot reload), run immediately
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      initializeInitiativeTracker();
     }
   </script>
 </Layout>
