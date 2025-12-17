@@ -39,6 +39,17 @@ const getTypeBadgeColor = (type: string) => {
       return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
   }
 };
+
+// Health status for players
+const getHealthStatus = (hp: number | null, maxHp: number | null) => {
+  if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
+  if (hp === 0) return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-800' };
+  const percent = hp / maxHp;
+  if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
+  if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
+  if (percent <= 0.75) return { text: 'Injured', classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' };
+  return { text: 'Healthy', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+};
 ---
 
 <Layout title="Initiative Tracker">
@@ -49,14 +60,34 @@ const getTypeBadgeColor = (type: string) => {
           <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
           <p class="text-gray-600 dark:text-gray-400 mt-2">Track combat initiative order</p>
         </div>
-        {canEdit && (
-          <button 
-            id="addInitiativeBtn"
-            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
-          >
-            Add Entry
-          </button>
-        )}
+        <div class="flex gap-3 items-center">
+          {canEdit && sortedInitiatives.length > 0 && (
+            <div class="flex gap-2">
+              <button 
+                id="prevTurnBtn"
+                class="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition"
+                title="Previous turn"
+              >
+                ← Prev
+              </button>
+              <button 
+                id="nextTurnBtn"
+                class="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition"
+                title="Next turn"
+              >
+                Next →
+              </button>
+            </div>
+          )}
+          {canEdit && (
+            <button 
+              id="addInitiativeBtn"
+              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
+            >
+              Add Entry
+            </button>
+          )}
+        </div>
       </div>
     </div>
 
@@ -98,14 +129,17 @@ const getTypeBadgeColor = (type: string) => {
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
             {sortedInitiatives.map((entry, index) => (
-              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition" class:list={[{ 'opacity-50': !entry.isActive }, { 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500': index === 0 && entry.isActive }]}>
+              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition initiative-row" 
+                  data-index={index}
+                  data-is-active={entry.isActive}
+                  class:list={[{ 'opacity-50': !entry.isActive }]}>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-2">
                     <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {entry.initiative}
                     </span>
                     {index === 0 && entry.isActive && (
-                      <span class="text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
+                      <span class="turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
                         TURN
                       </span>
                     )}
@@ -122,19 +156,36 @@ const getTypeBadgeColor = (type: string) => {
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {entry.hp !== null && entry.maxHp !== null ? (
-                    <span>{entry.hp} / {entry.maxHp}</span>
-                  ) : entry.hp !== null ? (
-                    <span>{entry.hp}</span>
+                  {canEdit ? (
+                    entry.hp !== null && entry.maxHp !== null ? (
+                      <span>{entry.hp} / {entry.maxHp}</span>
+                    ) : entry.hp !== null ? (
+                      <span>{entry.hp}</span>
+                    ) : (
+                      <span class="text-gray-400">-</span>
+                    )
+                  ) : (
+                    (() => {
+                      const status = getHealthStatus(entry.hp, entry.maxHp);
+                      return status.text === '-' ? (
+                        <span class={status.classes}>{status.text}</span>
+                      ) : (
+                        <span class={`px-2 py-1 rounded-full text-xs font-semibold ${status.classes}`}>
+                          {status.text}
+                        </span>
+                      );
+                    })()
+                  )}
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                  {canEdit ? (
+                    entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>
                   ) : (
                     <span class="text-gray-400">-</span>
                   )}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
-                </td>
                 <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {entry.notes || '-'}
+                  {canEdit ? (entry.notes || '-') : '-'}
                 </td>
                 {canEdit && (
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
@@ -340,7 +391,13 @@ const getTypeBadgeColor = (type: string) => {
   )}
 
   <script>
+    let initialized = false;
+    
     function initializeInitiativeTracker() {
+      // Prevent multiple initializations
+      if (initialized) return;
+      initialized = true;
+      
       const container = document.querySelector('[data-can-edit]');
       const canEdit = container?.getAttribute('data-can-edit') === 'true';
       
@@ -535,6 +592,60 @@ const getTypeBadgeColor = (type: string) => {
           alert(error instanceof Error ? error.message : 'Failed to save entry');
         }
       });
+
+      // Next/Prev turn functionality
+      const nextTurnBtn = document.getElementById('nextTurnBtn');
+      const prevTurnBtn = document.getElementById('prevTurnBtn');
+      
+      if (nextTurnBtn && prevTurnBtn) {
+        const updateTurnIndicator = (newIndex) => {
+          // Remove all turn indicators and highlights
+          document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
+          document.querySelectorAll('.initiative-row').forEach(row => {
+            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+          });
+          
+          // Find the active row at the new index
+          const rows = Array.from(document.querySelectorAll('.initiative-row'));
+          const activeRows = rows.filter(row => row.getAttribute('data-is-active') === 'true');
+          
+          if (activeRows.length > 0) {
+            const targetRow = activeRows[newIndex];
+            if (targetRow) {
+              // Add highlight
+              targetRow.classList.add('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+              
+              // Add turn badge
+              const initiativeCell = targetRow.querySelector('td:first-child > div');
+              if (initiativeCell) {
+                const badge = document.createElement('span');
+                badge.className = 'turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold';
+                badge.textContent = 'TURN';
+                initiativeCell.appendChild(badge);
+              }
+              
+              // Scroll into view
+              targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          }
+        };
+        
+        let currentTurnIndex = 0;
+        const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
+          row => row.getAttribute('data-is-active') === 'true'
+        );
+        const maxIndex = activeRows.length - 1;
+        
+        nextTurnBtn.addEventListener('click', () => {
+          currentTurnIndex = (currentTurnIndex + 1) % (maxIndex + 1);
+          updateTurnIndicator(currentTurnIndex);
+        });
+        
+        prevTurnBtn.addEventListener('click', () => {
+          currentTurnIndex = (currentTurnIndex - 1 + (maxIndex + 1)) % (maxIndex + 1);
+          updateTurnIndicator(currentTurnIndex);
+        });
+      }
     }
 
     // Run on initial page load
