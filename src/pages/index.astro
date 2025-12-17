@@ -623,8 +623,15 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           
           if (data.status === 'active' && indicator) {
             indicator.style.display = 'block';
-          } else if (indicator) {
-            indicator.style.display = 'none';
+          } else {
+            if (indicator) {
+              indicator.style.display = 'none';
+            }
+            // Stop polling if combat is not active
+            if (data.status !== 'active' && combatPollingInterval) {
+              clearInterval(combatPollingInterval);
+              combatPollingInterval = null;
+            }
           }
         }
       } catch (error) {

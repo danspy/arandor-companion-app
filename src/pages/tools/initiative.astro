@@ -973,19 +973,89 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           clearInterval(combatStateInterval);
         }
         
-        // Poll for combat state updates every 2 seconds (only when active)
+        // Poll for combat state and initiative data updates every 2 seconds
         combatStateInterval = setInterval(async () => {
           try {
-            const response = await fetch('/api/combat-state');
-            if (response.ok) {
-              const state = await response.json();
+            const [stateResponse, initiativeResponse] = await Promise.all([
+              fetch('/api/combat-state'),
+              fetch('/api/initiative')
+            ]);
+            
+            if (stateResponse.ok) {
+              const state = await stateResponse.json();
               
-              // Only sync when combat is active
-              if (state.status === 'active') {
-                if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
-                  currentRound = state.currentRound;
-                  currentTurnIndex = state.currentTurnIndex;
-                  updateTurnIndicator(currentTurnIndex, currentRound);
+              // Stop polling if combat is not active
+              if (state.status !== 'active') {
+                if (combatStateInterval) {
+                  clearInterval(combatStateInterval);
+                  combatStateInterval = null;
+                }
+                return;
+              }
+              
+              // Sync turn indicator and round
+              if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
+                currentRound = state.currentRound;
+                currentTurnIndex = state.currentTurnIndex;
+                updateTurnIndicator(currentTurnIndex, currentRound);
+              }
+              
+              // Update round display
+              const roundDisplay = document.getElementById('currentRoundDisplay');
+              if (roundDisplay) {
+                roundDisplay.textContent = state.currentRound;
+              }
+              
+              // Sync HP/AC/Notes data for all users
+              if (initiativeResponse.ok) {
+                const initiatives = await initiativeResponse.json();
+                const cards = Array.from(document.querySelectorAll('.initiative-card'));
+                
+                cards.forEach(card => {
+                  const entryId = card.getAttribute('data-entry-id');
+                  const entry = initiatives.find(i => i.id === entryId);
+                  
+                  if (!entry) {
+                    // Entry was deleted, trigger reload
+                    window.location.reload();
+                    return;
+                  }
+                  
+                  // Update HP display
+                  const hpElement = card.querySelector('[data-hp-display]');
+                  if (hpElement && entry.hp !== null && entry.maxHp !== null) {
+                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                  }
+                  
+                  // Update AC display
+                  const acElement = card.querySelector('[data-ac-display]');
+                  if (acElement) {
+                    acElement.textContent = entry.ac !== null ? entry.ac : '-';
+                  }
+                  
+                  // Update notes display
+                  const notesElement = card.querySelector('[data-notes-display]');
+                  if (notesElement) {
+                    if (entry.notes) {
+                      notesElement.textContent = entry.notes;
+                      notesElement.parentElement?.classList.remove('hidden');
+                    } else {
+                      notesElement.parentElement?.classList.add('hidden');
+                    }
+                  }
+                  
+                  // Update active status
+                  card.setAttribute('data-is-active', entry.isActive);
+                  if (entry.isActive) {
+                    card.classList.remove('opacity-60');
+                  } else {
+                    card.classList.add('opacity-60');
+                  }
+                });
+                
+                // Check if initiative order changed (entry added/deleted)
+                if (cards.length !== initiatives.length) {
+                  window.location.reload();
                 }
               }
             }
@@ -1029,7 +1099,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       });
     }
     
-    // Setup polling for non-edit users
+    // Setup polling for non-edit users (players)
     let pollingInitialized = false;
     let pollInterval = null;
     
@@ -1039,7 +1109,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const container = document.querySelector('[data-can-edit]');
       const canEdit = container?.getAttribute('data-can-edit') === 'true';
       
-      if (canEdit) return; // Only run for non-edit users
+      if (canEdit) return; // Only run for non-edit users (players)
       
       pollingInitialized = true;
       
@@ -1054,8 +1124,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           if (stateResponse.ok && initiativeResponse.ok) {
             const state = await stateResponse.json();
             
-            // Only update if combat is active
+            // Stop polling if combat is not active
             if (state.status !== 'active') {
+              if (pollInterval) {
+                clearInterval(pollInterval);
+                pollInterval = null;
+                pollingInitialized = false;
+              }
               return;
             }
             
