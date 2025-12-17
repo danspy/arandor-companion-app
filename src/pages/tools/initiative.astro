@@ -451,9 +451,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             <div class="flex gap-4 mt-6">
               <button 
                 type="submit"
-                class="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
+                id="saveBtn"
+                class="flex-1 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Save
+                <span id="saveBtnText">Save</span>
               </button>
               <button 
                 type="button"
@@ -476,9 +477,26 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       background-color: #fefce8 !important;
     }
     
-    .dark .initiative-row.turn-active {
+    /* Dark mode for turn active - much more specific selector */
+    :global(.dark) .initiative-row.turn-active {
       background-color: rgba(234, 179, 8, 0.15) !important;
       border-left-color: #eab308 !important;
+    }
+    
+    /* Loading spinner animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
     }
   </style>
 
@@ -695,6 +713,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         e.preventDefault();
         e.stopImmediatePropagation(); // Prevent any duplicate handlers
 
+        // Get save button and add loading state
+        const saveBtn = document.getElementById('saveBtn');
+        const saveBtnText = document.getElementById('saveBtnText');
+        const originalText = saveBtnText?.textContent || 'Save';
+        
+        if (saveBtn) saveBtn.disabled = true;
+        if (saveBtnText) {
+          saveBtnText.innerHTML = '<span class="spinner"></span>Saving...';
+        }
+
         const id = entryIdInput.value;
         const isEdit = !!id;
 
@@ -755,6 +783,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         } catch (error) {
           console.error('Error saving entry:', error);
           alert(error instanceof Error ? error.message : 'Failed to save entry');
+          
+          // Restore button state on error
+          if (saveBtn) saveBtn.disabled = false;
+          if (saveBtnText) {
+            saveBtnText.textContent = originalText;
+          }
         }
       };
       
@@ -770,7 +804,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           // Remove all turn indicators and highlights
           document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
           document.querySelectorAll('.initiative-row').forEach(row => {
-            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
+            // Only remove the turn-active class - let CSS handle all styling
+            row.classList.remove('turn-active');
           });
           
           // Update round display
@@ -786,7 +821,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           if (activeRows.length > 0 && newIndex >= 0 && newIndex < activeRows.length) {
             const targetRow = activeRows[newIndex];
             if (targetRow) {
-              // Add highlight with !important CSS class
+              // Add highlight with CSS class - CSS will handle light/dark mode via !important rules
               targetRow.classList.add('turn-active');
               
               // Add turn badge
