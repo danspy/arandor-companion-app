@@ -482,7 +482,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
   </style>
 
   <script>
-    let initialized = false;
+    // Store handler reference globally so we can properly remove it
+    let formSubmitHandler = null;
     
     function initializeInitiativeTracker() {
       const container = document.querySelector('[data-can-edit]');
@@ -491,10 +492,6 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (!canEdit) {
         return;
       }
-      
-      // Prevent multiple initializations in same page load
-      if (initialized) return;
-      initialized = true;
       const modal = document.getElementById('initiativeModal');
       const form = document.getElementById('initiativeForm');
       const modalTitle = document.getElementById('modalTitle');
@@ -683,9 +680,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       });
 
-      // Form submission handler (defined once)
-      const handleFormSubmit = async (e) => {
+      // Form submission handler - remove old handler first if it exists
+      if (formSubmitHandler && form) {
+        form.removeEventListener('submit', formSubmitHandler);
+        formSubmitHandler = null;
+      }
+      
+      // Create new handler
+      formSubmitHandler = async (e) => {
         e.preventDefault();
+        e.stopImmediatePropagation(); // Prevent any duplicate handlers
 
         const id = entryIdInput.value;
         const isEdit = !!id;
@@ -740,7 +744,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             if (!response.ok) {
               const error = await response.json();
               throw new Error(error.error || 'Failed to save entry');
-            }
+              }
           }
 
           window.location.reload();
@@ -750,9 +754,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       };
       
-      // Remove old listener if exists, add new one
-      form?.removeEventListener('submit', handleFormSubmit);
-      form?.addEventListener('submit', handleFormSubmit);
+      // Add the new handler
+      form?.addEventListener('submit', formSubmitHandler, { once: false });
 
       // Next/Prev turn functionality with server sync
       const nextTurnBtn = document.getElementById('nextTurnBtn');
@@ -921,32 +924,30 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       setInterval(pollCombatState, 2000);
     }
 
-    // Reset initialization flags on page navigation
+    // Reset and cleanup on page navigation for View Transitions
     document.addEventListener('astro:before-preparation', () => {
-      initialized = false;
-      pollingInitialized = false;
+      // Remove form handler before navigation
+      const form = document.getElementById('initiativeForm');
+      if (formSubmitHandler && form) {
+        form.removeEventListener('submit', formSubmitHandler);
+        formSubmitHandler = null;
+      }
     });
     
     // Run on initial page load
     document.addEventListener('DOMContentLoaded', () => {
-      initialized = false;
-      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     });
     
     // Run after Astro view transitions
     document.addEventListener('astro:page-load', () => {
-      initialized = false;
-      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     });
     
     // If already loaded (hot reload), run immediately
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      initialized = false;
-      pollingInitialized = false;
       initializeInitiativeTracker();
       setupPollingForPlayers();
     }
