@@ -39,7 +39,7 @@ const getTypeBadgeColor = (type: string) => {
 ---
 
 <Layout title="Initiative Tracker">
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-8" data-can-edit={canEdit}>
     <div class="mb-8">
       <div class="flex justify-between items-center">
         <div>
@@ -307,11 +307,12 @@ const getTypeBadgeColor = (type: string) => {
   )}
 
   <script>
-    const canEdit = {canEdit};
+    const container = document.querySelector('[data-can-edit]');
+    const canEdit = container?.getAttribute('data-can-edit') === 'true';
     
     if (canEdit) {
       const modal = document.getElementById('initiativeModal');
-      const form = document.getElementById('initiativeForm') as HTMLFormElement;
+      const form = document.getElementById('initiativeForm');
       const modalTitle = document.getElementById('modalTitle');
       const addBtn = document.getElementById('addInitiativeBtn');
       const closeModalBtn = document.getElementById('closeModalBtn');
@@ -319,19 +320,19 @@ const getTypeBadgeColor = (type: string) => {
       const clearAllBtn = document.getElementById('clearAllBtn');
 
       // Form fields
-      const entryIdInput = document.getElementById('entryId') as HTMLInputElement;
-      const nameInput = document.getElementById('name') as HTMLInputElement;
-      const initiativeInput = document.getElementById('initiative') as HTMLInputElement;
-      const typeSelect = document.getElementById('type') as HTMLSelectElement;
-      const hpInput = document.getElementById('hp') as HTMLInputElement;
-      const maxHpInput = document.getElementById('maxHp') as HTMLInputElement;
-      const acInput = document.getElementById('ac') as HTMLInputElement;
-      const notesInput = document.getElementById('notes') as HTMLTextAreaElement;
-      const isActiveInput = document.getElementById('isActive') as HTMLInputElement;
+      const entryIdInput = document.getElementById('entryId');
+      const nameInput = document.getElementById('name');
+      const initiativeInput = document.getElementById('initiative');
+      const typeSelect = document.getElementById('type');
+      const hpInput = document.getElementById('hp');
+      const maxHpInput = document.getElementById('maxHp');
+      const acInput = document.getElementById('ac');
+      const notesInput = document.getElementById('notes');
+      const isActiveInput = document.getElementById('isActive');
 
       // Open modal for adding
       addBtn?.addEventListener('click', () => {
-        modalTitle!.textContent = 'Add Initiative Entry';
+        if (modalTitle) modalTitle.textContent = 'Add Initiative Entry';
         form.reset();
         entryIdInput.value = '';
         isActiveInput.checked = true;
@@ -361,7 +362,7 @@ const getTypeBadgeColor = (type: string) => {
             
             const entry = await response.json();
             
-            modalTitle!.textContent = 'Edit Initiative Entry';
+            if (modalTitle) modalTitle.textContent = 'Edit Initiative Entry';
             entryIdInput.value = entry.id;
             nameInput.value = entry.name;
             initiativeInput.value = entry.initiative;
