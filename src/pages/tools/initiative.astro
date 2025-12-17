@@ -499,7 +499,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         form.reset();
         entryIdInput.value = '';
         isActiveInput.checked = true;
-        characterSelectContainer?.classList.add('hidden');
+        
+        // Check if default type is "character" and show dropdown accordingly
+        if (typeSelect && typeSelect.value === 'character') {
+          characterSelectContainer?.classList.remove('hidden');
+        } else {
+          characterSelectContainer?.classList.add('hidden');
+        }
+        
         modal?.classList.remove('hidden');
         modal?.classList.add('flex');
       });
