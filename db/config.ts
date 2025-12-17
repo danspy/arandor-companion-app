@@ -169,6 +169,7 @@ const CombatState = defineTable({
     id: column.text({ primaryKey: true }),
     currentRound: column.number({ default: 1 }),
     currentTurnIndex: column.number({ default: 0 }),
+    status: column.text({ default: 'stopped' }), // 'active' | 'paused' | 'stopped'
     updatedAt: column.date({ default: new Date() }),
   }
 });

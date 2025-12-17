@@ -17,9 +17,10 @@ export const GET: APIRoute = async ({ cookies }) => {
         id: COMBAT_STATE_ID,
         currentRound: 1,
         currentTurnIndex: 0,
+        status: 'stopped',
         updatedAt: new Date(),
       });
-      state = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, updatedAt: new Date() };
+      state = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, status: 'stopped', updatedAt: new Date() };
     }
 
     return new Response(JSON.stringify(state), {
@@ -41,10 +42,25 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
 
   try {
     const data = await request.json();
-    const { currentRound, currentTurnIndex } = data;
+    const { currentRound, currentTurnIndex, status } = data;
 
-    if (typeof currentRound !== 'number' || typeof currentTurnIndex !== 'number') {
-      return new Response(JSON.stringify({ error: 'Invalid data' }), {
+    // Validate required fields
+    if (currentRound !== undefined && typeof currentRound !== 'number') {
+      return new Response(JSON.stringify({ error: 'Invalid currentRound' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (currentTurnIndex !== undefined && typeof currentTurnIndex !== 'number') {
+      return new Response(JSON.stringify({ error: 'Invalid currentTurnIndex' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+    
+    if (status !== undefined && !['active', 'paused', 'stopped'].includes(status)) {
+      return new Response(JSON.stringify({ error: 'Invalid status. Must be active, paused, or stopped' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });
@@ -53,15 +69,21 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     // Upsert combat state
     const existing = await db.select().from(CombatState).where(eq(CombatState.id, COMBAT_STATE_ID)).get();
     
+    const updateData: any = { updatedAt: new Date() };
+    if (currentRound !== undefined) updateData.currentRound = currentRound;
+    if (currentTurnIndex !== undefined) updateData.currentTurnIndex = currentTurnIndex;
+    if (status !== undefined) updateData.status = status;
+    
     if (existing) {
       await db.update(CombatState)
-        .set({ currentRound, currentTurnIndex, updatedAt: new Date() })
+        .set(updateData)
         .where(eq(CombatState.id, COMBAT_STATE_ID));
     } else {
       await db.insert(CombatState).values({
         id: COMBAT_STATE_ID,
-        currentRound,
-        currentTurnIndex,
+        currentRound: currentRound || 1,
+        currentTurnIndex: currentTurnIndex || 0,
+        status: status || 'stopped',
         updatedAt: new Date(),
       });
     }

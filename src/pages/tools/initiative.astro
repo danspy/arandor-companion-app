@@ -39,9 +39,10 @@ if (!combatState) {
     id: COMBAT_STATE_ID,
     currentRound: 1,
     currentTurnIndex: 0,
+    status: 'stopped',
     updatedAt: new Date(),
   });
-  combatState = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, updatedAt: new Date() };
+  combatState = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, status: 'stopped', updatedAt: new Date() };
 }
 
 // Type badge colors
@@ -90,22 +91,53 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         {canEdit && (
           <div class="flex flex-col sm:flex-row gap-2">
             {sortedInitiatives.length > 0 && (
-              <div class="flex gap-2">
-                <button 
-                  id="prevTurnBtn"
-                  class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
-                  title="Previous turn"
-                >
-                  ← Prev
-                </button>
-                <button 
-                  id="nextTurnBtn"
-                  class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium"
-                  title="Next turn"
-                >
-                  Next →
-                </button>
-              </div>
+              <>
+                <!-- Combat Control Buttons -->
+                <div class="flex gap-2">
+                  <button 
+                    id="startCombatBtn"
+                    class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Start combat and enable real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'active' ? '▶ Active' : 'Start'}
+                  </button>
+                  <button 
+                    id="pauseCombatBtn"
+                    class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-yellow-600 hover:bg-yellow-700 dark:bg-yellow-700 dark:hover:bg-yellow-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Pause combat and real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'paused' ? '⏸ Paused' : 'Pause'}
+                  </button>
+                  <button 
+                    id="stopCombatBtn"
+                    class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 text-white rounded-lg transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    title="Stop combat and disable real-time tracking"
+                    data-status={combatState.status}
+                  >
+                    {combatState.status === 'stopped' ? '⏹ Stopped' : 'Stop'}
+                  </button>
+                </div>
+                
+                <!-- Turn Navigation -->
+                <div class="flex gap-2">
+                  <button 
+                    id="prevTurnBtn"
+                    class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
+                    title="Previous turn"
+                  >
+                    ← Prev
+                  </button>
+                  <button 
+                    id="nextTurnBtn"
+                    class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white rounded-lg transition font-medium"
+                    title="Next turn"
+                  >
+                    Next →
+                  </button>
+                </div>
+              </>
             )}
             <button 
               id="addInitiativeBtn"
@@ -170,19 +202,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                         <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                           {canEdit ? (
                             entry.hp !== null && entry.maxHp !== null ? (
-                              <span>{entry.hp}/{entry.maxHp}</span>
+                              <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
                             ) : entry.hp !== null ? (
-                              <span>{entry.hp}</span>
+                              <span data-hp-display>{entry.hp}</span>
                             ) : (
-                              <span class="text-gray-400">-</span>
+                              <span class="text-gray-400" data-hp-display>-</span>
                             )
                           ) : (
                             (() => {
                               const status = getHealthStatus(entry.hp, entry.maxHp);
                               return status.text === '-' ? (
-                                <span class={status.classes}>{status.text}</span>
+                                <span class={status.classes} data-hp-display>{status.text}</span>
                               ) : (
-                                <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`}>
+                                <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
                                   {status.text}
                                 </span>
                               );
@@ -195,7 +227,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                         <div class="text-center min-w-[40px]">
                           <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
                           <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                            {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                            <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
                           </div>
                         </div>
                       )}
@@ -227,19 +259,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                       <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {canEdit ? (
                           entry.hp !== null && entry.maxHp !== null ? (
-                            <span>{entry.hp}/{entry.maxHp}</span>
+                            <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
                           ) : entry.hp !== null ? (
-                            <span>{entry.hp}</span>
+                            <span data-hp-display>{entry.hp}</span>
                           ) : (
-                            <span class="text-gray-400">-</span>
+                            <span class="text-gray-400" data-hp-display>-</span>
                           )
                         ) : (
                           (() => {
                             const status = getHealthStatus(entry.hp, entry.maxHp);
                             return status.text === '-' ? (
-                              <span class={status.classes}>{status.text}</span>
+                              <span class={status.classes} data-hp-display>{status.text}</span>
                             ) : (
-                              <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`}>
+                              <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
                                 {status.text}
                               </span>
                             );
@@ -252,7 +284,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                       <div class="text-center min-w-[40px]">
                         <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
                         <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                          {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                          <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
                         </div>
                       </div>
                     )}
@@ -282,7 +314,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 {canEdit && entry.notes && (
                   <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
-                    <div class="text-sm text-gray-700 dark:text-gray-300">{entry.notes}</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display>{entry.notes}</div>
+                  </div>
+                )}
+                {canEdit && !entry.notes && (
+                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
                   </div>
                 )}
               </div>
@@ -935,16 +973,20 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           clearInterval(combatStateInterval);
         }
         
-        // Poll for combat state updates every 2 seconds
+        // Poll for combat state updates every 2 seconds (only when active)
         combatStateInterval = setInterval(async () => {
           try {
             const response = await fetch('/api/combat-state');
             if (response.ok) {
               const state = await response.json();
-              if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
-                currentRound = state.currentRound;
-                currentTurnIndex = state.currentTurnIndex;
-                updateTurnIndicator(currentTurnIndex, currentRound);
+              
+              // Only sync when combat is active
+              if (state.status === 'active') {
+                if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
+                  currentRound = state.currentRound;
+                  currentTurnIndex = state.currentTurnIndex;
+                  updateTurnIndicator(currentTurnIndex, currentRound);
+                }
               }
             }
           } catch (error) {
@@ -952,10 +994,44 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           }
         }, 2000);
       }
+      
+      // Combat control buttons - Start/Pause/Stop
+      const startCombatBtn = document.getElementById('startCombatBtn');
+      const pauseCombatBtn = document.getElementById('pauseCombatBtn');
+      const stopCombatBtn = document.getElementById('stopCombatBtn');
+      
+      const updateCombatStatus = async (status) => {
+        try {
+          const response = await fetch('/api/combat-state', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status }),
+          });
+          
+          if (response.ok) {
+            // Reload to update button states and polling behavior
+            window.location.reload();
+          } else {
+            throw new Error('Failed to update combat status');
+          }
+        } catch (error) {
+          console.error('Error updating combat status:', error);
+          alert('Failed to update combat status');
+        }
+      };
+      
+      startCombatBtn?.addEventListener('click', () => updateCombatStatus('active'));
+      pauseCombatBtn?.addEventListener('click', () => updateCombatStatus('paused'));
+      stopCombatBtn?.addEventListener('click', () => {
+        if (confirm('Stop combat? This will disable real-time tracking.')) {
+          updateCombatStatus('stopped');
+        }
+      });
     }
     
     // Setup polling for non-edit users
     let pollingInitialized = false;
+    let pollInterval = null;
     
     function setupPollingForPlayers() {
       if (pollingInitialized) return;
@@ -967,11 +1043,23 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       
       pollingInitialized = true;
       
-      const pollCombatState = async () => {
+      const pollCombatData = async () => {
         try {
-          const response = await fetch('/api/combat-state');
-          if (response.ok) {
-            const state = await response.json();
+          // Fetch both combat state and initiative entries
+          const [stateResponse, initiativeResponse] = await Promise.all([
+            fetch('/api/combat-state'),
+            fetch('/api/initiative')
+          ]);
+          
+          if (stateResponse.ok && initiativeResponse.ok) {
+            const state = await stateResponse.json();
+            
+            // Only update if combat is active
+            if (state.status !== 'active') {
+              return;
+            }
+            
+            const initiatives = await initiativeResponse.json();
             
             // Update round display
             const roundDisplay = document.getElementById('currentRoundDisplay');
@@ -979,8 +1067,76 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               roundDisplay.textContent = state.currentRound;
             }
             
-            // Update turn indicator on cards
+            // Update each card with fresh data
             const cards = Array.from(document.querySelectorAll('.initiative-card'));
+            
+            cards.forEach(card => {
+              const entryId = card.getAttribute('data-entry-id');
+              const entry = initiatives.find(i => i.id === entryId);
+              
+              if (!entry) {
+                // Entry was deleted, trigger reload
+                window.location.reload();
+                return;
+              }
+              
+              // Update HP display
+              const hpElement = card.querySelector('[data-hp-display]');
+              if (hpElement) {
+                if (canEdit) {
+                  if (entry.hp !== null && entry.maxHp !== null) {
+                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                  } else if (entry.hp !== null) {
+                    hpElement.textContent = entry.hp;
+                  } else {
+                    hpElement.textContent = '-';
+                  }
+                } else {
+                  // Update health status for players
+                  const getHealthStatus = (hp, maxHp) => {
+                    if (!hp || !maxHp || hp <= 0) {
+                      if (hp === 0) return { text: 'Dead', classes: 'bg-gray-800 text-white' };
+                      return { text: '-', classes: 'text-gray-400' };
+                    }
+                    const percentage = (hp / maxHp) * 100;
+                    if (percentage > 75) return { text: 'Healthy', classes: 'bg-green-500 text-white' };
+                    if (percentage > 50) return { text: 'Injured', classes: 'bg-yellow-500 text-white' };
+                    if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
+                    return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
+                  };
+                  const status = getHealthStatus(entry.hp, entry.maxHp);
+                  hpElement.textContent = status.text;
+                  hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
+                }
+              }
+              
+              // Update AC display (DM/Admin only)
+              const acElement = card.querySelector('[data-ac-display]');
+              if (acElement && canEdit) {
+                acElement.textContent = entry.ac !== null ? entry.ac : '-';
+              }
+              
+              // Update notes display (DM/Admin only)
+              const notesElement = card.querySelector('[data-notes-display]');
+              if (notesElement && canEdit) {
+                if (entry.notes) {
+                  notesElement.textContent = entry.notes;
+                  notesElement.parentElement?.classList.remove('hidden');
+                } else {
+                  notesElement.parentElement?.classList.add('hidden');
+                }
+              }
+              
+              // Update active status
+              card.setAttribute('data-is-active', entry.isActive);
+              if (entry.isActive) {
+                card.classList.remove('opacity-60');
+              } else {
+                card.classList.add('opacity-60');
+              }
+            });
+            
+            // Update turn indicator on cards
             const activeCards = cards.filter(card => card.getAttribute('data-is-active') === 'true');
             
             // Remove turn styling from all cards
@@ -997,14 +1153,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
               }
             }
+            
+            // Check if initiative order changed (entry added/deleted)
+            if (cards.length !== initiatives.length) {
+              window.location.reload();
+            }
           }
         } catch (error) {
-          console.error('Error polling combat state:', error);
+          console.error('Error polling combat data:', error);
         }
       };
       
       // Poll every 2 seconds
-      setInterval(pollCombatState, 2000);
+      pollInterval = setInterval(pollCombatData, 2000);
     }
 
     // Reset and cleanup on page navigation for View Transitions
@@ -1033,6 +1194,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         clearInterval(combatStateInterval);
         combatStateInterval = null;
       }
+      
+      // Clear player polling interval
+      if (pollInterval) {
+        clearInterval(pollInterval);
+        pollInterval = null;
+      }
+      
+      // Reset polling flag
+      pollingInitialized = false;
     });
     
     // Run on initial page load
