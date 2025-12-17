@@ -124,131 +124,122 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         </p>
       </div>
     ) : (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 overflow-hidden">
-        <table class="w-full">
-          <thead class="bg-gray-50 dark:bg-gray-900">
-            <tr>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Initiative
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Name
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Type
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                HP
-              </th>
-              {canEdit && (
-                <>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    AC
-                  </th>
-                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                    Notes
-                  </th>
-                </>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+        {sortedInitiatives.map((entry, index) => {
+          const activeEntries = sortedInitiatives.filter(e => e.isActive);
+          const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
+          const isCurrentTurn = entry.isActive && activeIndex === combatState.currentTurnIndex;
+          
+          return (
+            <div 
+              class:list={[
+                "initiative-card relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border-2",
+                { 'opacity-60': !entry.isActive },
+                { 'border-gray-200 dark:border-gray-700': !isCurrentTurn },
+                { 'border-yellow-500 dark:border-yellow-500': isCurrentTurn }
+              ]}
+              data-index={index}
+              data-active-index={activeIndex}
+              data-is-active={entry.isActive}
+              data-entry-id={entry.id}
+            >
+              {isCurrentTurn && (
+                <div class="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider">
+                  <span class="turn-indicator">CURRENT TURN</span>
+                </div>
               )}
-              {canEdit && (
-                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            {sortedInitiatives.map((entry, index) => {
-              const activeEntries = sortedInitiatives.filter(e => e.isActive);
-              const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
-              const isCurrentTurn = entry.isActive && activeIndex === combatState.currentTurnIndex;
               
-              return (
-              <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition initiative-row" 
-                  data-index={index}
-                  data-active-index={activeIndex}
-                  data-is-active={entry.isActive}
-                  data-entry-id={entry.id}
-                  class:list={[
-                    { 'opacity-50': !entry.isActive },
-                    { 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500': isCurrentTurn }
-                  ]}>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="flex items-center gap-2">
-                    <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
+              <div class:list={[
+                "p-4",
+                { 'pt-8': isCurrentTurn }
+              ]}>
+                <!-- Header: Initiative & Name -->
+                <div class="flex items-start justify-between mb-3">
+                  <div class="flex items-center gap-3">
+                    <div class="text-4xl sm:text-5xl font-bold text-primary-600 dark:text-primary-400">
                       {entry.initiative}
-                    </span>
-                    {isCurrentTurn && (
-                      <span class="turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
-                        TURN
+                    </div>
+                    <div class="flex-1">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                        {entry.name}
+                      </h3>
+                      <span class:list={["inline-block px-2 py-1 text-xs font-semibold rounded-full mt-1", getTypeBadgeColor(entry.type)]}>
+                        {entry.type}
                       </span>
-                    )}
+                    </div>
                   </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {entry.name}
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span class:list={["px-2 inline-flex text-xs leading-5 font-semibold rounded-full", getTypeBadgeColor(entry.type)]}>
-                    {entry.type}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {canEdit ? (
-                    entry.hp !== null && entry.maxHp !== null ? (
-                      <span>{entry.hp} / {entry.maxHp}</span>
-                    ) : entry.hp !== null ? (
-                      <span>{entry.hp}</span>
-                    ) : (
-                      <span class="text-gray-400">-</span>
-                    )
-                  ) : (
-                    (() => {
-                      const status = getHealthStatus(entry.hp, entry.maxHp);
-                      return status.text === '-' ? (
-                        <span class={status.classes}>{status.text}</span>
+                </div>
+
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                  <!-- HP -->
+                  <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">HP</div>
+                    <div class="text-sm font-medium text-gray-900 dark:text-gray-100">
+                      {canEdit ? (
+                        entry.hp !== null && entry.maxHp !== null ? (
+                          <span class="text-base">{entry.hp} / {entry.maxHp}</span>
+                        ) : entry.hp !== null ? (
+                          <span class="text-base">{entry.hp}</span>
+                        ) : (
+                          <span class="text-gray-400">-</span>
+                        )
                       ) : (
-                        <span class={`px-2 py-1 rounded-full text-xs font-semibold ${status.classes}`}>
-                          {status.text}
-                        </span>
-                      );
-                    })()
+                        (() => {
+                          const status = getHealthStatus(entry.hp, entry.maxHp);
+                          return status.text === '-' ? (
+                            <span class={status.classes}>{status.text}</span>
+                          ) : (
+                            <span class={`inline-block px-2 py-1 rounded-full text-xs font-semibold ${status.classes}`}>
+                              {status.text}
+                            </span>
+                          );
+                        })()
+                      )}
+                    </div>
+                  </div>
+
+                  <!-- AC -->
+                  {canEdit && (
+                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3">
+                      <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">AC</div>
+                      <div class="text-base font-medium text-gray-900 dark:text-gray-100">
+                        {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                      </div>
+                    </div>
                   )}
-                </td>
-                {canEdit && (
-                  <>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
-                    </td>
-                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                      {entry.notes || '-'}
-                    </td>
-                  </>
+                </div>
+
+                <!-- Notes -->
+                {canEdit && entry.notes && (
+                  <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-3 mb-3">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-1">Notes</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300">{entry.notes}</div>
+                  </div>
                 )}
+
+                <!-- Actions -->
                 {canEdit && (
-                  <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                  <div class="flex gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
                     <button 
-                      class="edit-initiative-btn text-primary-600 hover:text-primary-900 dark:text-primary-400 dark:hover:text-primary-200 mr-3"
+                      class="edit-initiative-btn flex-1 px-4 py-2 text-sm font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
                       data-id={entry.id}
                     >
                       Edit
                     </button>
                     <button 
-                      class="delete-initiative-btn text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
+                      class="delete-initiative-btn flex-1 px-4 py-2 text-sm font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
                       data-id={entry.id}
                       data-name={entry.name}
                     >
                       Delete
                     </button>
-                  </td>
+                  </div>
                 )}
-              </tr>
-              );
-            })}
-          </tbody>
-        </table>
+              </div>
+            </div>
+          );
+        })}
       </div>
     )}
 
@@ -471,17 +462,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
   )}
 
   <style>
-    /* Force yellow border to show with !important */
-    .initiative-row.turn-active {
-      border-left: 4px solid #eab308 !important;
-      background-color: #fefce8 !important;
-    }
-    
-    /* Dark mode for turn active - much more specific selector */
-    :global(.dark) .initiative-row.turn-active {
-      background-color: rgba(234, 179, 8, 0.15) !important;
-      border-left-color: #eab308 !important;
-    }
+    /* Cards already have border styling via Tailwind classes, no additional CSS needed for turn indicator */
     
     /* Loading spinner animation */
     @keyframes spin {
@@ -801,40 +782,53 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       
       if (nextTurnBtn && prevTurnBtn) {
         const updateTurnIndicator = (newIndex, newRound) => {
-          // Remove all turn indicators and highlights
-          document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
-          document.querySelectorAll('.initiative-row').forEach(row => {
-            // Remove both server-rendered Tailwind classes and turn-active class
-            row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
-          });
-          
           // Update round display
           const roundDisplay = document.getElementById('currentRoundDisplay');
           if (roundDisplay) {
             roundDisplay.textContent = newRound;
           }
           
-          // Find the active row at the new index
-          const rows = Array.from(document.querySelectorAll('.initiative-row'));
-          const activeRows = rows.filter(row => row.getAttribute('data-is-active') === 'true');
+          // Find all cards and active cards
+          const cards = Array.from(document.querySelectorAll('.initiative-card'));
+          const activeCards = cards.filter(card => card.getAttribute('data-is-active') === 'true');
           
-          if (activeRows.length > 0 && newIndex >= 0 && newIndex < activeRows.length) {
-            const targetRow = activeRows[newIndex];
-            if (targetRow) {
-              // Add highlight with CSS class - CSS will handle light/dark mode via !important rules
-              targetRow.classList.add('turn-active');
+          // Remove turn styling from all cards
+          cards.forEach(card => {
+            // Remove yellow border and add gray border
+            card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
+            card.classList.add('border-gray-200', 'dark:border-gray-700');
+            
+            // Remove "CURRENT TURN" banner if it exists
+            const banner = card.querySelector('.turn-indicator')?.parentElement;
+            if (banner) {
+              banner.remove();
+            }
+          });
+          
+          // Add turn styling to the active card
+          if (activeCards.length > 0 && newIndex >= 0 && newIndex < activeCards.length) {
+            const targetCard = activeCards[newIndex];
+            if (targetCard) {
+              // Add yellow border
+              targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+              targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
               
-              // Add turn badge
-              const initiativeCell = targetRow.querySelector('td:first-child > div');
-              if (initiativeCell) {
-                const badge = document.createElement('span');
-                badge.className = 'turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold';
-                badge.textContent = 'TURN';
-                initiativeCell.appendChild(badge);
+              // Add "CURRENT TURN" banner
+              const cardContent = targetCard.querySelector('[class*="p-4"]');
+              if (cardContent) {
+                const banner = document.createElement('div');
+                banner.className = 'absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider';
+                banner.innerHTML = '<span class="turn-indicator">CURRENT TURN</span>';
+                targetCard.insertBefore(banner, targetCard.firstChild);
+                
+                // Adjust padding if banner is added
+                if (!cardContent.classList.contains('pt-8')) {
+                  cardContent.classList.add('pt-8');
+                }
               }
               
               // Scroll into view
-              targetRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+              targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
           }
         };
@@ -953,26 +947,40 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               roundDisplay.textContent = state.currentRound;
             }
             
-            // Update turn indicator
-            document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
-            document.querySelectorAll('.initiative-row').forEach(row => {
-              row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500', 'turn-active');
+            // Update turn indicator on cards
+            const cards = Array.from(document.querySelectorAll('.initiative-card'));
+            const activeCards = cards.filter(card => card.getAttribute('data-is-active') === 'true');
+            
+            // Remove turn styling from all cards
+            cards.forEach(card => {
+              card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
+              card.classList.add('border-gray-200', 'dark:border-gray-700');
+              
+              const banner = card.querySelector('.turn-indicator')?.parentElement;
+              if (banner) {
+                banner.remove();
+              }
+              
+              const cardContent = card.querySelector('[class*="p-4"]');
+              if (cardContent) {
+                cardContent.classList.remove('pt-8');
+              }
             });
             
-            const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
-              row => row.getAttribute('data-is-active') === 'true'
-            );
-            
-            if (activeRows.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeRows.length) {
-              const targetRow = activeRows[state.currentTurnIndex];
-              if (targetRow) {
-                targetRow.classList.add('turn-active');
-                const initiativeCell = targetRow.querySelector('td:first-child > div');
-                if (initiativeCell && !initiativeCell.querySelector('.turn-indicator')) {
-                  const badge = document.createElement('span');
-                  badge.className = 'turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold';
-                  badge.textContent = 'TURN';
-                  initiativeCell.appendChild(badge);
+            // Add turn styling to active card
+            if (activeCards.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeCards.length) {
+              const targetCard = activeCards[state.currentTurnIndex];
+              if (targetCard) {
+                targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
+                targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
+                
+                const cardContent = targetCard.querySelector('[class*="p-4"]');
+                if (cardContent && !targetCard.querySelector('.turn-indicator')) {
+                  const banner = document.createElement('div');
+                  banner.className = 'absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider';
+                  banner.innerHTML = '<span class="turn-indicator">CURRENT TURN</span>';
+                  targetCard.insertBefore(banner, targetCard.firstChild);
+                  cardContent.classList.add('pt-8');
                 }
               }
             }
