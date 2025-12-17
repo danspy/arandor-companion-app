@@ -73,47 +73,50 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 <Layout title="Initiative Tracker">
   <div class="container mx-auto px-4 py-8" data-can-edit={canEdit}>
     <div class="mb-8">
-      <div class="flex justify-between items-center">
-        <div>
-          <div class="flex items-center gap-4">
-            <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
-            {sortedInitiatives.length > 0 && (
-              <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-4 py-2 rounded-lg">
-                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Round:</span>
-                <span id="currentRoundDisplay" class="text-2xl font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
-              </div>
-            )}
-          </div>
-          <p class="text-gray-600 dark:text-gray-400 mt-2">Track combat initiative order</p>
-        </div>
-        <div class="flex gap-3 items-center">
-          {canEdit && sortedInitiatives.length > 0 && (
-            <div class="flex gap-2">
-              <button 
-                id="prevTurnBtn"
-                class="px-4 py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition"
-                title="Previous turn"
-              >
-                ← Prev
-              </button>
-              <button 
-                id="nextTurnBtn"
-                class="px-4 py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition"
-                title="Next turn"
-              >
-                Next →
-              </button>
+      <div class="flex flex-col gap-4">
+        <!-- Title and Round Counter -->
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <h1 class="text-3xl sm:text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+          {sortedInitiatives.length > 0 && (
+            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-3 py-1.5 rounded-lg w-fit">
+              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Round:</span>
+              <span id="currentRoundDisplay" class="text-xl font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
             </div>
           )}
-          {canEdit && (
+        </div>
+        
+        <!-- Description -->
+        <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Track combat initiative order</p>
+        
+        <!-- Action Buttons -->
+        {canEdit && (
+          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+            {sortedInitiatives.length > 0 && (
+              <div class="flex gap-2 flex-1 sm:flex-initial">
+                <button 
+                  id="prevTurnBtn"
+                  class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
+                  title="Previous turn"
+                >
+                  ← Prev
+                </button>
+                <button 
+                  id="nextTurnBtn"
+                  class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium"
+                  title="Next turn"
+                >
+                  Next →
+                </button>
+              </div>
+            )}
             <button 
               id="addInitiativeBtn"
-              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition"
+              class="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition font-medium"
             >
               Add Entry
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </div>
     </div>
 
