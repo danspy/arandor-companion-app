@@ -124,7 +124,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         </p>
       </div>
     ) : (
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 gap-4">
         {sortedInitiatives.map((entry, index) => {
           const activeEntries = sortedInitiatives.filter(e => e.isActive);
           const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
@@ -845,24 +845,24 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           }
         };
         
-        const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
-          row => row.getAttribute('data-is-active') === 'true'
+        const activeCards = Array.from(document.querySelectorAll('.initiative-card')).filter(
+          card => card.getAttribute('data-is-active') === 'true'
         );
-        const maxIndex = activeRows.length - 1;
+        const maxIndex = activeCards.length - 1;
         
         let currentRound = parseInt(document.getElementById('currentRoundDisplay')?.textContent || '1');
         let currentTurnIndex = 0;
         
-        // Find current turn from server state by looking for turn-active class
-        const currentTurnRow = document.querySelector('.initiative-row.turn-active');
-        if (currentTurnRow) {
-          const idx = parseInt(currentTurnRow.getAttribute('data-active-index') || '0');
+        // Find current turn from server state by looking for banner
+        const currentTurnCard = document.querySelector('.initiative-card .turn-indicator')?.closest('.initiative-card');
+        if (currentTurnCard) {
+          const idx = parseInt(currentTurnCard.getAttribute('data-active-index') || '0');
           if (!isNaN(idx)) {
             currentTurnIndex = idx;
           }
         } else {
-          // Fallback: get from first active row
-          currentTurnIndex = parseInt(activeRows[0]?.getAttribute('data-active-index') || '0');
+          // Fallback: get from first active card
+          currentTurnIndex = parseInt(activeCards[0]?.getAttribute('data-active-index') || '0');
         }
         
         // Remove old handlers if they exist
