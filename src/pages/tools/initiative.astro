@@ -72,37 +72,35 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 
 <Layout title="Initiative Tracker">
   <div class="container mx-auto px-4 py-8" data-can-edit={canEdit}>
-    <div class="mb-8">
-      <div class="flex flex-col gap-4">
-        <!-- Title and Round Counter -->
-        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
-          <h1 class="text-3xl sm:text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+    <div class="mb-6">
+      <!-- Mobile: Title, Round, then Buttons below -->
+      <!-- Desktop: Title with buttons on the right (consistent with app layout) -->
+      <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
+          <h1 class="text-2xl sm:text-3xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
           {sortedInitiatives.length > 0 && (
-            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-3 py-1.5 rounded-lg w-fit">
-              <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Round:</span>
-              <span id="currentRoundDisplay" class="text-xl font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
+            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-2.5 py-1 rounded-lg w-fit">
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
+              <span id="currentRoundDisplay" class="text-lg font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
             </div>
           )}
         </div>
         
-        <!-- Description -->
-        <p class="text-gray-600 dark:text-gray-400 text-sm sm:text-base">Track combat initiative order</p>
-        
         <!-- Action Buttons -->
         {canEdit && (
-          <div class="flex flex-col sm:flex-row gap-2 sm:gap-3">
+          <div class="flex flex-col sm:flex-row gap-2">
             {sortedInitiatives.length > 0 && (
-              <div class="flex gap-2 flex-1 sm:flex-initial">
+              <div class="flex gap-2">
                 <button 
                   id="prevTurnBtn"
-                  class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
+                  class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-gray-600 hover:bg-gray-700 dark:bg-gray-700 dark:hover:bg-gray-600 text-white rounded-lg transition font-medium"
                   title="Previous turn"
                 >
                   ← Prev
                 </button>
                 <button 
                   id="nextTurnBtn"
-                  class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium"
+                  class="flex-1 sm:flex-initial px-3 py-2 text-sm bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white rounded-lg transition font-medium"
                   title="Next turn"
                 >
                   Next →
@@ -111,7 +109,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             )}
             <button 
               id="addInitiativeBtn"
-              class="w-full sm:w-auto px-4 py-2.5 sm:py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition font-medium"
+              class="w-full sm:w-auto px-3 py-2 text-sm bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition font-medium"
             >
               Add Entry
             </button>
@@ -127,7 +125,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         </p>
       </div>
     ) : (
-      <div class="grid grid-cols-1 gap-5 sm:gap-6">
+      <div class="grid grid-cols-1 gap-3">
         {sortedInitiatives.map((entry, index) => {
           const activeEntries = sortedInitiatives.filter(e => e.isActive);
           const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
@@ -136,7 +134,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           return (
             <div 
               class:list={[
-                "initiative-card relative bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-all duration-200 overflow-hidden border-2",
+                "initiative-card relative bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border",
                 { 'opacity-60': !entry.isActive },
                 { 'border-gray-200 dark:border-gray-700': !isCurrentTurn },
                 { 'border-yellow-500 dark:border-yellow-500': isCurrentTurn }
@@ -147,99 +145,97 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               data-entry-id={entry.id}
             >
               {isCurrentTurn && (
-                <div class="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-1 text-xs font-bold tracking-wider">
+                <div class="absolute top-0 left-0 right-0 bg-yellow-500 text-white text-center py-0.5 text-xs font-bold tracking-wider">
                   <span class="turn-indicator">CURRENT TURN</span>
                 </div>
               )}
               
               <div class:list={[
-                "p-5 sm:p-6",
-                { 'pt-9 sm:pt-10': isCurrentTurn }
+                "p-3",
+                { 'pt-6': isCurrentTurn }
               ]}>
-                <!-- Header: Initiative & Name -->
-                <div class="flex items-start justify-between mb-4 sm:mb-5">
-                  <div class="flex items-center gap-4 sm:gap-5">
-                    <div class="text-5xl sm:text-6xl font-bold text-primary-600 dark:text-primary-400">
-                      {entry.initiative}
-                    </div>
-                    <div class="flex-1">
-                      <h3 class="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                <!-- Compact horizontal layout -->
+                <div class="flex items-center gap-3">
+                  <!-- Initiative number -->
+                  <div class="flex-shrink-0 text-4xl font-bold text-primary-600 dark:text-primary-400 w-16">
+                    {entry.initiative}
+                  </div>
+                  
+                  <!-- Name & Type -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 flex-wrap">
+                      <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
                         {entry.name}
                       </h3>
-                      <span class:list={["inline-block px-3 py-1 text-sm font-semibold rounded-full mt-2", getTypeBadgeColor(entry.type)]}>
+                      <span class:list={["inline-block px-2 py-0.5 text-xs font-semibold rounded-full", getTypeBadgeColor(entry.type)]}>
                         {entry.type}
                       </span>
                     </div>
                   </div>
-                </div>
-
-                <!-- Stats Grid -->
-                <div class:list={[
-                  "grid gap-4 mb-4 sm:mb-5",
-                  canEdit ? "grid-cols-2" : "grid-cols-1"
-                ]}>
-                  <!-- HP -->
-                  <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 font-medium">HP</div>
-                    <div class="text-base font-medium text-gray-900 dark:text-gray-100">
-                      {canEdit ? (
-                        entry.hp !== null && entry.maxHp !== null ? (
-                          <span class="text-lg">{entry.hp} / {entry.maxHp}</span>
-                        ) : entry.hp !== null ? (
-                          <span class="text-lg">{entry.hp}</span>
-                        ) : (
-                          <span class="text-gray-400">-</span>
-                        )
-                      ) : (
-                        (() => {
-                          const status = getHealthStatus(entry.hp, entry.maxHp);
-                          return status.text === '-' ? (
-                            <span class={status.classes}>{status.text}</span>
+                  
+                  <!-- HP & AC inline -->
+                  <div class="flex items-center gap-3 flex-shrink-0">
+                    <div class="text-center min-w-[60px]">
+                      <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">HP</div>
+                      <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                        {canEdit ? (
+                          entry.hp !== null && entry.maxHp !== null ? (
+                            <span>{entry.hp}/{entry.maxHp}</span>
+                          ) : entry.hp !== null ? (
+                            <span>{entry.hp}</span>
                           ) : (
-                            <span class={`inline-block px-3 py-1.5 rounded-full text-sm font-semibold ${status.classes}`}>
-                              {status.text}
-                            </span>
-                          );
-                        })()
-                      )}
-                    </div>
-                  </div>
-
-                  <!-- AC -->
-                  {canEdit && (
-                    <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                      <div class="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 font-medium">AC</div>
-                      <div class="text-lg font-medium text-gray-900 dark:text-gray-100">
-                        {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                            <span class="text-gray-400">-</span>
+                          )
+                        ) : (
+                          (() => {
+                            const status = getHealthStatus(entry.hp, entry.maxHp);
+                            return status.text === '-' ? (
+                              <span class={status.classes}>{status.text}</span>
+                            ) : (
+                              <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`}>
+                                {status.text}
+                              </span>
+                            );
+                          })()
+                        )}
                       </div>
+                    </div>
+
+                    {canEdit && (
+                      <div class="text-center min-w-[40px]">
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase">AC</div>
+                        <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                          {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <!-- Actions -->
+                  {canEdit && (
+                    <div class="flex gap-2 flex-shrink-0">
+                      <button 
+                        class="edit-initiative-btn px-3 py-1.5 text-xs font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
+                        data-id={entry.id}
+                      >
+                        Edit
+                      </button>
+                      <button 
+                        class="delete-initiative-btn px-3 py-1.5 text-xs font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border border-red-600 dark:border-red-400 rounded-lg transition-colors"
+                        data-id={entry.id}
+                        data-name={entry.name}
+                      >
+                        Delete
+                      </button>
                     </div>
                   )}
                 </div>
 
-                <!-- Notes -->
+                <!-- Notes (if present, shown below) -->
                 {canEdit && entry.notes && (
-                  <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4 mb-4 sm:mb-5">
-                    <div class="text-sm text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2 font-medium">Notes</div>
-                    <div class="text-base text-gray-700 dark:text-gray-300">{entry.notes}</div>
-                  </div>
-                )}
-
-                <!-- Actions -->
-                {canEdit && (
-                  <div class="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-700">
-                    <button 
-                      class="edit-initiative-btn flex-1 px-5 py-2.5 text-base font-medium text-primary-600 hover:text-white hover:bg-primary-600 dark:text-primary-400 dark:hover:bg-primary-600 dark:hover:text-white border-2 border-primary-600 dark:border-primary-400 rounded-lg transition-colors"
-                      data-id={entry.id}
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      class="delete-initiative-btn flex-1 px-5 py-2.5 text-base font-medium text-red-600 hover:text-white hover:bg-red-600 dark:text-red-400 dark:hover:bg-red-600 dark:hover:text-white border-2 border-red-600 dark:border-red-400 rounded-lg transition-colors"
-                      data-id={entry.id}
-                      data-name={entry.name}
-                    >
-                      Delete
-                    </button>
+                  <div class="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Notes</div>
+                    <div class="text-sm text-gray-700 dark:text-gray-300">{entry.notes}</div>
                   </div>
                 )}
               </div>
