@@ -435,12 +435,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     function initializeInitiativeTracker() {
       // Prevent multiple initializations
       if (initialized) return;
-      initialized = true;
       
       const container = document.querySelector('[data-can-edit]');
       const canEdit = container?.getAttribute('data-can-edit') === 'true';
       
-      if (!canEdit) return;
+      if (!canEdit) {
+        // Set initialized flag even for non-edit users to prevent re-running polling setup
+        initialized = true;
+        return;
+      }
+      
+      // Only set initialized after we've confirmed canEdit is true
+      initialized = true;
       const modal = document.getElementById('initiativeModal');
       const form = document.getElementById('initiativeForm');
       const modalTitle = document.getElementById('modalTitle');
@@ -741,8 +747,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       }
     }
     
-    // Non-edit users also need polling
-    if (!canEdit) {
+    // Setup polling for non-edit users
+    let pollingInitialized = false;
+    
+    function setupPollingForPlayers() {
+      if (pollingInitialized) return;
+      
+      const container = document.querySelector('[data-can-edit]');
+      const canEdit = container?.getAttribute('data-can-edit') === 'true';
+      
+      if (canEdit) return; // Only run for non-edit users
+      
+      pollingInitialized = true;
+      
       const pollCombatState = async () => {
         try {
           const response = await fetch('/api/combat-state');
@@ -789,14 +806,21 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     }
 
     // Run on initial page load
-    document.addEventListener('DOMContentLoaded', initializeInitiativeTracker);
+    document.addEventListener('DOMContentLoaded', () => {
+      initializeInitiativeTracker();
+      setupPollingForPlayers();
+    });
     
     // Run after Astro view transitions
-    document.addEventListener('astro:page-load', initializeInitiativeTracker);
+    document.addEventListener('astro:page-load', () => {
+      initializeInitiativeTracker();
+      setupPollingForPlayers();
+    });
     
     // If already loaded (hot reload), run immediately
     if (document.readyState === 'complete' || document.readyState === 'interactive') {
       initializeInitiativeTracker();
+      setupPollingForPlayers();
     }
   </script>
 </Layout>
