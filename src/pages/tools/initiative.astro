@@ -26,6 +26,22 @@ const sortedInitiatives = initiatives.sort((a, b) => {
 // Fetch active characters for dropdown
 const activeCharacters = await db.select().from(Character).where(eq(Character.isActive, true));
 
+// Get combat state (round and turn tracking)
+const { CombatState } = await import('astro:db');
+const COMBAT_STATE_ID = 'current-combat';
+let combatState = await db.select().from(CombatState).where(eq(CombatState.id, COMBAT_STATE_ID)).get();
+
+// Create default state if it doesn't exist
+if (!combatState) {
+  await db.insert(CombatState).values({
+    id: COMBAT_STATE_ID,
+    currentRound: 1,
+    currentTurnIndex: 0,
+    updatedAt: new Date(),
+  });
+  combatState = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, updatedAt: new Date() };
+}
+
 // Type badge colors
 const getTypeBadgeColor = (type: string) => {
   switch (type) {
@@ -57,7 +73,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     <div class="mb-8">
       <div class="flex justify-between items-center">
         <div>
-          <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+          <div class="flex items-center gap-4">
+            <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
+            {sortedInitiatives.length > 0 && (
+              <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-4 py-2 rounded-lg">
+                <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Round:</span>
+                <span id="currentRoundDisplay" class="text-2xl font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
+              </div>
+            )}
+          </div>
           <p class="text-gray-600 dark:text-gray-400 mt-2">Track combat initiative order</p>
         </div>
         <div class="flex gap-3 items-center">
@@ -114,12 +138,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 HP
               </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                AC
-              </th>
-              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Notes
-              </th>
+              {canEdit && (
+                <>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    AC
+                  </th>
+                  <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Notes
+                  </th>
+                </>
+              )}
               {canEdit && (
                 <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                   Actions
@@ -128,17 +156,27 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-200 dark:divide-gray-800">
-            {sortedInitiatives.map((entry, index) => (
+            {sortedInitiatives.map((entry, index) => {
+              const activeEntries = sortedInitiatives.filter(e => e.isActive);
+              const activeIndex = activeEntries.findIndex(e => e.id === entry.id);
+              const isCurrentTurn = entry.isActive && activeIndex === combatState.currentTurnIndex;
+              
+              return (
               <tr class="hover:bg-gray-50 dark:hover:bg-gray-900 transition initiative-row" 
                   data-index={index}
+                  data-active-index={activeIndex}
                   data-is-active={entry.isActive}
-                  class:list={[{ 'opacity-50': !entry.isActive }]}>
+                  data-entry-id={entry.id}
+                  class:list={[
+                    { 'opacity-50': !entry.isActive },
+                    { 'bg-yellow-50 dark:bg-yellow-900/20 border-l-4 border-yellow-500': isCurrentTurn }
+                  ]}>
                 <td class="px-6 py-4 whitespace-nowrap">
                   <div class="flex items-center gap-2">
                     <span class="text-2xl font-bold text-primary-600 dark:text-primary-400">
                       {entry.initiative}
                     </span>
-                    {index === 0 && entry.isActive && (
+                    {isCurrentTurn && (
                       <span class="turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold">
                         TURN
                       </span>
@@ -177,16 +215,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     })()
                   )}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                  {canEdit ? (
-                    entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>
-                  ) : (
-                    <span class="text-gray-400">-</span>
-                  )}
-                </td>
-                <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                  {canEdit ? (entry.notes || '-') : '-'}
-                </td>
+                {canEdit && (
+                  <>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {entry.ac !== null ? entry.ac : <span class="text-gray-400">-</span>}
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
+                      {entry.notes || '-'}
+                    </td>
+                  </>
+                )}
                 {canEdit && (
                   <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button 
@@ -205,7 +243,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   </td>
                 )}
               </tr>
-            ))}
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -593,23 +632,29 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       });
 
-      // Next/Prev turn functionality
+      // Next/Prev turn functionality with server sync
       const nextTurnBtn = document.getElementById('nextTurnBtn');
       const prevTurnBtn = document.getElementById('prevTurnBtn');
       
       if (nextTurnBtn && prevTurnBtn) {
-        const updateTurnIndicator = (newIndex) => {
+        const updateTurnIndicator = (newIndex, newRound) => {
           // Remove all turn indicators and highlights
           document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
           document.querySelectorAll('.initiative-row').forEach(row => {
             row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
           });
           
+          // Update round display
+          const roundDisplay = document.getElementById('currentRoundDisplay');
+          if (roundDisplay) {
+            roundDisplay.textContent = newRound;
+          }
+          
           // Find the active row at the new index
           const rows = Array.from(document.querySelectorAll('.initiative-row'));
           const activeRows = rows.filter(row => row.getAttribute('data-is-active') === 'true');
           
-          if (activeRows.length > 0) {
+          if (activeRows.length > 0 && newIndex >= 0 && newIndex < activeRows.length) {
             const targetRow = activeRows[newIndex];
             if (targetRow) {
               // Add highlight
@@ -630,22 +675,117 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           }
         };
         
-        let currentTurnIndex = 0;
+        const saveState = async (round, turnIndex) => {
+          try {
+            await fetch('/api/combat-state', {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ currentRound: round, currentTurnIndex: turnIndex }),
+            });
+          } catch (error) {
+            console.error('Error saving combat state:', error);
+          }
+        };
+        
         const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
           row => row.getAttribute('data-is-active') === 'true'
         );
         const maxIndex = activeRows.length - 1;
         
-        nextTurnBtn.addEventListener('click', () => {
-          currentTurnIndex = (currentTurnIndex + 1) % (maxIndex + 1);
-          updateTurnIndicator(currentTurnIndex);
+        let currentRound = parseInt(document.getElementById('currentRoundDisplay')?.textContent || '1');
+        let currentTurnIndex = parseInt(activeRows[0]?.getAttribute('data-active-index') || '0');
+        
+        // Find current turn from server state
+        const currentTurnRow = document.querySelector('.initiative-row.bg-yellow-50');
+        if (currentTurnRow) {
+          const idx = parseInt(currentTurnRow.getAttribute('data-active-index') || '0');
+          if (!isNaN(idx)) currentTurnIndex = idx;
+        }
+        
+        nextTurnBtn.addEventListener('click', async () => {
+          currentTurnIndex++;
+          if (currentTurnIndex > maxIndex) {
+            currentTurnIndex = 0;
+            currentRound++;
+          }
+          updateTurnIndicator(currentTurnIndex, currentRound);
+          await saveState(currentRound, currentTurnIndex);
         });
         
-        prevTurnBtn.addEventListener('click', () => {
-          currentTurnIndex = (currentTurnIndex - 1 + (maxIndex + 1)) % (maxIndex + 1);
-          updateTurnIndicator(currentTurnIndex);
+        prevTurnBtn.addEventListener('click', async () => {
+          currentTurnIndex--;
+          if (currentTurnIndex < 0) {
+            currentTurnIndex = maxIndex;
+            if (currentRound > 1) currentRound--;
+          }
+          updateTurnIndicator(currentTurnIndex, currentRound);
+          await saveState(currentRound, currentTurnIndex);
         });
+        
+        // Poll for combat state updates every 2 seconds
+        setInterval(async () => {
+          try {
+            const response = await fetch('/api/combat-state');
+            if (response.ok) {
+              const state = await response.json();
+              if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
+                currentRound = state.currentRound;
+                currentTurnIndex = state.currentTurnIndex;
+                updateTurnIndicator(currentTurnIndex, currentRound);
+              }
+            }
+          } catch (error) {
+            console.error('Error polling combat state:', error);
+          }
+        }, 2000);
       }
+    }
+    
+    // Non-edit users also need polling
+    if (!canEdit) {
+      const pollCombatState = async () => {
+        try {
+          const response = await fetch('/api/combat-state');
+          if (response.ok) {
+            const state = await response.json();
+            
+            // Update round display
+            const roundDisplay = document.getElementById('currentRoundDisplay');
+            if (roundDisplay) {
+              roundDisplay.textContent = state.currentRound;
+            }
+            
+            // Update turn indicator
+            document.querySelectorAll('.turn-indicator').forEach(el => el.remove());
+            document.querySelectorAll('.initiative-row').forEach(row => {
+              row.classList.remove('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+            });
+            
+            const activeRows = Array.from(document.querySelectorAll('.initiative-row')).filter(
+              row => row.getAttribute('data-is-active') === 'true'
+            );
+            
+            if (activeRows.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeRows.length) {
+              const targetRow = activeRows[state.currentTurnIndex];
+              if (targetRow) {
+                targetRow.classList.add('bg-yellow-50', 'dark:bg-yellow-900/20', 'border-l-4', 'border-yellow-500');
+                const initiativeCell = targetRow.querySelector('td:first-child > div');
+                if (initiativeCell && !initiativeCell.querySelector('.turn-indicator')) {
+                  const badge = document.createElement('span');
+                  badge.className = 'turn-indicator text-xs bg-yellow-500 text-white px-2 py-1 rounded-full font-semibold';
+                  badge.textContent = 'TURN';
+                  initiativeCell.appendChild(badge);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error polling combat state:', error);
+        }
+      };
+      
+      // Poll every 2 seconds
+      setInterval(pollCombatState, 2000);
     }
 
     // Run on initial page load

@@ -164,6 +164,15 @@ const InitiativeTracker = defineTable({
   }
 });
 
+const CombatState = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    currentRound: column.number({ default: 1 }),
+    currentTurnIndex: column.number({ default: 0 }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -177,5 +186,6 @@ export default defineDb({
     Faction,
     PageSettings,
     InitiativeTracker,
+    CombatState,
   }
 });
