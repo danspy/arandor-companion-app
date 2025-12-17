@@ -477,13 +477,17 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     }
     
     .dark .initiative-row.turn-active {
-      background-color: rgba(234, 179, 8, 0.2) !important;
+      background-color: rgba(234, 179, 8, 0.15) !important;
+      border-left-color: #eab308 !important;
     }
   </style>
 
   <script>
-    // Store handler reference globally so we can properly remove it
+    // Store handler references globally so we can properly remove them
     let formSubmitHandler = null;
+    let nextTurnHandler = null;
+    let prevTurnHandler = null;
+    let combatStateInterval = null;
     
     function initializeInitiativeTracker() {
       const container = document.querySelector('[data-can-edit]');
@@ -818,16 +822,30 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         const maxIndex = activeRows.length - 1;
         
         let currentRound = parseInt(document.getElementById('currentRoundDisplay')?.textContent || '1');
-        let currentTurnIndex = parseInt(activeRows[0]?.getAttribute('data-active-index') || '0');
+        let currentTurnIndex = 0;
         
-        // Find current turn from server state
-        const currentTurnRow = document.querySelector('.initiative-row.bg-yellow-50');
+        // Find current turn from server state by looking for turn-active class
+        const currentTurnRow = document.querySelector('.initiative-row.turn-active');
         if (currentTurnRow) {
           const idx = parseInt(currentTurnRow.getAttribute('data-active-index') || '0');
-          if (!isNaN(idx)) currentTurnIndex = idx;
+          if (!isNaN(idx)) {
+            currentTurnIndex = idx;
+          }
+        } else {
+          // Fallback: get from first active row
+          currentTurnIndex = parseInt(activeRows[0]?.getAttribute('data-active-index') || '0');
         }
         
-        nextTurnBtn.addEventListener('click', async () => {
+        // Remove old handlers if they exist
+        if (nextTurnHandler) {
+          nextTurnBtn.removeEventListener('click', nextTurnHandler);
+        }
+        if (prevTurnHandler) {
+          prevTurnBtn.removeEventListener('click', prevTurnHandler);
+        }
+        
+        // Create new handlers
+        nextTurnHandler = async () => {
           currentTurnIndex++;
           if (currentTurnIndex > maxIndex) {
             currentTurnIndex = 0;
@@ -835,9 +853,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           }
           updateTurnIndicator(currentTurnIndex, currentRound);
           await saveState(currentRound, currentTurnIndex);
-        });
+        };
         
-        prevTurnBtn.addEventListener('click', async () => {
+        prevTurnHandler = async () => {
           currentTurnIndex--;
           if (currentTurnIndex < 0) {
             currentTurnIndex = maxIndex;
@@ -845,10 +863,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           }
           updateTurnIndicator(currentTurnIndex, currentRound);
           await saveState(currentRound, currentTurnIndex);
-        });
+        };
+        
+        // Attach new handlers
+        nextTurnBtn.addEventListener('click', nextTurnHandler);
+        prevTurnBtn.addEventListener('click', prevTurnHandler);
+        
+        // Clear old polling interval if it exists
+        if (combatStateInterval) {
+          clearInterval(combatStateInterval);
+        }
         
         // Poll for combat state updates every 2 seconds
-        setInterval(async () => {
+        combatStateInterval = setInterval(async () => {
           try {
             const response = await fetch('/api/combat-state');
             if (response.ok) {
@@ -931,6 +958,24 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (formSubmitHandler && form) {
         form.removeEventListener('submit', formSubmitHandler);
         formSubmitHandler = null;
+      }
+      
+      // Remove turn navigation handlers
+      const nextTurnBtn = document.getElementById('nextTurnBtn');
+      const prevTurnBtn = document.getElementById('prevTurnBtn');
+      if (nextTurnHandler && nextTurnBtn) {
+        nextTurnBtn.removeEventListener('click', nextTurnHandler);
+        nextTurnHandler = null;
+      }
+      if (prevTurnHandler && prevTurnBtn) {
+        prevTurnBtn.removeEventListener('click', prevTurnHandler);
+        prevTurnHandler = null;
+      }
+      
+      // Clear polling interval
+      if (combatStateInterval) {
+        clearInterval(combatStateInterval);
+        combatStateInterval = null;
       }
     });
     
