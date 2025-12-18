@@ -1,6 +1,8 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
 import { isAuthenticated, getUserRole } from '../lib/auth';
+import { db, PageSettings, eq } from 'astro:db';
 
 // Tools page is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -11,18 +13,27 @@ if (!isLoggedIn) {
 }
 
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'tools'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
 <Layout title="Tools">
-  <div class="container mx-auto px-4 py-8">
-    <div class="mb-8">
-      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Tools</h1>
-      <p class="text-gray-600 dark:text-gray-400 mt-2">Game master utilities and player tools</p>
-    </div>
+  <PageHero 
+    title="Tools" 
+    heroImageUrl={heroImageUrl}
+    pageName="tools"
+    canEditHero={canEdit}
+  />
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      <!-- Initiative Tracker Card -->
-      <a 
+  <div class="mb-8">
+    <p class="text-gray-600 dark:text-gray-400">Game master utilities and player tools</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Initiative Tracker Card -->
+    <a 
         href="/tools/initiative"
         class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
       >
@@ -44,8 +55,8 @@ const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
         </div>
       </a>
 
-      <!-- Placeholder for future tools -->
-      <div class="bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md dark:border dark:border-gray-800 p-6 opacity-50">
+    <!-- Placeholder for future tools -->
+    <div class="bg-gray-100 dark:bg-gray-900 rounded-lg shadow-md dark:border dark:border-gray-800 p-6 opacity-50">
         <div class="flex items-start gap-4">
           <div class="p-3 bg-gray-200 dark:bg-gray-800 rounded-lg">
             <svg class="w-6 h-6 text-gray-500 dark:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,7 +72,6 @@ const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
             </p>
           </div>
         </div>
-      </div>
     </div>
   </div>
 </Layout>
