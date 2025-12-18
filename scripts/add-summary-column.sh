@@ -6,6 +6,11 @@
 # Usage:
 #   chmod +x scripts/add-summary-column.sh
 #   ./scripts/add-summary-column.sh
+#
+# Note: Uses ASTRO_DATABASE_FILE environment variable if set,
+#       otherwise defaults to /srv/arandor/data/content.db
+#       Set ASTRO_DATABASE_FILE before running if your database is elsewhere:
+#       ASTRO_DATABASE_FILE=/path/to/your/db.db ./scripts/add-summary-column.sh
 
 set -e
 

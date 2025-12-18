@@ -483,9 +483,14 @@ const renderedContent = renderMarkdown(entry.content);
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Update the summary display
+        // Update the summary display (using textContent to prevent XSS)
         if (summaryContent) {
-          summaryContent.innerHTML = `<p>${data.summary}</p>`;
+          // Clear existing content
+          summaryContent.innerHTML = '';
+          // Create a new paragraph element and set text safely
+          const p = document.createElement('p');
+          p.textContent = data.summary;
+          summaryContent.appendChild(p);
         }
         
         // Show success message

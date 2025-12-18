@@ -24,9 +24,11 @@ export async function generateDiarySummary(
   title: string,
   content: string
 ): Promise<SummaryResult> {
-  const apiKey = import.meta.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY;
-  const apiBase = import.meta.env.OPENAI_API_BASE || process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
-  const model = import.meta.env.OPENAI_MODEL || process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+  // Use process.env for server-side API routes (import.meta.env is for build-time only)
+  const apiKey = process.env.OPENAI_API_KEY;
+  const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
+  const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+  const maxTokens = parseInt(process.env.OPENAI_MAX_TOKENS || '150', 10);
 
   // Check if API key is configured
   if (!apiKey) {
@@ -69,7 +71,7 @@ export async function generateDiarySummary(
           },
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: maxTokens,
       }),
     });
 
