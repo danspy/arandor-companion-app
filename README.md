@@ -10,6 +10,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Adventure Diary** - Document your campaign sessions with:
   - Markdown formatting support
   - Cover image uploads
+  - AI-powered summaries (optional, requires OpenAI API key or compatible service)
   - Podcast version with text-to-speech (on-demand, no files stored)
   - Tags for organization
   - Session numbers
