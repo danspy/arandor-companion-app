@@ -3,6 +3,7 @@ export interface DiaryEntry {
   date: string;
   title: string;
   content: string;
+  summary?: string;
   session: number;
   tags: string[];
   coverImageUrl?: string;

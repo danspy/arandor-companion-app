@@ -38,6 +38,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         date: body.date,
         title: body.title,
         content: body.content,
+        summary: body.summary || null,
         session: body.session,
         tags: body.tags,
         coverImageUrl: body.coverImageUrl || null,
