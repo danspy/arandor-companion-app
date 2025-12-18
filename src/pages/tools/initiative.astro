@@ -1,7 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
-import { db, InitiativeTracker, Character, eq } from 'astro:db';
+import { db, InitiativeTracker, Character, PageSettings, eq } from 'astro:db';
 
 // Initiative tracker is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -27,6 +28,10 @@ const sortedInitiatives = initiatives.sort((a, b) => {
 const activeCharacters = await db.select().from(Character).where(eq(Character.isActive, true));
 const { NPC } = await import('astro:db');
 const activeNPCs = await db.select().from(NPC);
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'initiative'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 
 // Get combat state (round and turn tracking)
 const { CombatState } = await import('astro:db');
@@ -72,13 +77,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 ---
 
 <Layout title="Initiative Tracker">
-  <div class="container mx-auto px-3 py-4 sm:px-4 sm:py-8" data-can-edit={canEdit}>
+  <PageHero 
+    title="Initiative Tracker" 
+    heroImageUrl={heroImageUrl}
+    pageName="initiative"
+    canEditHero={canEdit}
+  />
+
+  <div data-can-edit={canEdit}>
     <div class="mb-4 sm:mb-6">
-      <!-- Mobile: Title, Round, then Buttons below -->
-      <!-- Desktop: Title with buttons on the right (consistent with app layout) -->
+      <!-- Mobile: Round info and buttons -->
+      <!-- Desktop: Round info with buttons on the right (consistent with app layout) -->
       <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
-          <h1 class="text-xl sm:text-3xl font-bold text-primary-700 dark:text-primary-400">Initiative Tracker</h1>
           {sortedInitiatives.length > 0 && (
             <div class="flex items-center gap-1.5 sm:gap-2 bg-primary-100 dark:bg-primary-900 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg w-fit">
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
