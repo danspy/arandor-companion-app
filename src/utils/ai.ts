@@ -15,6 +15,49 @@ export interface SummaryResult {
 }
 
 /**
+ * Detect the primary language of the text
+ * @param text - The text to analyze
+ * @returns Language code ('de' for German, 'en' for English). Defaults to 'en' if unclear.
+ */
+function detectLanguage(text: string): string {
+  const cleanText = text.toLowerCase();
+  
+  // Common German words and patterns
+  const germanIndicators = [
+    'und', 'der', 'die', 'das', 'ist', 'ein', 'eine', 'nicht', 'mit', 'auf',
+    'von', 'zu', 'für', 'den', 'dem', 'des', 'sich', 'bei', 'auch', 'nach',
+    'wird', 'als', 'noch', 'über', 'wenn', 'durch', 'können', 'während'
+  ];
+  
+  // Common English words and patterns
+  const englishIndicators = [
+    'the', 'and', 'was', 'that', 'with', 'they', 'were', 'have', 'this',
+    'from', 'but', 'what', 'there', 'been', 'more', 'when', 'who', 'will',
+    'would', 'about', 'into', 'through', 'during', 'their', 'which'
+  ];
+  
+  let germanScore = 0;
+  let englishScore = 0;
+  
+  // Count occurrences of language-specific words
+  germanIndicators.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = cleanText.match(regex);
+    if (matches) germanScore += matches.length;
+  });
+  
+  englishIndicators.forEach(word => {
+    const regex = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = cleanText.match(regex);
+    if (matches) englishScore += matches.length;
+  });
+  
+  // Return language based on score (prefer German if clearly German, otherwise English)
+  // This handles the user's case where they want German for production content
+  return germanScore > englishScore ? 'de' : 'en';
+}
+
+/**
  * Generate a concise summary of a diary entry
  * @param title - The title of the diary entry
  * @param content - The full content of the diary entry (markdown)
@@ -50,6 +93,10 @@ export async function generateDiarySummary(
     .replace(/---+/g, '') // Remove horizontal rules
     .replace(/>\s+/g, '') // Remove blockquotes
     .trim();
+  
+  // Detect the language of the content
+  const detectedLang = detectLanguage(`${title} ${cleanContent}`);
+  const languageName = detectedLang === 'de' ? 'German' : 'English';
 
   try {
     const response = await fetch(`${apiBase}/chat/completions`, {
@@ -63,11 +110,11 @@ export async function generateDiarySummary(
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that creates concise summaries of D&D session diary entries. Your summaries should be 2-3 sentences long, capturing the key events, characters met, locations visited, and any major plot developments. Write in an engaging narrative style.',
+            content: `You are a helpful assistant that creates concise summaries of D&D session diary entries. Your summaries should be 2-3 sentences long, capturing the key events, characters met, locations visited, and any major plot developments. Write in an engaging narrative style. CRITICAL: You must write your response ONLY in ${languageName}. Do not include any prefixes like "Summary:" or "Zusammenfassung:" - just write the summary text directly.`,
           },
           {
             role: 'user',
-            content: `Please create a concise 2-3 sentence summary of this D&D session diary entry:\n\nTitle: ${title}\n\nContent:\n${cleanContent}`,
+            content: `Create a 2-3 sentence summary in ${languageName} for this D&D session. Write only the summary text without any labels or prefixes:\n\nTitle: ${title}\n\nContent:\n${cleanContent}`,
           },
         ],
         temperature: 0.7,
@@ -84,13 +131,31 @@ export async function generateDiarySummary(
     }
 
     const data = await response.json();
-    const summary = data.choices?.[0]?.message?.content?.trim();
+    let summary = data.choices?.[0]?.message?.content?.trim();
 
     if (!summary) {
       return {
         success: false,
         error: 'No summary generated from API response',
       };
+    }
+
+    // Remove common prefixes that AI might add despite instructions
+    const prefixPatterns = [
+      /^Summary:\s*/i,
+      /^Zusammenfassung:\s*/i,
+      /^Here is (?:a|the) summary:\s*/i,
+      /^Hier ist (?:eine|die) Zusammenfassung:\s*/i,
+    ];
+    
+    for (const pattern of prefixPatterns) {
+      summary = summary.replace(pattern, '');
+    }
+    
+    // Clean up and ensure it starts with capital letter
+    summary = summary.trim();
+    if (summary.length > 0) {
+      summary = summary.charAt(0).toUpperCase() + summary.slice(1);
     }
 
     return {
