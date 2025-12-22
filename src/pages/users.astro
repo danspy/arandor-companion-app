@@ -68,9 +68,9 @@ const users = await db.select({
                 {new Date(user.createdAt).toLocaleString()}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm">
-                <div class="flex gap-3 items-center">
+                <div class="flex gap-2 items-center">
                   <button 
-                    class="edit-user-btn text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition"
+                    class="edit-user-btn p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
                     data-user-id={user.id}
                     data-username={user.username}
                     data-user-role={user.role || 'player'}
@@ -83,7 +83,7 @@ const users = await db.select({
                   </button>
                   {user.username !== 'admin' && (
                     <button 
-                      class="delete-user-btn text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition"
+                      class="delete-user-btn p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
                       data-user-id={user.id}
                       data-username={user.username}
                       title="Delete user"
