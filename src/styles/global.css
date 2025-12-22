@@ -14,6 +14,22 @@ body {
   padding-top: var(--safe-top);
 }
 
+/* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
+@media (display-mode: standalone) and (max-width: 1024px) {
+  .pwa-hide-nav {
+    display: none !important;
+  }
+  
+  .pwa-hide-footer {
+    display: none !important;
+  }
+  
+  /* Adjust main content padding when nav is hidden */
+  main {
+    padding-top: max(env(safe-area-inset-top), 1rem);
+  }
+}
+
 /* PWA Status Bar Gradient Overlay */
 .pwa-status-bar-gradient {
   position: fixed;
