@@ -6,6 +6,7 @@ const DiaryEntry = defineTable({
     date: column.text(),
     title: column.text(),
     content: column.text(),
+    summary: column.text({ optional: true }),
     session: column.number(),
     tags: column.json(),
     coverImageUrl: column.text({ optional: true }),

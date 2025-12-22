@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest, eq, inArray } from 'astro:db';
-import { isAuthenticated } from '../../lib/auth';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
 import { getVideoMimeType } from '../../utils/video';
 
@@ -19,6 +19,8 @@ if (!entry) {
 }
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canGenerateSummary = userRole === 'dungeonmaster' || userRole === 'admin';
 
 // Get all diary entries to find previous and next sessions
 // Note: For typical D&D campaigns (10-100 sessions), fetching all entries is acceptable.
@@ -141,6 +143,41 @@ const renderedContent = renderMarkdown(entry.content);
               #{tag}
             </span>
           ))}
+        </div>
+      )}
+
+      <!-- AI Summary -->
+      {(entry.summary || canGenerateSummary) && (
+        <div id="summarySection" class="mb-6 border-l-4 border-secondary-500 bg-secondary-50 dark:bg-secondary-900/10 dark:border-secondary-600 p-4 rounded-r-lg">
+          <div class="flex items-start justify-between gap-4">
+            <div class="flex-1">
+              <h3 class="text-sm font-semibold text-secondary-700 dark:text-secondary-400 mb-2 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                </svg>
+                AI Summary
+              </h3>
+              <div id="summaryContent" class="text-gray-700 dark:text-gray-300">
+                {entry.summary ? (
+                  <p>{entry.summary}</p>
+                ) : (
+                  <p class="text-gray-500 dark:text-gray-500 italic">No summary yet</p>
+                )}
+              </div>
+            </div>
+            {canGenerateSummary && (
+              <button
+                id="generateSummaryBtn"
+                class="flex-shrink-0 bg-secondary-600 text-white px-3 py-1.5 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition text-sm font-medium flex items-center gap-2"
+                title="Generate AI summary"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span id="generateSummaryBtnText">Generate</span>
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -390,6 +427,9 @@ const renderedContent = renderMarkdown(entry.content);
   function initializeDetailPage() {
     const deleteBtn = document.getElementById('deleteEntry');
     const editBtn = document.getElementById('editEntry');
+    const generateSummaryBtn = document.getElementById('generateSummaryBtn');
+    const summaryContent = document.getElementById('summaryContent');
+    const summaryBtnText = document.getElementById('generateSummaryBtnText');
     
     // Handle edit button click
     editBtn?.addEventListener('click', () => {
@@ -418,6 +458,70 @@ const renderedContent = renderMarkdown(entry.content);
       } catch (error) {
         console.error('Delete error:', error);
         alert('An error occurred while deleting the entry. Please check your connection and try again.');
+      }
+    }
+  });
+
+  // Handle generate summary button click
+  generateSummaryBtn?.addEventListener('click', async () => {
+    // Get entry ID from URL
+    const pathParts = window.location.pathname.split('/');
+    const entryId = pathParts[pathParts.length - 1];
+
+    if (!entryId) {
+      alert('Unable to determine entry ID');
+      return;
+    }
+
+    // Show loading state
+    if (generateSummaryBtn && summaryBtnText) {
+      generateSummaryBtn.disabled = true;
+      summaryBtnText.textContent = 'Generating...';
+    }
+
+    try {
+      const response = await fetch(`/api/diary/${entryId}/summary`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Update the summary display (using textContent to prevent XSS)
+        if (summaryContent) {
+          // Clear existing content
+          summaryContent.innerHTML = '';
+          // Create a new paragraph element and set text safely
+          const p = document.createElement('p');
+          p.textContent = data.summary;
+          summaryContent.appendChild(p);
+        }
+        
+        // Show success message
+        if (summaryBtnText) {
+          summaryBtnText.textContent = 'Regenerate';
+        }
+      } else {
+        // Show error
+        alert(`Failed to generate summary: ${data.error || 'Unknown error'}`);
+        
+        // Reset button
+        if (summaryBtnText) {
+          summaryBtnText.textContent = 'Generate';
+        }
+      }
+    } catch (error) {
+      console.error('Error generating summary:', error);
+      alert('Failed to generate summary. Please check your connection and try again.');
+      
+      // Reset button
+      if (summaryBtnText) {
+        summaryBtnText.textContent = 'Generate';
+      }
+    } finally {
+      // Re-enable button
+      if (generateSummaryBtn) {
+        generateSummaryBtn.disabled = false;
       }
     }
   });

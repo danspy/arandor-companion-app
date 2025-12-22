@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS "DiaryEntry" (
   "date" text NOT NULL,
   "title" text NOT NULL,
   "content" text NOT NULL,
+  "summary" text,
   "session" integer NOT NULL,
   "tags" text NOT NULL DEFAULT '[]',
   "coverImageUrl" text,
