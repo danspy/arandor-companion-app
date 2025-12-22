@@ -177,39 +177,81 @@ export async function generateDiarySummary(
 }
 
 /**
- * Sanitize text for use in image prompts to reduce safety system rejections
- * @param text - The text to sanitize
- * @returns Sanitized text
+ * Extract safe themes and elements from D&D diary content
+ * @param text - The text to analyze
+ * @returns A list of safe, artistic themes
  */
-function sanitizeForImagePrompt(text: string): string {
-  // Remove potentially problematic content while preserving the essence
-  let sanitized = text
-    // Remove explicit violence or graphic descriptions
-    .replace(/\b(kill|murder|death|dead|dying|blood|gore|torture|weapon)\b/gi, 'encounter')
-    .replace(/\b(attack|fight|battle|combat)\b/gi, 'challenge')
-    // Keep fantasy-appropriate terms general
-    .replace(/\b(sword|axe|dagger|blade)\b/gi, 'equipment')
-    // Remove any potentially problematic character descriptions
-    .replace(/\b(naked|nude|undressed)\b/gi, 'unarmored');
+function extractSafeThemes(text: string): string[] {
+  const themes: string[] = [];
+  const lowerText = text.toLowerCase();
   
-  // Trim to reasonable length
-  return sanitized.substring(0, 800).trim();
+  // Location themes (safe)
+  if (lowerText.match(/\b(forest|wood|tree|grove)\b/)) themes.push('forest setting');
+  if (lowerText.match(/\b(mountain|peak|cliff|cave)\b/)) themes.push('mountain landscape');
+  if (lowerText.match(/\b(tavern|inn|bar)\b/)) themes.push('tavern interior');
+  if (lowerText.match(/\b(castle|fortress|tower|palace)\b/)) themes.push('castle architecture');
+  if (lowerText.match(/\b(dungeon|underground|crypt)\b/)) themes.push('underground chamber');
+  if (lowerText.match(/\b(city|town|village|street)\b/)) themes.push('medieval town');
+  if (lowerText.match(/\b(temple|shrine|church)\b/)) themes.push('temple setting');
+  if (lowerText.match(/\b(ruin|ancient|old)\b/)) themes.push('ancient ruins');
+  if (lowerText.match(/\b(ship|boat|sea|ocean|port)\b/)) themes.push('nautical scene');
+  if (lowerText.match(/\b(desert|sand|dune)\b/)) themes.push('desert landscape');
+  
+  // Atmosphere themes (safe)
+  if (lowerText.match(/\b(night|dark|shadow|moonlight)\b/)) themes.push('nighttime atmosphere');
+  if (lowerText.match(/\b(magic|spell|arcane|mystical)\b/)) themes.push('magical elements');
+  if (lowerText.match(/\b(fog|mist|cloudy)\b/)) themes.push('misty atmosphere');
+  if (lowerText.match(/\b(fire|flame|torch|candle)\b/)) themes.push('dramatic lighting');
+  
+  // Character themes (abstract, safe)
+  if (lowerText.match(/\b(wizard|mage|sorcerer)\b/)) themes.push('spellcaster character');
+  if (lowerText.match(/\b(warrior|fighter|knight)\b/)) themes.push('armored warrior');
+  if (lowerText.match(/\b(rogue|thief|scout)\b/)) themes.push('stealthy figure');
+  if (lowerText.match(/\b(cleric|priest|healer)\b/)) themes.push('holy character');
+  if (lowerText.match(/\b(ranger|hunter)\b/)) themes.push('wilderness explorer');
+  if (lowerText.match(/\b(bard|musician)\b/)) themes.push('traveling performer');
+  
+  // General adventure themes (safe)
+  if (lowerText.match(/\b(journey|travel|road|path)\b/)) themes.push('journey scene');
+  if (lowerText.match(/\b(treasure|gold|artifact|item)\b/)) themes.push('treasure discovery');
+  if (lowerText.match(/\b(map|scroll|book)\b/)) themes.push('ancient artifacts');
+  if (lowerText.match(/\b(meeting|council|gather)\b/)) themes.push('group gathering');
+  
+  return themes;
 }
 
 /**
- * Create a safe image prompt optimized for fantasy D&D content
+ * Create a safe, abstract image prompt optimized for fantasy D&D content
+ * This function creates prompts that focus on artistic style and safe themes
+ * rather than potentially problematic content details
  * @param title - The title of the diary entry
  * @param contextText - Summary or content excerpt
- * @param detectedLang - Language code
  * @returns A sanitized prompt string
  */
-function createSafeImagePrompt(title: string, contextText: string, detectedLang: string): string {
-  const sanitizedContext = sanitizeForImagePrompt(contextText);
-  const sanitizedTitle = sanitizeForImagePrompt(title);
+function createSafeImagePrompt(title: string, contextText: string): string {
+  // Extract safe themes from the content
+  const themes = extractSafeThemes(`${title} ${contextText}`);
   
-  // Create a more descriptive, artistic prompt that's less likely to trigger safety filters
-  // IMPORTANT: Explicitly instruct NO TEXT in the image
-  return `A fantasy RPG illustration in the style of tabletop game artwork. Scene: ${sanitizedTitle}. The image should depict a heroic fantasy setting with adventurers in a mystical environment. Artistic style: painted fantasy illustration with dramatic lighting and atmospheric details. Content: ${sanitizedContext}. IMPORTANT: Do not include any text, words, letters, titles, captions, or writing in the image. Pure visual artwork only, no text overlays.`;
+  // Build a safe, artistic prompt
+  let prompt = 'A fantasy tabletop RPG illustration in the style of official D&D artwork. ';
+  
+  if (themes.length > 0) {
+    // Use the extracted themes (max 3 for clarity)
+    const selectedThemes = themes.slice(0, 3).join(', ');
+    prompt += `The scene features: ${selectedThemes}. `;
+  } else {
+    // Fallback to a generic heroic fantasy scene
+    prompt += 'A heroic fantasy adventure scene with adventurers in an epic setting. ';
+  }
+  
+  // Add artistic direction
+  prompt += 'Artistic style: professional fantasy illustration with cinematic composition, dramatic lighting, rich colors, and atmospheric depth. ';
+  prompt += 'The scene should evoke a sense of adventure, mystery, and heroic fantasy. ';
+  
+  // Critical: No text in image
+  prompt += 'IMPORTANT: Do not include any text, words, letters, numbers, titles, captions, labels, or written language anywhere in the image. Pure visual artwork only, no text overlays or inscriptions.';
+  
+  return prompt;
 }
 
 /**
@@ -349,14 +391,14 @@ export async function generateDiaryImage(
     .replace(/>\s+/g, '') // Remove blockquotes
     .trim();
   
-  // Detect the language of the content
+  // Detect the language of the content (keeping for future use)
   const detectedLang = detectLanguage(`${title} ${cleanContent}`);
 
   // Create a prompt for image generation
   // Use summary if available, otherwise use a truncated version of the content
   const contextText = summary || cleanContent.substring(0, 500);
   
-  const imagePrompt = createSafeImagePrompt(title, contextText, detectedLang);
+  const imagePrompt = createSafeImagePrompt(title, contextText);
 
   return attemptImageGeneration(
     apiBase,
@@ -365,6 +407,6 @@ export async function generateDiaryImage(
     imageSize,
     imageQuality,
     imagePrompt,
-    2 // Retry up to 2 times (3 total attempts)
+    2 // Max retries after initial attempt (3 total attempts)
   );
 }
