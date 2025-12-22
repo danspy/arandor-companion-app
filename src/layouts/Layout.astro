@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 import { ClientRouter } from 'astro:transitions';
+import PWAFloatingMenu from '../components/PWAFloatingMenu.astro';
 
 interface Props {
   title: string;
@@ -119,7 +120,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       <div class="loading-spinner"></div>
     </div>
     
-    <nav class="bg-primary text-white shadow-lg dark:bg-black dark:border-b dark:border-gray-900 relative z-50" transition:persist>
+    <nav class="bg-primary text-white shadow-lg dark:bg-black dark:border-b dark:border-gray-900 relative z-50 pwa-hide-nav" transition:persist>
       <div class="container mx-auto px-4 py-4">
         <div class="flex items-center justify-between">
           <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
@@ -293,11 +294,18 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       <slot />
     </main>
     
-    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900" transition:persist>
+    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900 pwa-hide-footer" transition:persist>
       <div class="container mx-auto px-4 text-center">
         <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
       </div>
     </footer>
+    
+    <!-- PWA Floating Menu (only shown in standalone mode) -->
+    <PWAFloatingMenu 
+      currentPath={currentPath}
+      isLoggedIn={isLoggedIn}
+      canAccessUsers={canAccessUsers}
+    />
     
     <script>
       // Function to get theme preference from localStorage
