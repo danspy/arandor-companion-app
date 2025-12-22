@@ -499,22 +499,20 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             </div>
 
             <div class="flex gap-4 mt-6">
-              <Button
-                  type="submit"
-                  variant="primary"
-                  size="sm"
-                  id="saveBtn"
-                >
-                  <span id="saveBtnText">Save</span>
-                </Button>
-              <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  id="cancelBtn"
-                >
-                  Cancel
-                </Button>
+              <button 
+                type="submit" 
+                id="saveBtn"
+                class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+              >
+                <span id="saveBtnText">Save</span>
+              </button>
+              <button 
+                type="button" 
+                id="cancelBtn"
+                class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+              >
+                Cancel
+              </button>
             </div>
           </form>
         </div>
