@@ -445,6 +445,17 @@ const renderedContent = renderMarkdown(entry.content);
     const summaryContent = document.getElementById('summaryContent');
     const summaryBtnText = document.getElementById('generateSummaryBtnText');
     
+    // Helper function to get entry ID from URL
+    function getEntryIdFromUrl() {
+      const pathParts = window.location.pathname.split('/');
+      return pathParts[pathParts.length - 1];
+    }
+
+    // Helper function to show error alert
+    function showError(message) {
+      alert(message);
+    }
+    
     // Handle edit button click
     editBtn?.addEventListener('click', () => {
       const id = editBtn.getAttribute('data-id');
@@ -467,23 +478,21 @@ const renderedContent = renderMarkdown(entry.content);
           window.location.href = '/diary';
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
-          alert(`Failed to delete entry: ${error.error || response.statusText}`);
+          showError(`Failed to delete entry: ${error.error || response.statusText}`);
         }
       } catch (error) {
         console.error('Delete error:', error);
-        alert('An error occurred while deleting the entry. Please check your connection and try again.');
+        showError('An error occurred while deleting the entry. Please check your connection and try again.');
       }
     }
   });
 
   // Handle delete summary button click
   deleteSummaryBtn?.addEventListener('click', async () => {
-    // Get entry ID from URL
-    const pathParts = window.location.pathname.split('/');
-    const entryId = pathParts[pathParts.length - 1];
+    const entryId = getEntryIdFromUrl();
 
     if (!entryId) {
-      alert('Unable to determine entry ID');
+      showError('Unable to determine entry ID');
       return;
     }
 
@@ -518,22 +527,20 @@ const renderedContent = renderMarkdown(entry.content);
           summaryBtnText.textContent = 'Generate';
         }
       } else {
-        alert(`Failed to delete summary: ${data.error || 'Unknown error'}`);
+        showError(`Failed to delete summary: ${data.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Error deleting summary:', error);
-      alert('Failed to delete summary. Please check your connection and try again.');
+      showError('Failed to delete summary. Please check your connection and try again.');
     }
   });
 
   // Handle generate summary button click
   generateSummaryBtn?.addEventListener('click', async () => {
-    // Get entry ID from URL
-    const pathParts = window.location.pathname.split('/');
-    const entryId = pathParts[pathParts.length - 1];
+    const entryId = getEntryIdFromUrl();
 
     if (!entryId) {
-      alert('Unable to determine entry ID');
+      showError('Unable to determine entry ID');
       return;
     }
 
@@ -572,7 +579,7 @@ const renderedContent = renderMarkdown(entry.content);
         }
       } else {
         // Show error
-        alert(`Failed to generate summary: ${data.error || 'Unknown error'}`);
+        showError(`Failed to generate summary: ${data.error || 'Unknown error'}`);
         
         // Reset button
         if (summaryBtnText) {
@@ -581,7 +588,7 @@ const renderedContent = renderMarkdown(entry.content);
       }
     } catch (error) {
       console.error('Error generating summary:', error);
-      alert('Failed to generate summary. Please check your connection and try again.');
+      showError('Failed to generate summary. Please check your connection and try again.');
       
       // Reset button
       if (summaryBtnText) {
