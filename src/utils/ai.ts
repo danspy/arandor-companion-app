@@ -63,11 +63,11 @@ export async function generateDiarySummary(
         messages: [
           {
             role: 'system',
-            content: 'You are a helpful assistant that creates concise summaries of D&D session diary entries. Your summaries should be 2-3 sentences long, capturing the key events, characters met, locations visited, and any major plot developments. Write in an engaging narrative style.',
+            content: 'You are a helpful assistant that creates concise summaries of D&D session diary entries. Your summaries should be 2-3 sentences long, capturing the key events, characters met, locations visited, and any major plot developments. Write in an engaging narrative style. IMPORTANT: Always write the summary in the SAME LANGUAGE as the input text. If the input is in German, write the summary in German. If the input is in English, write the summary in English.',
           },
           {
             role: 'user',
-            content: `Please create a concise 2-3 sentence summary of this D&D session diary entry:\n\nTitle: ${title}\n\nContent:\n${cleanContent}`,
+            content: `Please create a concise 2-3 sentence summary of this D&D session diary entry. Write your summary in the SAME LANGUAGE as the diary entry text below:\n\nTitle: ${title}\n\nContent:\n${cleanContent}`,
           },
         ],
         temperature: 0.7,

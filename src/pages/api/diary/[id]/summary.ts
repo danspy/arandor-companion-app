@@ -73,3 +73,63 @@ export const POST: APIRoute = async ({ params, cookies }) => {
     });
   }
 };
+
+/**
+ * DELETE /api/diary/[id]/summary
+ * Deletes the AI summary from a diary entry
+ * Restricted to dungeonmaster and admin roles only
+ */
+export const DELETE: APIRoute = async ({ params, cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+
+  try {
+    const entryId = params.id;
+    if (!entryId) {
+      return new Response(JSON.stringify({ error: 'Entry ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Fetch the diary entry to check if it exists
+    const entries = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, entryId));
+    const entry = entries[0];
+
+    if (!entry) {
+      return new Response(JSON.stringify({ error: 'Entry not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Delete the summary by setting it to null
+    const now = new Date();
+    await db.update(DiaryEntry)
+      .set({
+        summary: null,
+        updatedAt: now,
+      })
+      .where(eq(DiaryEntry.id, entryId));
+
+    // Fetch and return the updated entry
+    const updatedEntries = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, entryId));
+    
+    return new Response(JSON.stringify({ 
+      success: true,
+      entry: updatedEntries[0]
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Error deleting summary:', error);
+    return new Response(JSON.stringify({ 
+      error: 'Failed to delete summary',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
