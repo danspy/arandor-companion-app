@@ -274,7 +274,11 @@ function isActiveLink(href: string): boolean {
 <style>
   /* CSS Custom Properties */
   :root {
-    --pwa-menu-bottom-spacing: 140px; /* Space for floating button (56px) + padding (24px) + safe spacing (60px) */
+    /* Calculate bottom spacing: floating button (56px) + button padding (24px) + safe spacing (60px) */
+    --pwa-menu-button-size: 56px;
+    --pwa-menu-button-padding: 24px;
+    --pwa-menu-safe-spacing: 60px;
+    --pwa-menu-bottom-spacing: calc(var(--pwa-menu-button-size) + var(--pwa-menu-button-padding) + var(--pwa-menu-safe-spacing));
     --pwa-menu-animation-duration: 300ms; /* Menu open/close animation duration */
     --pwa-menu-animation-delay: 10ms; /* Small delay to trigger CSS transitions */
   }
@@ -368,7 +372,7 @@ function isActiveLink(href: string): boolean {
   .pwa-menu-nav {
     padding: 8px;
     overflow-y: auto;
-    max-height: calc(100vh - var(--pwa-menu-bottom-spacing));
+    /* Inherit max-height from parent */
   }
   
   /* Menu items */
