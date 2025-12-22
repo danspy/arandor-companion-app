@@ -359,7 +359,7 @@ function isActiveLink(href: string): boolean {
     transition: all var(--pwa-menu-animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
   
-  .dark .pwa-menu-panel {
+  :global(.dark) .pwa-menu-panel {
     background: #000000;
     border: 1px solid #1f2937;
   }
@@ -394,7 +394,7 @@ function isActiveLink(href: string): boolean {
     background: transparent;
   }
   
-  .dark .pwa-menu-item {
+  :global(.dark) .pwa-menu-item {
     color: #e5e7eb;
   }
   
@@ -402,7 +402,7 @@ function isActiveLink(href: string): boolean {
     background: #f3f4f6;
   }
   
-  .dark .pwa-menu-item:hover {
+  :global(.dark) .pwa-menu-item:hover {
     background: #1f2937;
   }
   
@@ -412,7 +412,7 @@ function isActiveLink(href: string): boolean {
     font-weight: 600;
   }
   
-  .dark .pwa-menu-item-active {
+  :global(.dark) .pwa-menu-item-active {
     background: #92400e;
     color: #fde047;
   }
@@ -428,7 +428,7 @@ function isActiveLink(href: string): boolean {
     margin: 8px 0;
   }
   
-  .dark .pwa-menu-divider {
+  :global(.dark) .pwa-menu-divider {
     background: #374151;
   }
   
