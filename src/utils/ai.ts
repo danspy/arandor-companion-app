@@ -26,8 +26,11 @@ export interface PodcastGenerationResult {
   error?: string;
 }
 
+// Supported languages for podcast generation
+type SupportedLanguage = 'en' | 'de';
+
 // Localized podcast truncation messages
-const PODCAST_TRUNCATION_MESSAGES = {
+const PODCAST_TRUNCATION_MESSAGES: Record<SupportedLanguage, string> = {
   en: '... The full session continues in the written entry.',
   de: '... Der vollständige Eintrag kann im Text nachgelesen werden.',
 };
@@ -37,7 +40,7 @@ const PODCAST_TRUNCATION_MESSAGES = {
  * @param text - The text to analyze
  * @returns Language code ('de' for German, 'en' for English). Defaults to 'en' if unclear.
  */
-function detectLanguage(text: string): string {
+function detectLanguage(text: string): SupportedLanguage {
   const cleanText = text.toLowerCase();
   
   // Common German words and patterns
@@ -516,7 +519,7 @@ export async function generateDiaryPodcast(
   let finalText = narrationText;
   if (narrationText.length > TTS_MAX_CHARACTERS) {
     // Use localized truncation message based on detected language
-    const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang as 'en' | 'de'] || PODCAST_TRUNCATION_MESSAGES.en;
+    const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang];
     finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + truncationMessage;
   }
 
