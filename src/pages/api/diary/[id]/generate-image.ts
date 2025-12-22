@@ -128,13 +128,13 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       // Get the image buffer
       const imageBuffer = await imageResponse.arrayBuffer();
       
-      // Validate image size (max 10MB for safety)
-      const maxSize = 10 * 1024 * 1024; // 10MB
+      // Validate image size (max 5MB, consistent with upload.ts)
+      const maxSize = 5 * 1024 * 1024; // 5MB
       if (imageBuffer.byteLength > maxSize) {
         console.error('Image too large:', imageBuffer.byteLength, 'bytes');
         return new Response(JSON.stringify({ 
           error: 'Image too large',
-          details: `Image size ${(imageBuffer.byteLength / 1024 / 1024).toFixed(2)}MB exceeds maximum of 10MB`
+          details: `Image size ${(imageBuffer.byteLength / 1024 / 1024).toFixed(2)}MB exceeds maximum of 5MB`
         }), {
           status: 413,
           headers: { 'Content-Type': 'application/json' }
@@ -147,7 +147,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       const contentType = imageResponse.headers.get('content-type') || '';
       let ext: string;
       
-      // Whitelist of allowed image types
+      // Strict whitelist of allowed image types - reject unknown types
       if (contentType === 'image/jpeg' || contentType === 'image/jpg') {
         ext = 'jpg';
       } else if (contentType === 'image/png') {
@@ -155,9 +155,14 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       } else if (contentType === 'image/webp') {
         ext = 'webp';
       } else {
-        // Default to png for unknown types from trusted source (OpenAI)
-        console.warn('Unknown content-type from OpenAI:', contentType, '- defaulting to png');
-        ext = 'png';
+        console.error('Unsupported content-type from image source:', contentType);
+        return new Response(JSON.stringify({ 
+          error: 'Unsupported image format',
+          details: `Content-type '${contentType}' is not supported. Expected image/png, image/jpeg, or image/webp.`
+        }), {
+          status: 415,
+          headers: { 'Content-Type': 'application/json' }
+        });
       }
       
       // Generate unique filename

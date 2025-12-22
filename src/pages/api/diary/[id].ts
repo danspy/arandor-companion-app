@@ -45,7 +45,8 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
     
     // Build update object, preserving existing values for fields not in the request
-    const updateData: Partial<typeof existingEntry> = {
+    // Type assertion is safe here as we're only updating valid DiaryEntry fields
+    const updateData = {
       date: body.date,
       title: body.title,
       content: body.content,
@@ -58,19 +59,22 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       characterIds: body.characterIds || [],
       questIds: body.questIds || [],
       updatedAt: now,
-    };
+    } as const;
+    
+    // Create mutable copy for conditional updates
+    const finalUpdateData = { ...updateData };
     
     // Only update summary and podcastAudioUrl if explicitly provided in the request
     // This prevents accidental deletion when these fields are not included in the form
     if ('summary' in body) {
-      updateData.summary = body.summary || null;
+      (finalUpdateData as any).summary = body.summary || null;
     }
     if ('podcastAudioUrl' in body) {
-      updateData.podcastAudioUrl = body.podcastAudioUrl || null;
+      (finalUpdateData as any).podcastAudioUrl = body.podcastAudioUrl || null;
     }
     
     await db.update(DiaryEntry)
-      .set(updateData)
+      .set(finalUpdateData)
       .where(eq(DiaryEntry.id, params.id!));
 
     const updatedEntry = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, params.id!));
