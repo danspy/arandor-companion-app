@@ -14,8 +14,8 @@ body {
   padding-top: var(--safe-top);
 }
 
-/* PWA Mode - Hide header and footer when in PWA standalone mode */
-@media (display-mode: standalone) {
+/* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
+@media (display-mode: standalone) and (max-width: 1024px) {
   .pwa-hide-nav {
     display: none !important;
   }
