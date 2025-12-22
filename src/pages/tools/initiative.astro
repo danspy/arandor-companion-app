@@ -106,78 +106,71 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               <>
                 <!-- Combat Control Buttons -->
                 <div class="flex gap-2">
-                  <button 
-                    id="startCombatBtn"
-                    class="flex-1 whitespace-nowrap sm:flex-initial text-sm text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 justify-center"
-                    title="Start combat and enable real-time tracking"
-                    data-status={combatState.status}
-                  >
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{combatState.status === 'active' ? 'Active' : 'Start'}</span>
-                  </button>
-                  <button 
-                    id="pauseCombatBtn"
-                    class="flex-1 whitespace-nowrap sm:flex-initial text-sm text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 justify-center"
-                    title="Pause combat and real-time tracking"
-                    data-status={combatState.status}
-                  >
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <span>{combatState.status === 'paused' ? 'Paused' : 'Pause'}</span>
-                  </button>
-                  <button 
-                    id="stopCombatBtn"
-                    class="flex-1 whitespace-nowrap sm:flex-initial text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 justify-center"
-                    title="Stop combat and disable real-time tracking"
-                    data-status={combatState.status}
-                  >
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 10a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z" />
-                    </svg>
-                    <span>{combatState.status === 'stopped' ? 'Stopped' : 'Stop'}</span>
-                  </button>
+                  <Button
+                      variant="success"
+                      size="sm"
+                      icon="play"
+                      id="startCombatBtn"
+                      title="Start combat and enable real-time tracking"
+                      data-status={combatState.status}
+                    >
+                      {combatState.status === 'active' ? 'Active' : 'Start'}
+                    </Button>
+                  <Button
+                      variant="warning"
+                      size="sm"
+                      icon="pause"
+                      id="pauseCombatBtn"
+                      title="Pause combat and real-time tracking"
+                      data-status={combatState.status}
+                    >
+                      {combatState.status === 'paused' ? 'Paused' : 'Pause'}
+                    </Button>
+                  <Button
+                      variant="danger"
+                      size="sm"
+                      icon="stop"
+                      id="stopCombatBtn"
+                      title="Stop combat and disable real-time tracking"
+                      data-status={combatState.status}
+                    >
+                      {combatState.status === 'stopped' ? 'Stopped' : 'Stop'}
+                    </Button>
                 </div>
                 
                 <!-- Turn Navigation -->
                 <div class="flex gap-2">
-                  <button 
-                    id="prevTurnBtn"
-                    class="flex-1 whitespace-nowrap sm:flex-initial text-sm text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition font-medium flex items-center gap-1.5 justify-center"
-                    title="Previous turn"
-                  >
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                    <span>Prev</span>
-                  </button>
-                  <button 
-                    id="nextTurnBtn"
-                    class="flex-1 whitespace-nowrap sm:flex-initial text-sm text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition font-medium flex items-center gap-1.5 justify-center"
-                    title="Next turn"
-                  >
-                    <span>Next</span>
-                    <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="prev"
+                      id="prevTurnBtn"
+                      title="Previous turn"
+                    >
+                      Prev
+                    </Button>
+                  <Button
+                      variant="secondary"
+                      size="sm"
+                      icon="next"
+                      iconPosition="right"
+                      id="nextTurnBtn"
+                      title="Next turn"
+                    >
+                      Next
+                    </Button>
                 </div>
               </>
             )}
-            <button 
-              id="addInitiativeBtn"
-              class="w-full whitespace-nowrap sm:w-auto text-sm text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition font-medium flex items-center justify-center gap-2"
-              title="Add initiative entry"
-            >
-              <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-              </svg>
-              <span>Add Entry</span>
-            </button>
+            <Button
+                variant="primary"
+                size="sm"
+                icon="add"
+                id="addInitiativeBtn"
+                title="Add initiative entry"
+              >
+                Add Entry
+              </Button>
           </div>
         )}
       </div>
@@ -310,12 +303,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 
     {canEdit && sortedInitiatives.length > 0 && (
       <div class="mt-4 sm:mt-6 flex gap-2 sm:gap-4">
-        <button 
-          id="clearAllBtn"
-          class="text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition font-medium text-sm sm:text-base"
-        >
-          Clear All
-        </button>
+        <Button
+            variant="danger"
+            size="sm"
+            id="clearAllBtn"
+          >
+            Clear All
+          </Button>
       </div>
     )}
   </div>
@@ -505,20 +499,22 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             </div>
 
             <div class="flex gap-4 mt-6">
-              <button 
-                type="submit"
-                id="saveBtn"
-                class="flex-1 text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-              >
-                <span id="saveBtnText">Save</span>
-              </button>
-              <button 
-                type="button"
-                id="cancelBtn"
-                class="flex-1 text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 transition font-medium"
-              >
-                Cancel
-              </button>
+              <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  id="saveBtn"
+                >
+                  <span id="saveBtnText">Save</span>
+                </Button>
+              <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  id="cancelBtn"
+                >
+                  Cancel
+                </Button>
             </div>
           </form>
         </div>
