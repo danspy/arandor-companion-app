@@ -12,7 +12,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - Cover image uploads
   - AI-powered summaries (optional, requires OpenAI API key or compatible service)
   - AI-powered image generation (optional, requires OpenAI API key with DALL-E access)
-  - Podcast version with text-to-speech (on-demand, no files stored)
+  - AI-powered podcast narration with realistic, epic voices (optional, requires OpenAI API key)
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -129,6 +129,7 @@ The app includes optional AI-powered features for diary entries. These features 
 **Available AI Features:**
 - **AI Summaries** - Generate concise summaries of diary entries (2-3 sentences)
 - **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
+- **AI Podcast Narration** - Generate epic D&D narration with realistic AI voices
 
 **Setup:**
 
@@ -158,11 +159,22 @@ OPENAI_IMAGE_SIZE=1024x1024
 # Image quality (default: standard)
 # Options: standard, hd (DALL-E 3 only)
 OPENAI_IMAGE_QUALITY=standard
+
+# Text-to-Speech model (default: tts-1-hd)
+OPENAI_TTS_MODEL=tts-1-hd
+
+# TTS voice (default: onyx - deep, epic)
+# Options: alloy, echo, fable, onyx, nova, shimmer
+# Recommended for D&D: onyx (deep), fable (storytelling)
+OPENAI_TTS_VOICE=onyx
+
+# TTS speed (default: 1.0)
+OPENAI_TTS_SPEED=1.0
 ```
 
 **Permissions:**
-- AI summaries and image generation are restricted to **Admin** and **Dungeon Master** roles
-- Generated content (summaries and images) is visible to all users, including logged-out visitors
+- AI summaries, image generation, and podcast narration are restricted to **Admin** and **Dungeon Master** roles
+- Generated content (summaries, images, and podcasts) is visible to all users, including logged-out visitors
 
 **Alternative Providers:**
 You can use OpenRouter, local LLMs, or other OpenAI-compatible services by setting `OPENAI_API_BASE`. See `.env.example` for examples.
