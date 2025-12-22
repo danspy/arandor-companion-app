@@ -52,9 +52,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     <div class="flex justify-end mb-4">
       <button 
         id="addQuest"
-        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition flex items-center gap-2"
+        title="Add new quest"
       >
-        + Add Quest
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+        </svg>
+        <span>Add Quest</span>
       </button>
     </div>
   )}
@@ -141,28 +145,44 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
           </div>
           {canEdit && (
-            <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
+            <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto items-end">
               {quest.status === 'active' && (
                 <>
-                  <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition text-sm" data-id={quest.id}>
+                  <button class="complete-quest px-3 py-1.5 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition text-xs font-medium" data-id={quest.id}>
                     Complete
                   </button>
-                  <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition text-sm" data-id={quest.id}>
+                  <button class="fail-quest px-3 py-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition text-xs font-medium" data-id={quest.id}>
                     Fail
                   </button>
                 </>
               )}
               {(quest.status === 'completed' || quest.status === 'failed') && (
-                <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm" data-id={quest.id}>
+                <button class="reactivate-quest px-3 py-1.5 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-xs font-medium" data-id={quest.id}>
                   Reactivate
                 </button>
               )}
-              <button class="edit-quest px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={quest.id}>
-                Edit
-              </button>
-              <button class="delete-quest px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={quest.id}>
-                Delete
-              </button>
+              <div class="flex gap-2 items-center">
+                <button 
+                  class="edit-quest text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 transition" 
+                  data-id={quest.id}
+                  title="Edit quest"
+                  aria-label="Edit quest"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                  </svg>
+                </button>
+                <button 
+                  class="delete-quest text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition" 
+                  data-id={quest.id}
+                  title="Delete quest"
+                  aria-label="Delete quest"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                  </svg>
+                </button>
+              </div>
             </div>
           )}
         </div>
