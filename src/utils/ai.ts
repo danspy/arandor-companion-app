@@ -177,6 +177,139 @@ export async function generateDiarySummary(
 }
 
 /**
+ * Sanitize text for use in image prompts to reduce safety system rejections
+ * @param text - The text to sanitize
+ * @returns Sanitized text
+ */
+function sanitizeForImagePrompt(text: string): string {
+  // Remove potentially problematic content while preserving the essence
+  let sanitized = text
+    // Remove explicit violence or graphic descriptions
+    .replace(/\b(kill|murder|death|dead|dying|blood|gore|torture|weapon)\b/gi, 'encounter')
+    .replace(/\b(attack|fight|battle|combat)\b/gi, 'challenge')
+    // Keep fantasy-appropriate terms general
+    .replace(/\b(sword|axe|dagger|blade)\b/gi, 'equipment')
+    // Remove any potentially problematic character descriptions
+    .replace(/\b(naked|nude|undressed)\b/gi, 'unarmored');
+  
+  // Trim to reasonable length
+  return sanitized.substring(0, 800).trim();
+}
+
+/**
+ * Create a safe image prompt optimized for fantasy D&D content
+ * @param title - The title of the diary entry
+ * @param contextText - Summary or content excerpt
+ * @param detectedLang - Language code
+ * @returns A sanitized prompt string
+ */
+function createSafeImagePrompt(title: string, contextText: string, detectedLang: string): string {
+  const sanitizedContext = sanitizeForImagePrompt(contextText);
+  const sanitizedTitle = sanitizeForImagePrompt(title);
+  
+  // Create a more descriptive, artistic prompt that's less likely to trigger safety filters
+  // IMPORTANT: Explicitly instruct NO TEXT in the image
+  return `A fantasy RPG illustration in the style of tabletop game artwork. Scene: ${sanitizedTitle}. The image should depict a heroic fantasy setting with adventurers in a mystical environment. Artistic style: painted fantasy illustration with dramatic lighting and atmospheric details. Content: ${sanitizedContext}. IMPORTANT: Do not include any text, words, letters, titles, captions, or writing in the image. Pure visual artwork only, no text overlays.`;
+}
+
+/**
+ * Attempt to generate an image with retry logic for safety system errors
+ * @param apiBase - API base URL
+ * @param apiKey - API key
+ * @param imageModel - Image model to use
+ * @param imageSize - Image size
+ * @param imageQuality - Image quality
+ * @param imagePrompt - Image prompt
+ * @param maxRetries - Maximum number of retry attempts
+ * @returns ImageGenerationResult
+ */
+async function attemptImageGeneration(
+  apiBase: string,
+  apiKey: string,
+  imageModel: string,
+  imageSize: string,
+  imageQuality: string,
+  imagePrompt: string,
+  maxRetries: number = 2
+): Promise<ImageGenerationResult> {
+  let lastError = '';
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Add a small delay between retries to give the API a moment
+      if (attempt > 0) {
+        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+      }
+
+      const response = await fetch(`${apiBase}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: imageModel,
+          prompt: imagePrompt,
+          n: 1,
+          size: imageSize,
+          quality: imageQuality,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || '';
+        lastError = `API error: ${response.status} ${response.statusText}${errorMessage ? ' - ' + errorMessage : ''}`;
+        
+        // Check if this is a safety system error that can be retried
+        const isSafetyError = response.status === 400 && 
+          (errorMessage.toLowerCase().includes('safety system') || 
+           errorMessage.toLowerCase().includes('content policy'));
+        
+        if (isSafetyError && attempt < maxRetries) {
+          // This is a retryable error, continue to next attempt
+          continue;
+        }
+        
+        // Non-retryable error or max retries reached
+        return {
+          success: false,
+          error: lastError,
+        };
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data?.[0]?.url;
+
+      if (!imageUrl) {
+        return {
+          success: false,
+          error: 'No image URL generated from API response',
+        };
+      }
+
+      return {
+        success: true,
+        imageUrl: imageUrl,
+      };
+    } catch (error) {
+      lastError = `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      
+      // Network errors might be worth retrying
+      if (attempt < maxRetries) {
+        continue;
+      }
+    }
+  }
+  
+  // All retries exhausted
+  return {
+    success: false,
+    error: `${lastError}. The image generation was attempted ${maxRetries + 1} times. Please try rephrasing your diary entry or try again later.`,
+  };
+}
+
+/**
  * Generate an AI image for a diary entry
  * @param title - The title of the diary entry
  * @param content - The full content of the diary entry (markdown)
@@ -218,58 +351,20 @@ export async function generateDiaryImage(
   
   // Detect the language of the content
   const detectedLang = detectLanguage(`${title} ${cleanContent}`);
-  const languageName = detectedLang === 'de' ? 'German' : 'English';
 
   // Create a prompt for image generation
   // Use summary if available, otherwise use a truncated version of the content
   const contextText = summary || cleanContent.substring(0, 500);
   
-  const imagePrompt = `Create a fantasy D&D scene illustration for a session diary entry titled "${title}". ${
-    detectedLang === 'de' ? 'Kontext: ' : 'Context: '
-  }${contextText}. Style: Fantasy art, dramatic lighting, detailed environment, atmospheric. Focus on the key moment or location described.`;
+  const imagePrompt = createSafeImagePrompt(title, contextText, detectedLang);
 
-  try {
-    const response = await fetch(`${apiBase}/images/generations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: imageModel,
-        prompt: imagePrompt,
-        n: 1,
-        size: imageSize,
-        quality: imageQuality,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: `API error: ${response.status} ${response.statusText}${errorData.error?.message ? ' - ' + errorData.error.message : ''}`,
-      };
-    }
-
-    const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
-
-    if (!imageUrl) {
-      return {
-        success: false,
-        error: 'No image URL generated from API response',
-      };
-    }
-
-    return {
-      success: true,
-      imageUrl: imageUrl,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    };
-  }
+  return attemptImageGeneration(
+    apiBase,
+    apiKey,
+    imageModel,
+    imageSize,
+    imageQuality,
+    imagePrompt,
+    2 // Retry up to 2 times (3 total attempts)
+  );
 }
