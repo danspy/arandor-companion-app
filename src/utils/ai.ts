@@ -466,7 +466,7 @@ function preparePodcastNarration(title: string, content: string): string {
   return narration;
 }
 
-// OpenAI TTS API has a limit of 4096 characters per request
+// OpenAI TTS API has a maximum limit of 4096 characters per request
 // Note: For future enhancement, consider implementing multi-chunk support
 // to handle longer texts by splitting into multiple API requests
 const TTS_MAX_CHARACTERS = 4096;
