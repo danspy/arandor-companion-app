@@ -26,12 +26,21 @@ export interface PodcastGenerationResult {
   error?: string;
 }
 
+// Supported languages for podcast generation
+type SupportedLanguage = 'en' | 'de';
+
+// Localized podcast truncation messages
+const PODCAST_TRUNCATION_MESSAGES: Record<SupportedLanguage, string> = {
+  en: '... The full session continues in the written entry.',
+  de: '... Der vollständige Eintrag kann im Text nachgelesen werden.',
+};
+
 /**
  * Detect the primary language of the text
  * @param text - The text to analyze
  * @returns Language code ('de' for German, 'en' for English). Defaults to 'en' if unclear.
  */
-function detectLanguage(text: string): string {
+function detectLanguage(text: string): SupportedLanguage {
   const cleanText = text.toLowerCase();
   
   // Common German words and patterns
@@ -457,8 +466,10 @@ function preparePodcastNarration(title: string, content: string): string {
   return narration;
 }
 
-// OpenAI TTS API has a limit of approximately 4096 characters per request
-const TTS_MAX_CHARACTERS = 4000;
+// OpenAI TTS API has a maximum limit of 4096 characters per request
+// Note: For future enhancement, consider implementing multi-chunk support
+// to handle longer texts by splitting into multiple API requests
+const TTS_MAX_CHARACTERS = 4096;
 
 /**
  * Generate an AI-powered podcast narration for a diary entry
@@ -480,7 +491,6 @@ export async function generateDiaryPodcast(
   const apiKey = process.env.OPENAI_API_KEY;
   const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
   const ttsModel = process.env.OPENAI_TTS_MODEL || 'tts-1-hd';
-  const ttsVoice = process.env.OPENAI_TTS_VOICE || 'onyx';
   const ttsSpeed = parseFloat(process.env.OPENAI_TTS_SPEED || '1.0');
 
   // Check if API key is configured
@@ -493,11 +503,28 @@ export async function generateDiaryPodcast(
 
   // Prepare the text for narration
   const narrationText = preparePodcastNarration(title, content);
+  
+  // Detect language for proper voice selection and truncation message
+  const detectedLang = detectLanguage(`${title} ${content}`);
+
+  // Select appropriate TTS voice based on language
+  // If OPENAI_TTS_VOICE is set, it takes priority; otherwise, auto-detect
+  let ttsVoice = process.env.OPENAI_TTS_VOICE;
+  if (!ttsVoice) {
+    // Auto-select voice based on detected language
+    // German content: "alloy" works well for German pronunciation
+    // English content: "onyx", "fable", etc. are good choices
+    ttsVoice = detectedLang === 'de' ? 'alloy' : 'onyx';
+  }
 
   // Truncate if content exceeds OpenAI TTS character limit
   let finalText = narrationText;
   if (narrationText.length > TTS_MAX_CHARACTERS) {
-    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + '... The full session continues in the written entry.';
+    // Use localized truncation message based on detected language
+    const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang];
+    // Ensure the final text (content + truncation message) doesn't exceed the limit
+    const maxContentLength = Math.max(0, TTS_MAX_CHARACTERS - truncationMessage.length);
+    finalText = narrationText.substring(0, maxContentLength) + truncationMessage;
   }
 
   try {

@@ -12,7 +12,8 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - Cover image uploads
   - AI-powered summaries (optional, requires OpenAI API key or compatible service)
   - AI-powered image generation (optional, requires OpenAI API key with DALL-E access)
-  - AI-powered podcast narration with realistic, epic voices (optional, requires OpenAI API key)
+  - AI-powered podcast narration with realistic voices (optional, requires OpenAI API key)
+  - Automatically detects language and selects appropriate voice (German/English)
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -129,7 +130,7 @@ The app includes optional AI-powered features for diary entries. These features 
 **Available AI Features:**
 - **AI Summaries** - Generate concise summaries of diary entries (2-3 sentences)
 - **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
-- **AI Podcast Narration** - Generate epic D&D narration with realistic AI voices
+- **AI Podcast Narration** - Generate narration with realistic AI voices, automatically adapting to your language (German/English)
 
 **Setup:**
 
@@ -163,10 +164,14 @@ OPENAI_IMAGE_QUALITY=standard
 # Text-to-Speech model (default: tts-1-hd)
 OPENAI_TTS_MODEL=tts-1-hd
 
-# TTS voice (default: onyx - deep, epic)
+# TTS voice (auto-detected by default based on language)
+# If not set, voice is automatically selected:
+#   - German content: alloy (clear, neutral)
+#   - English content: onyx (deep, epic)
 # Options: alloy, echo, fable, onyx, nova, shimmer
-# Recommended for D&D: onyx (deep), fable (storytelling)
-OPENAI_TTS_VOICE=onyx
+# Recommended for English D&D: onyx (deep), fable (storytelling)
+# Recommended for German: alloy (clear), echo (balanced)
+# OPENAI_TTS_VOICE=onyx
 
 # TTS speed (default: 1.0)
 OPENAI_TTS_SPEED=1.0

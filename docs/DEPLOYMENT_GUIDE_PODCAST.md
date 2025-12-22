@@ -16,15 +16,16 @@ This guide provides step-by-step instructions for deploying the AI-powered podca
 
 **What it does:**
 - Generates high-quality podcast narrations for diary entries
-- Uses OpenAI's TTS API with professional voices (default: "onyx" - deep, epic)
+- Automatically detects language (English/German) and selects appropriate voice
+- Uses OpenAI's TTS API with professional voices (auto-detected: "alloy" for German, "onyx" for English)
 - Stores audio as base64 data in database (no separate file storage needed)
 - Provides HTML5 audio player for playback
+- Automatically truncates long entries with localized messages
 - Restricted to DM/admin roles for generation
 
-**Recommended voices for D&D:**
-- `onyx` - Deep, epic voice (default, recommended)
-- `fable` - Storytelling voice
-- `echo` - Balanced, clear voice
+**Recommended voices for different languages:**
+- **German**: `alloy` (clear, neutral - auto-selected), `echo` (balanced)
+- **English**: `onyx` (deep, epic - auto-selected), `fable` (storytelling)
 
 ## Step-by-Step Deployment
 
@@ -84,7 +85,14 @@ OPENAI_API_KEY=your-api-key-here
 
 # Optional: Configure TTS settings
 OPENAI_TTS_MODEL=tts-1-hd          # Options: tts-1, tts-1-hd
-OPENAI_TTS_VOICE=onyx              # Options: alloy, echo, fable, onyx, nova, shimmer
+
+# Voice selection (optional - auto-detected by default):
+# If not set, voice is automatically selected based on detected language:
+#   - German content: alloy (clear, neutral)
+#   - English content: onyx (deep, epic)
+# Options: alloy, echo, fable, onyx, nova, shimmer
+# OPENAI_TTS_VOICE=onyx
+
 OPENAI_TTS_SPEED=1.0               # Range: 0.25 to 4.0
 
 # Save and exit (Ctrl+X, then Y, then Enter)
@@ -156,18 +164,40 @@ sudo journalctl -u arandor.service -f -n 50
 
 ### Voices
 
-**onyx** (default, recommended for D&D):
+**Language-specific recommendations:**
+
+The system automatically detects the language of your diary entries (currently supports English and German) and selects an appropriate voice:
+- **German content**: Uses `alloy` by default (clear, neutral voice that works well for German)
+- **English content**: Uses `onyx` by default (deep, epic voice)
+- **Other languages**: Will default to English voice selection
+
+You can override this automatic selection by setting `OPENAI_TTS_VOICE` in your `.env` file.
+
+**onyx** (recommended for English D&D):
 - Deep, epic voice
 - Perfect for heroic fantasy narration
 - Male voice
+- Default for English content
 
-**fable**:
+**fable** (good for English storytelling):
 - Storytelling voice
 - Engaging and dramatic
 - Neutral/male voice
 
-**alloy**, **echo**, **nova**, **shimmer**:
+**alloy** (recommended for German narration):
+- Clear, neutral voice
+- Works well for German language
+- Balanced tone
+- Default for German content
+
+**echo** (alternative for German):
+- Balanced, clear voice
+- Good alternative for German content
+- Neutral tone
+
+**nova**, **shimmer**:
 - Various voice options
+- Female voices
 - Experiment to find your preference
 
 ### Speed
