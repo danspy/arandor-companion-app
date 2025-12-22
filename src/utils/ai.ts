@@ -278,9 +278,10 @@ async function attemptImageGeneration(
   
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      // Add a small delay between retries to give the API a moment
+      // Add exponential backoff delay between retries
       if (attempt > 0) {
-        await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+        const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s...
+        await new Promise(resolve => setTimeout(resolve, delay));
       }
 
       const response = await fetch(`${apiBase}/images/generations`, {
@@ -347,7 +348,7 @@ async function attemptImageGeneration(
   // All retries exhausted
   return {
     success: false,
-    error: `${lastError}. The image generation was attempted ${maxRetries + 1} times. Please try rephrasing your diary entry or try again later.`,
+    error: `${lastError}. The image generation was attempted ${maxRetries + 1} times. This may be due to content restrictions. Please try again later.`,
   };
 }
 
@@ -390,9 +391,6 @@ export async function generateDiaryImage(
     .replace(/---+/g, '') // Remove horizontal rules
     .replace(/>\s+/g, '') // Remove blockquotes
     .trim();
-  
-  // Detect the language of the content (keeping for future use)
-  const detectedLang = detectLanguage(`${title} ${cleanContent}`);
 
   // Create a prompt for image generation
   // Use summary if available, otherwise use a truncated version of the content
