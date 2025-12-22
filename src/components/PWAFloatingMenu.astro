@@ -168,6 +168,11 @@ function isActiveLink(href: string): boolean {
     
     if (!menuBtn || !menuPanel || !menuOverlay) return;
     
+    // Get animation durations from CSS custom properties
+    const styles = getComputedStyle(document.documentElement);
+    const animationDuration = parseInt(styles.getPropertyValue('--pwa-menu-animation-duration')) || 300;
+    const animationDelay = parseInt(styles.getPropertyValue('--pwa-menu-animation-delay')) || 10;
+    
     // Toggle menu
     const toggleMenu = () => {
       const isHidden = menuPanel.classList.contains('hidden');
@@ -178,10 +183,10 @@ function isActiveLink(href: string): boolean {
         menuIcon?.classList.add('hidden');
         closeIcon?.classList.remove('hidden');
         
-        // Trigger animation
+        // Trigger animation after a small delay to ensure CSS transition works
         setTimeout(() => {
           menuPanel.classList.add('pwa-menu-panel-open');
-        }, 10);
+        }, animationDelay);
       } else {
         menuPanel.classList.remove('pwa-menu-panel-open');
         menuOverlay.classList.add('hidden');
@@ -191,7 +196,7 @@ function isActiveLink(href: string): boolean {
         // Wait for animation to finish before hiding
         setTimeout(() => {
           menuPanel.classList.add('hidden');
-        }, 300);
+        }, animationDuration);
       }
     };
     
@@ -205,7 +210,7 @@ function isActiveLink(href: string): boolean {
         
         setTimeout(() => {
           menuPanel.classList.add('hidden');
-        }, 300);
+        }, animationDuration);
       }
     };
     
@@ -270,6 +275,8 @@ function isActiveLink(href: string): boolean {
   /* CSS Custom Properties */
   :root {
     --pwa-menu-bottom-spacing: 140px; /* Space for floating button (56px) + padding (24px) + safe spacing (60px) */
+    --pwa-menu-animation-duration: 300ms; /* Menu open/close animation duration */
+    --pwa-menu-animation-delay: 10ms; /* Small delay to trigger CSS transitions */
   }
   
   /* Only show floating menu in PWA mode (standalone) */
@@ -327,7 +334,7 @@ function isActiveLink(href: string): boolean {
     background: rgba(0, 0, 0, 0.5);
     backdrop-filter: blur(2px);
     z-index: 9998;
-    transition: opacity 0.3s ease;
+    transition: opacity var(--pwa-menu-animation-duration) ease;
   }
   
   /* Menu panel */
@@ -344,7 +351,7 @@ function isActiveLink(href: string): boolean {
     z-index: 10000;
     transform: translateY(20px) scale(0.9);
     opacity: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all var(--pwa-menu-animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
   
   .dark .pwa-menu-panel {
