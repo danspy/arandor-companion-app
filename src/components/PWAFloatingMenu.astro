@@ -1,6 +1,4 @@
 ---
-import { isAuthenticated, getUserRole } from '../lib/auth';
-
 interface Props {
   currentPath: string;
   isLoggedIn: boolean;
@@ -269,6 +267,11 @@ function isActiveLink(href: string): boolean {
 </script>
 
 <style>
+  /* CSS Custom Properties */
+  :root {
+    --pwa-menu-bottom-spacing: 140px; /* Space for floating button (56px) + padding (24px) + safe spacing (60px) */
+  }
+  
   /* Only show floating menu in PWA mode (standalone) */
   .hidden-in-browser {
     display: none;
@@ -333,7 +336,7 @@ function isActiveLink(href: string): boolean {
     bottom: 96px;
     right: 24px;
     width: 280px;
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - var(--pwa-menu-bottom-spacing));
     background: white;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -358,7 +361,7 @@ function isActiveLink(href: string): boolean {
   .pwa-menu-nav {
     padding: 8px;
     overflow-y: auto;
-    max-height: calc(100vh - 140px);
+    max-height: calc(100vh - var(--pwa-menu-bottom-spacing));
   }
   
   /* Menu items */
