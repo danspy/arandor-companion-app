@@ -2,21 +2,22 @@
 
 ## Overview
 
-This feature enables administrators and dungeon masters to generate fantasy D&D scene illustrations for diary entries using OpenAI's DALL-E API. Generated images are displayed alongside manually uploaded cover images and videos.
+This feature enables administrators and dungeon masters to generate fantasy D&D scene illustrations for diary entries using OpenAI's DALL-E API. The system uses a **preview/approval workflow** where users can review and regenerate images before accepting them.
 
 ## Features
 
+- **Preview Before Saving**: Generated images are shown in a modal for review before being saved
+- **Regenerate Option**: Don't like the result? Generate a new version instantly
 - **Automatic Prompt Generation**: Creates contextual prompts based on diary entry title, content, and optional AI summary
 - **Language Detection**: Supports both English and German content with automatic language detection
-- **Visual Distinction**: AI-generated images are marked with a purple "AI Generated" badge
-- **Permission Control**: Only admin and dungeon master roles can generate or delete AI images
-- **Public Visibility**: Everyone can view AI-generated images, including logged-out users
+- **Permission Control**: Only admin and dungeon master roles can generate images
+- **Public Visibility**: Everyone can view saved images, including logged-out users
 
 ## How It Works
 
 ### Image Generation Flow
 
-1. **User clicks "Generate" button** in the diary entry detail page
+1. **User clicks "Generate Preview"** in the diary entry detail page
 2. **System processes the entry**:
    - Extracts and cleans the title and content
    - Detects the language (English or German)
@@ -24,22 +25,21 @@ This feature enables administrators and dungeon masters to generate fantasy D&D 
 3. **API call to OpenAI**:
    - Sends prompt to DALL-E (default: dall-e-3)
    - Receives generated image URL
-4. **Database update**:
-   - Stores image URL in `aiGeneratedImageUrl` field
-   - Updates the entry's `updatedAt` timestamp
-5. **UI updates**:
-   - Displays the new image
-   - Shows the delete button
-   - Changes generate button to "Regenerate"
+4. **Preview modal opens**:
+   - Shows the generated image in a full-screen modal
+   - User can **Accept & Save**, **Regenerate**, or **Cancel**
+5. **On Accept**:
+   - Image URL is saved to `coverImageUrl` field
+   - Page reloads to show the new cover image
+   - Image is now visible to all users
 
-### Image Display Priority
+### Image Display
 
-When displaying diary entries, the system prioritizes media in this order:
+AI-generated images are saved to the same `coverImageUrl` field as manually uploaded images. The system displays media in this priority:
 1. Cover video (if present)
-2. AI-generated image (if present)
-3. Manually uploaded cover image (if present)
+2. Cover image (manual or AI-generated)
 
-This means AI-generated images take precedence over manually uploaded images but not over videos.
+This means AI-generated images replace any existing cover images when accepted.
 
 ## Configuration
 
@@ -72,7 +72,7 @@ OPENAI_IMAGE_QUALITY=standard
 
 ## API Endpoints
 
-### Generate Image
+### Generate Image Preview
 
 ```http
 POST /api/diary/[id]/generate-image
@@ -80,12 +80,14 @@ POST /api/diary/[id]/generate-image
 
 **Authorization**: Requires admin or dungeonmaster role
 
+**Description**: Generates an AI image preview without saving to database
+
 **Response**:
 ```json
 {
   "success": true,
   "imageUrl": "https://...",
-  "entry": { ... }
+  "preview": true
 }
 ```
 
@@ -97,13 +99,22 @@ POST /api/diary/[id]/generate-image
 }
 ```
 
-### Delete AI-Generated Image
+### Accept and Save Image
 
 ```http
-DELETE /api/diary/[id]/generate-image
+PUT /api/diary/[id]/generate-image
 ```
 
 **Authorization**: Requires admin or dungeonmaster role
+
+**Description**: Accepts the preview and saves image URL to `coverImageUrl`
+
+**Request Body**:
+```json
+{
+  "imageUrl": "https://..."
+}
+```
 
 **Response**:
 ```json
@@ -117,12 +128,12 @@ DELETE /api/diary/[id]/generate-image
 
 ### DiaryEntry Table
 
-Added field:
+Uses existing field:
 ```typescript
-aiGeneratedImageUrl: column.text({ optional: true })
+coverImageUrl: column.text({ optional: true })
 ```
 
-This field stores the URL of the AI-generated image. It's separate from `coverImageUrl` to distinguish between manually uploaded and AI-generated content.
+AI-generated images are saved to the same field as manually uploaded images. This simplifies the data model and treats both types of images equally.
 
 ## User Interface
 
@@ -130,27 +141,32 @@ This field stores the URL of the AI-generated image. It's separate from `coverIm
 
 **AI Image Generation Section** (visible to admin/DM only):
 - Located after the AI Summary section
-- Shows current status ("No AI-generated image yet" or "AI-generated image is displayed above")
-- **Generate Button**: Creates a new AI-generated image
+- Purple-themed section with lightbulb icon
+- **Generate Preview Button**: Starts the image generation process
   - Disabled during generation with "Generating..." text
-  - Changes to "Regenerate" after first generation
-- **Delete Button**: Removes the AI-generated image
-  - Only visible when an AI image exists
-  - Requires confirmation before deletion
+  - Takes 10-30 seconds to generate
+
+**Preview Modal**:
+- Full-screen modal displaying the generated image
+- Three action buttons:
+  - **Accept & Save** (green): Saves image to `coverImageUrl` and reloads page
+  - **Regenerate** (purple): Generates a new version
+  - **Cancel** (gray): Closes modal without saving
+- Click outside modal or press Cancel to dismiss
 
 ### Diary List Page
 
 **Entry Cards**:
-- Display AI-generated images with a purple "AI" badge in the top-right corner
-- Badge helps users quickly identify AI-generated vs. manually uploaded images
+- Display cover images (whether manually uploaded or AI-generated)
+- No visual distinction between AI-generated and manual images
 
 ## Permissions
 
 | Action | Admin | Dungeon Master | Player | Public |
 |--------|-------|----------------|--------|--------|
-| Generate Image | ✅ | ✅ | ❌ | ❌ |
-| Delete AI Image | ✅ | ✅ | ❌ | ❌ |
-| View AI Image | ✅ | ✅ | ✅ | ✅ |
+| Generate Preview | ✅ | ✅ | ❌ | ❌ |
+| Accept Image | ✅ | ✅ | ❌ | ❌ |
+| View Saved Image | ✅ | ✅ | ✅ | ✅ |
 
 ## Cost Considerations
 
@@ -158,9 +174,11 @@ This field stores the URL of the AI-generated image. It's separate from `coverIm
 - **DALL-E 3 HD**: ~$0.08 per image (1024x1024)
 - **DALL-E 2**: ~$0.02 per image (1024x1024)
 
-Images are generated on-demand and stored as URLs. The URLs are temporary (expire after ~1 hour), so you may want to:
-1. Download and re-upload important images
-2. Use the cover image upload feature for permanent storage
+**Important Notes**:
+- Each "Generate" or "Regenerate" click costs one API call
+- Preview URLs from DALL-E are temporary (expire after ~1 hour)
+- Once accepted, the URL is saved to your database
+- For permanent storage, consider downloading and re-uploading images
 
 ## Error Handling
 
