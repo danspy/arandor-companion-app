@@ -222,27 +222,31 @@ function extractSafeThemes(text: string): string[] {
 }
 
 /**
- * Create a safe, abstract image prompt optimized for fantasy D&D content
- * This function creates prompts that focus on artistic style and safe themes
- * rather than potentially problematic content details
+ * Create a safe, contextual image prompt optimized for fantasy D&D content
+ * Uses AI-generated summary when available for better context, supplemented with theme extraction
  * @param title - The title of the diary entry
  * @param contextText - Summary or content excerpt
+ * @param useSummary - Whether contextText is an AI-generated summary (already safe)
  * @returns A sanitized prompt string
  */
-function createSafeImagePrompt(title: string, contextText: string): string {
-  // Extract safe themes from the content
-  const themes = extractSafeThemes(`${title} ${contextText}`);
-  
-  // Build a safe, artistic prompt
+function createSafeImagePrompt(title: string, contextText: string, useSummary: boolean = false): string {
   let prompt = 'A fantasy tabletop RPG illustration in the style of official D&D artwork. ';
   
-  if (themes.length > 0) {
-    // Use the extracted themes (max 3 for clarity)
-    const selectedThemes = themes.slice(0, 3).join(', ');
-    prompt += `The scene features: ${selectedThemes}. `;
+  if (useSummary && contextText) {
+    // If we have an AI-generated summary, use it directly as it's already clean and contextual
+    prompt += `Scene description: ${contextText}. `;
   } else {
-    // Fallback to a generic heroic fantasy scene
-    prompt += 'A heroic fantasy adventure scene with adventurers in an epic setting. ';
+    // Otherwise, fall back to theme extraction for safety
+    const themes = extractSafeThemes(`${title} ${contextText}`);
+    
+    if (themes.length > 0) {
+      // Use the extracted themes (max 3 for clarity)
+      const selectedThemes = themes.slice(0, 3).join(', ');
+      prompt += `The scene features: ${selectedThemes}. `;
+    } else {
+      // Fallback to a generic heroic fantasy scene
+      prompt += 'A heroic fantasy adventure scene with adventurers in an epic setting. ';
+    }
   }
   
   // Add artistic direction
@@ -394,10 +398,12 @@ export async function generateDiaryImage(
     .trim();
 
   // Create a prompt for image generation
-  // Use summary if available, otherwise use a truncated version of the content
+  // Prefer using the AI-generated summary if available (it's already safe and contextual)
+  // Otherwise fall back to truncated content with theme extraction
   const contextText = summary || cleanContent.substring(0, 500);
+  const useSummary = !!summary; // Use summary directly if available
   
-  const imagePrompt = createSafeImagePrompt(title, contextText);
+  const imagePrompt = createSafeImagePrompt(title, contextText, useSummary);
 
   return attemptImageGeneration(
     apiBase,
