@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
+import Button from '../components/Button.astro';
 import { db, Quest, PageSettings, eq } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
@@ -50,16 +51,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {canEdit && (
     <div class="flex justify-end mb-4">
-      <button 
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
         id="addQuest"
-        class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition flex items-center gap-2 font-medium"
-        title="Add new quest"
+        title="Add new Add Quest"
       >
-        <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        <span>Add Quest</span>
-      </button>
+        Add Quest
+      </Button>
     </div>
   )}
 

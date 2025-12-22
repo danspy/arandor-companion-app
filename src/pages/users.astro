@@ -23,16 +23,15 @@ const users = await db.select({
   <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">User Management</h1>
-      <button 
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
         id="addUserBtn"
-        class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition flex items-center gap-2 font-medium"
-        title="Add new user"
+        title="Add new Add User"
       >
-        <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-        </svg>
-        <span>Add User</span>
-      </button>
+        Add User
+      </Button>
     </div>
 
     <!-- Success/Error Messages -->
