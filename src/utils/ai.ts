@@ -14,6 +14,12 @@ export interface SummaryResult {
   error?: string;
 }
 
+export interface ImageGenerationResult {
+  success: boolean;
+  imageUrl?: string;
+  error?: string;
+}
+
 /**
  * Detect the primary language of the text
  * @param text - The text to analyze
@@ -166,6 +172,104 @@ export async function generateDiarySummary(
     return {
       success: false,
       error: `Failed to generate summary: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
+}
+
+/**
+ * Generate an AI image for a diary entry
+ * @param title - The title of the diary entry
+ * @param content - The full content of the diary entry (markdown)
+ * @param summary - Optional AI-generated summary to provide context
+ * @returns URL to the generated image
+ */
+export async function generateDiaryImage(
+  title: string,
+  content: string,
+  summary?: string
+): Promise<ImageGenerationResult> {
+  // Use process.env for server-side API routes
+  const apiKey = process.env.OPENAI_API_KEY;
+  const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
+  const imageModel = process.env.OPENAI_IMAGE_MODEL || 'dall-e-3';
+  const imageSize = process.env.OPENAI_IMAGE_SIZE || '1024x1024';
+  const imageQuality = process.env.OPENAI_IMAGE_QUALITY || 'standard';
+
+  // Check if API key is configured
+  if (!apiKey) {
+    return {
+      success: false,
+      error: 'OpenAI API key not configured. Set OPENAI_API_KEY environment variable.',
+    };
+  }
+
+  // Remove markdown formatting for cleaner prompt generation
+  const cleanContent = content
+    .replace(/#{1,6}\s+/g, '') // Remove headers
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // Remove bold
+    .replace(/\*([^*]+)\*/g, '$1') // Remove italic
+    .replace(/__([^_]+)__/g, '$1') // Remove bold
+    .replace(/_([^_]+)_/g, '$1') // Remove italic
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1') // Remove links
+    .replace(/`([^`]+)`/g, '$1') // Remove code
+    .replace(/---+/g, '') // Remove horizontal rules
+    .replace(/>\s+/g, '') // Remove blockquotes
+    .trim();
+  
+  // Detect the language of the content
+  const detectedLang = detectLanguage(`${title} ${cleanContent}`);
+  const languageName = detectedLang === 'de' ? 'German' : 'English';
+
+  // Create a prompt for image generation
+  // Use summary if available, otherwise use a truncated version of the content
+  const contextText = summary || cleanContent.substring(0, 500);
+  
+  const imagePrompt = `Create a fantasy D&D scene illustration for a session diary entry titled "${title}". ${
+    detectedLang === 'de' ? 'Kontext: ' : 'Context: '
+  }${contextText}. Style: Fantasy art, dramatic lighting, detailed environment, atmospheric. Focus on the key moment or location described.`;
+
+  try {
+    const response = await fetch(`${apiBase}/images/generations`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: imageModel,
+        prompt: imagePrompt,
+        n: 1,
+        size: imageSize,
+        quality: imageQuality,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: `API error: ${response.status} ${response.statusText}${errorData.error?.message ? ' - ' + errorData.error.message : ''}`,
+      };
+    }
+
+    const data = await response.json();
+    const imageUrl = data.data?.[0]?.url;
+
+    if (!imageUrl) {
+      return {
+        success: false,
+        error: 'No image URL generated from API response',
+      };
+    }
+
+    return {
+      success: true,
+      imageUrl: imageUrl,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`,
     };
   }
 }
