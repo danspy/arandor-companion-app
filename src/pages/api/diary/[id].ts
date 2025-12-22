@@ -33,23 +33,44 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     const body = await request.json();
     const now = new Date();
     
+    // Fetch existing entry to preserve fields not in the update request
+    const existingEntries = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, params.id!));
+    const existingEntry = existingEntries[0];
+    
+    if (!existingEntry) {
+      return new Response(JSON.stringify({ error: 'Entry not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Build update object, preserving existing values for fields not in the request
+    const updateData: any = {
+      date: body.date,
+      title: body.title,
+      content: body.content,
+      session: body.session,
+      tags: body.tags,
+      coverImageUrl: body.coverImageUrl || null,
+      coverVideoUrl: body.coverVideoUrl || null,
+      npcIds: body.npcIds || [],
+      locationIds: body.locationIds || [],
+      characterIds: body.characterIds || [],
+      questIds: body.questIds || [],
+      updatedAt: now,
+    };
+    
+    // Only update summary and podcastAudioUrl if explicitly provided in the request
+    // This prevents accidental deletion when these fields are not included in the form
+    if ('summary' in body) {
+      updateData.summary = body.summary || null;
+    }
+    if ('podcastAudioUrl' in body) {
+      updateData.podcastAudioUrl = body.podcastAudioUrl || null;
+    }
+    
     await db.update(DiaryEntry)
-      .set({
-        date: body.date,
-        title: body.title,
-        content: body.content,
-        summary: body.summary || null,
-        podcastAudioUrl: body.podcastAudioUrl || null,
-        session: body.session,
-        tags: body.tags,
-        coverImageUrl: body.coverImageUrl || null,
-        coverVideoUrl: body.coverVideoUrl || null,
-        npcIds: body.npcIds || [],
-        locationIds: body.locationIds || [],
-        characterIds: body.characterIds || [],
-        questIds: body.questIds || [],
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(DiaryEntry.id, params.id!));
 
     const updatedEntry = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, params.id!));
