@@ -10,6 +10,8 @@ Environment="NODE_ENV=production"
 Environment="HOST=0.0.0.0"
 Environment="PORT=4321"
 Environment="ASTRO_DATABASE_FILE=/srv/arandor/data/content.db"
+Environment="OPENAI_API_KEY=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"
+Environment="OPENAI_MODEL=gpt-3.5-turbo"
 ExecStart=/usr/bin/node /srv/arandor/dist/server/entry.mjs
 Restart=always
 RestartSec=10
