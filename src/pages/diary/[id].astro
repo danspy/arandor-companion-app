@@ -213,11 +213,16 @@ const renderedContent = renderMarkdown(entry.content);
             <div class="flex-shrink-0">
               <button
                 id="generateImageBtn"
-                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition text-sm font-medium flex items-center gap-2"
+                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition text-sm font-medium flex items-center gap-2 relative"
                 title="Generate AI image"
               >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg id="generateImageIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <!-- Spinner (hidden by default) -->
+                <svg id="generateImageSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
                 <span id="generateImageBtnText">Generate Preview</span>
               </button>
@@ -463,11 +468,23 @@ const renderedContent = renderMarkdown(entry.content);
 
   <!-- AI Image Preview Modal -->
   <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
-    <div class="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+    <div class="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700 relative">
+      <!-- Loading Overlay -->
+      <div id="modalLoadingOverlay" class="hidden absolute inset-0 bg-white dark:bg-gray-900 bg-opacity-90 dark:bg-opacity-90 flex items-center justify-center z-10 rounded-lg">
+        <div class="text-center">
+          <svg class="animate-spin h-12 w-12 text-purple-600 dark:text-purple-400 mx-auto mb-4" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <p class="text-lg font-semibold text-purple-700 dark:text-purple-400" id="modalLoadingText">Generating image...</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">This may take 10-30 seconds</p>
+        </div>
+      </div>
+
       <div class="p-6">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">AI Generated Image Preview</h2>
         
-        <div id="previewImageContainer" class="mb-6 rounded-lg overflow-hidden">
+        <div id="previewImageContainer" class="mb-6 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800">
           <img 
             id="previewImage" 
             src="" 
@@ -483,25 +500,30 @@ const renderedContent = renderMarkdown(entry.content);
         <div class="flex gap-3 flex-wrap">
           <button
             id="acceptImageBtn"
-            class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition font-medium flex items-center justify-center gap-2"
+            class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
             </svg>
-            Accept & Save
+            <span id="acceptImageBtnText">Accept & Save</span>
           </button>
           <button
             id="regenerateImageBtn"
-            class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition font-medium flex items-center justify-center gap-2"
+            class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition font-medium flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg id="regenerateIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            Regenerate
+            <!-- Spinner for regenerate -->
+            <svg id="regenerateSpinner" class="hidden w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span id="regenerateImageBtnText">Regenerate</span>
           </button>
           <button
             id="cancelPreviewBtn"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition font-medium"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
@@ -691,6 +713,14 @@ const renderedContent = renderMarkdown(entry.content);
   const regenerateImageBtn = document.getElementById('regenerateImageBtn');
   const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
   const generateImageBtnText = document.getElementById('generateImageBtnText');
+  const generateImageIcon = document.getElementById('generateImageIcon');
+  const generateImageSpinner = document.getElementById('generateImageSpinner');
+  const modalLoadingOverlay = document.getElementById('modalLoadingOverlay');
+  const modalLoadingText = document.getElementById('modalLoadingText');
+  const regenerateIcon = document.getElementById('regenerateIcon');
+  const regenerateSpinner = document.getElementById('regenerateSpinner');
+  const regenerateImageBtnText = document.getElementById('regenerateImageBtnText');
+  const acceptImageBtnText = document.getElementById('acceptImageBtnText');
 
   let currentPreviewUrl: string | null = null;
 
@@ -703,10 +733,12 @@ const renderedContent = renderMarkdown(entry.content);
       return;
     }
 
-    // Show loading state
-    if (generateImageBtn && generateImageBtnText) {
+    // Show loading state with spinner
+    if (generateImageBtn && generateImageBtnText && generateImageIcon && generateImageSpinner) {
       generateImageBtn.disabled = true;
       generateImageBtnText.textContent = 'Generating...';
+      generateImageIcon.classList.add('hidden');
+      generateImageSpinner.classList.remove('hidden');
     }
 
     try {
@@ -733,10 +765,83 @@ const renderedContent = renderMarkdown(entry.content);
       console.error('Error generating image:', error);
       showError('Failed to generate image. Please check your connection and try again.');
     } finally {
-      // Re-enable button
-      if (generateImageBtn && generateImageBtnText) {
+      // Re-enable button and restore icon
+      if (generateImageBtn && generateImageBtnText && generateImageIcon && generateImageSpinner) {
         generateImageBtn.disabled = false;
         generateImageBtnText.textContent = 'Generate Preview';
+        generateImageIcon.classList.remove('hidden');
+        generateImageSpinner.classList.add('hidden');
+      }
+    }
+  }
+
+  // Generate with modal overlay (for regenerate)
+  async function regenerateWithOverlay() {
+    const entryId = getEntryIdFromUrl();
+
+    if (!entryId) {
+      showError('Unable to determine entry ID');
+      return;
+    }
+
+    // Show loading overlay in modal
+    if (modalLoadingOverlay) {
+      modalLoadingOverlay.classList.remove('hidden');
+    }
+    if (modalLoadingText) {
+      modalLoadingText.textContent = 'Regenerating image...';
+    }
+
+    // Disable all buttons
+    if (acceptImageBtn) acceptImageBtn.disabled = true;
+    if (regenerateImageBtn) regenerateImageBtn.disabled = true;
+    if (cancelPreviewBtn) cancelPreviewBtn.disabled = true;
+
+    // Show spinner on regenerate button
+    if (regenerateIcon && regenerateSpinner && regenerateImageBtnText) {
+      regenerateIcon.classList.add('hidden');
+      regenerateSpinner.classList.remove('hidden');
+      regenerateImageBtnText.textContent = 'Regenerating...';
+    }
+
+    try {
+      const response = await fetch(`/api/diary/${entryId}/generate-image`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success && data.imageUrl) {
+        // Store the new preview URL
+        currentPreviewUrl = data.imageUrl;
+        
+        // Update the preview image
+        if (previewImage) {
+          previewImage.src = data.imageUrl;
+        }
+      } else {
+        // Show error
+        showError(`Failed to regenerate image: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error regenerating image:', error);
+      showError('Failed to regenerate image. Please check your connection and try again.');
+    } finally {
+      // Hide loading overlay
+      if (modalLoadingOverlay) {
+        modalLoadingOverlay.classList.add('hidden');
+      }
+
+      // Re-enable buttons
+      if (acceptImageBtn) acceptImageBtn.disabled = false;
+      if (regenerateImageBtn) regenerateImageBtn.disabled = false;
+      if (cancelPreviewBtn) cancelPreviewBtn.disabled = false;
+
+      // Restore regenerate button
+      if (regenerateIcon && regenerateSpinner && regenerateImageBtnText) {
+        regenerateIcon.classList.remove('hidden');
+        regenerateSpinner.classList.add('hidden');
+        regenerateImageBtnText.textContent = 'Regenerate';
       }
     }
   }
@@ -754,10 +859,28 @@ const renderedContent = renderMarkdown(entry.content);
       return;
     }
 
-    // Disable button during save
+    // Show loading state with overlay
+    if (modalLoadingOverlay) {
+      modalLoadingOverlay.classList.remove('hidden');
+    }
+    if (modalLoadingText) {
+      modalLoadingText.textContent = 'Saving image...';
+    }
+
+    // Disable all buttons
     if (acceptImageBtn) {
       acceptImageBtn.disabled = true;
-      acceptImageBtn.textContent = 'Saving...';
+    }
+    if (regenerateImageBtn) {
+      regenerateImageBtn.disabled = true;
+    }
+    if (cancelPreviewBtn) {
+      cancelPreviewBtn.disabled = true;
+    }
+
+    // Update accept button text
+    if (acceptImageBtnText) {
+      acceptImageBtnText.textContent = 'Saving...';
     }
 
     try {
@@ -770,24 +893,53 @@ const renderedContent = renderMarkdown(entry.content);
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Close modal and reload page to show the new cover image
-        if (imagePreviewModal) {
-          imagePreviewModal.classList.add('hidden');
+        // Update loading text to show success
+        if (modalLoadingText) {
+          modalLoadingText.textContent = 'Saved! Reloading page...';
         }
-        window.location.reload();
+        
+        // Close modal and reload page to show the new cover image
+        setTimeout(() => {
+          if (imagePreviewModal) {
+            imagePreviewModal.classList.add('hidden');
+          }
+          window.location.reload();
+        }, 500);
       } else {
         showError(`Failed to save image: ${data.error || 'Unknown error'}`);
-        if (acceptImageBtn) {
-          acceptImageBtn.disabled = false;
-          acceptImageBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Accept & Save';
+        
+        // Hide overlay
+        if (modalLoadingOverlay) {
+          modalLoadingOverlay.classList.add('hidden');
+        }
+        
+        // Re-enable buttons
+        if (acceptImageBtn) acceptImageBtn.disabled = false;
+        if (regenerateImageBtn) regenerateImageBtn.disabled = false;
+        if (cancelPreviewBtn) cancelPreviewBtn.disabled = false;
+        
+        // Restore button text
+        if (acceptImageBtnText) {
+          acceptImageBtnText.textContent = 'Accept & Save';
         }
       }
     } catch (error) {
       console.error('Error accepting image:', error);
       showError('Failed to save image. Please try again.');
-      if (acceptImageBtn) {
-        acceptImageBtn.disabled = false;
-        acceptImageBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Accept & Save';
+      
+      // Hide overlay
+      if (modalLoadingOverlay) {
+        modalLoadingOverlay.classList.add('hidden');
+      }
+      
+      // Re-enable buttons
+      if (acceptImageBtn) acceptImageBtn.disabled = false;
+      if (regenerateImageBtn) regenerateImageBtn.disabled = false;
+      if (cancelPreviewBtn) cancelPreviewBtn.disabled = false;
+      
+      // Restore button text
+      if (acceptImageBtnText) {
+        acceptImageBtnText.textContent = 'Accept & Save';
       }
     }
   }
@@ -803,7 +955,7 @@ const renderedContent = renderMarkdown(entry.content);
   // Event listeners for image generation
   generateImageBtn?.addEventListener('click', generateImagePreview);
   acceptImageBtn?.addEventListener('click', acceptImage);
-  regenerateImageBtn?.addEventListener('click', generateImagePreview);
+  regenerateImageBtn?.addEventListener('click', regenerateWithOverlay);
   cancelPreviewBtn?.addEventListener('click', closePreviewModal);
 
   // Close modal on background click
