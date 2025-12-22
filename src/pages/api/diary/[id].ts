@@ -45,7 +45,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
     
     // Build update object, preserving existing values for fields not in the request
-    const updateData: any = {
+    const updateData: Partial<typeof existingEntry> = {
       date: body.date,
       title: body.title,
       content: body.content,

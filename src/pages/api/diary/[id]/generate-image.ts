@@ -127,11 +127,38 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
       // Get the image buffer
       const imageBuffer = await imageResponse.arrayBuffer();
+      
+      // Validate image size (max 10MB for safety)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (imageBuffer.byteLength > maxSize) {
+        console.error('Image too large:', imageBuffer.byteLength, 'bytes');
+        return new Response(JSON.stringify({ 
+          error: 'Image too large',
+          details: `Image size ${(imageBuffer.byteLength / 1024 / 1024).toFixed(2)}MB exceeds maximum of 10MB`
+        }), {
+          status: 413,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
       const buffer = Buffer.from(imageBuffer);
 
-      // Determine file extension from content-type or default to png
-      const contentType = imageResponse.headers.get('content-type') || 'image/png';
-      const ext = contentType.includes('jpeg') || contentType.includes('jpg') ? 'jpg' : 'png';
+      // Validate and determine file extension from content-type
+      const contentType = imageResponse.headers.get('content-type') || '';
+      let ext: string;
+      
+      // Whitelist of allowed image types
+      if (contentType === 'image/jpeg' || contentType === 'image/jpg') {
+        ext = 'jpg';
+      } else if (contentType === 'image/png') {
+        ext = 'png';
+      } else if (contentType === 'image/webp') {
+        ext = 'webp';
+      } else {
+        // Default to png for unknown types from trusted source (OpenAI)
+        console.warn('Unknown content-type from OpenAI:', contentType, '- defaulting to png');
+        ext = 'png';
+      }
       
       // Generate unique filename
       const filename = `ai-${randomUUID()}.${ext}`;
