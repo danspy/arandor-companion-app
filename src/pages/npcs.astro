@@ -31,7 +31,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     <div class="flex justify-end mb-4">
       <button 
         id="addNPC"
-        class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition flex items-center gap-2"
+        class="text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 transition flex items-center gap-2 font-medium"
         title="Add new NPC"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -170,7 +170,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           {isLoggedIn && (
             <div class="flex gap-2 mt-3 justify-end items-center border-t dark:border-gray-800 pt-3">
               <button 
-                class="edit-npc p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" 
+                class="edit-npc p-2 text-gray-500 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer" 
                 data-id={npc.id}
                 title="Edit NPC"
                 aria-label="Edit NPC"
@@ -180,7 +180,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 </svg>
               </button>
               <button 
-                class="delete-npc p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition" 
+                class="delete-npc p-2 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer" 
                 data-id={npc.id}
                 title="Delete NPC"
                 aria-label="Delete NPC"
