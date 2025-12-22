@@ -457,12 +457,20 @@ function preparePodcastNarration(title: string, content: string): string {
   return narration;
 }
 
+// OpenAI TTS API has a limit of approximately 4096 characters per request
+const TTS_MAX_CHARACTERS = 4000;
+
 /**
  * Generate an AI-powered podcast narration for a diary entry
  * Uses OpenAI's Text-to-Speech API with high-quality voices
+ * 
+ * Note: The audio is returned as a base64 data URL and stored in the database.
+ * This approach keeps the implementation simple without requiring file storage infrastructure.
+ * For very large campaigns with many podcasts, consider implementing file-based storage.
+ * 
  * @param title - The title of the diary entry
  * @param content - The full content of the diary entry (markdown)
- * @returns URL to the generated audio file (temporary, valid for 1 hour)
+ * @returns Base64 data URL of the generated audio (stored in database)
  */
 export async function generateDiaryPodcast(
   title: string,
@@ -486,12 +494,10 @@ export async function generateDiaryPodcast(
   // Prepare the text for narration
   const narrationText = preparePodcastNarration(title, content);
 
-  // OpenAI TTS has a limit of ~4096 characters per request
-  // For longer content, we'll truncate with a note
-  const maxLength = 4000;
+  // Truncate if content exceeds OpenAI TTS character limit
   let finalText = narrationText;
-  if (narrationText.length > maxLength) {
-    finalText = narrationText.substring(0, maxLength) + '... The full session continues in the written entry.';
+  if (narrationText.length > TTS_MAX_CHARACTERS) {
+    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + '... The full session continues in the written entry.';
   }
 
   try {
