@@ -520,7 +520,9 @@ export async function generateDiaryPodcast(
   if (narrationText.length > TTS_MAX_CHARACTERS) {
     // Use localized truncation message based on detected language
     const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang];
-    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + truncationMessage;
+    // Ensure the final text (content + truncation message) doesn't exceed the limit
+    const maxContentLength = TTS_MAX_CHARACTERS - truncationMessage.length;
+    finalText = narrationText.substring(0, maxContentLength) + truncationMessage;
   }
 
   try {
