@@ -177,6 +177,187 @@ export async function generateDiarySummary(
 }
 
 /**
+ * Extract safe themes and elements from D&D diary content
+ * Supports both English and German content
+ * @param text - The text to analyze
+ * @returns A list of safe, artistic themes
+ */
+function extractSafeThemes(text: string): string[] {
+  const themes: string[] = [];
+  const lowerText = text.toLowerCase();
+  
+  // Location themes (safe) - English and German keywords
+  if (lowerText.match(/\b(forest|wood|tree|grove|wald|baum|hain)\b/)) themes.push('forest setting');
+  if (lowerText.match(/\b(mountain|peak|cliff|cave|berg|gipfel|klippe|höhle)\b/)) themes.push('mountain landscape');
+  if (lowerText.match(/\b(tavern|inn|bar|taverne|gasthaus|wirtshaus|schenke)\b/)) themes.push('tavern interior');
+  if (lowerText.match(/\b(castle|fortress|tower|palace|burg|festung|turm|palast|schloss)\b/)) themes.push('castle architecture');
+  if (lowerText.match(/\b(dungeon|underground|crypt|kerker|verlies|gruft|krypta)\b/)) themes.push('underground chamber');
+  if (lowerText.match(/\b(city|town|village|street|stadt|dorf|straße|strasse|gasse)\b/)) themes.push('medieval town');
+  if (lowerText.match(/\b(temple|shrine|church|tempel|schrein|kirche|kapelle)\b/)) themes.push('temple setting');
+  if (lowerText.match(/\b(ruin|ancient|old|ruine|alt|antik)\b/)) themes.push('ancient ruins');
+  if (lowerText.match(/\b(ship|boat|sea|ocean|port|schiff|boot|meer|ozean|hafen)\b/)) themes.push('nautical scene');
+  if (lowerText.match(/\b(desert|sand|dune|wüste|düne)\b/)) themes.push('desert landscape');
+  
+  // Atmosphere themes (safe) - English and German keywords
+  if (lowerText.match(/\b(night|dark|shadow|moonlight|nacht|dunkel|schatten|mondlicht|mondschein)\b/)) themes.push('nighttime atmosphere');
+  if (lowerText.match(/\b(magic|spell|arcane|mystical|magie|zauber|magisch|mystisch|arkane)\b/)) themes.push('magical elements');
+  if (lowerText.match(/\b(fog|mist|cloudy|nebel|neblig|wolkig)\b/)) themes.push('misty atmosphere');
+  if (lowerText.match(/\b(fire|flame|torch|candle|feuer|flamme|fackel|kerze)\b/)) themes.push('dramatic lighting');
+  
+  // Character themes (abstract, safe) - English and German keywords
+  if (lowerText.match(/\b(wizard|mage|sorcerer|magier|zauberer|hexenmeister)\b/)) themes.push('spellcaster character');
+  if (lowerText.match(/\b(warrior|fighter|knight|krieger|kämpfer|ritter)\b/)) themes.push('armored warrior');
+  if (lowerText.match(/\b(rogue|thief|scout|schurke|dieb|kundschafter)\b/)) themes.push('stealthy figure');
+  if (lowerText.match(/\b(cleric|priest|healer|kleriker|priester|heiler)\b/)) themes.push('holy character');
+  if (lowerText.match(/\b(ranger|hunter|waldläufer|jäger)\b/)) themes.push('wilderness explorer');
+  if (lowerText.match(/\b(bard|musician|spielmann|musiker)\b/)) themes.push('traveling performer');
+  
+  // General adventure themes (safe) - English and German keywords
+  if (lowerText.match(/\b(journey|travel|road|path|reise|weg|pfad|straße|strasse)\b/)) themes.push('journey scene');
+  if (lowerText.match(/\b(treasure|gold|artifact|item|schatz|gold|artefakt|gegenstand)\b/)) themes.push('treasure discovery');
+  if (lowerText.match(/\b(map|scroll|book|karte|schriftrolle|buch)\b/)) themes.push('ancient artifacts');
+  if (lowerText.match(/\b(meeting|council|gather|treffen|rat|versammlung)\b/)) themes.push('group gathering');
+  
+  return themes;
+}
+
+/**
+ * Create a safe, contextual image prompt optimized for fantasy D&D content
+ * Uses AI-generated summary when available for better context, supplemented with theme extraction
+ * @param title - The title of the diary entry
+ * @param contextText - Summary or content excerpt
+ * @param useSummary - Whether contextText is an AI-generated summary (already safe)
+ * @returns A sanitized prompt string
+ */
+function createSafeImagePrompt(title: string, contextText: string, useSummary: boolean = false): string {
+  let prompt = 'A fantasy tabletop RPG illustration in the style of official D&D artwork. ';
+  
+  if (useSummary && contextText) {
+    // If we have an AI-generated summary, use it directly as it's already clean and contextual
+    prompt += `Scene description: ${contextText}. `;
+  } else {
+    // Otherwise, fall back to theme extraction for safety
+    const themes = extractSafeThemes(`${title} ${contextText}`);
+    
+    if (themes.length > 0) {
+      // Use the extracted themes (max 3 for clarity)
+      const selectedThemes = themes.slice(0, 3).join(', ');
+      prompt += `The scene features: ${selectedThemes}. `;
+    } else {
+      // Fallback to a generic heroic fantasy scene
+      prompt += 'A heroic fantasy adventure scene with adventurers in an epic setting. ';
+    }
+  }
+  
+  // Add artistic direction
+  prompt += 'Artistic style: professional fantasy illustration with cinematic composition, dramatic lighting, rich colors, and atmospheric depth. ';
+  prompt += 'The scene should evoke a sense of adventure, mystery, and heroic fantasy. ';
+  
+  // Critical: No text in image
+  prompt += 'IMPORTANT: Do not include any text, words, letters, numbers, titles, captions, labels, or written language anywhere in the image. Pure visual artwork only, no text overlays or inscriptions.';
+  
+  return prompt;
+}
+
+/**
+ * Attempt to generate an image with retry logic for safety system errors
+ * @param apiBase - API base URL
+ * @param apiKey - API key
+ * @param imageModel - Image model to use
+ * @param imageSize - Image size
+ * @param imageQuality - Image quality
+ * @param imagePrompt - Image prompt
+ * @param maxRetries - Maximum number of retry attempts
+ * @returns ImageGenerationResult
+ */
+async function attemptImageGeneration(
+  apiBase: string,
+  apiKey: string,
+  imageModel: string,
+  imageSize: string,
+  imageQuality: string,
+  imagePrompt: string,
+  maxRetries: number = 2
+): Promise<ImageGenerationResult> {
+  let lastError = '';
+  
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      // Add exponential backoff delay between retries
+      if (attempt > 0) {
+        const delay = Math.pow(2, attempt - 1) * 1000; // 1s, 2s, 4s...
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+
+      const response = await fetch(`${apiBase}/images/generations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: imageModel,
+          prompt: imagePrompt,
+          n: 1,
+          size: imageSize,
+          quality: imageQuality,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.error?.message || '';
+        lastError = `API error: ${response.status} ${response.statusText}${errorMessage ? ' - ' + errorMessage : ''}`;
+        
+        // Check if this is a safety system error that can be retried
+        const isSafetyError = response.status === 400 && 
+          (errorMessage.toLowerCase().includes('safety system') || 
+           errorMessage.toLowerCase().includes('content policy'));
+        
+        if (isSafetyError && attempt < maxRetries) {
+          // This is a retryable error, continue to next attempt
+          continue;
+        }
+        
+        // Non-retryable error or max retries reached
+        return {
+          success: false,
+          error: lastError,
+        };
+      }
+
+      const data = await response.json();
+      const imageUrl = data.data?.[0]?.url;
+
+      if (!imageUrl) {
+        return {
+          success: false,
+          error: 'No image URL generated from API response',
+        };
+      }
+
+      return {
+        success: true,
+        imageUrl: imageUrl,
+      };
+    } catch (error) {
+      lastError = `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`;
+      
+      // Network errors might be worth retrying
+      if (attempt < maxRetries) {
+        continue;
+      }
+    }
+  }
+  
+  // All retries exhausted
+  return {
+    success: false,
+    error: `${lastError}. The image generation was attempted ${maxRetries + 1} times. This may be due to content restrictions. Please try again later.`,
+  };
+}
+
+/**
  * Generate an AI image for a diary entry
  * @param title - The title of the diary entry
  * @param content - The full content of the diary entry (markdown)
@@ -215,61 +396,22 @@ export async function generateDiaryImage(
     .replace(/---+/g, '') // Remove horizontal rules
     .replace(/>\s+/g, '') // Remove blockquotes
     .trim();
-  
-  // Detect the language of the content
-  const detectedLang = detectLanguage(`${title} ${cleanContent}`);
-  const languageName = detectedLang === 'de' ? 'German' : 'English';
 
   // Create a prompt for image generation
-  // Use summary if available, otherwise use a truncated version of the content
+  // Prefer using the AI-generated summary if available (it's already safe and contextual)
+  // Otherwise fall back to truncated content with theme extraction
   const contextText = summary || cleanContent.substring(0, 500);
+  const useSummary = !!summary; // Use summary directly if available
   
-  const imagePrompt = `Create a fantasy D&D scene illustration for a session diary entry titled "${title}". ${
-    detectedLang === 'de' ? 'Kontext: ' : 'Context: '
-  }${contextText}. Style: Fantasy art, dramatic lighting, detailed environment, atmospheric. Focus on the key moment or location described.`;
+  const imagePrompt = createSafeImagePrompt(title, contextText, useSummary);
 
-  try {
-    const response = await fetch(`${apiBase}/images/generations`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: imageModel,
-        prompt: imagePrompt,
-        n: 1,
-        size: imageSize,
-        quality: imageQuality,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      return {
-        success: false,
-        error: `API error: ${response.status} ${response.statusText}${errorData.error?.message ? ' - ' + errorData.error.message : ''}`,
-      };
-    }
-
-    const data = await response.json();
-    const imageUrl = data.data?.[0]?.url;
-
-    if (!imageUrl) {
-      return {
-        success: false,
-        error: 'No image URL generated from API response',
-      };
-    }
-
-    return {
-      success: true,
-      imageUrl: imageUrl,
-    };
-  } catch (error) {
-    return {
-      success: false,
-      error: `Failed to generate image: ${error instanceof Error ? error.message : 'Unknown error'}`,
-    };
-  }
+  return attemptImageGeneration(
+    apiBase,
+    apiKey,
+    imageModel,
+    imageSize,
+    imageQuality,
+    imagePrompt,
+    2 // Max retries after initial attempt (3 total attempts)
+  );
 }
