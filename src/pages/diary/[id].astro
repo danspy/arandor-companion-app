@@ -98,7 +98,7 @@ const renderedContent = renderMarkdown(entry.content);
       )}
     </div>
 
-    <!-- Cover Video or AI-Generated Image or Cover Image -->
+    <!-- Cover Video or Image -->
     {entry.coverVideoUrl ? (
       <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
         <video 
@@ -115,22 +115,13 @@ const renderedContent = renderMarkdown(entry.content);
           Your browser does not support the video tag.
         </video>
       </div>
-    ) : (entry.aiGeneratedImageUrl || entry.coverImageUrl) && (
-      <div class="mb-8 rounded-lg overflow-hidden shadow-lg relative">
+    ) : entry.coverImageUrl && (
+      <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
         <img 
-          id="entryImage"
-          src={entry.aiGeneratedImageUrl || entry.coverImageUrl} 
+          src={entry.coverImageUrl} 
           alt={entry.title}
           class="w-full h-96 object-cover"
         />
-        {entry.aiGeneratedImageUrl && (
-          <div class="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            AI Generated
-          </div>
-        )}
       </div>
     )}
 
@@ -204,7 +195,7 @@ const renderedContent = renderMarkdown(entry.content);
         </div>
       )}
 
-      <!-- AI Generated Image -->
+      <!-- AI Image Generation -->
       {canGenerateSummary && (
         <div id="imageGenerationSection" class="mb-6 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-900/10 dark:border-purple-600 p-4 rounded-r-lg">
           <div class="flex items-start justify-between gap-4">
@@ -213,38 +204,22 @@ const renderedContent = renderMarkdown(entry.content);
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
-                AI Generated Image
+                AI Image Generation
               </h3>
-              <div id="imageGenerationContent" class="text-gray-700 dark:text-gray-300">
-                {entry.aiGeneratedImageUrl ? (
-                  <p class="text-sm">AI-generated image is displayed above</p>
-                ) : (
-                  <p class="text-gray-500 dark:text-gray-500 italic text-sm">No AI-generated image yet. Click "Generate" to create one based on the diary entry.</p>
-                )}
-              </div>
+              <p class="text-sm text-gray-700 dark:text-gray-300">
+                Generate a fantasy D&D scene illustration for this diary entry using AI.
+              </p>
             </div>
-            <div class="flex-shrink-0 flex gap-2">
+            <div class="flex-shrink-0">
               <button
                 id="generateImageBtn"
-                class="bg-purple-600 text-white px-3 py-1.5 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition text-sm font-medium flex items-center gap-2"
+                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition text-sm font-medium flex items-center gap-2"
                 title="Generate AI image"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
                 </svg>
-                <span id="generateImageBtnText">Generate</span>
-              </button>
-              <button
-                id="deleteImageBtn"
-                class:list={[
-                  "border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm font-medium flex items-center gap-2",
-                  { "hidden": !entry.aiGeneratedImageUrl }
-                ]}
-                title="Delete AI-generated image"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                <span id="generateImageBtnText">Generate Preview</span>
               </button>
             </div>
           </div>
@@ -485,6 +460,55 @@ const renderedContent = renderMarkdown(entry.content);
       </div>
     )}
   </div>
+
+  <!-- AI Image Preview Modal -->
+  <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+    <div class="bg-white dark:bg-gray-900 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-700">
+      <div class="p-6">
+        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">AI Generated Image Preview</h2>
+        
+        <div id="previewImageContainer" class="mb-6 rounded-lg overflow-hidden">
+          <img 
+            id="previewImage" 
+            src="" 
+            alt="AI Generated Preview"
+            class="w-full h-auto max-h-[60vh] object-contain"
+          />
+        </div>
+
+        <p class="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Review the generated image. You can regenerate a new version or accept this one to set it as the cover image.
+        </p>
+
+        <div class="flex gap-3 flex-wrap">
+          <button
+            id="acceptImageBtn"
+            class="flex-1 bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition font-medium flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            Accept & Save
+          </button>
+          <button
+            id="regenerateImageBtn"
+            class="flex-1 bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition font-medium flex items-center justify-center gap-2"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+            Regenerate
+          </button>
+          <button
+            id="cancelPreviewBtn"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-3 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition font-medium"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
 </Layout>
 
 <style is:global>
@@ -659,15 +683,19 @@ const renderedContent = renderMarkdown(entry.content);
     }
   });
 
-  // Handle AI image generation
+  // Handle AI image generation with preview modal
   const generateImageBtn = document.getElementById('generateImageBtn');
-  const deleteImageBtn = document.getElementById('deleteImageBtn');
-  const imageGenerationContent = document.getElementById('imageGenerationContent');
+  const imagePreviewModal = document.getElementById('imagePreviewModal');
+  const previewImage = document.getElementById('previewImage') as HTMLImageElement;
+  const acceptImageBtn = document.getElementById('acceptImageBtn');
+  const regenerateImageBtn = document.getElementById('regenerateImageBtn');
+  const cancelPreviewBtn = document.getElementById('cancelPreviewBtn');
   const generateImageBtnText = document.getElementById('generateImageBtnText');
-  const entryImage = document.getElementById('entryImage');
 
-  // Handle generate image button click
-  generateImageBtn?.addEventListener('click', async () => {
+  let currentPreviewUrl: string | null = null;
+
+  // Generate image preview
+  async function generateImagePreview() {
     const entryId = getEntryIdFromUrl();
 
     if (!entryId) {
@@ -688,88 +716,100 @@ const renderedContent = renderMarkdown(entry.content);
 
       const data = await response.json();
 
-      if (response.ok && data.success) {
-        // Update the image display if it exists
-        if (entryImage && data.imageUrl) {
-          entryImage.src = data.imageUrl;
-        } else if (data.imageUrl) {
-          // If no image element exists, reload the page to show the new image
-          window.location.reload();
-          return;
-        }
+      if (response.ok && data.success && data.imageUrl) {
+        // Store the preview URL
+        currentPreviewUrl = data.imageUrl;
         
-        // Update the image generation content
-        if (imageGenerationContent) {
-          imageGenerationContent.innerHTML = '';
-          const p = document.createElement('p');
-          p.className = 'text-sm';
-          p.textContent = 'AI-generated image is displayed above';
-          imageGenerationContent.appendChild(p);
-        }
-        
-        // Show the delete button if it exists
-        if (deleteImageBtn) {
-          deleteImageBtn.classList.remove('hidden');
-        }
-        
-        // Update button text
-        if (generateImageBtnText) {
-          generateImageBtnText.textContent = 'Regenerate';
+        // Show the preview modal
+        if (previewImage && imagePreviewModal) {
+          previewImage.src = data.imageUrl;
+          imagePreviewModal.classList.remove('hidden');
         }
       } else {
         // Show error
         showError(`Failed to generate image: ${data.error || 'Unknown error'}`);
-        
-        // Reset button
-        if (generateImageBtnText) {
-          generateImageBtnText.textContent = 'Generate';
-        }
       }
     } catch (error) {
       console.error('Error generating image:', error);
       showError('Failed to generate image. Please check your connection and try again.');
-      
-      // Reset button
-      if (generateImageBtnText) {
-        generateImageBtnText.textContent = 'Generate';
-      }
     } finally {
       // Re-enable button
-      if (generateImageBtn) {
+      if (generateImageBtn && generateImageBtnText) {
         generateImageBtn.disabled = false;
+        generateImageBtnText.textContent = 'Generate Preview';
       }
     }
-  });
+  }
 
-  // Handle delete image button click
-  deleteImageBtn?.addEventListener('click', async () => {
+  // Accept and save the preview image
+  async function acceptImage() {
+    if (!currentPreviewUrl) {
+      showError('No preview image to accept');
+      return;
+    }
+
     const entryId = getEntryIdFromUrl();
-
     if (!entryId) {
       showError('Unable to determine entry ID');
       return;
     }
 
-    if (!confirm('Are you sure you want to delete this AI-generated image? This action cannot be undone.')) {
-      return;
+    // Disable button during save
+    if (acceptImageBtn) {
+      acceptImageBtn.disabled = true;
+      acceptImageBtn.textContent = 'Saving...';
     }
 
     try {
       const response = await fetch(`/api/diary/${entryId}/generate-image`, {
-        method: 'DELETE',
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imageUrl: currentPreviewUrl }),
       });
 
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Reload the page to show the updated state
+        // Close modal and reload page to show the new cover image
+        if (imagePreviewModal) {
+          imagePreviewModal.classList.add('hidden');
+        }
         window.location.reload();
       } else {
-        showError(`Failed to delete image: ${data.error || 'Unknown error'}`);
+        showError(`Failed to save image: ${data.error || 'Unknown error'}`);
+        if (acceptImageBtn) {
+          acceptImageBtn.disabled = false;
+          acceptImageBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Accept & Save';
+        }
       }
     } catch (error) {
-      console.error('Error deleting image:', error);
-      showError('Failed to delete image. Please check your connection and try again.');
+      console.error('Error accepting image:', error);
+      showError('Failed to save image. Please try again.');
+      if (acceptImageBtn) {
+        acceptImageBtn.disabled = false;
+        acceptImageBtn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg> Accept & Save';
+      }
+    }
+  }
+
+  // Close the preview modal
+  function closePreviewModal() {
+    if (imagePreviewModal) {
+      imagePreviewModal.classList.add('hidden');
+    }
+    currentPreviewUrl = null;
+  }
+
+  // Event listeners for image generation
+  generateImageBtn?.addEventListener('click', generateImagePreview);
+  acceptImageBtn?.addEventListener('click', acceptImage);
+  regenerateImageBtn?.addEventListener('click', generateImagePreview);
+  cancelPreviewBtn?.addEventListener('click', closePreviewModal);
+
+  // Close modal on background click
+  imagePreviewModal?.addEventListener('click', (e) => {
+    if (e.target === imagePreviewModal) {
+      closePreviewModal();
     }
   });
   }

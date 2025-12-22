@@ -5,7 +5,8 @@ import { generateDiaryImage } from '../../../../utils/ai';
 
 /**
  * POST /api/diary/[id]/generate-image
- * Generates an AI image for a diary entry and saves it
+ * Generates an AI image preview for a diary entry (does NOT save to database)
+ * Returns the image URL for user preview and approval
  * Restricted to dungeonmaster and admin roles only
  */
 export const POST: APIRoute = async ({ params, cookies }) => {
@@ -42,22 +43,11 @@ export const POST: APIRoute = async ({ params, cookies }) => {
       });
     }
 
-    // Update the entry with the generated image URL
-    const now = new Date();
-    await db.update(DiaryEntry)
-      .set({
-        aiGeneratedImageUrl: result.imageUrl,
-        updatedAt: now,
-      })
-      .where(eq(DiaryEntry.id, entryId));
-
-    // Fetch and return the updated entry
-    const updatedEntries = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, entryId));
-    
+    // Return the image URL for preview (NOT saved to database yet)
     return new Response(JSON.stringify({ 
       success: true,
       imageUrl: result.imageUrl,
-      entry: updatedEntries[0]
+      preview: true // Indicate this is a preview, not saved
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -75,11 +65,11 @@ export const POST: APIRoute = async ({ params, cookies }) => {
 };
 
 /**
- * DELETE /api/diary/[id]/generate-image
- * Deletes the AI-generated image from a diary entry
+ * PUT /api/diary/[id]/generate-image
+ * Accepts and saves the AI-generated image preview to coverImageUrl
  * Restricted to dungeonmaster and admin roles only
  */
-export const DELETE: APIRoute = async ({ params, cookies }) => {
+export const PUT: APIRoute = async ({ params, request, cookies }) => {
   const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
 
@@ -87,6 +77,16 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
     const entryId = params.id;
     if (!entryId) {
       return new Response(JSON.stringify({ error: 'Entry ID is required' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    const body = await request.json();
+    const imageUrl = body.imageUrl;
+
+    if (!imageUrl) {
+      return new Response(JSON.stringify({ error: 'Image URL is required' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' }
       });
@@ -103,11 +103,11 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       });
     }
 
-    // Delete the AI-generated image by setting it to null
+    // Save the accepted image to coverImageUrl
     const now = new Date();
     await db.update(DiaryEntry)
       .set({
-        aiGeneratedImageUrl: null,
+        coverImageUrl: imageUrl,
         updatedAt: now,
       })
       .where(eq(DiaryEntry.id, entryId));
@@ -123,9 +123,9 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
-    console.error('Error deleting AI-generated image:', error);
+    console.error('Error accepting image:', error);
     return new Response(JSON.stringify({ 
-      error: 'Failed to delete AI-generated image',
+      error: 'Failed to accept image',
       details: error instanceof Error ? error.message : 'Unknown error'
     }), {
       status: 500,

@@ -11,7 +11,6 @@ const DiaryEntry = defineTable({
     tags: column.json(),
     coverImageUrl: column.text({ optional: true }),
     coverVideoUrl: column.text({ optional: true }),
-    aiGeneratedImageUrl: column.text({ optional: true }),
     npcIds: column.json({ default: [] }),
     locationIds: column.json({ default: [] }),
     characterIds: column.json({ default: [] }),

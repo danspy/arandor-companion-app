@@ -126,21 +126,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               Your browser does not support the video tag.
             </video>
           </div>
-        ) : (entry.aiGeneratedImageUrl || entry.coverImageUrl) && (
-          <div class="mb-4 rounded-lg overflow-hidden relative">
+        ) : entry.coverImageUrl && (
+          <div class="mb-4 rounded-lg overflow-hidden">
             <img 
-              src={entry.aiGeneratedImageUrl || entry.coverImageUrl} 
+              src={entry.coverImageUrl} 
               alt={entry.title}
               class="w-full h-48 object-cover"
             />
-            {entry.aiGeneratedImageUrl && (
-              <div class="absolute top-2 right-2 bg-purple-600 text-white px-2 py-1 rounded-lg text-xs font-medium flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI
-              </div>
-            )}
           </div>
         )}
         <div class="mb-4">
