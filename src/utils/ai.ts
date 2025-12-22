@@ -26,6 +26,12 @@ export interface PodcastGenerationResult {
   error?: string;
 }
 
+// Localized podcast truncation messages
+const PODCAST_TRUNCATION_MESSAGES = {
+  en: '... The full session continues in the written entry.',
+  de: '... Der vollständige Eintrag kann im Text nachgelesen werden.',
+};
+
 /**
  * Detect the primary language of the text
  * @param text - The text to analyze
@@ -510,9 +516,7 @@ export async function generateDiaryPodcast(
   let finalText = narrationText;
   if (narrationText.length > TTS_MAX_CHARACTERS) {
     // Use localized truncation message based on detected language
-    const truncationMessage = detectedLang === 'de' 
-      ? '... Der vollständige Eintrag kann im Text nachgelesen werden.'
-      : '... The full session continues in the written entry.';
+    const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang as 'en' | 'de'] || PODCAST_TRUNCATION_MESSAGES.en;
     finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + truncationMessage;
   }
 
