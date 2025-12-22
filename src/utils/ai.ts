@@ -178,6 +178,7 @@ export async function generateDiarySummary(
 
 /**
  * Extract safe themes and elements from D&D diary content
+ * Supports both English and German content
  * @param text - The text to analyze
  * @returns A list of safe, artistic themes
  */
@@ -185,37 +186,37 @@ function extractSafeThemes(text: string): string[] {
   const themes: string[] = [];
   const lowerText = text.toLowerCase();
   
-  // Location themes (safe)
-  if (lowerText.match(/\b(forest|wood|tree|grove)\b/)) themes.push('forest setting');
-  if (lowerText.match(/\b(mountain|peak|cliff|cave)\b/)) themes.push('mountain landscape');
-  if (lowerText.match(/\b(tavern|inn|bar)\b/)) themes.push('tavern interior');
-  if (lowerText.match(/\b(castle|fortress|tower|palace)\b/)) themes.push('castle architecture');
-  if (lowerText.match(/\b(dungeon|underground|crypt)\b/)) themes.push('underground chamber');
-  if (lowerText.match(/\b(city|town|village|street)\b/)) themes.push('medieval town');
-  if (lowerText.match(/\b(temple|shrine|church)\b/)) themes.push('temple setting');
-  if (lowerText.match(/\b(ruin|ancient|old)\b/)) themes.push('ancient ruins');
-  if (lowerText.match(/\b(ship|boat|sea|ocean|port)\b/)) themes.push('nautical scene');
-  if (lowerText.match(/\b(desert|sand|dune)\b/)) themes.push('desert landscape');
+  // Location themes (safe) - English and German keywords
+  if (lowerText.match(/\b(forest|wood|tree|grove|wald|baum|hain)\b/)) themes.push('forest setting');
+  if (lowerText.match(/\b(mountain|peak|cliff|cave|berg|gipfel|klippe|höhle)\b/)) themes.push('mountain landscape');
+  if (lowerText.match(/\b(tavern|inn|bar|taverne|gasthaus|wirtshaus|schenke)\b/)) themes.push('tavern interior');
+  if (lowerText.match(/\b(castle|fortress|tower|palace|burg|festung|turm|palast|schloss)\b/)) themes.push('castle architecture');
+  if (lowerText.match(/\b(dungeon|underground|crypt|kerker|verlies|gruft|krypta)\b/)) themes.push('underground chamber');
+  if (lowerText.match(/\b(city|town|village|street|stadt|dorf|straße|strasse|gasse)\b/)) themes.push('medieval town');
+  if (lowerText.match(/\b(temple|shrine|church|tempel|schrein|kirche|kapelle)\b/)) themes.push('temple setting');
+  if (lowerText.match(/\b(ruin|ancient|old|ruine|alt|antik)\b/)) themes.push('ancient ruins');
+  if (lowerText.match(/\b(ship|boat|sea|ocean|port|schiff|boot|meer|ozean|hafen)\b/)) themes.push('nautical scene');
+  if (lowerText.match(/\b(desert|sand|dune|wüste|düne)\b/)) themes.push('desert landscape');
   
-  // Atmosphere themes (safe)
-  if (lowerText.match(/\b(night|dark|shadow|moonlight)\b/)) themes.push('nighttime atmosphere');
-  if (lowerText.match(/\b(magic|spell|arcane|mystical)\b/)) themes.push('magical elements');
-  if (lowerText.match(/\b(fog|mist|cloudy)\b/)) themes.push('misty atmosphere');
-  if (lowerText.match(/\b(fire|flame|torch|candle)\b/)) themes.push('dramatic lighting');
+  // Atmosphere themes (safe) - English and German keywords
+  if (lowerText.match(/\b(night|dark|shadow|moonlight|nacht|dunkel|schatten|mondlicht|mondschein)\b/)) themes.push('nighttime atmosphere');
+  if (lowerText.match(/\b(magic|spell|arcane|mystical|magie|zauber|magisch|mystisch|arkane)\b/)) themes.push('magical elements');
+  if (lowerText.match(/\b(fog|mist|cloudy|nebel|neblig|wolkig)\b/)) themes.push('misty atmosphere');
+  if (lowerText.match(/\b(fire|flame|torch|candle|feuer|flamme|fackel|kerze)\b/)) themes.push('dramatic lighting');
   
-  // Character themes (abstract, safe)
-  if (lowerText.match(/\b(wizard|mage|sorcerer)\b/)) themes.push('spellcaster character');
-  if (lowerText.match(/\b(warrior|fighter|knight)\b/)) themes.push('armored warrior');
-  if (lowerText.match(/\b(rogue|thief|scout)\b/)) themes.push('stealthy figure');
-  if (lowerText.match(/\b(cleric|priest|healer)\b/)) themes.push('holy character');
-  if (lowerText.match(/\b(ranger|hunter)\b/)) themes.push('wilderness explorer');
-  if (lowerText.match(/\b(bard|musician)\b/)) themes.push('traveling performer');
+  // Character themes (abstract, safe) - English and German keywords
+  if (lowerText.match(/\b(wizard|mage|sorcerer|magier|zauberer|hexenmeister)\b/)) themes.push('spellcaster character');
+  if (lowerText.match(/\b(warrior|fighter|knight|krieger|kämpfer|ritter)\b/)) themes.push('armored warrior');
+  if (lowerText.match(/\b(rogue|thief|scout|schurke|dieb|kundschafter)\b/)) themes.push('stealthy figure');
+  if (lowerText.match(/\b(cleric|priest|healer|kleriker|priester|heiler)\b/)) themes.push('holy character');
+  if (lowerText.match(/\b(ranger|hunter|waldläufer|jäger)\b/)) themes.push('wilderness explorer');
+  if (lowerText.match(/\b(bard|musician|spielmann|musiker)\b/)) themes.push('traveling performer');
   
-  // General adventure themes (safe)
-  if (lowerText.match(/\b(journey|travel|road|path)\b/)) themes.push('journey scene');
-  if (lowerText.match(/\b(treasure|gold|artifact|item)\b/)) themes.push('treasure discovery');
-  if (lowerText.match(/\b(map|scroll|book)\b/)) themes.push('ancient artifacts');
-  if (lowerText.match(/\b(meeting|council|gather)\b/)) themes.push('group gathering');
+  // General adventure themes (safe) - English and German keywords
+  if (lowerText.match(/\b(journey|travel|road|path|reise|weg|pfad|straße|strasse)\b/)) themes.push('journey scene');
+  if (lowerText.match(/\b(treasure|gold|artifact|item|schatz|gold|artefakt|gegenstand)\b/)) themes.push('treasure discovery');
+  if (lowerText.match(/\b(map|scroll|book|karte|schriftrolle|buch)\b/)) themes.push('ancient artifacts');
+  if (lowerText.match(/\b(meeting|council|gather|treffen|rat|versammlung)\b/)) themes.push('group gathering');
   
   return themes;
 }
