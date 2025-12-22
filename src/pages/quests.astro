@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
+import Button from '../components/Button.astro';
 import { db, Quest, PageSettings, eq } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
@@ -50,12 +51,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {canEdit && (
     <div class="flex justify-end mb-4">
-      <button 
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
         id="addQuest"
-        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+        title="Add new Add Quest"
       >
-        + Add Quest
-      </button>
+        Add Quest
+      </Button>
     </div>
   )}
 
@@ -141,28 +145,44 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
           </div>
           {canEdit && (
-            <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto">
+            <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto items-center items-end">
               {quest.status === 'active' && (
                 <>
-                  <button class="complete-quest px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 transition text-sm" data-id={quest.id}>
+                  <Button variant="success" size="xs" class="complete-quest" data-id={quest.id}>
                     Complete
-                  </button>
-                  <button class="fail-quest px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600 transition text-sm" data-id={quest.id}>
+                  </Button>
+                  <Button variant="danger" size="xs" class="fail-quest" data-id={quest.id}>
                     Fail
-                  </button>
+                  </Button>
                 </>
               )}
               {(quest.status === 'completed' || quest.status === 'failed') && (
-                <button class="reactivate-quest px-4 py-2 bg-accent-600 text-white rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm" data-id={quest.id}>
+                <Button variant="secondary" size="xs" class="reactivate-quest" data-id={quest.id}>
                   Reactivate
-                </button>
+                </Button>
               )}
-              <button class="edit-quest px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={quest.id}>
-                Edit
-              </button>
-              <button class="delete-quest px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={quest.id}>
-                Delete
-              </button>
+              <div class="flex gap-2 items-center">
+                <Button
+                variant="icon"
+                size="md"
+                icon="edit"
+                iconPosition="only"
+                class="edit-quest"
+                data-id={quest.id}
+                title="Edit quest"
+                ariaLabel="Edit quest"
+              />
+                <Button
+                variant="ghost"
+                size="md"
+                icon="delete"
+                iconPosition="only"
+                class="delete-quest hover:text-red-600 dark:hover:text-red-400"
+                data-id={quest.id}
+                title="Delete quest"
+                ariaLabel="Delete quest"
+              />
+              </div>
             </div>
           )}
         </div>

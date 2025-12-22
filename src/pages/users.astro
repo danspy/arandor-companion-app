@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
 import { getUserRole } from '../lib/auth';
 
 // Check if user is authenticated and is admin
@@ -23,12 +24,15 @@ const users = await db.select({
   <div class="max-w-4xl mx-auto">
     <div class="flex justify-between items-center mb-8">
       <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">User Management</h1>
-      <button 
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
         id="addUserBtn"
-        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+        title="Add new Add User"
       >
         Add User
-      </button>
+      </Button>
     </div>
 
     <!-- Success/Error Messages -->
@@ -63,24 +67,34 @@ const users = await db.select({
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                 {new Date(user.createdAt).toLocaleString()}
               </td>
-              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                <button 
-                  class="edit-user-btn text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 mr-4"
-                  data-user-id={user.id}
-                  data-username={user.username}
-                  data-user-role={user.role || 'player'}
-                >
-                  Edit
-                </button>
-                {user.username !== 'admin' && (
+              <td class="px-6 py-4 whitespace-nowrap text-sm">
+                <div class="flex gap-2 items-center">
                   <button 
-                    class="delete-user-btn text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                    class="edit-user-btn p-2.5 text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
                     data-user-id={user.id}
                     data-username={user.username}
+                    data-user-role={user.role || 'player'}
+                    title="Edit user"
+                    aria-label="Edit user"
                   >
-                    Delete
+                    <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                    </svg>
                   </button>
-                )}
+                  {user.username !== 'admin' && (
+                    <button 
+                      class="delete-user-btn p-2.5 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
+                      data-user-id={user.id}
+                      data-username={user.username}
+                      title="Delete user"
+                      aria-label="Delete user"
+                    >
+                      <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                      </svg>
+                    </button>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
@@ -95,7 +109,7 @@ const users = await db.select({
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400">Add New User</h2>
         <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -178,7 +192,7 @@ const users = await db.select({
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400">Edit User</h2>
         <button id="closeEditModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>
@@ -268,7 +282,7 @@ const users = await db.select({
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-red-700 dark:text-red-400">Delete User</h2>
         <button id="closeDeleteModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
         </button>

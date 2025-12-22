@@ -1,6 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
+import Button from '../components/Button.astro';
 import { db, Location, PageSettings, eq } from 'astro:db';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 
@@ -30,12 +31,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {isLoggedIn && (
     <div class="flex justify-end mb-4">
-      <button 
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
         id="addLocation"
-        class="bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+        title="Add new Add Location"
       >
-        + Add Location
-      </button>
+        Add Location
+      </Button>
     </div>
   )}
 
@@ -171,13 +175,27 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </a>
 
           {isLoggedIn && (
-            <div class="flex gap-2 mt-2">
-              <button class="edit-location flex-1 bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm" data-id={location.id}>
-                Edit
-              </button>
-              <button class="delete-location px-4 py-2 border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm" data-id={location.id}>
-                Delete
-              </button>
+            <div class="flex gap-3 mt-3 justify-end items-center border-t dark:border-gray-800 pt-3">
+              <Button
+                variant="icon"
+                size="md"
+                icon="edit"
+                iconPosition="only"
+                class="edit-location"
+                data-id={location.id}
+                title="Edit location"
+                ariaLabel="Edit location"
+              />
+              <Button
+                variant="ghost"
+                size="md"
+                icon="delete"
+                iconPosition="only"
+                class="delete-location hover:text-red-600 dark:hover:text-red-400"
+                data-id={location.id}
+                title="Delete location"
+                ariaLabel="Delete location"
+              />
             </div>
           )}
         </div>
