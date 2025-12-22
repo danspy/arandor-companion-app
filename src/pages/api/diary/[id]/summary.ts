@@ -1,14 +1,15 @@
 import type { APIRoute } from 'astro';
 import { db, DiaryEntry, eq } from 'astro:db';
-import { requirePlayerOrAbove } from '../../../../lib/middleware';
+import { requireDungeonmasterOrAdmin } from '../../../../lib/middleware';
 import { generateDiarySummary } from '../../../../utils/ai';
 
 /**
  * POST /api/diary/[id]/summary
  * Generates an AI summary for a diary entry and saves it
+ * Restricted to dungeonmaster and admin roles only
  */
 export const POST: APIRoute = async ({ params, cookies }) => {
-  const authError = await requirePlayerOrAbove(cookies);
+  const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
 
   try {

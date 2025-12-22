@@ -70,6 +70,8 @@ Works with:
 - Removes markdown formatting
 
 ### User Experience
+- Role-based generation: Only dungeonmaster and admin can generate summaries
+- Public viewing: Everyone (including non-logged-in users) can see generated summaries
 - On-demand generation (not automatic)
 - Summaries saved in database
 - Can regenerate anytime
@@ -79,7 +81,7 @@ Works with:
 ### Security & Quality
 - ✅ XSS protection (safe DOM manipulation)
 - ✅ Server-side API key storage
-- ✅ Authentication required
+- ✅ Role-based authentication (dungeonmaster/admin only)
 - ✅ Error handling and user feedback
 - ✅ Code reviewed and tested
 

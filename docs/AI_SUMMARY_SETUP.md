@@ -12,10 +12,18 @@ The AI summary feature automatically generates concise 2-3 sentence summaries of
 
 ## Features
 
+- ✅ **Role-based access**: Only dungeonmasters and admins can generate summaries
+- ✅ **Public viewing**: Generated summaries are visible to all users (including non-logged-in viewers)
 - ✅ **On-demand generation**: Click a button to generate or regenerate summaries
 - ✅ **Persistent storage**: Summaries are saved in the database
 - ✅ **Flexible AI provider**: Works with OpenAI, OpenRouter, local LLMs, or any OpenAI-compatible API
 - ✅ **Optional feature**: Works without configuration; generates summaries when API is configured
+
+## Permissions
+
+- **Generate summaries**: Requires dungeonmaster or admin role
+- **View summaries**: Available to everyone (including non-logged-in users)
+- **Summary section visibility**: Only shown if a summary exists OR user is dungeonmaster/admin
 
 ## Setup Instructions
 
