@@ -11,6 +11,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - Markdown formatting support
   - Cover image uploads
   - AI-powered summaries (optional, requires OpenAI API key or compatible service)
+  - AI-powered image generation (optional, requires OpenAI API key with DALL-E access)
   - Podcast version with text-to-speech (on-demand, no files stored)
   - Tags for organization
   - Session numbers
@@ -118,6 +119,53 @@ The built site will be in the `dist/` directory.
 ```bash
 npm run preview
 ```
+
+## Configuration
+
+### AI Features (Optional)
+
+The app includes optional AI-powered features for diary entries. These features require an OpenAI API key (or compatible service).
+
+**Available AI Features:**
+- **AI Summaries** - Generate concise summaries of diary entries (2-3 sentences)
+- **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
+
+**Setup:**
+
+1. Copy `.env.example` to `.env`:
+```bash
+cp .env.example .env
+```
+
+2. Add your OpenAI API key:
+```bash
+OPENAI_API_KEY=your-api-key-here
+```
+
+3. (Optional) Configure AI models and settings:
+```bash
+# Text generation model (default: gpt-3.5-turbo)
+OPENAI_MODEL=gpt-3.5-turbo
+
+# Image generation model (default: dall-e-3)
+OPENAI_IMAGE_MODEL=dall-e-3
+
+# Image size (default: 1024x1024)
+# DALL-E 2: 256x256, 512x512, 1024x1024
+# DALL-E 3: 1024x1024, 1792x1024, 1024x1792
+OPENAI_IMAGE_SIZE=1024x1024
+
+# Image quality (default: standard)
+# Options: standard, hd (DALL-E 3 only)
+OPENAI_IMAGE_QUALITY=standard
+```
+
+**Permissions:**
+- AI summaries and image generation are restricted to **Admin** and **Dungeon Master** roles
+- Generated content (summaries and images) is visible to all users, including logged-out visitors
+
+**Alternative Providers:**
+You can use OpenRouter, local LLMs, or other OpenAI-compatible services by setting `OPENAI_API_BASE`. See `.env.example` for examples.
 
 ## Deployment
 
