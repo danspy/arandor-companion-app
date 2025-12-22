@@ -4,6 +4,7 @@ export interface DiaryEntry {
   title: string;
   content: string;
   summary?: string;
+  podcastAudioUrl?: string;
   session: number;
   tags: string[];
   coverImageUrl?: string;

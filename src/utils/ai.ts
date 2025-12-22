@@ -20,6 +20,12 @@ export interface ImageGenerationResult {
   error?: string;
 }
 
+export interface PodcastGenerationResult {
+  success: boolean;
+  audioUrl?: string;
+  error?: string;
+}
+
 /**
  * Detect the primary language of the text
  * @param text - The text to analyze
@@ -414,4 +420,125 @@ export async function generateDiaryImage(
     imagePrompt,
     2 // Max retries after initial attempt (3 total attempts)
   );
+}
+
+/**
+ * Prepare diary entry content for podcast narration
+ * Strips markdown formatting and creates natural narrative flow
+ * @param title - The title of the diary entry
+ * @param content - The full content of the diary entry (markdown)
+ * @returns Cleaned text suitable for TTS narration
+ */
+function preparePodcastNarration(title: string, content: string): string {
+  // Remove markdown formatting
+  let text = content
+    // Remove headers
+    .replace(/#{1,6}\s+/g, '')
+    // Remove bold/italic
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+    // Remove links but keep text
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
+    // Remove code blocks
+    .replace(/`([^`]+)`/g, '$1')
+    // Remove horizontal rules
+    .replace(/---+/g, '')
+    // Remove blockquotes
+    .replace(/>\s+/g, '')
+    // Normalize whitespace
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // Add introductory narration with title
+  const narration = `${title}. ${text}`;
+  
+  return narration;
+}
+
+// OpenAI TTS API has a limit of approximately 4096 characters per request
+const TTS_MAX_CHARACTERS = 4000;
+
+/**
+ * Generate an AI-powered podcast narration for a diary entry
+ * Uses OpenAI's Text-to-Speech API with high-quality voices
+ * 
+ * Note: The audio is returned as a base64 data URL and stored in the database.
+ * This approach keeps the implementation simple without requiring file storage infrastructure.
+ * For very large campaigns with many podcasts, consider implementing file-based storage.
+ * 
+ * @param title - The title of the diary entry
+ * @param content - The full content of the diary entry (markdown)
+ * @returns Base64 data URL of the generated audio (stored in database)
+ */
+export async function generateDiaryPodcast(
+  title: string,
+  content: string
+): Promise<PodcastGenerationResult> {
+  // Use process.env for server-side API routes
+  const apiKey = process.env.OPENAI_API_KEY;
+  const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
+  const ttsModel = process.env.OPENAI_TTS_MODEL || 'tts-1-hd';
+  const ttsVoice = process.env.OPENAI_TTS_VOICE || 'onyx';
+  const ttsSpeed = parseFloat(process.env.OPENAI_TTS_SPEED || '1.0');
+
+  // Check if API key is configured
+  if (!apiKey) {
+    return {
+      success: false,
+      error: 'OpenAI API key not configured. Set OPENAI_API_KEY environment variable.',
+    };
+  }
+
+  // Prepare the text for narration
+  const narrationText = preparePodcastNarration(title, content);
+
+  // Truncate if content exceeds OpenAI TTS character limit
+  let finalText = narrationText;
+  if (narrationText.length > TTS_MAX_CHARACTERS) {
+    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + '... The full session continues in the written entry.';
+  }
+
+  try {
+    const response = await fetch(`${apiBase}/audio/speech`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: ttsModel,
+        input: finalText,
+        voice: ttsVoice,
+        speed: ttsSpeed,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        error: `API error: ${response.status} ${response.statusText}${errorData.error?.message ? ' - ' + errorData.error.message : ''}`,
+      };
+    }
+
+    // Get the audio data as a buffer
+    const audioBuffer = await response.arrayBuffer();
+    
+    // Convert to base64 data URL for storage/playback
+    // This keeps the audio in memory without requiring file system storage
+    const base64Audio = Buffer.from(audioBuffer).toString('base64');
+    const audioDataUrl = `data:audio/mpeg;base64,${base64Audio}`;
+
+    return {
+      success: true,
+      audioUrl: audioDataUrl,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: `Failed to generate podcast: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    };
+  }
 }

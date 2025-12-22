@@ -146,118 +146,118 @@ const renderedContent = renderMarkdown(entry.content);
         </div>
       )}
 
-      <!-- AI Summary -->
-      {(entry.summary || canGenerateSummary) && (
-        <div id="summarySection" class="mb-6 border-l-4 border-secondary-500 bg-secondary-50 dark:bg-secondary-900/10 dark:border-secondary-600 p-4 rounded-r-lg">
-          <div class="flex flex-col items-start justify-between gap-4">
-            <div class="flex-1">
-              <h3 class="text-sm font-semibold text-secondary-700 dark:text-secondary-400 mb-2 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-                AI Summary
-              </h3>
-              <div id="summaryContent" class="text-gray-700 dark:text-gray-300">
-                {entry.summary ? (
-                  <p>{entry.summary}</p>
-                ) : (
-                  <p class="text-gray-500 dark:text-gray-500 italic">No summary yet</p>
-                )}
-              </div>
-            </div>
+      <!-- AI Tools Accordion (only for DM/admin) -->
+      {canGenerateSummary && (
+        <details class="mb-6 border border-gray-200 dark:border-gray-800 bg-white dark:bg-black rounded-lg">
+          <summary class="cursor-pointer px-4 py-3 font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2 hover:bg-gray-50 dark:hover:bg-gray-900 rounded-lg">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            AI Tools
+          </summary>
+          <div class="px-4 pb-4 pt-2 flex flex-wrap gap-2">
+            <button
+              id="generateSummaryBtn"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg transition flex items-center gap-2"
+              title="Generate summary"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span id="generateSummaryBtnText">Generate Summary</span>
+            </button>
+            <button
+              id="generateImageBtn"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg transition flex items-center gap-2"
+              title="Generate image"
+            >
+              <svg id="generateImageIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <svg id="generateImageSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="generateImageBtnText">Generate Image</span>
+            </button>
+            <button
+              id="generatePodcastBtn"
+              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 rounded-lg transition flex items-center gap-2"
+              title="Generate podcast"
+            >
+              <svg id="generatePodcastIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+              </svg>
+              <svg id="generatePodcastSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span id="generatePodcastBtnText">Generate Podcast</span>
+            </button>
+          </div>
+        </details>
+      )}
+
+      <!-- Summary (visible to all when exists) -->
+      {entry.summary && (
+        <div data-summary-section class="mb-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              Summary
+            </h3>
             {canGenerateSummary && (
-              <div class="flex-shrink-0 flex gap-2">
-                <button
-                  id="generateSummaryBtn"
-                  class="bg-secondary-600 text-white px-3 py-1.5 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition text-sm font-medium flex items-center gap-2"
-                  title="Generate AI summary"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                  <span id="generateSummaryBtnText">Generate</span>
-                </button>
-                <button
-                  id="deleteSummaryBtn"
-                  class:list={[
-                    "border-2 border-red-600 text-red-600 dark:text-red-400 dark:border-red-500 px-3 py-1.5 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition text-sm font-medium flex items-center gap-2",
-                    { "hidden": !entry.summary }
-                  ]}
-                  title="Delete AI summary"
-                >
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
-                </button>
-              </div>
+              <button
+                id="deleteSummaryBtn"
+                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition"
+                title="Delete summary"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
             )}
           </div>
-        </div>
-      )}
-
-      <!-- AI Image Generation -->
-      {canGenerateSummary && (
-        <div id="imageGenerationSection" class="mb-6 border-l-4 border-purple-500 bg-purple-50 dark:bg-purple-900/10 dark:border-purple-600 p-4 rounded-r-lg">
-          <div class="flex flex-col items-start justify-between gap-4">
-            <div class="flex-1">
-              <h3 class="text-sm font-semibold text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-2">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                AI Image Generation
-              </h3>
-              <p class="text-sm text-gray-700 dark:text-gray-300">
-                Generate a fantasy D&D scene illustration for this diary entry using AI.
-              </p>
-            </div>
-            <div class="flex-shrink-0">
-              <button
-                id="generateImageBtn"
-                class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 dark:bg-purple-700 dark:hover:bg-purple-600 transition text-sm font-medium flex items-center gap-2 relative"
-                title="Generate AI image"
-              >
-                <svg id="generateImageIcon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                </svg>
-                <!-- Spinner (hidden by default) -->
-                <svg id="generateImageSpinner" class="hidden w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                <span id="generateImageBtnText">Generate Preview</span>
-              </button>
-            </div>
+          <div id="summaryContent" class="text-sm text-gray-700 dark:text-gray-300">
+            <p>{entry.summary}</p>
           </div>
         </div>
       )}
 
-      <!-- Podcast Player -->
-      <div class="mb-6 flex items-center gap-3">
-        <button
-          id="playPauseBtn"
-          class="w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all shadow-sm hover:shadow-md"
-          title="Play"
-        >
-          <svg id="playIcon" class="w-5 h-5 text-gray-700 dark:text-gray-300 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M8 5v14l11-7z"/>
-          </svg>
-          <svg id="pauseIcon" class="hidden w-5 h-5 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/>
-          </svg>
-        </button>
-        <button
-          id="stopBtn"
-          class="hidden w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 flex items-center justify-center transition-all"
-          title="Stop"
-        >
-          <svg class="w-4 h-4 text-gray-700 dark:text-gray-300" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M6 6h12v12H6z"/>
-          </svg>
-        </button>
-        <div id="podcastStatus" class="text-xs text-gray-500 dark:text-gray-500 hidden">
-          <span id="podcastStatusText"></span>
+      <!-- Podcast (visible to all when exists) -->
+      {entry.podcastAudioUrl && (
+        <div data-podcast-section class="mb-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800">
+          <div class="flex items-start justify-between gap-4 mb-3">
+            <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+              </svg>
+              Podcast
+            </h3>
+            {canGenerateSummary && (
+              <button
+                id="deletePodcastBtn"
+                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition"
+                title="Delete podcast"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <audio 
+            controls 
+            class="w-full"
+            preload="metadata"
+          >
+            <source src={entry.podcastAudioUrl} type="audio/mpeg" />
+            Your browser does not support the audio element.
+          </audio>
         </div>
-      </div>
+      )}
 
       <!-- Content -->
       <div class="prose dark:prose-invert max-w-none mb-6">
@@ -537,6 +537,16 @@ const renderedContent = renderMarkdown(entry.content);
   .diary-text p + p {
     margin-top: 2rem;
   }
+  
+  /* Audio element styling */
+  audio {
+    background-color: transparent;
+    color: black;
+  }
+  
+  :root.dark audio {
+    filter: invert(1);
+  }
 </style>
 
 <script>
@@ -611,23 +621,10 @@ const renderedContent = renderMarkdown(entry.content);
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Update the summary display to show "No summary yet"
-        if (summaryContent) {
-          summaryContent.innerHTML = '';
-          const p = document.createElement('p');
-          p.className = 'text-gray-500 dark:text-gray-500 italic';
-          p.textContent = 'No summary yet';
-          summaryContent.appendChild(p);
-        }
-        
-        // Hide the delete button
-        if (deleteSummaryBtn) {
-          deleteSummaryBtn.classList.add('hidden');
-        }
-
-        // Update generate button text
-        if (summaryBtnText) {
-          summaryBtnText.textContent = 'Generate';
+        // Remove the summary section
+        const summarySection = document.querySelector('[data-summary-section]');
+        if (summarySection) {
+          summarySection.remove();
         }
       } else {
         showError(`Failed to delete summary: ${data.error || 'Unknown error'}`);
@@ -637,6 +634,41 @@ const renderedContent = renderMarkdown(entry.content);
       showError('Failed to delete summary. Please check your connection and try again.');
     }
   });
+
+  // Define deleteSummary function for dynamic event binding
+  async function deleteSummary() {
+    const entryId = getEntryIdFromUrl();
+
+    if (!entryId) {
+      showError('Unable to determine entry ID');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this summary? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/diary/${entryId}/summary`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the summary section
+        const summarySection = document.querySelector('[data-summary-section]');
+        if (summarySection) {
+          summarySection.remove();
+        }
+      } else {
+        showError(`Failed to delete summary: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting summary:', error);
+      showError('Failed to delete summary. Please check your connection and try again.');
+    }
+  }
 
   // Handle generate summary button click
   generateSummaryBtn?.addEventListener('click', async () => {
@@ -661,24 +693,59 @@ const renderedContent = renderMarkdown(entry.content);
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // Update the summary display (using textContent to prevent XSS)
-        if (summaryContent) {
-          // Clear existing content
-          summaryContent.innerHTML = '';
-          // Create a new paragraph element and set text safely
-          const p = document.createElement('p');
-          p.textContent = data.summary;
-          summaryContent.appendChild(p);
+        // Create or update the summary section
+        let summarySection = document.querySelector('[data-summary-section]');
+        
+        if (!summarySection) {
+          // Create new summary section
+          const aiToolsAccordion = document.querySelector('details');
+          summarySection = document.createElement('div');
+          summarySection.setAttribute('data-summary-section', '');
+          summarySection.className = 'mb-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800';
+          
+          summarySection.innerHTML = `
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                Summary
+              </h3>
+              <button
+                id="deleteSummaryBtn"
+                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition"
+                title="Delete summary"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+            <div id="summaryContent" class="text-sm text-gray-700 dark:text-gray-300">
+              <p></p>
+            </div>
+          `;
+          
+          // Insert after AI Tools accordion
+          if (aiToolsAccordion) {
+            aiToolsAccordion.insertAdjacentElement('afterend', summarySection);
+          }
+          
+          // Re-attach delete event listener to new button
+          const newDeleteBtn = summarySection.querySelector('#deleteSummaryBtn');
+          newDeleteBtn?.addEventListener('click', deleteSummary);
         }
         
-        // Show the delete button if it exists
-        if (deleteSummaryBtn) {
-          deleteSummaryBtn.classList.remove('hidden');
+        // Update the summary content
+        const summaryContentEl = summarySection.querySelector('#summaryContent p');
+        if (summaryContentEl) {
+          summaryContentEl.textContent = data.summary;
         }
         
-        // Show success message
-        if (summaryBtnText) {
-          summaryBtnText.textContent = 'Regenerate';
+        // Reset button state
+        if (generateSummaryBtn && summaryBtnText) {
+          generateSummaryBtn.disabled = false;
+          summaryBtnText.textContent = 'Generate Summary';
         }
       } else {
         // Show error
@@ -686,7 +753,10 @@ const renderedContent = renderMarkdown(entry.content);
         
         // Reset button
         if (summaryBtnText) {
-          summaryBtnText.textContent = 'Generate';
+          summaryBtnText.textContent = 'Generate Summary';
+        }
+        if (generateSummaryBtn) {
+          generateSummaryBtn.disabled = false;
         }
       }
     } catch (error) {
@@ -695,10 +765,8 @@ const renderedContent = renderMarkdown(entry.content);
       
       // Reset button
       if (summaryBtnText) {
-        summaryBtnText.textContent = 'Generate';
+        summaryBtnText.textContent = 'Generate Summary';
       }
-    } finally {
-      // Re-enable button
       if (generateSummaryBtn) {
         generateSummaryBtn.disabled = false;
       }
@@ -964,6 +1032,168 @@ const renderedContent = renderMarkdown(entry.content);
       closePreviewModal();
     }
   });
+
+  // Handle AI podcast generation
+  const generatePodcastBtn = document.getElementById('generatePodcastBtn');
+  const deletePodcastBtn = document.getElementById('deletePodcastBtn');
+  const generatePodcastBtnText = document.getElementById('generatePodcastBtnText');
+  const generatePodcastIcon = document.getElementById('generatePodcastIcon');
+  const generatePodcastSpinner = document.getElementById('generatePodcastSpinner');
+
+  // Generate podcast
+  async function generatePodcast() {
+    const entryId = getEntryIdFromUrl();
+
+    if (!entryId) {
+      showError('Unable to determine entry ID');
+      return;
+    }
+
+    // Show loading state
+    if (generatePodcastBtn && generatePodcastBtnText && generatePodcastIcon && generatePodcastSpinner) {
+      generatePodcastBtn.disabled = true;
+      generatePodcastBtnText.textContent = 'Generating...';
+      generatePodcastIcon.classList.add('hidden');
+      generatePodcastSpinner.classList.remove('hidden');
+    }
+
+    try {
+      const response = await fetch(`/api/diary/${entryId}/podcast`, {
+        method: 'POST',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Create or update the podcast player section
+        let podcastSection = document.querySelector('[data-podcast-section]');
+        
+        if (!podcastSection) {
+          // Create new podcast section
+          const aiToolsAccordion = document.querySelector('details');
+          podcastSection = document.createElement('div');
+          podcastSection.setAttribute('data-podcast-section', '');
+          podcastSection.className = 'mb-6 bg-gray-50 dark:bg-gray-900 rounded-lg p-4 border border-gray-200 dark:border-gray-800';
+          
+          podcastSection.innerHTML = `
+            <div class="flex items-start justify-between gap-4 mb-3">
+              <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z" />
+                </svg>
+                Podcast
+              </h3>
+              <button
+                id="deletePodcastBtn"
+                class="text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 p-1.5 rounded transition"
+                title="Delete podcast"
+              >
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </button>
+            </div>
+            <audio 
+              controls 
+              class="w-full"
+              preload="metadata"
+            >
+              <source src="${data.audioUrl}" type="audio/mpeg" />
+              Your browser does not support the audio element.
+            </audio>
+          `;
+          
+          // Insert after summary section or after AI Tools accordion
+          const summarySection = document.querySelector('[data-summary-section]');
+          if (summarySection) {
+            summarySection.insertAdjacentElement('afterend', podcastSection);
+          } else if (aiToolsAccordion) {
+            aiToolsAccordion.insertAdjacentElement('afterend', podcastSection);
+          }
+          
+          // Re-attach delete event listener to new button
+          const newDeleteBtn = podcastSection.querySelector('#deletePodcastBtn');
+          newDeleteBtn?.addEventListener('click', deletePodcast);
+        } else {
+          // Update existing audio source
+          const audioElement = podcastSection.querySelector('audio source');
+          if (audioElement) {
+            audioElement.src = data.audioUrl;
+            const audio = podcastSection.querySelector('audio');
+            audio?.load();
+          }
+        }
+        
+        // Reset button state
+        if (generatePodcastBtn && generatePodcastBtnText && generatePodcastIcon && generatePodcastSpinner) {
+          generatePodcastBtn.disabled = false;
+          generatePodcastBtnText.textContent = 'Generate Podcast';
+          generatePodcastIcon.classList.remove('hidden');
+          generatePodcastSpinner.classList.add('hidden');
+        }
+      } else {
+        showError(`Failed to generate podcast: ${data.error || 'Unknown error'}`);
+        
+        // Reset button
+        if (generatePodcastBtn && generatePodcastBtnText && generatePodcastIcon && generatePodcastSpinner) {
+          generatePodcastBtn.disabled = false;
+          generatePodcastBtnText.textContent = 'Generate Podcast';
+          generatePodcastIcon.classList.remove('hidden');
+          generatePodcastSpinner.classList.add('hidden');
+        }
+      }
+    } catch (error) {
+      console.error('Error generating podcast:', error);
+      showError('Failed to generate podcast. Please check your connection and try again.');
+      
+      // Reset button
+      if (generatePodcastBtn && generatePodcastBtnText && generatePodcastIcon && generatePodcastSpinner) {
+        generatePodcastBtn.disabled = false;
+        generatePodcastBtnText.textContent = 'Generate Podcast';
+        generatePodcastIcon.classList.remove('hidden');
+        generatePodcastSpinner.classList.add('hidden');
+      }
+    }
+  }
+
+  // Delete podcast
+  async function deletePodcast() {
+    const entryId = getEntryIdFromUrl();
+
+    if (!entryId) {
+      showError('Unable to determine entry ID');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this podcast? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/diary/${entryId}/podcast`, {
+        method: 'DELETE',
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Remove the podcast section
+        const podcastSection = document.querySelector('[data-podcast-section]');
+        if (podcastSection) {
+          podcastSection.remove();
+        }
+      } else {
+        showError(`Failed to delete podcast: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error deleting podcast:', error);
+      showError('Failed to delete podcast. Please check your connection and try again.');
+    }
+  }
+
+  // Event listeners for podcast generation
+  generatePodcastBtn?.addEventListener('click', generatePodcast);
+  deletePodcastBtn?.addEventListener('click', deletePodcast);
   }
 
   // Run on initial page load and after View Transitions navigation
@@ -975,211 +1205,6 @@ const renderedContent = renderMarkdown(entry.content);
   
   // Ensure videos play after View Transitions navigation
   document.addEventListener('astro:page-load', initializeVideoAutoplay);
-</script>
-
-<script>
-  function initializePodcast() {
-    const playPauseBtn = document.getElementById('playPauseBtn');
-    const playIcon = document.getElementById('playIcon');
-    const pauseIcon = document.getElementById('pauseIcon');
-    const stopBtn = document.getElementById('stopBtn');
-    const statusDiv = document.getElementById('podcastStatus');
-    const statusText = document.getElementById('podcastStatusText');
-
-    if (!playPauseBtn || !playIcon || !pauseIcon || !stopBtn || !statusDiv || !statusText) {
-      return;
-    }
-
-    // Helper function to prepare podcast text
-    function preparePodcastText(title: string, content: string): string {
-      // Remove markdown formatting
-      let text = content
-        .replace(/#{1,6}\s+/g, '')
-        .replace(/\*\*([^*]+)\*\*/g, '$1')
-        .replace(/\*([^*]+)\*/g, '$1')
-        .replace(/__([^_]+)__/g, '$1')
-        .replace(/_([^_]+)_/g, '$1')
-        .replace(/\[([^\]]+)\]\([^\)]+\)/g, '$1')
-        .replace(/`([^`]+)`/g, '$1')
-        .replace(/---+/g, '')
-        .replace(/>\s+/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
-
-      // Add pauses between paragraphs
-      const paragraphs = text.split(/\n\n+/).filter(p => p.trim());
-      const narration = paragraphs.join('... ');
-      
-      return narration;
-    }
-
-    // Get the best German voice
-    // Note: This function is duplicated from src/utils/podcast.ts because
-    // client-side Astro script tags cannot import from TypeScript utility files
-    function getBestGermanVoice(): SpeechSynthesisVoice | undefined {
-      const voices = window.speechSynthesis.getVoices();
-      
-      // Filter for German voices (de-DE, de-AT, de-CH)
-      const germanVoices = voices.filter(voice => 
-        voice.lang.startsWith('de-') || voice.lang === 'de'
-      );
-      
-      if (germanVoices.length === 0) {
-        return undefined;
-      }
-      
-      // Prioritize Google voices (typically higher quality)
-      const googleVoice = germanVoices.find(voice => 
-        voice.name.toLowerCase().includes('google')
-      );
-      if (googleVoice) {
-        return googleVoice;
-      }
-      
-      // Then Microsoft voices
-      const microsoftVoice = germanVoices.find(voice => 
-        voice.name.toLowerCase().includes('microsoft')
-      );
-      if (microsoftVoice) {
-        return microsoftVoice;
-      }
-      
-      // Otherwise, prefer voices that are not marked as 'local' (usually better quality)
-      const nonLocalVoice = germanVoices.find(voice => 
-        !voice.localService
-      );
-      if (nonLocalVoice) {
-        return nonLocalVoice;
-      }
-      
-      // Fall back to first available German voice
-      return germanVoices[0];
-    }
-
-    // Get diary entry content from the page
-    const titleElement = document.querySelector('h1');
-    const contentElement = document.querySelector('.diary-text');
-    
-    if (!titleElement || !contentElement) {
-      console.error('Could not find diary entry content');
-      return;
-    }
-
-    const title = titleElement.textContent || '';
-    const content = contentElement.textContent || '';
-    const podcastText = preparePodcastText(title, content);
-
-    let isPaused = false;
-    let germanVoice: SpeechSynthesisVoice | undefined;
-
-    // Initialize voices
-    function initializeVoice() {
-      germanVoice = getBestGermanVoice();
-      if (germanVoice) {
-        console.log('Using German voice:', germanVoice.name, '(' + germanVoice.lang + ')');
-      } else {
-        console.warn('No German voice found. Using default voice.');
-      }
-    }
-
-    if ('speechSynthesis' in window) {
-      initializeVoice();
-      // Voices may load asynchronously
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = initializeVoice;
-      }
-    }
-
-    let isPlaying = false;
-
-    // Play/Pause button handler
-    playPauseBtn.addEventListener('click', () => {
-      if (isPlaying) {
-        if (isPaused) {
-          // Resume from pause
-          window.speechSynthesis.resume();
-          isPaused = false;
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-          statusText.textContent = 'Wiedergabe...';
-        } else {
-          // Pause
-          window.speechSynthesis.pause();
-          isPaused = true;
-          playIcon.classList.remove('hidden');
-          pauseIcon.classList.add('hidden');
-          statusText.textContent = 'Pausiert';
-        }
-      } else {
-        // Start playback
-        try {
-          window.speechSynthesis.cancel();
-          
-          // Re-initialize voice in case it wasn't loaded before
-          if (!germanVoice) {
-            germanVoice = getBestGermanVoice();
-          }
-          
-          const utterance = new SpeechSynthesisUtterance(podcastText);
-          utterance.rate = 0.9;
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
-          
-          if (germanVoice) {
-            utterance.voice = germanVoice;
-          }
-
-          utterance.onend = () => {
-            isPlaying = false;
-            isPaused = false;
-            playIcon.classList.remove('hidden');
-            pauseIcon.classList.add('hidden');
-            stopBtn.classList.add('hidden');
-            statusDiv.classList.add('hidden');
-            playPauseBtn.title = 'Play';
-          };
-
-          window.speechSynthesis.speak(utterance);
-          isPlaying = true;
-          isPaused = false;
-          playIcon.classList.add('hidden');
-          pauseIcon.classList.remove('hidden');
-          stopBtn.classList.remove('hidden');
-          stopBtn.style.display = 'flex';
-          statusDiv.classList.remove('hidden');
-          statusText.textContent = 'Wiedergabe...';
-          playPauseBtn.title = 'Pause';
-        } catch (error) {
-          console.error('Podcast playback error:', error);
-          statusText.textContent = 'Fehler: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler');
-          statusDiv.classList.remove('hidden');
-        }
-      }
-    });
-
-    // Stop button handler
-    stopBtn.addEventListener('click', () => {
-      window.speechSynthesis.cancel();
-      isPlaying = false;
-      isPaused = false;
-      playIcon.classList.remove('hidden');
-      pauseIcon.classList.add('hidden');
-      stopBtn.classList.add('hidden');
-      statusDiv.classList.add('hidden');
-      playPauseBtn.title = 'Play';
-    });
-
-    // Check if speech synthesis is supported
-    if (!('speechSynthesis' in window)) {
-      playPauseBtn.disabled = true;
-      playPauseBtn.classList.add('opacity-50', 'cursor-not-allowed');
-      statusText.textContent = 'Text-zu-Sprache wird in diesem Browser nicht unterstützt';
-      statusDiv.classList.remove('hidden');
-    }
-  }
-
-  // Initialize on page load
-  document.addEventListener('astro:page-load', initializePodcast);
 </script>
 
 <script>

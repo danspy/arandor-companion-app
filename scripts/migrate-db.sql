@@ -13,6 +13,7 @@ CREATE TABLE IF NOT EXISTS "DiaryEntry" (
   "title" text NOT NULL,
   "content" text NOT NULL,
   "summary" text,
+  "podcastAudioUrl" text,
   "session" integer NOT NULL,
   "tags" text NOT NULL DEFAULT '[]',
   "coverImageUrl" text,
