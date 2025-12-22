@@ -480,7 +480,6 @@ export async function generateDiaryPodcast(
   const apiKey = process.env.OPENAI_API_KEY;
   const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
   const ttsModel = process.env.OPENAI_TTS_MODEL || 'tts-1-hd';
-  const ttsVoice = process.env.OPENAI_TTS_VOICE || 'onyx';
   const ttsSpeed = parseFloat(process.env.OPENAI_TTS_SPEED || '1.0');
 
   // Check if API key is configured
@@ -493,11 +492,28 @@ export async function generateDiaryPodcast(
 
   // Prepare the text for narration
   const narrationText = preparePodcastNarration(title, content);
+  
+  // Detect language for proper voice selection and truncation message
+  const detectedLang = detectLanguage(`${title} ${content}`);
+
+  // Select appropriate TTS voice based on language
+  // If OPENAI_TTS_VOICE is set, it takes priority; otherwise, auto-detect
+  let ttsVoice = process.env.OPENAI_TTS_VOICE;
+  if (!ttsVoice) {
+    // Auto-select voice based on detected language
+    // German-speaking voices: "alloy" and "echo" work well for German
+    // English voices: "onyx", "fable", etc.
+    ttsVoice = detectedLang === 'de' ? 'alloy' : 'onyx';
+  }
 
   // Truncate if content exceeds OpenAI TTS character limit
   let finalText = narrationText;
   if (narrationText.length > TTS_MAX_CHARACTERS) {
-    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + '... The full session continues in the written entry.';
+    // Use localized truncation message based on detected language
+    const truncationMessage = detectedLang === 'de' 
+      ? '... Der vollständige Eintrag kann im Text nachgelesen werden.'
+      : '... The full session continues in the written entry.';
+    finalText = narrationText.substring(0, TTS_MAX_CHARACTERS) + truncationMessage;
   }
 
   try {
