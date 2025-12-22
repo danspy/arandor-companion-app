@@ -177,8 +177,23 @@ AI-generated images are saved to the same field as manually uploaded images. Thi
 **Important Notes**:
 - Each "Generate" or "Regenerate" click costs one API call
 - Preview URLs from DALL-E are temporary (expire after ~1 hour)
-- Once accepted, the URL is saved to your database
-- For permanent storage, consider downloading and re-uploading images
+- **✅ Images are automatically downloaded and stored permanently** when accepted
+- Images are saved to the uploads folder alongside manually uploaded images
+- Stored images remain accessible indefinitely
+
+## Image Storage
+
+When you accept an AI-generated image:
+1. The system downloads the image from the temporary DALL-E URL
+2. Saves it to the persistent uploads folder (`/srv/arandor/uploads` in production, `public/uploads` in development)
+3. Stores the permanent local URL (`/uploads/ai-*.png`) in the database
+4. The image is now stored permanently, just like manually uploaded images
+
+This ensures:
+- ✅ Images don't expire after 1 hour
+- ✅ Images are reliable and always accessible
+- ✅ Consistent storage for all images (manual and AI-generated)
+- ✅ No dependency on external temporary URLs
 
 ## Error Handling
 
@@ -188,6 +203,17 @@ The system handles various error scenarios:
 - **API Errors**: Displays OpenAI API error messages to the user
 - **Network Errors**: Shows connection error with retry suggestion
 - **Invalid Entry**: Returns 404 if diary entry doesn't exist
+- **Download Failures**: Returns error if image cannot be downloaded or saved
+
+## Data Integrity
+
+### Summary and Podcast Preservation
+
+AI-generated summaries and podcasts are **independent** of images and other diary entry fields:
+- Deleting or changing an image does **not** affect the summary or podcast
+- Editing a diary entry via the form preserves existing summary and podcast data
+- Summary and podcast can only be deleted using their dedicated delete buttons
+- This ensures your AI-generated content remains safe during other edits
 
 ## Implementation Details
 
@@ -226,7 +252,7 @@ For local solutions, you would need to set up an OpenAI-compatible API wrapper a
 ## Future Enhancements
 
 Potential improvements:
-- Store generated images permanently instead of using temporary URLs
+- ~~Store generated images permanently instead of using temporary URLs~~ ✅ **Implemented**
 - Support for custom prompt templates
 - Batch generation for multiple entries
 - Image style preferences (realistic, cartoon, painterly, etc.)

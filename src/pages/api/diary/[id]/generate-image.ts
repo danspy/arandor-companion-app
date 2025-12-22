@@ -2,6 +2,9 @@ import type { APIRoute } from 'astro';
 import { db, DiaryEntry, eq } from 'astro:db';
 import { requireDungeonmasterOrAdmin } from '../../../../lib/middleware';
 import { generateDiaryImage } from '../../../../utils/ai';
+import { writeFile, mkdir } from 'node:fs/promises';
+import { join } from 'node:path';
+import { randomUUID } from 'node:crypto';
 
 /**
  * POST /api/diary/[id]/generate-image
@@ -67,6 +70,7 @@ export const POST: APIRoute = async ({ params, cookies }) => {
 /**
  * PUT /api/diary/[id]/generate-image
  * Accepts and saves the AI-generated image preview to coverImageUrl
+ * Downloads the image from the temporary URL and saves it to the uploads folder
  * Restricted to dungeonmaster and admin roles only
  */
 export const PUT: APIRoute = async ({ params, request, cookies }) => {
@@ -103,11 +107,98 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
-    // Save the accepted image to coverImageUrl
+    // Download the image from the temporary URL and save it to uploads folder
+    let persistentImageUrl = imageUrl;
+    
+    try {
+      // Download the image from the temporary URL
+      const imageResponse = await fetch(imageUrl);
+      
+      if (!imageResponse.ok) {
+        console.error('Failed to download image:', imageResponse.status, imageResponse.statusText);
+        return new Response(JSON.stringify({ 
+          error: 'Failed to download image from temporary URL',
+          details: `HTTP ${imageResponse.status}: ${imageResponse.statusText}`
+        }), {
+          status: 500,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+
+      // Get the image buffer
+      const imageBuffer = await imageResponse.arrayBuffer();
+      
+      // Validate image size (max 5MB, consistent with upload.ts)
+      const maxSize = 5 * 1024 * 1024; // 5MB
+      if (imageBuffer.byteLength > maxSize) {
+        console.error('Image too large:', imageBuffer.byteLength, 'bytes');
+        return new Response(JSON.stringify({ 
+          error: 'Image too large',
+          details: `Image size ${(imageBuffer.byteLength / 1024 / 1024).toFixed(2)}MB exceeds maximum of 5MB`
+        }), {
+          status: 413,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      const buffer = Buffer.from(imageBuffer);
+
+      // Validate and determine file extension from content-type
+      const contentType = imageResponse.headers.get('content-type') || '';
+      let ext: string;
+      
+      // Strict whitelist of allowed image types - reject unknown types
+      if (contentType === 'image/jpeg' || contentType === 'image/jpg') {
+        ext = 'jpg';
+      } else if (contentType === 'image/png') {
+        ext = 'png';
+      } else if (contentType === 'image/webp') {
+        ext = 'webp';
+      } else {
+        console.error('Unsupported content-type from image source:', contentType);
+        return new Response(JSON.stringify({ 
+          error: 'Unsupported image format',
+          details: `Content-type '${contentType}' is not supported. Expected image/png, image/jpeg, or image/webp.`
+        }), {
+          status: 415,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      
+      // Generate unique filename
+      const filename = `ai-${randomUUID()}.${ext}`;
+      
+      // Ensure upload directory exists
+      const isDev = import.meta.env.DEV;
+      const uploadDir = isDev 
+        ? join(process.cwd(), 'public', 'uploads')
+        : '/srv/arandor/uploads';
+      await mkdir(uploadDir, { recursive: true });
+      
+      // Save to uploads directory
+      const filepath = join(uploadDir, filename);
+      await writeFile(filepath, buffer);
+      
+      // Update the persistent image URL to point to our local file
+      persistentImageUrl = `/uploads/${filename}`;
+      
+      console.log('AI-generated image saved successfully:', persistentImageUrl);
+    } catch (downloadError) {
+      console.error('Error downloading/saving image:', downloadError);
+      return new Response(JSON.stringify({ 
+        error: 'Failed to save image permanently',
+        details: downloadError instanceof Error ? downloadError.message : 'Unknown error'
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Save the persistent local image URL to coverImageUrl
     const now = new Date();
     await db.update(DiaryEntry)
       .set({
-        coverImageUrl: imageUrl,
+        coverImageUrl: persistentImageUrl,
         updatedAt: now,
       })
       .where(eq(DiaryEntry.id, entryId));
