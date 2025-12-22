@@ -166,11 +166,12 @@ sudo journalctl -u arandor.service -f -n 50
 
 **Language-specific recommendations:**
 
-The system automatically detects the language of your diary entries and selects an appropriate voice:
+The system automatically detects the language of your diary entries (currently supports English and German) and selects an appropriate voice:
 - **German content**: Uses `alloy` by default (clear, neutral voice that works well for German)
 - **English content**: Uses `onyx` by default (deep, epic voice)
+- **Other languages**: Will default to English voice selection
 
-You can override this by setting `OPENAI_TTS_VOICE` in your `.env` file.
+You can override this automatic selection by setting `OPENAI_TTS_VOICE` in your `.env` file.
 
 **onyx** (recommended for English D&D):
 - Deep, epic voice

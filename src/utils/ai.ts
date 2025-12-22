@@ -510,8 +510,8 @@ export async function generateDiaryPodcast(
   let ttsVoice = process.env.OPENAI_TTS_VOICE;
   if (!ttsVoice) {
     // Auto-select voice based on detected language
-    // German-speaking voices: "alloy" and "echo" work well for German
-    // English voices: "onyx", "fable", etc.
+    // German content: "alloy" works well for German pronunciation
+    // English content: "onyx", "fable", etc. are good choices
     ttsVoice = detectedLang === 'de' ? 'alloy' : 'onyx';
   }
 
@@ -521,7 +521,7 @@ export async function generateDiaryPodcast(
     // Use localized truncation message based on detected language
     const truncationMessage = PODCAST_TRUNCATION_MESSAGES[detectedLang];
     // Ensure the final text (content + truncation message) doesn't exceed the limit
-    const maxContentLength = TTS_MAX_CHARACTERS - truncationMessage.length;
+    const maxContentLength = Math.max(0, TTS_MAX_CHARACTERS - truncationMessage.length);
     finalText = narrationText.substring(0, maxContentLength) + truncationMessage;
   }
 
