@@ -23,7 +23,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
     </div>
     {canEditHero && (
       <button 
-        class="edit-hero-btn text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white transition text-sm flex items-center gap-2 font-medium"
+        class="edit-hero-btn absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg flex items-center gap-2"
         data-page-name={pageName}
         title="Edit hero image"
       >
