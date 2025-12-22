@@ -17,7 +17,7 @@ export interface SummaryResult {
 /**
  * Detect the primary language of the text
  * @param text - The text to analyze
- * @returns Language code ('de' for German, 'en' for English, etc.)
+ * @returns Language code ('de' for German, 'en' for English). Defaults to 'en' if unclear.
  */
 function detectLanguage(text: string): string {
   const cleanText = text.toLowerCase();
@@ -52,7 +52,8 @@ function detectLanguage(text: string): string {
     if (matches) englishScore += matches.length;
   });
   
-  // Return language based on score
+  // Return language based on score (prefer German if clearly German, otherwise English)
+  // This handles the user's case where they want German for production content
   return germanScore > englishScore ? 'de' : 'en';
 }
 
