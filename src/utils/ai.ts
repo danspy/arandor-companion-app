@@ -466,6 +466,107 @@ function preparePodcastNarration(title: string, content: string): string {
   return narration;
 }
 
+/**
+ * Generate an AI-powered narrative summary optimized for podcast narration
+ * The narrator recollects what happened in the session and acts out highlights
+ * @param title - The title of the diary entry
+ * @param content - The full content of the diary entry (markdown)
+ * @param targetLanguage - The detected language for the narration
+ * @returns AI-generated narrative suitable for podcast TTS
+ */
+async function generatePodcastNarrative(
+  title: string,
+  content: string,
+  targetLanguage: SupportedLanguage
+): Promise<string | null> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
+  const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+
+  if (!apiKey) {
+    // Fall back to simple narration if no API key
+    return null;
+  }
+
+  // Clean the content for AI processing
+  const cleanContent = preparePodcastNarration(title, content);
+  
+  // Define language-specific instructions
+  const languageName = targetLanguage === 'de' ? 'German' : 'English';
+  const languageInstruction = targetLanguage === 'de' 
+    ? 'Du MUSST ausschließlich auf Deutsch antworten.'
+    : 'You MUST respond exclusively in English.';
+  
+  // System prompt for creating engaging podcast narration
+  const systemPrompt = `You are a skilled D&D storyteller and podcast narrator. Your role is to recollect and narrate what happened in a D&D session in an engaging, dramatic way. 
+
+CRITICAL REQUIREMENTS:
+1. ${languageInstruction}
+2. You are narrating directly to the audience - speak as if you're recounting the adventure
+3. Act out highlights with vivid descriptions and emotional delivery
+4. Focus on the key moments: battles, discoveries, character interactions, plot twists
+5. Use present tense for immediacy and engagement ("The party enters..." not "The party entered...")
+6. Add dramatic pauses with ellipses (...) for effect
+7. Keep it engaging but concise - aim for 2-4 minutes of narration (approximately 300-800 words)
+8. DO NOT include ANY meta-commentary, labels, or prefixes - dive straight into the narration
+9. Make it feel like an epic recap of the adventure
+
+STYLE GUIDELINES:
+- Be enthusiastic and dramatic where appropriate
+- Vary your pacing - quick for action, slower for tension
+- Highlight character names and important locations
+- Build suspense and drama
+- End with a hook or reflection on what happened
+
+Remember: This will be read aloud by text-to-speech, so write in a natural, spoken style.`;
+
+  const userPrompt = targetLanguage === 'de'
+    ? `Erzähle diese D&D-Sitzung als spannende Podcast-Episode nach. Erinnere dich lebhaft daran, was passiert ist, und hebe die wichtigsten Momente hervor:\n\nTitel: ${title}\n\nSession-Details:\n${cleanContent}`
+    : `Narrate this D&D session as an engaging podcast episode. Recollect what happened and act out the key highlights:\n\nTitle: ${title}\n\nSession Details:\n${cleanContent}`;
+
+  try {
+    const response = await fetch(`${apiBase}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: model,
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+        temperature: 0.8, // Higher temperature for more creative narration
+        max_tokens: 2000, // Allow longer narratives
+      }),
+    });
+
+    if (!response.ok) {
+      console.error('Failed to generate podcast narrative:', response.status, response.statusText);
+      return null;
+    }
+
+    const data = await response.json();
+    const narrative = data.choices?.[0]?.message?.content?.trim();
+
+    if (!narrative) {
+      return null;
+    }
+
+    return narrative;
+  } catch (error) {
+    console.error('Error generating podcast narrative:', error);
+    return null;
+  }
+}
+
 // OpenAI TTS API has a maximum limit of 4096 characters per request
 // Note: For future enhancement, consider implementing multi-chunk support
 // to handle longer texts by splitting into multiple API requests
@@ -474,6 +575,10 @@ const TTS_MAX_CHARACTERS = 4096;
 /**
  * Generate an AI-powered podcast narration for a diary entry
  * Uses OpenAI's Text-to-Speech API with high-quality voices
+ * 
+ * The podcast features an AI-generated narrative summary where the narrator
+ * recollects what happened in the session and acts out highlights, creating
+ * an engaging 2-4 minute recap in the original language of the content.
  * 
  * Note: The audio is returned as a base64 data URL and stored in the database.
  * This approach keeps the implementation simple without requiring file storage infrastructure.
@@ -500,12 +605,19 @@ export async function generateDiaryPodcast(
       error: 'OpenAI API key not configured. Set OPENAI_API_KEY environment variable.',
     };
   }
-
-  // Prepare the text for narration
-  const narrationText = preparePodcastNarration(title, content);
   
-  // Detect language for proper voice selection and truncation message
+  // Detect language for proper voice selection and narrative generation
   const detectedLang = detectLanguage(`${title} ${content}`);
+
+  // Generate an engaging AI narrative for the podcast
+  // This creates a dramatic recap where the narrator recollects the session highlights
+  let narrationText = await generatePodcastNarrative(title, content, detectedLang);
+  
+  // Fallback to simple narration if AI generation fails
+  if (!narrationText) {
+    console.warn('AI narrative generation failed, falling back to simple narration');
+    narrationText = preparePodcastNarration(title, content);
+  }
 
   // Select appropriate TTS voice based on language
   // If OPENAI_TTS_VOICE is set, it takes priority; otherwise, auto-detect
