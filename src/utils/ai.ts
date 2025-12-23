@@ -482,6 +482,10 @@ async function generatePodcastNarrative(
   const apiKey = process.env.OPENAI_API_KEY;
   const apiBase = process.env.OPENAI_API_BASE || 'https://api.openai.com/v1';
   const model = process.env.OPENAI_MODEL || 'gpt-3.5-turbo';
+  
+  // Allow configuration of AI creativity and length via environment variables
+  const temperature = parseFloat(process.env.OPENAI_PODCAST_TEMPERATURE || '0.8');
+  const maxTokens = parseInt(process.env.OPENAI_PODCAST_MAX_TOKENS || '2000', 10);
 
   if (!apiKey) {
     // Fall back to simple narration if no API key
@@ -543,8 +547,8 @@ Remember: This will be read aloud by text-to-speech, so write in a natural, spok
             content: userPrompt,
           },
         ],
-        temperature: 0.8, // Higher temperature for more creative narration
-        max_tokens: 2000, // Allow longer narratives
+        temperature: temperature,
+        max_tokens: maxTokens,
       }),
     });
 
