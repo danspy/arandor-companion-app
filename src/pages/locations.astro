@@ -151,8 +151,36 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </a>
         
         <div class="p-6">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{location.name}</h2>
+            </a>
+            {isLoggedIn && (
+              <div class="flex gap-2 items-center flex-shrink-0">
+                <Button
+                  variant="icon"
+                  size="sm"
+                  icon="edit"
+                  iconPosition="only"
+                  class="edit-location"
+                  data-id={location.id}
+                  title="Edit location"
+                  ariaLabel="Edit location"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="delete"
+                  iconPosition="only"
+                  class="delete-location hover:text-red-600 dark:hover:text-red-400"
+                  data-id={location.id}
+                  title="Delete location"
+                  ariaLabel="Delete location"
+                />
+              </div>
+            )}
+          </div>
           <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-            <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-2">{location.name}</h2>
             <p class="text-gray-600 dark:text-gray-400 mb-4">
               {location.region && `${location.region}`}
               {location.visited && (
@@ -173,31 +201,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           >
             View Details →
           </a>
-
-          {isLoggedIn && (
-            <div class="flex gap-3 mt-3 justify-end items-center border-t dark:border-gray-800 pt-3">
-              <Button
-                variant="icon"
-                size="md"
-                icon="edit"
-                iconPosition="only"
-                class="edit-location"
-                data-id={location.id}
-                title="Edit location"
-                ariaLabel="Edit location"
-              />
-              <Button
-                variant="ghost"
-                size="md"
-                icon="delete"
-                iconPosition="only"
-                class="delete-location hover:text-red-600 dark:hover:text-red-400"
-                data-id={location.id}
-                title="Delete location"
-                ariaLabel="Delete location"
-              />
-            </div>
-          )}
         </div>
       </div>
     ))}

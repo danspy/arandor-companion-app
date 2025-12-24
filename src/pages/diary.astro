@@ -140,9 +140,35 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </div>
         )}
         <div class="mb-4">
-          <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
-            {entry.title}
-          </a>
+          <div class="flex items-start justify-between gap-2 mb-1">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
+              {entry.title}
+            </a>
+            {isLoggedIn && (
+              <div class="flex gap-2 items-center flex-shrink-0">
+                <Button
+                  variant="icon"
+                  size="sm"
+                  icon="edit"
+                  iconPosition="only"
+                  class="edit-entry"
+                  data-id={entry.id}
+                  title="Edit entry"
+                  ariaLabel="Edit entry"
+                />
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  icon="delete"
+                  iconPosition="only"
+                  class="delete-entry hover:text-red-600 dark:hover:text-red-400"
+                  data-id={entry.id}
+                  title="Delete entry"
+                  ariaLabel="Delete entry"
+                />
+              </div>
+            )}
+          </div>
           <div class="flex gap-4 text-sm text-gray-500 mt-1">
             <span>Session {entry.session}</span>
             {entry.podcastAudioUrl && (
@@ -174,31 +200,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           View Details →
         </a>
-
-        {isLoggedIn && (
-          <div class="flex gap-3 mt-3 justify-end items-center border-t dark:border-gray-800 pt-3">
-            <Button
-                variant="icon"
-                size="md"
-                icon="edit"
-                iconPosition="only"
-                class="edit-entry"
-                data-id={entry.id}
-                title="Edit entry"
-                ariaLabel="Edit entry"
-              />
-            <Button
-                variant="ghost"
-                size="md"
-                icon="delete"
-                iconPosition="only"
-                class="delete-entry hover:text-red-600 dark:hover:text-red-400"
-                data-id={entry.id}
-                title="Delete entry"
-                ariaLabel="Delete entry"
-              />
-          </div>
-        )}
       </article>
       );
     })}

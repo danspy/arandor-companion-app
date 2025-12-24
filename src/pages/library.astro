@@ -118,9 +118,35 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           data-search={`${entry.title} ${entry.content}`.toLowerCase()}
         >
           <div class="mb-4">
-            <a href={`/library/${entry.id}`} class="text-xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition block mb-2">
-              {entry.title}
-            </a>
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <a href={`/library/${entry.id}`} class="text-xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
+                {entry.title}
+              </a>
+              {isLoggedIn && (
+                <div class="flex gap-2 items-center flex-shrink-0">
+                  <Button
+                    variant="icon"
+                    size="sm"
+                    icon="edit"
+                    iconPosition="only"
+                    class="edit-entry"
+                    data-id={entry.id}
+                    title="Edit entry"
+                    ariaLabel="Edit entry"
+                  />
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    icon="delete"
+                    iconPosition="only"
+                    class="delete-entry hover:text-red-600 dark:hover:text-red-400"
+                    data-id={entry.id}
+                    title="Delete entry"
+                    ariaLabel="Delete entry"
+                  />
+                </div>
+              )}
+            </div>
             {locationName && (
               <a href={`/locations/${entry.locationId}`} class="text-sm text-secondary-600 dark:text-secondary-400 hover:underline flex items-center gap-1">
                 <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -148,31 +174,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           >
             View Details →
           </a>
-
-          {isLoggedIn && (
-            <div class="flex gap-3 mt-3 justify-end items-center border-t dark:border-gray-800 pt-3">
-              <Button
-                variant="icon"
-                size="md"
-                icon="edit"
-                iconPosition="only"
-                class="edit-entry"
-                data-id={entry.id}
-                title="Edit entry"
-                ariaLabel="Edit entry"
-              />
-              <Button
-                variant="ghost"
-                size="md"
-                icon="delete"
-                iconPosition="only"
-                class="delete-entry hover:text-red-600 dark:hover:text-red-400"
-                data-id={entry.id}
-                title="Delete entry"
-                ariaLabel="Delete entry"
-              />
-            </div>
-          )}
         </article>
       );
     })}
