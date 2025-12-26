@@ -58,6 +58,12 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
     - Type badges (character, NPC, monster, other)
     - Editable by DM/admin only, viewable by all logged-in users
     - Quick add/edit/delete functionality
+  - **DM Screen** - Control what players see on a second display (DM/admin only)
+    - Select locations to display mood images
+    - Add NPCs to spotlight for player view
+    - Toggle initiative tracker visibility for players
+    - Generate shareable link for player display screen
+    - Real-time synchronization between DM control and player display
   - Coming soon: Dice Roller, Session Timer
 
 ### Additional Features
@@ -246,6 +252,7 @@ The database includes the following tables:
 - **Faction** - Faction standings and progress
 - **CampaignProgress** - Party level tracking
 - **InitiativeTracker** - Combat initiative tracking with HP, AC, and notes
+- **DMScreenState** - DM Screen state management for player display
 - **User** - Authentication credentials with role-based permissions
 
 ### Features
@@ -365,6 +372,10 @@ The following REST API endpoints are available:
 - `GET/POST /api/initiative` - Initiative entries (GET: all users, POST: DM/admin only)
 - `GET/PUT/DELETE /api/initiative/[id]` - Single initiative entry (GET: all users, PUT/DELETE: DM/admin only)
 
+**DM Screen:**
+- `GET /api/dm-screen` - Get current DM Screen state (all logged-in users)
+- `PUT /api/dm-screen` - Update DM Screen state (DM/admin only)
+
 **File Upload:**
 - `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
 
@@ -410,6 +421,8 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Image uploads for diary entries
 - [x] Multi-user support with role-based permissions
 - [x] Initiative tracker (DM/admin can edit, players can view)
+- [x] DM Screen prototype (control panel and player display)
+- [ ] Custom asset upload for DM Screen
 - [ ] D&D Beyond API integration (currently URL links only)
 - [ ] Character import/export
 - [ ] Image uploads for characters/NPCs
