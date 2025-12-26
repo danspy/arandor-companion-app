@@ -4,17 +4,9 @@ import { isAuthenticated, getUserRole } from '../../lib/auth';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
 
-// GET - Fetch current DM Screen state (accessible to all logged-in users)
-export const GET: APIRoute = async ({ cookies }) => {
-  const isLoggedIn = isAuthenticated(cookies);
-  
-  if (!isLoggedIn) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  }
-
+// GET - Fetch current DM Screen state (public - no authentication required)
+// This endpoint is public because the player display page (/display) needs access
+export const GET: APIRoute = async () => {
   try {
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     

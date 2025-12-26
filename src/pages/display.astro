@@ -360,13 +360,26 @@ const COMBAT_STATE_ID = 'current-combat';
         }
       }
 
-      // Poll for state updates
+      // Polling management
+      let pollInterval = null;
+      let pollRetryCount = 0;
+      const MAX_RETRY_DELAY = 30000; // Maximum 30 seconds between retries
+
+      // Poll for state updates with smart retry logic
       async function pollForUpdates() {
+        // Skip polling if page is hidden
+        if (document.hidden) {
+          return;
+        }
+
         try {
           const response = await fetch('/api/dm-screen');
-          if (!response.ok) return;
+          if (!response.ok) throw new Error('Failed to fetch');
 
           const state = await response.json();
+          
+          // Reset retry count on success
+          pollRetryCount = 0;
           
           // Check if state changed
           const stateChanged = 
@@ -384,6 +397,10 @@ const COMBAT_STATE_ID = 'current-combat';
           }
         } catch (error) {
           console.error('Error polling for updates:', error);
+          // Implement exponential backoff on errors
+          pollRetryCount++;
+          const delay = Math.min(2000 * Math.pow(2, pollRetryCount), MAX_RETRY_DELAY);
+          console.warn(`Polling failed. Retrying in ${delay / 1000}s...`);
         }
       }
 
@@ -401,8 +418,26 @@ const COMBAT_STATE_ID = 'current-combat';
         }
 
         // Poll for updates every 2 seconds
-        setInterval(pollForUpdates, 2000);
+        pollInterval = setInterval(pollForUpdates, 2000);
+        
+        // Stop polling when page is hidden, resume when visible
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            console.log('Page hidden - polling paused');
+          } else {
+            console.log('Page visible - polling resumed');
+            // Immediately poll when page becomes visible
+            pollForUpdates();
+          }
+        });
       }
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+        }
+      });
 
       // Start when page loads
       if (document.readyState === 'loading') {

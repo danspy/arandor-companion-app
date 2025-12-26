@@ -444,10 +444,12 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     const copyUrlBtn = document.getElementById('copyUrlBtn');
     const playerDisplayUrlInput = document.getElementById('playerDisplayUrl');
     
-    copyUrlBtn?.addEventListener('click', () => {
-      if (playerDisplayUrlInput) {
-        playerDisplayUrlInput.select();
-        document.execCommand('copy');
+    copyUrlBtn?.addEventListener('click', async () => {
+      if (!playerDisplayUrlInput) return;
+      
+      try {
+        // Use modern Clipboard API
+        await navigator.clipboard.writeText(playerDisplayUrlInput.value);
         
         // Show feedback
         const originalText = copyUrlBtn.textContent;
@@ -455,6 +457,20 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         setTimeout(() => {
           copyUrlBtn.textContent = originalText;
         }, 2000);
+      } catch (error) {
+        // Fallback to older method if Clipboard API is not available
+        playerDisplayUrlInput.select();
+        try {
+          document.execCommand('copy');
+          const originalText = copyUrlBtn.textContent;
+          copyUrlBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyUrlBtn.textContent = originalText;
+          }, 2000);
+        } catch (fallbackError) {
+          console.error('Failed to copy:', fallbackError);
+          alert('Failed to copy. Please copy the URL manually.');
+        }
       }
     });
 
