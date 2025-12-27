@@ -54,12 +54,17 @@ The player display screen (`/display`) is a public page that requires no authent
 
 ### Display Modes
 
-The player display automatically shows the most relevant content based on what the DM has configured:
+The player display shows content in a vertical scrollable layout, allowing multiple elements to be displayed simultaneously:
 
 1. **Empty State**: When nothing is selected, shows "Awaiting DM..." message
-2. **Location Display**: Full-screen location image with name and info overlay
+2. **Location Display**: Hero-style location image with name and info overlay
 3. **NPC Spotlight**: Grid of NPC cards with portraits and details
 4. **Initiative Tracker**: Combat tracker with health status and turn indicators
+
+**New: Combined Display Support**
+- You can now show **any combination** of location, NPCs, and initiative tracker simultaneously
+- All enabled sections stack vertically in a scrollable layout
+- Each section appears only when configured by the DM
 
 ### Auto-Refresh
 
@@ -87,11 +92,15 @@ The player display automatically polls for updates every 2 seconds, ensuring it 
    - Current round number
 4. Use Next/Prev Turn buttons in the Initiative Tracker to advance combat
 
-### Scenario 4: Mixed Display
-You can combine multiple elements:
-- Show location image AND initiative tracker
-- Show NPCs AND initiative tracker
-- The display prioritizes showing the most relevant content
+### Scenario 4: Combined Display (All At Once)
+You can now show multiple elements simultaneously:
+- **Location + NPCs**: Show the tavern interior with the NPCs present
+- **Location + Initiative**: Show the dungeon map during combat
+- **NPCs + Initiative**: Focus on characters during battle
+- **All Three**: Location image at top, NPCs in the middle, initiative tracker at bottom
+- All sections stack vertically and the display becomes scrollable
+
+Example use case: Show the throne room image, the king and guards as NPCs, and the initiative tracker during a combat encounter - all visible at once!
 
 ## Tips & Best Practices
 
