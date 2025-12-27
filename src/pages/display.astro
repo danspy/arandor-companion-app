@@ -40,7 +40,7 @@ const COMBAT_STATE_ID = 'current-combat';
       </div>
 
       <!-- Main content container -->
-      <div id="mainContent" class="hidden w-full h-full">
+      <div id="mainContent" class="hidden w-full h-full flex flex-col">
         <!-- Empty state -->
         <div id="emptyState" class="flex items-center justify-center h-full">
           <div class="text-center max-w-2xl">
@@ -55,49 +55,62 @@ const COMBAT_STATE_ID = 'current-combat';
           </div>
         </div>
 
-        <!-- Location display -->
-        <div id="locationDisplay" class="hidden h-full flex flex-col">
-          <div class="flex-1 relative overflow-hidden">
-            <!-- Location image background -->
-            <div id="locationImageContainer" class="absolute inset-0">
-              <img id="locationImage" class="w-full h-full object-cover" alt="Location" />
-              <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900"></div>
-            </div>
-            
-            <!-- Location info overlay -->
-            <div class="absolute bottom-0 left-0 right-0 p-8 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent">
-              <h1 id="locationName" class="text-5xl font-bold mb-2"></h1>
-              <p id="locationInfo" class="text-2xl text-gray-300"></p>
-            </div>
-          </div>
-        </div>
-
-        <!-- NPCs in spotlight -->
-        <div id="npcSpotlight" class="hidden">
-          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-8" id="npcGrid">
-            <!-- NPCs will be inserted here -->
-          </div>
-        </div>
-
-        <!-- Initiative tracker -->
-        <div id="initiativeDisplay" class="hidden p-8">
-          <div class="max-w-6xl mx-auto">
-            <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-6">
-              <div class="flex items-center justify-between mb-6">
-                <h2 class="text-3xl font-bold flex items-center gap-3">
-                  <svg class="w-8 h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-                  </svg>
-                  Initiative Tracker
-                </h2>
-                <div class="bg-primary-600 px-4 py-2 rounded-lg">
-                  <span class="text-sm font-medium">Round: </span>
-                  <span id="currentRound" class="text-2xl font-bold">1</span>
-                </div>
+        <!-- Combined display area (hidden when empty state is shown) -->
+        <div id="combinedDisplay" class="hidden h-full flex flex-col overflow-auto">
+          <!-- Location display -->
+          <div id="locationDisplay" class="hidden">
+            <div class="relative">
+              <!-- Location image background -->
+              <div id="locationImageContainer" class="relative h-64 md:h-96 overflow-hidden">
+                <img id="locationImage" class="w-full h-full object-cover" alt="Location" />
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900"></div>
               </div>
               
-              <div id="initiativeList" class="space-y-3">
-                <!-- Initiative entries will be inserted here -->
+              <!-- Location info overlay -->
+              <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent">
+                <h1 id="locationName" class="text-3xl md:text-5xl font-bold mb-2"></h1>
+                <p id="locationInfo" class="text-lg md:text-2xl text-gray-300"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- NPCs in spotlight -->
+          <div id="npcSpotlight" class="hidden">
+            <div class="p-6 md:p-8">
+              <h2 class="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">
+                <svg class="w-6 h-6 md:w-8 md:h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                NPCs in Scene
+              </h2>
+              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="npcGrid">
+                <!-- NPCs will be inserted here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Initiative tracker -->
+          <div id="initiativeDisplay" class="hidden">
+            <div class="p-6 md:p-8">
+              <div class="max-w-6xl mx-auto">
+                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-4 md:p-6">
+                  <div class="flex items-center justify-between mb-4 md:mb-6">
+                    <h2 class="text-2xl md:text-3xl font-bold flex items-center gap-2 md:gap-3">
+                      <svg class="w-6 h-6 md:w-8 md:h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                      </svg>
+                      Initiative Tracker
+                    </h2>
+                    <div class="bg-primary-600 px-3 py-1 md:px-4 md:py-2 rounded-lg">
+                      <span class="text-xs md:text-sm font-medium">Round: </span>
+                      <span id="currentRound" class="text-xl md:text-2xl font-bold">1</span>
+                    </div>
+                  </div>
+                  
+                  <div id="initiativeList" class="space-y-2 md:space-y-3">
+                    <!-- Initiative entries will be inserted here -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -151,15 +164,38 @@ const COMBAT_STATE_ID = 'current-combat';
         if (loadingState) loadingState.classList.add('hidden');
         if (mainContent) mainContent.classList.remove('hidden');
 
-        // Determine what to show
-        if (!hasLocation && !hasNpcs && !showInitiative) {
-          showEmpty();
-        } else if (hasLocation) {
-          showLocation(state.currentLocationId);
-        } else if (hasNpcs) {
-          showNpcs(state.spotlightNpcIds);
-        } else if (showInitiative) {
-          showInitiativeTracker();
+        // Check if we have any content to show
+        const hasAnyContent = hasLocation || hasNpcs || showInitiative;
+
+        if (!hasAnyContent) {
+          // Show empty state
+          document.getElementById('emptyState')?.classList.remove('hidden');
+          document.getElementById('combinedDisplay')?.classList.add('hidden');
+        } else {
+          // Hide empty state and show combined display
+          document.getElementById('emptyState')?.classList.add('hidden');
+          document.getElementById('combinedDisplay')?.classList.remove('hidden');
+          
+          // Show/update location if present
+          if (hasLocation) {
+            showLocation(state.currentLocationId);
+          } else {
+            document.getElementById('locationDisplay')?.classList.add('hidden');
+          }
+          
+          // Show/update NPCs if present
+          if (hasNpcs) {
+            showNpcs(state.spotlightNpcIds);
+          } else {
+            document.getElementById('npcSpotlight')?.classList.add('hidden');
+          }
+          
+          // Show/update initiative tracker if enabled
+          if (showInitiative) {
+            showInitiativeTracker();
+          } else {
+            document.getElementById('initiativeDisplay')?.classList.add('hidden');
+          }
         }
 
         // Update current state
@@ -173,6 +209,7 @@ const COMBAT_STATE_ID = 'current-combat';
       // Show empty state
       function showEmpty() {
         document.getElementById('emptyState')?.classList.remove('hidden');
+        document.getElementById('combinedDisplay')?.classList.add('hidden');
         document.getElementById('locationDisplay')?.classList.add('hidden');
         document.getElementById('npcSpotlight')?.classList.add('hidden');
         document.getElementById('initiativeDisplay')?.classList.add('hidden');
@@ -182,10 +219,6 @@ const COMBAT_STATE_ID = 'current-combat';
       function showLocation(locationId) {
         const location = locationsCache.get(locationId);
         if (!location) return;
-
-        document.getElementById('emptyState')?.classList.add('hidden');
-        document.getElementById('npcSpotlight')?.classList.add('hidden');
-        document.getElementById('initiativeDisplay')?.classList.add('hidden');
 
         const display = document.getElementById('locationDisplay');
         const image = document.getElementById('locationImage');
@@ -207,10 +240,6 @@ const COMBAT_STATE_ID = 'current-combat';
 
       // Show NPCs
       function showNpcs(npcIds) {
-        document.getElementById('emptyState')?.classList.add('hidden');
-        document.getElementById('locationDisplay')?.classList.add('hidden');
-        document.getElementById('initiativeDisplay')?.classList.add('hidden');
-
         const spotlight = document.getElementById('npcSpotlight');
         const grid = document.getElementById('npcGrid');
         
@@ -227,19 +256,19 @@ const COMBAT_STATE_ID = 'current-combat';
           card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 border-gray-700 hover:border-primary-600 transition';
           
           const avatarHtml = npc.avatarUrl 
-            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-64 object-cover" />`
-            : `<div class="w-full h-64 bg-gray-700 flex items-center justify-center">
-                <svg class="w-24 h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-48 md:h-64 object-cover" />`
+            : `<div class="w-full h-48 md:h-64 bg-gray-700 flex items-center justify-center">
+                <svg class="w-16 h-16 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
               </div>`;
 
           card.innerHTML = `
             ${avatarHtml}
-            <div class="p-6">
-              <h3 class="text-2xl font-bold mb-2">${npc.name}</h3>
-              <p class="text-gray-400 mb-2">${npc.occupation || npc.race}</p>
-              ${npc.description ? `<p class="text-sm text-gray-300 mt-4">${npc.description}</p>` : ''}
+            <div class="p-4 md:p-6">
+              <h3 class="text-xl md:text-2xl font-bold mb-2">${npc.name}</h3>
+              <p class="text-gray-400 mb-2 text-sm md:text-base">${npc.occupation || npc.race}</p>
+              ${npc.description ? `<p class="text-xs md:text-sm text-gray-300 mt-2 md:mt-4">${npc.description}</p>` : ''}
             </div>
           `;
           
@@ -249,10 +278,6 @@ const COMBAT_STATE_ID = 'current-combat';
 
       // Show initiative tracker
       async function showInitiativeTracker() {
-        document.getElementById('emptyState')?.classList.add('hidden');
-        document.getElementById('locationDisplay')?.classList.add('hidden');
-        document.getElementById('npcSpotlight')?.classList.add('hidden');
-
         const display = document.getElementById('initiativeDisplay');
         if (display) display.classList.remove('hidden');
 
