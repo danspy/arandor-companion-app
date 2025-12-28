@@ -1,0 +1,614 @@
+---
+import { db, Location, NPC, InitiativeTracker, CombatState, eq } from 'astro:db';
+
+// Player display is public - no authentication required
+// This page will be displayed on a second screen for players
+
+// We'll load initial state server-side, then poll for updates client-side
+const COMBAT_STATE_ID = 'current-combat';
+---
+
+<!DOCTYPE html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Player Display - Arandor</title>
+    <link rel="stylesheet" href="/src/styles/global.css" />
+    <script is:inline>
+      // Initialize dark mode
+      const getThemePreference = () => {
+        try {
+          const stored = localStorage.getItem('theme');
+          if (stored) return stored;
+        } catch (e) {
+          console.error('Error accessing localStorage:', e);
+        }
+        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      };
+      
+      const theme = getThemePreference();
+      document.documentElement.classList.toggle('dark', theme === 'dark');
+    </script>
+  </head>
+  <body class="bg-gray-900 text-white min-h-screen overflow-hidden">
+    <div id="displayContainer" class="w-full h-screen flex items-center justify-center">
+      <!-- Loading state -->
+      <div id="loadingState" class="text-center">
+        <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4"></div>
+        <p class="text-xl text-gray-400">Connecting to DM...</p>
+      </div>
+
+      <!-- Main content container -->
+      <div id="mainContent" class="hidden w-full h-full">
+        <!-- Placeholder/Hidden state -->
+        <div id="placeholderState" class="hidden h-full">
+          <div id="placeholderImage" class="hidden h-full">
+            <img id="placeholderImg" class="w-full h-full object-cover" alt="Placeholder" />
+          </div>
+          <div id="defaultPlaceholder" class="flex items-center justify-center h-full bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+            <div class="text-center max-w-2xl px-8">
+              <svg class="w-32 h-32 mx-auto mb-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+              </svg>
+              <h1 class="text-5xl font-bold mb-4 text-gray-300">Session Paused</h1>
+              <p class="text-2xl text-gray-400">
+                The DM will resume shortly...
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Empty state -->
+        <div id="emptyState" class="flex items-center justify-center h-full">
+          <div class="text-center max-w-2xl px-8">
+            <svg class="w-24 h-24 mx-auto mb-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+            </svg>
+            <h1 class="text-4xl font-bold mb-4">Awaiting DM...</h1>
+            <p class="text-xl text-gray-400">
+              Your DM will control what appears on this screen during the session.
+            </p>
+          </div>
+        </div>
+
+        <!-- Combined display area - uses flexbox for side-by-side layout -->
+        <div id="combinedDisplay" class="hidden h-full flex">
+          <!-- Left panel (60% width when split, 100% when alone) -->
+          <div id="leftPanel" class="h-full overflow-auto">
+            <!-- Location display (fullscreen when alone) -->
+            <div id="locationDisplay" class="hidden h-full">
+              <div class="relative h-full">
+                <img id="locationImage" class="w-full h-full object-cover" alt="Location" />
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900/80"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-8">
+                  <h1 id="locationName" class="text-5xl md:text-6xl font-bold mb-2"></h1>
+                  <p id="locationInfo" class="text-2xl md:text-3xl text-gray-300"></p>
+                </div>
+              </div>
+            </div>
+
+            <!-- NPCs in spotlight (fullscreen when alone) -->
+            <div id="npcSpotlight" class="hidden h-full">
+              <div class="h-full flex flex-col p-8">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 flex items-center gap-3">
+                  <svg class="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                  NPCs in Scene
+                </h2>
+                <div class="flex-1 overflow-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="npcGrid">
+                    <!-- NPCs will be inserted here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right panel - Initiative tracker (40% width when split, 100% when alone) -->
+          <div id="rightPanel" class="h-full overflow-auto">
+            <div id="initiativeDisplay" class="hidden h-full">
+              <div class="h-full flex flex-col p-8">
+                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-6 flex-1 flex flex-col">
+                  <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl md:text-4xl font-bold flex items-center gap-3">
+                      <svg class="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                      </svg>
+                      Initiative
+                    </h2>
+                    <div class="bg-primary-600 px-4 py-2 rounded-lg">
+                      <span class="text-sm font-medium">Round: </span>
+                      <span id="currentRound" class="text-2xl font-bold">1</span>
+                    </div>
+                  </div>
+                  <div id="initiativeList" class="flex-1 overflow-auto space-y-3">
+                    <!-- Initiative entries will be inserted here -->
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Store current state
+      let currentDisplayState = {
+        locationId: null,
+        npcIds: [],
+        showInitiative: false,
+        screenVisible: true,
+        placeholderImageUrl: null,
+      };
+
+      // Data caches
+      const locationsCache = new Map();
+      const npcsCache = new Map();
+
+      // Load reference data
+      async function loadReferenceData() {
+        try {
+          const [locationsResponse, npcsResponse] = await Promise.all([
+            fetch('/api/locations'),
+            fetch('/api/npcs'),
+          ]);
+
+          if (locationsResponse.ok) {
+            const locations = await locationsResponse.json();
+            locations.forEach(loc => locationsCache.set(loc.id, loc));
+          }
+
+          if (npcsResponse.ok) {
+            const npcs = await npcsResponse.json();
+            npcs.forEach(npc => npcsCache.set(npc.id, npc));
+          }
+        } catch (error) {
+          console.error('Error loading reference data:', error);
+        }
+      }
+
+      // Update display based on state
+      async function updateDisplay(state) {
+        const hasLocation = state.currentLocationId;
+        const hasNpcs = state.spotlightNpcIds && state.spotlightNpcIds.length > 0;
+        const showInitiative = state.showInitiativeTracker;
+        const screenVisible = state.screenVisible === undefined ? true : state.screenVisible; // Default to true if undefined
+
+        // Hide loading, show main content
+        const loadingState = document.getElementById('loadingState');
+        const mainContent = document.getElementById('mainContent');
+        if (loadingState) loadingState.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('hidden');
+
+        // Update current state BEFORE early return so polling detects changes
+        currentDisplayState = {
+          locationId: state.currentLocationId,
+          npcIds: state.spotlightNpcIds || [],
+          showInitiative: state.showInitiativeTracker,
+          screenVisible: screenVisible,
+          placeholderImageUrl: state.placeholderImageUrl,
+        };
+
+        // Check if screen is hidden - show placeholder
+        if (!screenVisible) {
+          showPlaceholder(state.placeholderImageUrl);
+          return;
+        }
+        
+        // Hide placeholder when screen is visible
+        document.getElementById('placeholderState')?.classList.add('hidden');
+
+        // Count active sections
+        const activeCount = [hasLocation, hasNpcs, showInitiative].filter(Boolean).length;
+        
+        if (activeCount === 0) {
+          // Show empty state
+          showEmpty();
+        } else {
+          // Hide empty state and show combined display
+          document.getElementById('emptyState')?.classList.add('hidden');
+          document.getElementById('combinedDisplay')?.classList.remove('hidden');
+          
+          const leftPanel = document.getElementById('leftPanel');
+          const rightPanel = document.getElementById('rightPanel');
+          const locationDisplay = document.getElementById('locationDisplay');
+          const npcSpotlight = document.getElementById('npcSpotlight');
+          const initiativeDisplay = document.getElementById('initiativeDisplay');
+          
+          // Reset all displays and their heights
+          locationDisplay?.classList.add('hidden');
+          npcSpotlight?.classList.add('hidden');
+          initiativeDisplay?.classList.add('hidden');
+          
+          // Reset all heights to allow dynamic resizing
+          if (locationDisplay) locationDisplay.style.height = '';
+          if (npcSpotlight) npcSpotlight.style.height = '';
+          if (initiativeDisplay) initiativeDisplay.style.height = '';
+          
+          // Apply layout based on what's active
+          if (activeCount === 1) {
+            // Single item - fullscreen
+            if (hasLocation) {
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              leftPanel.classList.remove('hidden');
+              locationDisplay?.classList.remove('hidden');
+              showLocation(state.currentLocationId);
+            } else if (hasNpcs) {
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              leftPanel.classList.remove('hidden');
+              npcSpotlight?.classList.remove('hidden');
+              showNpcs(state.spotlightNpcIds);
+            } else if (showInitiative) {
+              leftPanel.style.width = '0';
+              leftPanel.classList.add('hidden');
+              rightPanel.style.width = '100%';
+              rightPanel.classList.remove('hidden');
+              initiativeDisplay?.classList.remove('hidden');
+              await showInitiativeTracker();
+            }
+          } else if (activeCount === 2) {
+            // Two items - side by side 60/40
+            leftPanel.classList.remove('hidden');
+            rightPanel.classList.remove('hidden');
+            
+            if (showInitiative) {
+              // Initiative always on right when present
+              leftPanel.style.width = '60%';
+              rightPanel.style.width = '40%';
+              initiativeDisplay?.classList.remove('hidden');
+              await showInitiativeTracker();
+              
+              if (hasLocation) {
+                locationDisplay?.classList.remove('hidden');
+                showLocation(state.currentLocationId);
+              } else if (hasNpcs) {
+                npcSpotlight?.classList.remove('hidden');
+                showNpcs(state.spotlightNpcIds);
+              }
+            } else {
+              // Location and NPCs - both on left, split the space
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              
+              if (hasLocation) {
+                locationDisplay?.classList.remove('hidden');
+                locationDisplay.style.height = '50%';
+                showLocation(state.currentLocationId);
+              }
+              if (hasNpcs) {
+                npcSpotlight?.classList.remove('hidden');
+                npcSpotlight.style.height = '50%';
+                showNpcs(state.spotlightNpcIds);
+              }
+            }
+          } else if (activeCount === 3) {
+            // All three - Location + NPCs on left (60%), Initiative on right (40%)
+            leftPanel.style.width = '60%';
+            rightPanel.style.width = '40%';
+            leftPanel.classList.remove('hidden');
+            rightPanel.classList.remove('hidden');
+            
+            // Split left panel vertically
+            locationDisplay?.classList.remove('hidden');
+            locationDisplay.style.height = '50%';
+            showLocation(state.currentLocationId);
+            
+            npcSpotlight?.classList.remove('hidden');
+            npcSpotlight.style.height = '50%';
+            showNpcs(state.spotlightNpcIds);
+            
+            // Initiative on right
+            initiativeDisplay?.classList.remove('hidden');
+            await showInitiativeTracker();
+          }
+        }
+      }
+
+      // Show placeholder/hidden state
+      function showPlaceholder(imageUrl) {
+        document.getElementById('combinedDisplay')?.classList.add('hidden');
+        
+        if (imageUrl) {
+          // Show custom placeholder image
+          document.getElementById('emptyState')?.classList.add('hidden');
+          const placeholderState = document.getElementById('placeholderState');
+          const placeholderImage = document.getElementById('placeholderImage');
+          const placeholderImg = document.getElementById('placeholderImg');
+          const defaultPlaceholder = document.getElementById('defaultPlaceholder');
+          
+          placeholderState?.classList.remove('hidden');
+          if (placeholderImg) placeholderImg.src = imageUrl;
+          placeholderImage?.classList.remove('hidden');
+          defaultPlaceholder?.classList.add('hidden');
+        } else {
+          // No image set - show "Awaiting DM..." screen
+          document.getElementById('placeholderState')?.classList.add('hidden');
+          document.getElementById('emptyState')?.classList.remove('hidden');
+        }
+      }
+      
+      // Show empty state
+      function showEmpty() {
+        document.getElementById('emptyState')?.classList.remove('hidden');
+        document.getElementById('combinedDisplay')?.classList.add('hidden');
+        document.getElementById('placeholderState')?.classList.add('hidden');
+      }
+
+      // Show location
+      function showLocation(locationId) {
+        const location = locationsCache.get(locationId);
+        if (!location) return;
+
+        const display = document.getElementById('locationDisplay');
+        const image = document.getElementById('locationImage');
+        const name = document.getElementById('locationName');
+        const info = document.getElementById('locationInfo');
+
+        if (display) display.classList.remove('hidden');
+        if (image && location.imageUrl) {
+          image.src = location.imageUrl;
+          image.alt = location.name;
+        }
+        if (name) name.textContent = location.name;
+        if (info) {
+          const parts = [location.type];
+          if (location.region) parts.push(location.region);
+          info.textContent = parts.join(' • ');
+        }
+      }
+
+      // Show NPCs
+      function showNpcs(npcIds) {
+        const spotlight = document.getElementById('npcSpotlight');
+        const grid = document.getElementById('npcGrid');
+        
+        if (!spotlight || !grid) return;
+
+        spotlight.classList.remove('hidden');
+        grid.innerHTML = '';
+
+        npcIds.forEach(npcId => {
+          const npc = npcsCache.get(npcId);
+          if (!npc) return;
+
+          const card = document.createElement('div');
+          card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 border-gray-700 hover:border-primary-600 transition';
+          
+          const avatarHtml = npc.avatarUrl 
+            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-40 md:h-48 object-cover" />`
+            : `<div class="w-full h-40 md:h-48 bg-gray-700 flex items-center justify-center">
+                <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>`;
+
+          card.innerHTML = `
+            ${avatarHtml}
+            <div class="p-4">
+              <h3 class="text-lg md:text-xl font-bold mb-1">${npc.name}</h3>
+              <p class="text-gray-400 mb-2 text-sm">${npc.occupation || npc.race}</p>
+              ${npc.description ? `<p class="text-xs text-gray-300 line-clamp-2">${npc.description}</p>` : ''}
+            </div>
+          `;
+          
+          grid.appendChild(card);
+        });
+      }
+
+      // Show initiative tracker
+      async function showInitiativeTracker() {
+        const display = document.getElementById('initiativeDisplay');
+        if (display) display.classList.remove('hidden');
+
+        await updateInitiativeList();
+      }
+
+      // Update initiative list
+      async function updateInitiativeList() {
+        try {
+          const [initiativeResponse, combatResponse] = await Promise.all([
+            fetch('/api/initiative'),
+            fetch('/api/combat-state'),
+          ]);
+
+          if (!initiativeResponse.ok || !combatResponse.ok) return;
+
+          const initiatives = await initiativeResponse.json();
+          const combat = await combatResponse.json();
+
+          const list = document.getElementById('initiativeList');
+          const roundDisplay = document.getElementById('currentRound');
+          
+          if (roundDisplay) roundDisplay.textContent = combat.currentRound || 1;
+          if (!list) return;
+
+          // Sort by initiative
+          const sorted = initiatives.sort((a, b) => {
+            if (b.initiative !== a.initiative) return b.initiative - a.initiative;
+            return a.name.localeCompare(b.name);
+          });
+
+          // Filter active entries
+          const active = sorted.filter(e => e.isActive);
+
+          list.innerHTML = '';
+          
+          // Debug logging
+          console.log('Combat state:', combat);
+          console.log('Active entries:', active.length);
+          console.log('Current turn index:', combat.currentTurnIndex);
+          console.log('Combat status:', combat.status);
+
+          active.forEach((entry, index) => {
+            const isCurrentTurn = index === combat.currentTurnIndex && combat.status === 'active';
+            
+            // Debug log for each entry
+            if (isCurrentTurn) {
+              console.log(`Current turn: ${entry.name} (index ${index})`);
+            }
+            
+            const getHealthStatus = (hp, maxHp) => {
+              if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
+              if (hp === 0) return { text: 'Dead', classes: 'bg-black text-white' };
+              const percent = hp / maxHp;
+              if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-600 text-white' };
+              if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-600 text-white' };
+              if (percent <= 0.75) return { text: 'Injured', classes: 'bg-yellow-600 text-white' };
+              return { text: 'Healthy', classes: 'bg-green-600 text-white' };
+            };
+
+            const getTypeBadge = (type) => {
+              const colors = {
+                character: 'bg-green-900/30',
+                npc: 'bg-blue-900/30',
+                monster: 'bg-red-900/30',
+                other: 'bg-gray-900/30',
+              };
+              return colors[type] || colors.other;
+            };
+
+            const health = getHealthStatus(entry.hp, entry.maxHp);
+            
+            const entryEl = document.createElement('div');
+            entryEl.className = `p-4 rounded-lg transition ${getTypeBadge(entry.type)} ${
+              isCurrentTurn 
+                ? 'border-2 border-yellow-500 shadow-lg' 
+                : ''
+            }`;
+            
+            entryEl.innerHTML = `
+              <div class="flex items-center gap-4">
+                <div class="text-4xl font-bold text-primary-400 min-w-16 text-center">
+                  ${entry.initiative}
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="text-xl font-semibold">${entry.name}</h3>
+                  </div>
+                  ${health.text !== '-' 
+                    ? `<span class="inline-block px-2 py-1 rounded text-sm font-semibold ${health.classes}">
+                        ${health.text}
+                      </span>`
+                    : ''
+                  }
+                </div>
+                ${isCurrentTurn 
+                  ? `<div class="text-yellow-400 font-bold text-lg">
+                      ▶ Current Turn
+                    </div>`
+                  : ''
+                }
+              </div>
+            `;
+            
+            list.appendChild(entryEl);
+          });
+
+          if (active.length === 0) {
+            list.innerHTML = '<p class="text-center text-gray-400 py-8">No active combatants</p>';
+          }
+        } catch (error) {
+          console.error('Error updating initiative list:', error);
+        }
+      }
+
+      // Polling management
+      let pollInterval = null;
+      let pollRetryCount = 0;
+      const MAX_RETRY_DELAY = 30000; // Maximum 30 seconds between retries
+
+      // Poll for state updates with smart retry logic
+      async function pollForUpdates() {
+        // Skip polling if page is hidden
+        if (document.hidden) {
+          return;
+        }
+
+        try {
+          const response = await fetch('/api/dm-screen');
+          if (!response.ok) throw new Error('Failed to fetch');
+
+          const state = await response.json();
+          
+          // Reset retry count on success
+          pollRetryCount = 0;
+          
+          // Check if state changed
+          const screenVisible = state.screenVisible === undefined ? true : state.screenVisible;
+          const stateChanged = 
+            state.currentLocationId !== currentDisplayState.locationId ||
+            JSON.stringify(state.spotlightNpcIds) !== JSON.stringify(currentDisplayState.npcIds) ||
+            state.showInitiativeTracker !== currentDisplayState.showInitiative ||
+            screenVisible !== currentDisplayState.screenVisible ||
+            state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl;
+
+          if (stateChanged) {
+            await updateDisplay(state);
+          }
+
+          // If showing initiative, update the list on every poll to catch turn changes
+          if (state.showInitiativeTracker) {
+            await updateInitiativeList();
+          }
+        } catch (error) {
+          console.error('Error polling for updates:', error);
+          // Implement exponential backoff on errors
+          pollRetryCount++;
+          const delay = Math.min(2000 * Math.pow(2, pollRetryCount), MAX_RETRY_DELAY);
+          console.warn(`Polling failed. Retrying in ${delay / 1000}s...`);
+        }
+      }
+
+      // Initialize
+      async function initialize() {
+        await loadReferenceData();
+        
+        // Load initial state
+        const response = await fetch('/api/dm-screen');
+        if (response.ok) {
+          const state = await response.json();
+          await updateDisplay(state);
+        } else {
+          showEmpty();
+        }
+
+        // Poll for updates every 2 seconds
+        pollInterval = setInterval(pollForUpdates, 2000);
+        
+        // Stop polling when page is hidden, resume when visible
+        document.addEventListener('visibilitychange', () => {
+          if (document.hidden) {
+            console.log('Page hidden - polling paused');
+          } else {
+            console.log('Page visible - polling resumed');
+            // Immediately poll when page becomes visible
+            pollForUpdates();
+          }
+        });
+      }
+
+      // Cleanup on page unload
+      window.addEventListener('beforeunload', () => {
+        if (pollInterval) {
+          clearInterval(pollInterval);
+        }
+      });
+
+      // Start when page loads
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initialize);
+      } else {
+        initialize();
+      }
+    </script>
+  </body>
+</html>

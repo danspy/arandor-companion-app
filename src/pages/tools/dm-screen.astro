@@ -1,0 +1,942 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import Button from '../../components/Button.astro';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { db, Location, NPC, PageSettings, eq } from 'astro:db';
+
+// DM Screen is only accessible to DM/Admin
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+
+if (!isLoggedIn || !canEdit) {
+  return Astro.redirect('/login');
+}
+
+// Fetch all locations and NPCs for selection
+const locations = await db.select().from(Location);
+const npcs = await db.select().from(NPC);
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dm-screen'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
+
+// Generate player display URL
+const playerDisplayUrl = `${Astro.url.origin}/display`;
+---
+
+<Layout title="DM Screen">
+  <PageHero 
+    title="DM Screen" 
+    heroImageUrl={heroImageUrl}
+    pageName="dm-screen"
+    canEditHero={canEdit}
+  />
+
+  <div class="mb-6">
+    <p class="text-gray-600 dark:text-gray-400 mb-4">
+      Control what your players see on their display screen. Select locations, NPCs in spotlight, and manage the combat tracker.
+    </p>
+    
+    <!-- Player Display Link -->
+    <div class="bg-secondary-50 dark:bg-secondary-950 border-2 border-secondary-200 dark:border-secondary-800 rounded-lg p-4 mb-6">
+      <div class="flex items-start gap-3">
+        <svg class="w-6 h-6 text-secondary-600 dark:text-secondary-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+        </svg>
+        <div class="flex-1">
+          <h3 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">Player Display Screen</h3>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
+            Open this link on a second screen or share it with your players:
+          </p>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              readonly
+              value={playerDisplayUrl}
+              id="playerDisplayUrl"
+              class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
+            />
+            <Button variant="secondary" size="sm" id="copyUrlBtn">
+              Copy
+            </Button>
+            <a href={playerDisplayUrl} target="_blank" rel="noopener noreferrer">
+              <Button variant="primary" size="sm">
+                Open
+              </Button>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Location Control -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Current Location
+      </h2>
+      
+      <div class="space-y-4">
+        <div>
+          <label for="locationSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Select Location to Display
+          </label>
+          <select 
+            id="locationSelect"
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+          >
+            <option value="">-- None --</option>
+            {locations.map(location => (
+              <option value={location.id}>
+                {location.name} ({location.type})
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div id="locationPreview" class="hidden">
+          <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Preview:</p>
+          <div class="border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+            <div id="locationImageContainer" class="bg-gray-100 dark:bg-gray-800 aspect-video flex items-center justify-center">
+              <img id="locationImage" class="w-full h-full object-cover hidden" alt="Location" />
+              <p id="noLocationImage" class="text-gray-400 dark:text-gray-600">No image available</p>
+            </div>
+            <div class="p-3 bg-gray-50 dark:bg-gray-900">
+              <p id="locationName" class="font-semibold text-gray-900 dark:text-gray-100"></p>
+              <p id="locationInfo" class="text-sm text-gray-600 dark:text-gray-400"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- NPC Spotlight Control -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+        </svg>
+        NPCs in Spotlight
+      </h2>
+
+      <div class="space-y-4">
+        <div>
+          <label for="npcSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Add NPC to Spotlight
+          </label>
+          <div class="flex gap-2">
+            <select 
+              id="npcSelect"
+              class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+            >
+              <option value="">-- Select NPC --</option>
+              {npcs.map(npc => (
+                <option value={npc.id}>
+                  {npc.name} ({npc.occupation || npc.race})
+                </option>
+              ))}
+            </select>
+            <Button variant="primary" size="sm" id="addNpcBtn">
+              Add
+            </Button>
+          </div>
+        </div>
+
+        <div id="spotlightNpcList" class="space-y-2">
+          <p class="text-sm text-gray-500 dark:text-gray-400" id="noNpcsMessage">No NPCs in spotlight</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Initiative Tracker Control -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+        </svg>
+        Initiative Tracker
+      </h2>
+
+      <div class="space-y-4">
+        <div class="flex items-center">
+          <input 
+            type="checkbox" 
+            id="showInitiativeTracker"
+            class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+          />
+          <label for="showInitiativeTracker" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+            Show initiative tracker on player display
+          </label>
+        </div>
+
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          When enabled, players will see the initiative tracker on their display screen during combat.
+        </p>
+        
+        <!-- Combat Controls -->
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Combat Controls</span>
+            <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-2.5 py-1 rounded-lg">
+              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
+              <span id="dmCurrentRound" class="text-lg font-bold text-primary-700 dark:text-primary-400">1</span>
+            </div>
+          </div>
+          
+          <div class="flex flex-col gap-2">
+            <!-- Combat Status Buttons -->
+            <div class="flex gap-2">
+              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="flex-1" data-status="stopped">
+                Start
+              </Button>
+              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="flex-1" data-status="stopped">
+                Pause
+              </Button>
+              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="flex-1" data-status="stopped">
+                Stop
+              </Button>
+            </div>
+            
+            <!-- Turn Navigation -->
+            <div class="flex gap-2">
+              <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="flex-1">
+                Prev
+              </Button>
+              <Button variant="secondary" size="sm" icon="next" iconPosition="right" id="dmNextTurnBtn" class="flex-1">
+                Next
+              </Button>
+            </div>
+          </div>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Control initiative turns directly from here, or use the full <a href="/tools/initiative" class="text-primary-600 dark:text-primary-400 hover:underline">Initiative Tracker</a>.
+          </p>
+        </div>
+
+        <!-- Current and Next Combatants Display -->
+        <div id="initiativePreview" class="pt-4 border-t border-gray-200 dark:border-gray-700 hidden">
+          <span class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2 block">Turn Order</span>
+          
+          <!-- Current Turn -->
+          <div id="currentTurnDisplay" class="mb-2 p-3 bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-400 dark:border-yellow-600 rounded-lg">
+            <div class="flex items-center gap-2 mb-1">
+              <svg class="w-4 h-4 text-yellow-600 dark:text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
+              </svg>
+              <span class="text-xs font-semibold text-yellow-700 dark:text-yellow-400">CURRENT TURN</span>
+            </div>
+            <div id="currentTurnContent" class="text-sm">
+              <span class="font-semibold text-gray-900 dark:text-gray-100">--</span>
+              <span class="text-gray-600 dark:text-gray-400 ml-2">Init: --</span>
+            </div>
+          </div>
+          
+          <!-- Next Turn -->
+          <div id="nextTurnDisplay" class="p-3 bg-gray-50 dark:bg-gray-800/50 border border-gray-300 dark:border-gray-600 rounded-lg">
+            <div class="flex items-center gap-2 mb-1">
+              <svg class="w-4 h-4 text-gray-500 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+              </svg>
+              <span class="text-xs font-semibold text-gray-600 dark:text-gray-400">UP NEXT</span>
+            </div>
+            <div id="nextTurnContent" class="text-sm">
+              <span class="font-semibold text-gray-900 dark:text-gray-100">--</span>
+              <span class="text-gray-600 dark:text-gray-400 ml-2">Init: --</span>
+            </div>
+          </div>
+        </div>
+
+        <a href="/tools/initiative" class="inline-block">
+          <Button variant="secondary" size="sm">
+            Manage Initiative
+          </Button>
+        </a>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        Quick Actions
+      </h2>
+
+      <div class="space-y-4">
+        <!-- Show/Hide Screen Toggle -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Screen Visibility</label>
+            <div class="flex items-center gap-2">
+              <span id="screenStatusText" class="text-sm text-gray-600 dark:text-gray-400">Visible</span>
+              <button 
+                id="toggleScreenBtn"
+                class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium"
+              >
+                Hide Screen
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            Hide the screen to show placeholder image while keeping your data intact.
+          </p>
+        </div>
+        
+        <!-- Placeholder Image Upload -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Placeholder Wallpaper
+          </label>
+          <div class="space-y-2">
+            <input 
+              type="text" 
+              id="placeholderImageUrl"
+              placeholder="Enter image URL..."
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+            />
+            <div class="flex gap-2">
+              <label for="placeholderImageFile" class="flex-1">
+                <div class="cursor-pointer w-full px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm text-center font-medium border border-gray-300 dark:border-gray-600">
+                  📁 Upload Image
+                </div>
+                <input 
+                  type="file" 
+                  id="placeholderImageFile"
+                  accept="image/*"
+                  class="hidden"
+                />
+              </label>
+              <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="flex-1">
+                Save Wallpaper
+              </Button>
+              <Button variant="secondary" size="sm" id="clearPlaceholderBtn">
+                Clear
+              </Button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Upload an image file or enter an image URL. This appears when the screen is hidden.
+          </p>
+        </div>
+        
+        <!-- Clear All -->
+        <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+          <Button variant="danger" size="sm" id="clearAllBtn" class="w-full">
+            Clear Player Display
+          </Button>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            This will clear the location, NPCs, and hide the initiative tracker on the player display.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Store current state
+    let currentState = {
+      currentLocationId: null,
+      spotlightNpcIds: [],
+      customAssets: [],
+      showInitiativeTracker: false,
+      screenVisible: true,
+      placeholderImageUrl: null,
+    };
+
+    // Store locations and NPCs data
+    const locationsData = new Map();
+    const npcsData = new Map();
+
+    // Initialize data maps
+    async function initializeData() {
+      try {
+        const [locationsResponse, npcsResponse] = await Promise.all([
+          fetch('/api/locations'),
+          fetch('/api/npcs'),
+        ]);
+
+        if (locationsResponse.ok) {
+          const locations = await locationsResponse.json();
+          locations.forEach(loc => {
+            locationsData.set(loc.id, loc);
+          });
+        }
+
+        if (npcsResponse.ok) {
+          const npcs = await npcsResponse.json();
+          npcs.forEach(npc => {
+            npcsData.set(npc.id, npc);
+          });
+        }
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    }
+
+    // Load current DM Screen state
+    async function loadState() {
+      try {
+        const response = await fetch('/api/dm-screen');
+        if (response.ok) {
+          const state = await response.json();
+          currentState = state;
+          
+          // Update UI
+          updateLocationPreview(state.currentLocationId);
+          updateNpcList(state.spotlightNpcIds);
+          
+          const locationSelect = document.getElementById('locationSelect');
+          const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+          const placeholderImageInput = document.getElementById('placeholderImageUrl');
+          
+          if (locationSelect) locationSelect.value = state.currentLocationId || '';
+          if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
+          if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
+          
+          // Update screen visibility UI
+          updateScreenVisibilityUI(state.screenVisible !== false); // Default to true if undefined
+        }
+      } catch (error) {
+        console.error('Error loading state:', error);
+      }
+    }
+    
+    // Update screen visibility UI
+    function updateScreenVisibilityUI(isVisible) {
+      const toggleBtn = document.getElementById('toggleScreenBtn');
+      const statusText = document.getElementById('screenStatusText');
+      
+      if (isVisible) {
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Hide Screen';
+          toggleBtn.className = 'px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium';
+        }
+        if (statusText) statusText.textContent = 'Visible';
+      } else {
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Show Screen';
+          toggleBtn.className = 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium';
+        }
+        if (statusText) statusText.textContent = 'Hidden';
+      }
+    }
+
+    // Update location preview
+    function updateLocationPreview(locationId) {
+      const preview = document.getElementById('locationPreview');
+      const image = document.getElementById('locationImage');
+      const noImage = document.getElementById('noLocationImage');
+      const name = document.getElementById('locationName');
+      const info = document.getElementById('locationInfo');
+
+      if (!locationId) {
+        preview?.classList.add('hidden');
+        return;
+      }
+
+      const location = locationsData.get(locationId);
+      if (!location) return;
+
+      preview?.classList.remove('hidden');
+      
+      if (location.imageUrl) {
+        image?.classList.remove('hidden');
+        noImage?.classList.add('hidden');
+        if (image) image.src = location.imageUrl;
+      } else {
+        image?.classList.add('hidden');
+        noImage?.classList.remove('hidden');
+      }
+
+      if (name) name.textContent = location.name;
+      if (info) info.textContent = `${location.type}${location.region ? ' • ' + location.region : ''}`;
+    }
+
+    // Update NPC list
+    function updateNpcList(npcIds) {
+      const list = document.getElementById('spotlightNpcList');
+      const noMessage = document.getElementById('noNpcsMessage');
+      
+      if (!list) return;
+
+      // Clear existing NPCs (except the "no NPCs" message)
+      const npcElements = list.querySelectorAll('.npc-item');
+      npcElements.forEach(el => el.remove());
+
+      if (!npcIds || npcIds.length === 0) {
+        noMessage?.classList.remove('hidden');
+        return;
+      }
+
+      noMessage?.classList.add('hidden');
+
+      npcIds.forEach(npcId => {
+        const npc = npcsData.get(npcId);
+        if (!npc) return;
+
+        const npcItem = document.createElement('div');
+        npcItem.className = 'npc-item flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900 rounded-lg';
+        npcItem.innerHTML = `
+          <div>
+            <p class="font-medium text-gray-900 dark:text-gray-100">${npc.name}</p>
+            <p class="text-sm text-gray-600 dark:text-gray-400">${npc.occupation || npc.race}</p>
+          </div>
+          <button class="remove-npc-btn text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300" data-npc-id="${npcId}">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        `;
+        list.appendChild(npcItem);
+      });
+
+      // Add event listeners to remove buttons
+      document.querySelectorAll('.remove-npc-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const npcId = btn.getAttribute('data-npc-id');
+          removeNpcFromSpotlight(npcId);
+        });
+      });
+    }
+
+    // Update state on server
+    async function updateState(updates) {
+      try {
+        const response = await fetch('/api/dm-screen', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+
+        if (response.ok) {
+          const newState = await response.json();
+          currentState = newState;
+          return true;
+        }
+        return false;
+      } catch (error) {
+        console.error('Error updating state:', error);
+        return false;
+      }
+    }
+
+    // Location selection change
+    const locationSelect = document.getElementById('locationSelect');
+    locationSelect?.addEventListener('change', async () => {
+      const locationId = locationSelect.value || null;
+      const success = await updateState({ currentLocationId: locationId });
+      if (success) {
+        updateLocationPreview(locationId);
+      }
+    });
+
+    // Add NPC to spotlight
+    const addNpcBtn = document.getElementById('addNpcBtn');
+    const npcSelect = document.getElementById('npcSelect');
+    
+    addNpcBtn?.addEventListener('click', async () => {
+      const npcId = npcSelect?.value;
+      if (!npcId) return;
+
+      if (currentState.spotlightNpcIds.includes(npcId)) {
+        alert('This NPC is already in the spotlight');
+        return;
+      }
+
+      const newNpcIds = [...currentState.spotlightNpcIds, npcId];
+      const success = await updateState({ spotlightNpcIds: newNpcIds });
+      
+      if (success) {
+        updateNpcList(newNpcIds);
+        if (npcSelect) npcSelect.value = '';
+      }
+    });
+
+    // Remove NPC from spotlight
+    async function removeNpcFromSpotlight(npcId) {
+      const newNpcIds = currentState.spotlightNpcIds.filter(id => id !== npcId);
+      const success = await updateState({ spotlightNpcIds: newNpcIds });
+      
+      if (success) {
+        updateNpcList(newNpcIds);
+      }
+    }
+
+    // Toggle initiative tracker
+    const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+    showInitiativeCheckbox?.addEventListener('change', async () => {
+      const showTracker = showInitiativeCheckbox.checked;
+      await updateState({ showInitiativeTracker: showTracker });
+    });
+
+    // Combat controls
+    let combatState = { currentRound: 1, currentTurnIndex: 0, status: 'stopped' };
+    let initiatives = [];
+    
+    // Fetch combat state and initiatives
+    async function loadCombatData() {
+      try {
+        const [combatResponse, initiativeResponse] = await Promise.all([
+          fetch('/api/combat-state'),
+          fetch('/api/initiative')
+        ]);
+        
+        if (combatResponse.ok) {
+          combatState = await combatResponse.json();
+          const roundDisplay = document.getElementById('dmCurrentRound');
+          if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+          updateButtonStates();
+        }
+        
+        if (initiativeResponse.ok) {
+          initiatives = await initiativeResponse.json();
+          updateInitiativePreview();
+        }
+      } catch (error) {
+        console.error('Error loading combat data:', error);
+      }
+    }
+    
+    // Update initiative preview (current and next turns)
+    function updateInitiativePreview() {
+      const preview = document.getElementById('initiativePreview');
+      const currentContent = document.getElementById('currentTurnContent');
+      const nextContent = document.getElementById('nextTurnContent');
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      
+      if (activeInitiatives.length === 0 || combatState.status === 'stopped') {
+        preview?.classList.add('hidden');
+        return;
+      }
+      
+      preview?.classList.remove('hidden');
+      
+      // Get current and next combatants
+      const currentIndex = combatState.currentTurnIndex || 0;
+      const nextIndex = (currentIndex + 1) % activeInitiatives.length;
+      
+      const currentCombatant = activeInitiatives[currentIndex];
+      const nextCombatant = activeInitiatives[nextIndex];
+      
+      // Update current turn display
+      if (currentContent && currentCombatant) {
+        const typeColor = currentCombatant.type === 'character' ? 'text-green-600 dark:text-green-400' :
+                         currentCombatant.type === 'npc' ? 'text-blue-600 dark:text-blue-400' :
+                         'text-red-600 dark:text-red-400';
+        currentContent.innerHTML = `
+          <span class="font-semibold text-gray-900 dark:text-gray-100">${currentCombatant.name}</span>
+          <span class="text-gray-600 dark:text-gray-400 ml-2">Init: ${currentCombatant.initiative}</span>
+          <span class="text-xs ${typeColor} ml-2">${currentCombatant.type}</span>
+        `;
+      }
+      
+      // Update next turn display
+      if (nextContent && nextCombatant) {
+        const typeColor = nextCombatant.type === 'character' ? 'text-green-600 dark:text-green-400' :
+                         nextCombatant.type === 'npc' ? 'text-blue-600 dark:text-blue-400' :
+                         'text-red-600 dark:text-red-400';
+        nextContent.innerHTML = `
+          <span class="font-semibold text-gray-900 dark:text-gray-100">${nextCombatant.name}</span>
+          <span class="text-gray-600 dark:text-gray-400 ml-2">Init: ${nextCombatant.initiative}</span>
+          <span class="text-xs ${typeColor} ml-2">${nextCombatant.type}</span>
+        `;
+      }
+    }
+    
+    // Update button states based on combat status
+    function updateButtonStates() {
+      const startBtn = document.getElementById('dmStartCombatBtn');
+      const pauseBtn = document.getElementById('dmPauseCombatBtn');
+      const stopBtn = document.getElementById('dmStopCombatBtn');
+      
+      if (startBtn) {
+        startBtn.textContent = combatState.status === 'active' ? 'Active' : 'Start';
+        startBtn.setAttribute('data-status', combatState.status);
+      }
+      if (pauseBtn) {
+        pauseBtn.textContent = combatState.status === 'paused' ? 'Paused' : 'Pause';
+        pauseBtn.setAttribute('data-status', combatState.status);
+      }
+      if (stopBtn) {
+        stopBtn.textContent = combatState.status === 'stopped' ? 'Stopped' : 'Stop';
+        stopBtn.setAttribute('data-status', combatState.status);
+      }
+    }
+    
+    // Update combat state
+    async function updateCombatState(updates) {
+      try {
+        const response = await fetch('/api/combat-state', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        
+        if (response.ok) {
+          combatState = { ...combatState, ...updates };
+          const roundDisplay = document.getElementById('dmCurrentRound');
+          if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+          updateButtonStates();
+          updateInitiativePreview();
+          return true;
+        }
+      } catch (error) {
+        console.error('Error updating combat state:', error);
+      }
+      return false;
+    }
+    
+    // Next turn
+    const dmNextTurnBtn = document.getElementById('dmNextTurnBtn');
+    dmNextTurnBtn?.addEventListener('click', async () => {
+      await loadCombatData(); // Refresh data
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('No active combatants in initiative tracker');
+        return;
+      }
+      
+      let newIndex = combatState.currentTurnIndex + 1;
+      let newRound = combatState.currentRound;
+      
+      if (newIndex >= activeInitiatives.length) {
+        newIndex = 0;
+        newRound++;
+      }
+      
+      await updateCombatState({
+        currentTurnIndex: newIndex,
+        currentRound: newRound,
+        status: 'active'
+      });
+    });
+    
+    // Previous turn
+    const dmPrevTurnBtn = document.getElementById('dmPrevTurnBtn');
+    dmPrevTurnBtn?.addEventListener('click', async () => {
+      await loadCombatData(); // Refresh data
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('No active combatants in initiative tracker');
+        return;
+      }
+      
+      let newIndex = combatState.currentTurnIndex - 1;
+      let newRound = combatState.currentRound;
+      
+      if (newIndex < 0) {
+        newIndex = activeInitiatives.length - 1;
+        newRound = Math.max(1, newRound - 1);
+      }
+      
+      await updateCombatState({
+        currentTurnIndex: newIndex,
+        currentRound: newRound,
+        status: 'active'
+      });
+    });
+    
+    // Start combat
+    const dmStartCombatBtn = document.getElementById('dmStartCombatBtn');
+    dmStartCombatBtn?.addEventListener('click', async () => {
+      await loadCombatData();
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('Add active combatants to the initiative tracker first');
+        return;
+      }
+      
+      await updateCombatState({
+        status: 'active',
+        currentTurnIndex: 0,
+        currentRound: 1
+      });
+    });
+    
+    // Pause combat
+    const dmPauseCombatBtn = document.getElementById('dmPauseCombatBtn');
+    dmPauseCombatBtn?.addEventListener('click', async () => {
+      await updateCombatState({
+        status: 'paused'
+      });
+    });
+    
+    // Stop combat
+    const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
+    dmStopCombatBtn?.addEventListener('click', async () => {
+      if (!confirm('Stop combat? This will reset the turn order.')) return;
+      
+      await updateCombatState({
+        status: 'stopped',
+        currentTurnIndex: 0,
+        currentRound: 1
+      });
+    });
+    
+    // Load combat data on init
+    loadCombatData();
+    
+    // Refresh combat data periodically
+    setInterval(loadCombatData, 5000);
+    
+    // Initialize button states
+    updateButtonStates();
+
+    // Clear all
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    clearAllBtn?.addEventListener('click', async () => {
+      if (!confirm('Clear the entire player display? This will remove the location, NPCs, and hide the initiative tracker.')) {
+        return;
+      }
+
+      const success = await updateState({
+        currentLocationId: null,
+        spotlightNpcIds: [],
+        showInitiativeTracker: false,
+      });
+
+      if (success) {
+        if (locationSelect) locationSelect.value = '';
+        if (showInitiativeCheckbox) showInitiativeCheckbox.checked = false;
+        updateLocationPreview(null);
+        updateNpcList([]);
+      }
+    });
+    
+    // Toggle screen visibility
+    const toggleScreenBtn = document.getElementById('toggleScreenBtn');
+    toggleScreenBtn?.addEventListener('click', async () => {
+      const newVisibility = !currentState.screenVisible;
+      const success = await updateState({ screenVisible: newVisibility });
+      
+      if (success) {
+        updateScreenVisibilityUI(newVisibility);
+      }
+    });
+    
+    // Save placeholder image
+    const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
+    const placeholderImageInput = document.getElementById('placeholderImageUrl');
+    savePlaceholderBtn?.addEventListener('click', async () => {
+      const imageUrl = placeholderImageInput?.value.trim();
+      if (!imageUrl) {
+        alert('Please enter an image URL');
+        return;
+      }
+      
+      const success = await updateState({ placeholderImageUrl: imageUrl });
+      if (success) {
+        alert('Placeholder wallpaper saved!');
+      }
+    });
+    
+    // Clear placeholder image
+    const clearPlaceholderBtn = document.getElementById('clearPlaceholderBtn');
+    clearPlaceholderBtn?.addEventListener('click', async () => {
+      if (!confirm('Remove the placeholder wallpaper?')) return;
+      
+      const success = await updateState({ placeholderImageUrl: null });
+      if (success) {
+        if (placeholderImageInput) placeholderImageInput.value = '';
+      }
+    });
+    
+    // Handle file upload for placeholder image
+    const placeholderImageFile = document.getElementById('placeholderImageFile');
+    placeholderImageFile?.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file is too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      // Convert to data URL
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result;
+        if (typeof dataUrl === 'string') {
+          // Update the input field with the data URL
+          if (placeholderImageInput) placeholderImageInput.value = dataUrl;
+          
+          // Automatically save
+          const success = await updateState({ placeholderImageUrl: dataUrl });
+          if (success) {
+            alert('Placeholder wallpaper uploaded and saved!');
+          }
+        }
+      };
+      reader.onerror = () => {
+        alert('Error reading file. Please try again.');
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Copy URL to clipboard
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    const playerDisplayUrlInput = document.getElementById('playerDisplayUrl');
+    
+    copyUrlBtn?.addEventListener('click', async () => {
+      if (!playerDisplayUrlInput) return;
+      
+      try {
+        // Use modern Clipboard API
+        await navigator.clipboard.writeText(playerDisplayUrlInput.value);
+        
+        // Show feedback
+        const originalText = copyUrlBtn.textContent;
+        copyUrlBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyUrlBtn.textContent = originalText;
+        }, 2000);
+      } catch (error) {
+        // Fallback to older method if Clipboard API is not available
+        playerDisplayUrlInput.select();
+        try {
+          document.execCommand('copy');
+          const originalText = copyUrlBtn.textContent;
+          copyUrlBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyUrlBtn.textContent = originalText;
+          }, 2000);
+        } catch (fallbackError) {
+          console.error('Failed to copy:', fallbackError);
+          alert('Failed to copy. Please copy the URL manually.');
+        }
+      }
+    });
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', async () => {
+      await initializeData();
+      await loadState();
+    });
+
+    // Also initialize after Astro page transitions
+    document.addEventListener('astro:page-load', async () => {
+      await initializeData();
+      await loadState();
+    });
+  </script>
+</Layout>

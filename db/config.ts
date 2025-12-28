@@ -190,6 +190,7 @@ export {
   PageSettings,
   InitiativeTracker,
   CombatState,
+  DMScreenState,
 };
 
 const DiaryNote = defineTable({
@@ -199,6 +200,19 @@ const DiaryNote = defineTable({
     userId: column.text(), // Foreign key to User - ensures notes are user-specific
     content: column.text(),
     createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
+const DMScreenState = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    currentLocationId: column.text({ optional: true }), // Foreign key to Location - currently displayed location
+    spotlightNpcIds: column.json({ default: [] }), // Array of NPC IDs in spotlight
+    customAssets: column.json({ default: [] }), // Array of custom asset URLs
+    showInitiativeTracker: column.boolean({ default: false }), // Whether to show initiative tracker on player display
+    screenVisible: column.boolean({ default: true }), // Whether to show content or placeholder on player display
+    placeholderImageUrl: column.text({ optional: true }), // Placeholder/wallpaper image when screen is hidden
     updatedAt: column.date({ default: new Date() }),
   }
 });
@@ -218,5 +232,6 @@ export default defineDb({
     InitiativeTracker,
     CombatState,
     DiaryNote,
+    DMScreenState,
   }
 });
