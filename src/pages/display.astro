@@ -141,6 +141,8 @@ const COMBAT_STATE_ID = 'current-combat';
         locationId: null,
         npcIds: [],
         showInitiative: false,
+        screenVisible: true,
+        placeholderImageUrl: null,
       };
 
       // Data caches
@@ -301,6 +303,8 @@ const COMBAT_STATE_ID = 'current-combat';
           locationId: state.currentLocationId,
           npcIds: state.spotlightNpcIds || [],
           showInitiative: state.showInitiativeTracker,
+          screenVisible: state.screenVisible !== false,
+          placeholderImageUrl: state.placeholderImageUrl,
         };
       }
 
@@ -540,7 +544,9 @@ const COMBAT_STATE_ID = 'current-combat';
           const stateChanged = 
             state.currentLocationId !== currentDisplayState.locationId ||
             JSON.stringify(state.spotlightNpcIds) !== JSON.stringify(currentDisplayState.npcIds) ||
-            state.showInitiativeTracker !== currentDisplayState.showInitiative;
+            state.showInitiativeTracker !== currentDisplayState.showInitiative ||
+            (state.screenVisible !== false) !== currentDisplayState.screenVisible ||
+            state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl;
 
           if (stateChanged) {
             updateDisplay(state);
