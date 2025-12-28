@@ -43,9 +43,10 @@ The system fetches HP data from D&D Beyond's character API and calculates:
 
 When combat status is set to "Active":
 1. HP is immediately synced for all characters with D&D Beyond URLs
-2. HP continues to sync automatically every 30 seconds
-3. Synced HP updates both the Character database and Initiative Tracker
-4. Syncing stops when combat is paused or stopped
+2. HP continues to sync automatically every 10 seconds (fast updates)
+3. Syncing works across all tools: Initiative Tracker, DM Screen, and Player Display
+4. Synced HP updates both the Character database and Initiative Tracker
+5. Syncing stops when combat is paused or stopped
 
 ### Manual Syncing
 
@@ -108,7 +109,7 @@ tempHp: number | null    // Temporary HP
 1. **Start Combat**:
    - Add characters to the initiative tracker
    - Click "Start" to activate combat tracking
-   - HP will automatically sync from D&D Beyond immediately and every 30 seconds
+   - HP will automatically sync from D&D Beyond immediately and every 10 seconds
 
 2. **Manual Sync** (if needed):
    - Click "Sync HP" button at any time
@@ -117,6 +118,7 @@ tempHp: number | null    // Temporary HP
 3. **Monitor Syncing**:
    - Check browser console for sync logs: "HP synced: X of Y characters"
    - Failed syncs are logged with error details
+   - Syncing works in Initiative Tracker, DM Screen, and Player Display
 
 ### Troubleshooting
 
@@ -136,10 +138,10 @@ tempHp: number | null    // Temporary HP
 
 **Syncing Too Slow/Fast?**
 
-The sync interval is set to 30 seconds in the code. To change:
-- Edit `src/pages/tools/initiative.astro`
-- Find `HP_SYNC_INTERVAL` constant (currently 30000 ms)
-- Adjust as needed (minimum recommended: 10 seconds)
+The sync interval is set to 10 seconds in the code. To change:
+- Edit `src/pages/tools/initiative.astro`, `src/pages/tools/dm-screen.astro`, and `src/pages/display.astro`
+- Find `HP_SYNC_INTERVAL` constant (currently 10000 ms)
+- Adjust as needed (minimum recommended: 5 seconds to avoid rate limiting)
 
 ## Technical Notes
 

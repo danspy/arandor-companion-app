@@ -561,7 +561,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let combatStateInterval = null;
     let hpSyncInterval = null; // Separate interval for HP syncing
     let lastHpSync = 0; // Track last HP sync time
-    const HP_SYNC_INTERVAL = 30000; // Sync HP every 30 seconds
+    const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds for quick updates
     let deleteHandlers = new Map(); // Store delete button handlers
     let clearAllHandler = null; // Store clear all button handler
     let combatControlHandlers = new Map(); // Store combat control button handlers
