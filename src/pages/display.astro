@@ -31,8 +31,8 @@ const COMBAT_STATE_ID = 'current-combat';
       document.documentElement.classList.toggle('dark', theme === 'dark');
     </script>
   </head>
-  <body class="bg-gray-900 text-white min-h-screen">
-    <div id="displayContainer" class="w-full h-screen flex items-center justify-center p-8">
+  <body class="bg-gray-900 text-white min-h-screen overflow-hidden">
+    <div id="displayContainer" class="w-full h-screen flex items-center justify-center">
       <!-- Loading state -->
       <div id="loadingState" class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4"></div>
@@ -40,10 +40,10 @@ const COMBAT_STATE_ID = 'current-combat';
       </div>
 
       <!-- Main content container -->
-      <div id="mainContent" class="hidden w-full h-full flex flex-col">
+      <div id="mainContent" class="hidden w-full h-full">
         <!-- Empty state -->
         <div id="emptyState" class="flex items-center justify-center h-full">
-          <div class="text-center max-w-2xl">
+          <div class="text-center max-w-2xl px-8">
             <svg class="w-24 h-24 mx-auto mb-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
@@ -55,59 +55,58 @@ const COMBAT_STATE_ID = 'current-combat';
           </div>
         </div>
 
-        <!-- Combined display area (hidden when empty state is shown) -->
-        <div id="combinedDisplay" class="hidden h-full flex flex-col overflow-auto">
-          <!-- Location display -->
-          <div id="locationDisplay" class="hidden">
-            <div class="relative">
-              <!-- Location image background -->
-              <div id="locationImageContainer" class="relative h-64 md:h-96 overflow-hidden">
+        <!-- Combined display area - uses flexbox for side-by-side layout -->
+        <div id="combinedDisplay" class="hidden h-full flex">
+          <!-- Left panel (60% width when split, 100% when alone) -->
+          <div id="leftPanel" class="h-full overflow-auto">
+            <!-- Location display (fullscreen when alone) -->
+            <div id="locationDisplay" class="hidden h-full">
+              <div class="relative h-full">
                 <img id="locationImage" class="w-full h-full object-cover" alt="Location" />
-                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900"></div>
+                <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-gray-900/80"></div>
+                <div class="absolute bottom-0 left-0 right-0 p-8">
+                  <h1 id="locationName" class="text-5xl md:text-6xl font-bold mb-2"></h1>
+                  <p id="locationInfo" class="text-2xl md:text-3xl text-gray-300"></p>
+                </div>
               </div>
-              
-              <!-- Location info overlay -->
-              <div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-gray-900 via-gray-900/90 to-transparent">
-                <h1 id="locationName" class="text-3xl md:text-5xl font-bold mb-2"></h1>
-                <p id="locationInfo" class="text-lg md:text-2xl text-gray-300"></p>
+            </div>
+
+            <!-- NPCs in spotlight (fullscreen when alone) -->
+            <div id="npcSpotlight" class="hidden h-full">
+              <div class="h-full flex flex-col p-8">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 flex items-center gap-3">
+                  <svg class="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                  </svg>
+                  NPCs in Scene
+                </h2>
+                <div class="flex-1 overflow-auto">
+                  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="npcGrid">
+                    <!-- NPCs will be inserted here -->
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- NPCs in spotlight -->
-          <div id="npcSpotlight" class="hidden">
-            <div class="p-6 md:p-8">
-              <h2 class="text-2xl md:text-3xl font-bold mb-4 flex items-center gap-2">
-                <svg class="w-6 h-6 md:w-8 md:h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                </svg>
-                NPCs in Scene
-              </h2>
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6" id="npcGrid">
-                <!-- NPCs will be inserted here -->
-              </div>
-            </div>
-          </div>
-
-          <!-- Initiative tracker -->
-          <div id="initiativeDisplay" class="hidden">
-            <div class="p-6 md:p-8">
-              <div class="max-w-6xl mx-auto">
-                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-4 md:p-6">
-                  <div class="flex items-center justify-between mb-4 md:mb-6">
-                    <h2 class="text-2xl md:text-3xl font-bold flex items-center gap-2 md:gap-3">
-                      <svg class="w-6 h-6 md:w-8 md:h-8 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <!-- Right panel - Initiative tracker (40% width when split, 100% when alone) -->
+          <div id="rightPanel" class="h-full overflow-auto">
+            <div id="initiativeDisplay" class="hidden h-full">
+              <div class="h-full flex flex-col p-8">
+                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-6 flex-1 flex flex-col">
+                  <div class="flex items-center justify-between mb-6">
+                    <h2 class="text-3xl md:text-4xl font-bold flex items-center gap-3">
+                      <svg class="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
                       </svg>
-                      Initiative Tracker
+                      Initiative
                     </h2>
-                    <div class="bg-primary-600 px-3 py-1 md:px-4 md:py-2 rounded-lg">
-                      <span class="text-xs md:text-sm font-medium">Round: </span>
-                      <span id="currentRound" class="text-xl md:text-2xl font-bold">1</span>
+                    <div class="bg-primary-600 px-4 py-2 rounded-lg">
+                      <span class="text-sm font-medium">Round: </span>
+                      <span id="currentRound" class="text-2xl font-bold">1</span>
                     </div>
                   </div>
-                  
-                  <div id="initiativeList" class="space-y-2 md:space-y-3">
+                  <div id="initiativeList" class="flex-1 overflow-auto space-y-3">
                     <!-- Initiative entries will be inserted here -->
                   </div>
                 </div>
@@ -164,37 +163,108 @@ const COMBAT_STATE_ID = 'current-combat';
         if (loadingState) loadingState.classList.add('hidden');
         if (mainContent) mainContent.classList.remove('hidden');
 
-        // Check if we have any content to show
-        const hasAnyContent = hasLocation || hasNpcs || showInitiative;
-
-        if (!hasAnyContent) {
+        // Count active sections
+        const activeCount = [hasLocation, hasNpcs, showInitiative].filter(Boolean).length;
+        
+        if (activeCount === 0) {
           // Show empty state
-          document.getElementById('emptyState')?.classList.remove('hidden');
-          document.getElementById('combinedDisplay')?.classList.add('hidden');
+          showEmpty();
         } else {
           // Hide empty state and show combined display
           document.getElementById('emptyState')?.classList.add('hidden');
           document.getElementById('combinedDisplay')?.classList.remove('hidden');
           
-          // Show/update location if present
-          if (hasLocation) {
+          const leftPanel = document.getElementById('leftPanel');
+          const rightPanel = document.getElementById('rightPanel');
+          const locationDisplay = document.getElementById('locationDisplay');
+          const npcSpotlight = document.getElementById('npcSpotlight');
+          const initiativeDisplay = document.getElementById('initiativeDisplay');
+          
+          // Reset all displays
+          locationDisplay?.classList.add('hidden');
+          npcSpotlight?.classList.add('hidden');
+          initiativeDisplay?.classList.add('hidden');
+          
+          // Apply layout based on what's active
+          if (activeCount === 1) {
+            // Single item - fullscreen
+            if (hasLocation) {
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              leftPanel.classList.remove('hidden');
+              locationDisplay?.classList.remove('hidden');
+              showLocation(state.currentLocationId);
+            } else if (hasNpcs) {
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              leftPanel.classList.remove('hidden');
+              npcSpotlight?.classList.remove('hidden');
+              showNpcs(state.spotlightNpcIds);
+            } else if (showInitiative) {
+              leftPanel.style.width = '0';
+              leftPanel.classList.add('hidden');
+              rightPanel.style.width = '100%';
+              rightPanel.classList.remove('hidden');
+              initiativeDisplay?.classList.remove('hidden');
+              showInitiativeTracker();
+            }
+          } else if (activeCount === 2) {
+            // Two items - side by side 60/40
+            leftPanel.classList.remove('hidden');
+            rightPanel.classList.remove('hidden');
+            
+            if (showInitiative) {
+              // Initiative always on right when present
+              leftPanel.style.width = '60%';
+              rightPanel.style.width = '40%';
+              initiativeDisplay?.classList.remove('hidden');
+              showInitiativeTracker();
+              
+              if (hasLocation) {
+                locationDisplay?.classList.remove('hidden');
+                showLocation(state.currentLocationId);
+              } else if (hasNpcs) {
+                npcSpotlight?.classList.remove('hidden');
+                showNpcs(state.spotlightNpcIds);
+              }
+            } else {
+              // Location and NPCs - both on left, split the space
+              leftPanel.style.width = '100%';
+              rightPanel.style.width = '0';
+              rightPanel.classList.add('hidden');
+              
+              if (hasLocation) {
+                locationDisplay?.classList.remove('hidden');
+                locationDisplay.style.height = '50%';
+                showLocation(state.currentLocationId);
+              }
+              if (hasNpcs) {
+                npcSpotlight?.classList.remove('hidden');
+                npcSpotlight.style.height = '50%';
+                showNpcs(state.spotlightNpcIds);
+              }
+            }
+          } else if (activeCount === 3) {
+            // All three - Location + NPCs on left (60%), Initiative on right (40%)
+            leftPanel.style.width = '60%';
+            rightPanel.style.width = '40%';
+            leftPanel.classList.remove('hidden');
+            rightPanel.classList.remove('hidden');
+            
+            // Split left panel vertically
+            locationDisplay?.classList.remove('hidden');
+            locationDisplay.style.height = '50%';
             showLocation(state.currentLocationId);
-          } else {
-            document.getElementById('locationDisplay')?.classList.add('hidden');
-          }
-          
-          // Show/update NPCs if present
-          if (hasNpcs) {
+            
+            npcSpotlight?.classList.remove('hidden');
+            npcSpotlight.style.height = '50%';
             showNpcs(state.spotlightNpcIds);
-          } else {
-            document.getElementById('npcSpotlight')?.classList.add('hidden');
-          }
-          
-          // Show/update initiative tracker if enabled
-          if (showInitiative) {
+            
+            // Initiative on right
+            initiativeDisplay?.classList.remove('hidden');
             showInitiativeTracker();
-          } else {
-            document.getElementById('initiativeDisplay')?.classList.add('hidden');
           }
         }
 
@@ -253,19 +323,19 @@ const COMBAT_STATE_ID = 'current-combat';
           card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 border-gray-700 hover:border-primary-600 transition';
           
           const avatarHtml = npc.avatarUrl 
-            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-48 md:h-64 object-cover" />`
-            : `<div class="w-full h-48 md:h-64 bg-gray-700 flex items-center justify-center">
-                <svg class="w-16 h-16 md:w-24 md:h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-40 md:h-48 object-cover" />`
+            : `<div class="w-full h-40 md:h-48 bg-gray-700 flex items-center justify-center">
+                <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
               </div>`;
 
           card.innerHTML = `
             ${avatarHtml}
-            <div class="p-4 md:p-6">
-              <h3 class="text-xl md:text-2xl font-bold mb-2">${npc.name}</h3>
-              <p class="text-gray-400 mb-2 text-sm md:text-base">${npc.occupation || npc.race}</p>
-              ${npc.description ? `<p class="text-xs md:text-sm text-gray-300 mt-2 md:mt-4">${npc.description}</p>` : ''}
+            <div class="p-4">
+              <h3 class="text-lg md:text-xl font-bold mb-1">${npc.name}</h3>
+              <p class="text-gray-400 mb-2 text-sm">${npc.occupation || npc.race}</p>
+              ${npc.description ? `<p class="text-xs text-gray-300 line-clamp-2">${npc.description}</p>` : ''}
             </div>
           `;
           
