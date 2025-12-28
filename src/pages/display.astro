@@ -172,7 +172,7 @@ const COMBAT_STATE_ID = 'current-combat';
       }
 
       // Update display based on state
-      function updateDisplay(state) {
+      async function updateDisplay(state) {
         const hasLocation = state.currentLocationId;
         const hasNpcs = state.spotlightNpcIds && state.spotlightNpcIds.length > 0;
         const showInitiative = state.showInitiativeTracker;
@@ -238,7 +238,7 @@ const COMBAT_STATE_ID = 'current-combat';
               rightPanel.style.width = '100%';
               rightPanel.classList.remove('hidden');
               initiativeDisplay?.classList.remove('hidden');
-              showInitiativeTracker();
+              await showInitiativeTracker();
             }
           } else if (activeCount === 2) {
             // Two items - side by side 60/40
@@ -250,7 +250,7 @@ const COMBAT_STATE_ID = 'current-combat';
               leftPanel.style.width = '60%';
               rightPanel.style.width = '40%';
               initiativeDisplay?.classList.remove('hidden');
-              showInitiativeTracker();
+              await showInitiativeTracker();
               
               if (hasLocation) {
                 locationDisplay?.classList.remove('hidden');
@@ -294,7 +294,7 @@ const COMBAT_STATE_ID = 'current-combat';
             
             // Initiative on right
             initiativeDisplay?.classList.remove('hidden');
-            showInitiativeTracker();
+            await showInitiativeTracker();
           }
         }
 
@@ -549,7 +549,7 @@ const COMBAT_STATE_ID = 'current-combat';
             state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl;
 
           if (stateChanged) {
-            updateDisplay(state);
+            await updateDisplay(state);
           }
 
           // If showing initiative, update the list on every poll to catch turn changes
@@ -573,7 +573,7 @@ const COMBAT_STATE_ID = 'current-combat';
         const response = await fetch('/api/dm-screen');
         if (response.ok) {
           const state = await response.json();
-          updateDisplay(state);
+          await updateDisplay(state);
         } else {
           showEmpty();
         }
