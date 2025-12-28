@@ -54,17 +54,27 @@ The player display screen (`/display`) is a public page that requires no authent
 
 ### Display Modes
 
-The player display shows content in a vertical scrollable layout, allowing multiple elements to be displayed simultaneously:
+The player display uses a dynamic layout system that adapts based on the number of active elements:
 
-1. **Empty State**: When nothing is selected, shows "Awaiting DM..." message
-2. **Location Display**: Hero-style location image with name and info overlay
-3. **NPC Spotlight**: Grid of NPC cards with portraits and details
-4. **Initiative Tracker**: Combat tracker with health status and turn indicators
+**Single Selection (Fullscreen - 100%):**
+- **Location only**: Fullscreen location image with name and info overlay
+- **NPCs only**: Fullscreen NPC grid with portraits and details
+- **Initiative only**: Fullscreen initiative tracker with health status
 
-**New: Combined Display Support**
-- You can now show **any combination** of location, NPCs, and initiative tracker simultaneously
-- All enabled sections stack vertically in a scrollable layout
-- Each section appears only when configured by the DM
+**Two Selections (Side-by-Side 60/40):**
+- **Location + Initiative**: Location left (60%), Initiative right (40%)
+- **NPCs + Initiative**: NPCs left (60%), Initiative right (40%)
+- **Location + NPCs**: Both vertically stacked, fullscreen (50% each)
+
+**All Three Selected (Side-by-Side 60/40):**
+- **Left Panel (60%)**: Location top (50%) + NPCs bottom (50%)
+- **Right Panel (40%)**: Initiative tracker (100%)
+
+**Layout Rules:**
+- Initiative tracker **always** appears on the right when combined with other elements
+- Single items use 100% of screen space
+- Everything fits on screen - no vertical scrolling required
+- Responsive to screen size
 
 ### Auto-Refresh
 
@@ -74,7 +84,7 @@ The player display automatically polls for updates every 2 seconds, ensuring it 
 
 ### Scenario 1: Arriving at a New Location
 1. Select the location from the Location Control dropdown
-2. The player display immediately shows the location's image
+2. The player display immediately shows the location's image in fullscreen
 3. Players see the mood and atmosphere of where they are
 
 ### Scenario 2: NPC Encounter
@@ -92,15 +102,23 @@ The player display automatically polls for updates every 2 seconds, ensuring it 
    - Current round number
 4. Use Next/Prev Turn buttons in the Initiative Tracker to advance combat
 
-### Scenario 4: Combined Display (All At Once)
-You can now show multiple elements simultaneously:
-- **Location + NPCs**: Show the tavern interior with the NPCs present
-- **Location + Initiative**: Show the dungeon map during combat
-- **NPCs + Initiative**: Focus on characters during battle
-- **All Three**: Location image at top, NPCs in the middle, initiative tracker at bottom
-- All sections stack vertically and the display becomes scrollable
+### Scenario 4: Combined Display
+The dynamic layout system handles all combinations:
 
-Example use case: Show the throne room image, the king and guards as NPCs, and the initiative tracker during a combat encounter - all visible at once!
+**During Exploration:**
+- Show location + NPCs side-by-side to display the tavern with its inhabitants
+
+**During Combat at a Location:**
+- Show location + initiative side-by-side (60/40) to keep the battlefield visible during combat
+
+**Intense Combat Scene:**
+- Show all three: location + NPCs on left (60%), initiative on right (40%)
+- Perfect for boss fights where location, enemy portraits, and turn order are all important
+
+**Pure Combat Focus:**
+- Show only initiative tracker in fullscreen for mechanical combat without visual distractions
+
+The layout automatically adjusts when the DM adds or removes elements, always using the optimal space for the content shown.
 
 ## Tips & Best Practices
 
