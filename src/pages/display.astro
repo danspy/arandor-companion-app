@@ -176,7 +176,7 @@ const COMBAT_STATE_ID = 'current-combat';
         const hasLocation = state.currentLocationId;
         const hasNpcs = state.spotlightNpcIds && state.spotlightNpcIds.length > 0;
         const showInitiative = state.showInitiativeTracker;
-        const screenVisible = state.screenVisible !== false; // Default to true
+        const screenVisible = state.screenVisible === undefined ? true : state.screenVisible; // Default to true if undefined
 
         // Hide loading, show main content
         const loadingState = document.getElementById('loadingState');
@@ -308,7 +308,7 @@ const COMBAT_STATE_ID = 'current-combat';
           locationId: state.currentLocationId,
           npcIds: state.spotlightNpcIds || [],
           showInitiative: state.showInitiativeTracker,
-          screenVisible: state.screenVisible !== false,
+          screenVisible: state.screenVisible === undefined ? true : state.screenVisible,
           placeholderImageUrl: state.placeholderImageUrl,
         };
       }
@@ -543,11 +543,12 @@ const COMBAT_STATE_ID = 'current-combat';
           pollRetryCount = 0;
           
           // Check if state changed
+          const screenVisible = state.screenVisible === undefined ? true : state.screenVisible;
           const stateChanged = 
             state.currentLocationId !== currentDisplayState.locationId ||
             JSON.stringify(state.spotlightNpcIds) !== JSON.stringify(currentDisplayState.npcIds) ||
             state.showInitiativeTracker !== currentDisplayState.showInitiative ||
-            (state.screenVisible !== false) !== currentDisplayState.screenVisible ||
+            screenVisible !== currentDisplayState.screenVisible ||
             state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl;
 
           if (stateChanged) {
