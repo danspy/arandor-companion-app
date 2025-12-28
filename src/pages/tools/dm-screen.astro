@@ -193,13 +193,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <div class="flex flex-col gap-2">
             <!-- Combat Status Buttons -->
             <div class="flex gap-2">
-              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="flex-1">
+              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="flex-1" data-status="stopped">
                 Start
               </Button>
-              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="flex-1">
+              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="flex-1" data-status="stopped">
                 Pause
               </Button>
-              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="flex-1">
+              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="flex-1" data-status="stopped">
                 Stop
               </Button>
             </div>
@@ -561,6 +561,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           combatState = await combatResponse.json();
           const roundDisplay = document.getElementById('dmCurrentRound');
           if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+          updateButtonStates();
         }
         
         if (initiativeResponse.ok) {
@@ -568,6 +569,26 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         }
       } catch (error) {
         console.error('Error loading combat data:', error);
+      }
+    }
+    
+    // Update button states based on combat status
+    function updateButtonStates() {
+      const startBtn = document.getElementById('dmStartCombatBtn');
+      const pauseBtn = document.getElementById('dmPauseCombatBtn');
+      const stopBtn = document.getElementById('dmStopCombatBtn');
+      
+      if (startBtn) {
+        startBtn.textContent = combatState.status === 'active' ? 'Active' : 'Start';
+        startBtn.setAttribute('data-status', combatState.status);
+      }
+      if (pauseBtn) {
+        pauseBtn.textContent = combatState.status === 'paused' ? 'Paused' : 'Pause';
+        pauseBtn.setAttribute('data-status', combatState.status);
+      }
+      if (stopBtn) {
+        stopBtn.textContent = combatState.status === 'stopped' ? 'Stopped' : 'Stop';
+        stopBtn.setAttribute('data-status', combatState.status);
       }
     }
     
@@ -584,6 +605,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           combatState = { ...combatState, ...updates };
           const roundDisplay = document.getElementById('dmCurrentRound');
           if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+          updateButtonStates();
           return true;
         }
       } catch (error) {
@@ -687,6 +709,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     
     // Refresh combat data periodically
     setInterval(loadCombatData, 5000);
+    
+    // Initialize button states
+    updateButtonStates();
 
     // Clear all
     const clearAllBtn = document.getElementById('clearAllBtn');
