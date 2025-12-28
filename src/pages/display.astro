@@ -306,25 +306,24 @@ const COMBAT_STATE_ID = 'current-combat';
 
       // Show placeholder/hidden state
       function showPlaceholder(imageUrl) {
-        document.getElementById('emptyState')?.classList.add('hidden');
         document.getElementById('combinedDisplay')?.classList.add('hidden');
-        
-        const placeholderState = document.getElementById('placeholderState');
-        const placeholderImage = document.getElementById('placeholderImage');
-        const placeholderImg = document.getElementById('placeholderImg');
-        const defaultPlaceholder = document.getElementById('defaultPlaceholder');
-        
-        placeholderState?.classList.remove('hidden');
         
         if (imageUrl) {
           // Show custom placeholder image
+          document.getElementById('emptyState')?.classList.add('hidden');
+          const placeholderState = document.getElementById('placeholderState');
+          const placeholderImage = document.getElementById('placeholderImage');
+          const placeholderImg = document.getElementById('placeholderImg');
+          const defaultPlaceholder = document.getElementById('defaultPlaceholder');
+          
+          placeholderState?.classList.remove('hidden');
           if (placeholderImg) placeholderImg.src = imageUrl;
           placeholderImage?.classList.remove('hidden');
           defaultPlaceholder?.classList.add('hidden');
         } else {
-          // Show default placeholder
-          placeholderImage?.classList.add('hidden');
-          defaultPlaceholder?.classList.remove('hidden');
+          // No image set - show "Awaiting DM..." screen
+          document.getElementById('placeholderState')?.classList.add('hidden');
+          document.getElementById('emptyState')?.classList.remove('hidden');
         }
       }
       
