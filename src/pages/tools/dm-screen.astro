@@ -50,7 +50,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">
             Open this link on a second screen or share it with your players:
           </p>
-          <div class="flex items-center gap-2">
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <input 
               type="text" 
               readonly
@@ -58,14 +58,16 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
               id="playerDisplayUrl"
               class="flex-1 px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded text-sm"
             />
-            <Button variant="secondary" size="sm" id="copyUrlBtn">
-              Copy
-            </Button>
-            <a href={playerDisplayUrl} target="_blank" rel="noopener noreferrer">
-              <Button variant="primary" size="sm">
-                Open
+            <div class="flex gap-2">
+              <Button variant="secondary" size="sm" id="copyUrlBtn" class="flex-1 sm:flex-none">
+                Copy
               </Button>
-            </a>
+              <a href={playerDisplayUrl} target="_blank" rel="noopener noreferrer" class="flex-1 sm:flex-none">
+                <Button variant="primary" size="sm" class="w-full">
+                  Open
+                </Button>
+              </a>
+            </div>
           </div>
         </div>
       </div>
@@ -182,7 +184,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         
         <!-- Combat Controls -->
         <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-3">
             <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Combat Controls</span>
             <div class="flex items-center gap-2 bg-primary-100 dark:bg-primary-900 px-2.5 py-1 rounded-lg">
               <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
@@ -192,27 +194,28 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           
           <div class="flex flex-col gap-2">
             <!-- Combat Status Buttons -->
-            <div class="flex gap-2">
-              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="flex-1" data-status="stopped">
-                Start
+            <div class="grid grid-cols-3 gap-2">
+              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+                <span class="hidden xs:inline">Start</span>
               </Button>
-              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="flex-1" data-status="stopped">
-                Pause
+              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+                <span class="hidden xs:inline">Pause</span>
               </Button>
-              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="flex-1" data-status="stopped">
-                Stop
+              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+                <span class="hidden xs:inline">Stop</span>
               </Button>
             </div>
             
             <!-- Turn Navigation -->
-            <div class="flex gap-2">
-              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="flex-1">
-                Sync HP
+            <div class="grid grid-cols-3 gap-2">
+              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="w-full text-xs sm:text-sm">
+                <span class="hidden sm:inline">Sync HP</span>
+                <span class="sm:hidden">Sync</span>
               </Button>
-              <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="flex-1">
+              <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="w-full text-xs sm:text-sm">
                 Prev
               </Button>
-              <Button variant="secondary" size="sm" icon="next" iconPosition="right" id="dmNextTurnBtn" class="flex-1">
+              <Button variant="secondary" size="sm" icon="next" iconPosition="right" id="dmNextTurnBtn" class="w-full text-xs sm:text-sm">
                 Next
               </Button>
             </div>
@@ -276,7 +279,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       <div class="space-y-4">
         <!-- Show/Hide Screen Toggle -->
         <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
-          <div class="flex items-center justify-between mb-2">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
             <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Screen Visibility</label>
             <div class="flex items-center gap-2">
               <span id="screenStatusText" class="text-sm text-gray-600 dark:text-gray-400">Visible</span>
@@ -305,10 +308,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
               placeholder="Enter image URL..."
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-sm"
             />
-            <div class="flex gap-2">
-              <label for="placeholderImageFile" class="flex-1">
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              <label for="placeholderImageFile" class="col-span-2 sm:col-span-1">
                 <div class="cursor-pointer w-full px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm text-center font-medium border border-gray-300 dark:border-gray-600">
-                  📁 Upload Image
+                  📁 <span class="hidden xs:inline">Upload</span>
                 </div>
                 <input 
                   type="file" 
@@ -317,10 +320,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                   class="hidden"
                 />
               </label>
-              <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="flex-1">
-                Save Wallpaper
+              <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="w-full col-span-1">
+                <span class="hidden sm:inline">Save Wallpaper</span>
+                <span class="sm:hidden">Save</span>
               </Button>
-              <Button variant="secondary" size="sm" id="clearPlaceholderBtn">
+              <Button variant="secondary" size="sm" id="clearPlaceholderBtn" class="w-full col-span-1">
                 Clear
               </Button>
             </div>
