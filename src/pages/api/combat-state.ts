@@ -1,13 +1,12 @@
 import type { APIRoute } from 'astro';
 import { db, CombatState, eq } from 'astro:db';
-import { requireAuth, requireDungeonmasterOrAdmin } from '../../lib/middleware';
+import { requireDungeonmasterOrAdmin } from '../../lib/middleware';
 
 const COMBAT_STATE_ID = 'current-combat';
 
-export const GET: APIRoute = async ({ cookies }) => {
-  const authError = requireAuth(cookies);
-  if (authError) return authError;
-
+// GET - Fetch current combat state (public - no authentication required)
+// This endpoint is public because the player display page (/display) needs access
+export const GET: APIRoute = async () => {
   try {
     let state = await db.select().from(CombatState).where(eq(CombatState.id, COMBAT_STATE_ID)).get();
     
