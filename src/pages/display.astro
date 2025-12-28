@@ -210,10 +210,15 @@ const COMBAT_STATE_ID = 'current-combat';
           const npcSpotlight = document.getElementById('npcSpotlight');
           const initiativeDisplay = document.getElementById('initiativeDisplay');
           
-          // Reset all displays
+          // Reset all displays and their heights
           locationDisplay?.classList.add('hidden');
           npcSpotlight?.classList.add('hidden');
           initiativeDisplay?.classList.add('hidden');
+          
+          // Reset all heights to allow dynamic resizing
+          if (locationDisplay) locationDisplay.style.height = '';
+          if (npcSpotlight) npcSpotlight.style.height = '';
+          if (initiativeDisplay) initiativeDisplay.style.height = '';
           
           // Apply layout based on what's active
           if (activeCount === 1) {
