@@ -56,6 +56,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - **Initiative Tracker** - Track combat initiative order for characters, NPCs, and monsters
     - Initiative order with HP, AC, and notes
     - Type badges (character, NPC, monster, other)
+    - **D&D Beyond HP Sync** - Automatically sync character HP from D&D Beyond in real-time
     - Editable by DM/admin only, viewable by all logged-in users
     - Quick add/edit/delete functionality
   - **DM Screen** - Control what players see on a second display (DM/admin only)
@@ -422,9 +423,9 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Multi-user support with role-based permissions
 - [x] Initiative tracker (DM/admin can edit, players can view)
 - [x] DM Screen prototype (control panel and player display)
+- [x] D&D Beyond API integration for HP sync (real-time combat tracking)
 - [ ] Custom asset upload for DM Screen
-- [ ] D&D Beyond API integration (currently URL links only)
-- [ ] Character import/export
+- [ ] Full D&D Beyond character import/export
 - [ ] Image uploads for characters/NPCs
 - [ ] Session scheduling and reminders
 - [ ] Dice roller integration
