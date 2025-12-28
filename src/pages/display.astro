@@ -92,12 +92,6 @@ const COMBAT_STATE_ID = 'current-combat';
             <!-- NPCs in spotlight (fullscreen when alone) -->
             <div id="npcSpotlight" class="hidden h-full">
               <div class="h-full flex flex-col p-8">
-                <h2 class="text-3xl md:text-4xl font-bold mb-6 flex items-center gap-3">
-                  <svg class="w-10 h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
-                  </svg>
-                  NPCs in Scene
-                </h2>
                 <div class="flex-1 overflow-auto">
                   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="npcGrid">
                     <!-- NPCs will be inserted here -->
@@ -381,11 +375,11 @@ const COMBAT_STATE_ID = 'current-combat';
           if (!npc) return;
 
           const card = document.createElement('div');
-          card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 border-gray-700 hover:border-primary-600 transition';
+          card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 flex aspect-[4/3] border-gray-700 hover:border-primary-600 transition';
           
           const avatarHtml = npc.avatarUrl 
-            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full h-40 md:h-48 object-cover" />`
-            : `<div class="w-full h-40 md:h-48 bg-gray-700 flex items-center justify-center">
+            ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full object-cover" />`
+            : `<div class="w-full bg-gray-700 flex items-center justify-center">
                 <svg class="w-16 h-16 md:w-20 md:h-20 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                 </svg>
