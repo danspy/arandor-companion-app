@@ -259,10 +259,21 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             <input 
               type="text" 
               id="placeholderImageUrl"
-              placeholder="Enter image URL or upload..."
+              placeholder="Enter image URL..."
               class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-sm"
             />
             <div class="flex gap-2">
+              <label for="placeholderImageFile" class="flex-1">
+                <div class="cursor-pointer w-full px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm text-center font-medium border border-gray-300 dark:border-gray-600">
+                  📁 Upload Image
+                </div>
+                <input 
+                  type="file" 
+                  id="placeholderImageFile"
+                  accept="image/*"
+                  class="hidden"
+                />
+              </label>
               <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="flex-1">
                 Save Wallpaper
               </Button>
@@ -272,7 +283,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             </div>
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
-            This image appears when the screen is hidden.
+            Upload an image file or enter an image URL. This appears when the screen is hidden.
           </p>
         </div>
         
@@ -719,6 +730,45 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       if (success) {
         if (placeholderImageInput) placeholderImageInput.value = '';
       }
+    });
+    
+    // Handle file upload for placeholder image
+    const placeholderImageFile = document.getElementById('placeholderImageFile');
+    placeholderImageFile?.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) return;
+      
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image file is too large. Maximum size is 5MB.');
+        return;
+      }
+      
+      // Convert to data URL
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const dataUrl = e.target?.result;
+        if (typeof dataUrl === 'string') {
+          // Update the input field with the data URL
+          if (placeholderImageInput) placeholderImageInput.value = dataUrl;
+          
+          // Automatically save
+          const success = await updateState({ placeholderImageUrl: dataUrl });
+          if (success) {
+            alert('Placeholder wallpaper uploaded and saved!');
+          }
+        }
+      };
+      reader.onerror = () => {
+        alert('Error reading file. Please try again.');
+      };
+      reader.readAsDataURL(file);
     });
 
     // Copy URL to clipboard

@@ -18,6 +18,8 @@ export const GET: APIRoute = async () => {
         spotlightNpcIds: [],
         customAssets: [],
         showInitiativeTracker: false,
+        screenVisible: true,
+        placeholderImageUrl: null,
         updatedAt: new Date(),
       });
       state = { 
@@ -25,7 +27,9 @@ export const GET: APIRoute = async () => {
         currentLocationId: null, 
         spotlightNpcIds: [], 
         customAssets: [], 
-        showInitiativeTracker: false, 
+        showInitiativeTracker: false,
+        screenVisible: true,
+        placeholderImageUrl: null,
         updatedAt: new Date() 
       };
     }
@@ -69,6 +73,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         spotlightNpcIds: updates.spotlightNpcIds ?? [],
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
+        screenVisible: updates.screenVisible ?? true,
+        placeholderImageUrl: updates.placeholderImageUrl ?? null,
         updatedAt: new Date(),
       });
     } else {
@@ -79,6 +85,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           spotlightNpcIds: updates.spotlightNpcIds !== undefined ? updates.spotlightNpcIds : state.spotlightNpcIds,
           customAssets: updates.customAssets !== undefined ? updates.customAssets : state.customAssets,
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
+          screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,
+          placeholderImageUrl: updates.placeholderImageUrl !== undefined ? updates.placeholderImageUrl : state.placeholderImageUrl,
           updatedAt: new Date(),
         })
         .where(eq(DMScreenState.id, DM_SCREEN_STATE_ID));
