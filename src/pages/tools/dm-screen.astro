@@ -195,13 +195,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <div class="flex flex-col gap-2">
             <!-- Combat Status Buttons -->
             <div class="grid grid-cols-3 gap-2">
-              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="w-full text-xs sm:text-sm" ariaLabel="Start Combat" data-status="stopped">
                 <span class="hidden xs:inline">Start</span>
               </Button>
-              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="w-full text-xs sm:text-sm" ariaLabel="Pause Combat" data-status="stopped">
                 <span class="hidden xs:inline">Pause</span>
               </Button>
-              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="w-full text-xs sm:text-sm" data-status="stopped">
+              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="w-full text-xs sm:text-sm" ariaLabel="Stop Combat" data-status="stopped">
                 <span class="hidden xs:inline">Stop</span>
               </Button>
             </div>
