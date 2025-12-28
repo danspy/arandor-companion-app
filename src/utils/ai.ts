@@ -502,31 +502,34 @@ async function generatePodcastNarrative(
     : 'You MUST respond exclusively in English.';
   
   // System prompt for creating engaging podcast narration
-  const systemPrompt = `You are a skilled D&D storyteller and podcast narrator. Your role is to recollect and narrate what happened in a D&D session in an engaging, dramatic way. 
+  const systemPrompt = `You are an EPIC fantasy storyteller and master narrator of legendary adventures. You are the voice of tales that will be remembered for generations. Your role is to narrate what happened in a D&D session with the gravitas and drama worthy of the greatest adventures ever told.
 
 CRITICAL REQUIREMENTS:
 1. ${languageInstruction}
-2. You are narrating directly to the audience - speak as if you're recounting the adventure
-3. Act out highlights with vivid descriptions and emotional delivery
-4. Focus on the key moments: battles, discoveries, character interactions, plot twists
-5. Use present tense for immediacy and engagement ("The party enters..." not "The party entered...")
-6. Add dramatic pauses with ellipses (...) for effect
-7. Keep it engaging but concise - aim for 2-4 minutes of narration (approximately 300-800 words)
-8. DO NOT include ANY meta-commentary, labels, or prefixes - dive straight into the narration
-9. Make it feel like an epic recap of the adventure
+2. You are the EPIC narrator - speak with authority, passion, and dramatic flair
+3. Paint vivid, cinematic scenes that transport listeners into the heart of the adventure
+4. Focus on the most dramatic moments: legendary battles, earth-shattering discoveries, fateful choices, and world-changing revelations
+5. Use present tense for immediacy and power ("The heroes stand..." not "The heroes stood...")
+6. Add dramatic pauses with ellipses (...) to build tension and emphasize key moments
+7. Keep it gripping but focused - aim for 2-4 minutes of EPIC narration (approximately 300-800 words)
+8. DO NOT include ANY meta-commentary, labels, or prefixes - plunge directly into the EPIC tale
+9. Make every session feel like a chapter from the greatest adventure saga ever told
 
-STYLE GUIDELINES:
-- Be enthusiastic and dramatic where appropriate
-- Vary your pacing - quick for action, slower for tension
-- Highlight character names and important locations
-- Build suspense and drama
-- End with a hook or reflection on what happened
+STYLE GUIDELINES FOR EPIC NARRATION:
+- Channel the gravitas of legendary fantasy narrators - be bold, dramatic, and awe-inspiring
+- Use powerful, evocative language that conveys the EPIC scale of events
+- Vary your pacing dramatically - swift and intense for action, deep and resonant for moments of consequence
+- Emphasize character names with reverence - these are HEROES whose deeds will echo through time
+- Build mounting tension and deliver satisfying dramatic peaks
+- Use rich descriptive language - paint pictures with words
+- For German: Use language that befits große Abenteuer (great adventures) - kraftvoll, episch, dramatisch
+- End with weight and significance - hint at the legends yet to unfold
 
-Remember: This will be read aloud by text-to-speech, so write in a natural, spoken style.`;
+Remember: This will be spoken by a deep, epic narrator voice. Write in a style that matches this GRAND, LEGENDARY tone.`;
 
   const userPrompt = targetLanguage === 'de'
-    ? `Erzähle diese D&D-Sitzung als spannende Podcast-Episode nach. Erinnere dich lebhaft daran, was passiert ist, und hebe die wichtigsten Momente hervor:\n\nTitel: ${title}\n\nSession-Details:\n${cleanContent}`
-    : `Narrate this D&D session as an engaging podcast episode. Recollect what happened and act out the key highlights:\n\nTitle: ${title}\n\nSession Details:\n${cleanContent}`;
+    ? `Erzähle diese D&D-Sitzung als EPISCHE Legende nach - mit der Kraft und Dramatik eines großen Abenteuers. Erschaffe eine kraftvolle, mitreißende Erzählung, die diese Heldentaten für die Ewigkeit festhält:\n\nTitel: ${title}\n\nSession-Details:\n${cleanContent}`
+    : `Narrate this D&D session as an EPIC LEGEND - with the power and drama worthy of the greatest adventures. Create a powerful, gripping narration that immortalizes these heroic deeds:\n\nTitle: ${title}\n\nSession Details:\n${cleanContent}`;
 
   try {
     const response = await fetch(`${apiBase}/chat/completions`, {
@@ -628,9 +631,10 @@ export async function generateDiaryPodcast(
   let ttsVoice = process.env.OPENAI_TTS_VOICE;
   if (!ttsVoice) {
     // Auto-select voice based on detected language
-    // German content: "alloy" works well for German pronunciation
-    // English content: "onyx", "fable", etc. are good choices
-    ttsVoice = detectedLang === 'de' ? 'alloy' : 'onyx';
+    // For both German and English, use "onyx" for an epic, deep narrator voice
+    // "onyx" provides a dramatic, storytelling quality suitable for adventure narratives
+    // in multiple languages, with clear pronunciation for German content
+    ttsVoice = 'onyx';
   }
 
   // Truncate if content exceeds OpenAI TTS character limit
