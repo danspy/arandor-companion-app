@@ -900,7 +900,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     };
     
     // Check combat status periodically and start/stop HP sync accordingly
-    setInterval(() => {
+    const hpSyncStatusCheckInterval = setInterval(() => {
       if (combatState.status === 'active' && !hpSyncInterval) {
         startHpSync();
       } else if (combatState.status !== 'active' && hpSyncInterval) {
@@ -909,6 +909,20 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         console.log('[DM Screen] HP sync stopped (combat not active)');
       }
     }, 2000);
+    
+    // Cleanup on page unload or navigation
+    const cleanup = () => {
+      if (hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+        hpSyncInterval = null;
+      }
+      if (hpSyncStatusCheckInterval) {
+        clearInterval(hpSyncStatusCheckInterval);
+      }
+    };
+    
+    window.addEventListener('beforeunload', cleanup);
+    document.addEventListener('astro:before-preparation', cleanup);
     
     // Start HP sync if combat is already active
     startHpSync();

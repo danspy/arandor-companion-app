@@ -667,7 +667,7 @@ const COMBAT_STATE_ID = 'current-combat';
         };
         
         // Check combat status periodically and start/stop HP sync accordingly
-        setInterval(async () => {
+        const hpSyncStatusCheckInterval = setInterval(async () => {
           try {
             const combatResponse = await fetch('/api/combat-state');
             if (combatResponse.ok) {
@@ -689,6 +689,9 @@ const COMBAT_STATE_ID = 'current-combat';
         // Start HP sync if combat is already active
         await startHpSync();
         
+        // Store interval reference for cleanup
+        window.__hpSyncStatusCheckInterval = hpSyncStatusCheckInterval;
+        
         // Stop polling when page is hidden, resume when visible
         document.addEventListener('visibilitychange', () => {
           if (document.hidden) {
@@ -708,6 +711,9 @@ const COMBAT_STATE_ID = 'current-combat';
         }
         if (hpSyncInterval) {
           clearInterval(hpSyncInterval);
+        }
+        if (window.__hpSyncStatusCheckInterval) {
+          clearInterval(window.__hpSyncStatusCheckInterval);
         }
       });
 
