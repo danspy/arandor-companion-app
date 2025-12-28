@@ -1,75 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, Character, eq } from 'astro:db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
-
-interface DnDBeyondHPData {
-  hp?: number;
-  maxHp?: number;
-  tempHp?: number;
-}
-
-/**
- * Fetch HP data from D&D Beyond character sheet
- */
-async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
-  try {
-    // Extract character ID from URL
-    const characterIdMatch = url.match(/characters\/(\d+)/);
-    if (!characterIdMatch) {
-      throw new Error('Invalid D&D Beyond character URL');
-    }
-
-    const characterId = characterIdMatch[1];
-    const API_VERSION = 'v5';
-    const jsonUrl = `https://character-service.dndbeyond.com/character/${API_VERSION}/character/${characterId}`;
-    
-    const response = await fetch(jsonUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ArandorCompanion/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      if (response.status === 403 || response.status === 404) {
-        throw new Error('Character not found or not public');
-      }
-      throw new Error(`Failed to fetch character data: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Extract HP data
-    const baseHp = data.data?.baseHitPoints || 0;
-    const bonusHp = data.data?.bonusHitPoints || 0;
-    const overrideHp = data.data?.overrideHitPoints;
-    const removedHp = data.data?.removedHitPoints || 0;
-    const tempHp = data.data?.temporaryHitPoints || 0;
-    
-    // Calculate max HP (use override if set, otherwise base + bonus)
-    const maxHp = overrideHp !== null && overrideHp !== undefined ? overrideHp : (baseHp + bonusHp);
-    
-    // Calculate current HP (max - damage)
-    const currentHp = Math.max(0, maxHp - removedHp);
-    
-    const hpData: DnDBeyondHPData = {};
-    
-    if (maxHp > 0) {
-      hpData.maxHp = maxHp;
-      hpData.hp = currentHp;
-    }
-    
-    if (tempHp > 0) {
-      hpData.tempHp = tempHp;
-    }
-
-    return hpData;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Failed to fetch HP data from D&D Beyond');
-  }
-}
+import { fetchDnDBeyondHP } from '../../../lib/dndbeyond';
 
 /**
  * Sync HP data for a character from D&D Beyond

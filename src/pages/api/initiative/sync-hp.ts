@@ -1,66 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, Character, InitiativeTracker, eq } from 'astro:db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
-
-interface DnDBeyondHPData {
-  hp?: number;
-  maxHp?: number;
-  tempHp?: number;
-}
-
-/**
- * Fetch HP data from D&D Beyond character sheet
- */
-async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
-  try {
-    const characterIdMatch = url.match(/characters\/(\d+)/);
-    if (!characterIdMatch) {
-      throw new Error('Invalid D&D Beyond character URL');
-    }
-
-    const characterId = characterIdMatch[1];
-    const API_VERSION = 'v5';
-    const jsonUrl = `https://character-service.dndbeyond.com/character/${API_VERSION}/character/${characterId}`;
-    
-    const response = await fetch(jsonUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ArandorCompanion/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch character data: ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // Extract HP data
-    const baseHp = data.data?.baseHitPoints || 0;
-    const bonusHp = data.data?.bonusHitPoints || 0;
-    const overrideHp = data.data?.overrideHitPoints;
-    const removedHp = data.data?.removedHitPoints || 0;
-    const tempHp = data.data?.temporaryHitPoints || 0;
-    
-    const maxHp = overrideHp !== null && overrideHp !== undefined ? overrideHp : (baseHp + bonusHp);
-    const currentHp = Math.max(0, maxHp - removedHp);
-    
-    const hpData: DnDBeyondHPData = {};
-    
-    if (maxHp > 0) {
-      hpData.maxHp = maxHp;
-      hpData.hp = currentHp;
-    }
-    
-    if (tempHp > 0) {
-      hpData.tempHp = tempHp;
-    }
-
-    return hpData;
-  } catch (error) {
-    console.error('Error fetching HP from D&D Beyond:', error);
-    return {}; // Return empty object on error, don't fail the whole sync
-  }
-}
+import { fetchDnDBeyondHP, type DnDBeyondHPData } from '../../../lib/dndbeyond';
 
 /**
  * Sync HP for all characters in initiative tracker that have D&D Beyond URLs
@@ -71,30 +12,37 @@ export const POST: APIRoute = async ({ cookies }) => {
   if (authError) return authError;
 
   try {
-    // Get all initiative entries of type 'character'
+    // Get all initiative entries
     const initiatives = await db.select().from(InitiativeTracker);
-    const characterInitiatives = initiatives.filter(i => i.type === 'character');
-
-    // Get all active characters with D&D Beyond URLs
+    
+    // Get all characters with D&D Beyond URLs
     const characters = await db.select().from(Character);
     const charactersWithDnDBeyond = characters.filter(c => c.dndbeyondUrl);
 
-    const syncResults = [];
-    
-    // For each character with D&D Beyond URL
-    for (const character of charactersWithDnDBeyond) {
+    // Create a map of character IDs to their initiative entries
+    // Store characterId in initiative entries for proper matching
+    const characterIdToInitiative = new Map();
+    initiatives.forEach(initiative => {
+      // Find matching character by name (temporary until we add characterId to InitiativeTracker)
+      const matchingChar = characters.find(c => c.name === initiative.name);
+      if (matchingChar) {
+        characterIdToInitiative.set(matchingChar.id, initiative);
+      }
+    });
+
+    // Process all characters in parallel using Promise.allSettled
+    const syncPromises = charactersWithDnDBeyond.map(async (character) => {
       try {
         // Fetch HP data from D&D Beyond
         const hpData = await fetchDnDBeyondHP(character.dndbeyondUrl!);
         
         if (Object.keys(hpData).length === 0) {
-          syncResults.push({
+          return {
             characterId: character.id,
             characterName: character.name,
             success: false,
             error: 'Failed to fetch HP from D&D Beyond',
-          });
-          continue;
+          };
         }
 
         // Update character in database
@@ -107,40 +55,49 @@ export const POST: APIRoute = async ({ cookies }) => {
           })
           .where(eq(Character.id, character.id));
 
-        // Update any initiative entries for this character
-        const characterInInitiative = characterInitiatives.find(
-          i => i.name === character.name
-        );
-
-        if (characterInInitiative) {
+        // Update initiative entry if this character is in the tracker
+        const initiativeEntry = characterIdToInitiative.get(character.id);
+        if (initiativeEntry) {
           await db.update(InitiativeTracker)
             .set({
               hp: hpData.hp,
               maxHp: hpData.maxHp,
               updatedAt: new Date(),
             })
-            .where(eq(InitiativeTracker.id, characterInInitiative.id));
+            .where(eq(InitiativeTracker.id, initiativeEntry.id));
         }
 
-        syncResults.push({
+        return {
           characterId: character.id,
           characterName: character.name,
           success: true,
           hp: hpData.hp,
           maxHp: hpData.maxHp,
           tempHp: hpData.tempHp,
-          updatedInInitiative: !!characterInInitiative,
-        });
+          updatedInInitiative: !!initiativeEntry,
+        };
       } catch (error) {
         console.error(`Error syncing character ${character.name}:`, error);
-        syncResults.push({
+        return {
           characterId: character.id,
           characterName: character.name,
           success: false,
           error: error instanceof Error ? error.message : 'Unknown error',
-        });
+        };
       }
-    }
+    });
+
+    const results = await Promise.allSettled(syncPromises);
+    
+    // Extract sync results from settled promises
+    const syncResults = results.map(result => 
+      result.status === 'fulfilled' ? result.value : {
+        characterId: 'unknown',
+        characterName: 'unknown',
+        success: false,
+        error: 'Promise rejected',
+      }
+    );
 
     return new Response(JSON.stringify({
       success: true,
