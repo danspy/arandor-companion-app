@@ -2,7 +2,7 @@
 
 ## Overview
 
-This guide provides step-by-step instructions for deploying the AI-powered podcast narration feature to your production server. The feature generates epic D&D narrations using OpenAI's Text-to-Speech API with realistic, professional voices.
+This guide provides step-by-step instructions for deploying the AI-powered podcast narration feature to your production server. The feature generates EPIC D&D narrations using OpenAI's Text-to-Speech API with a deep, dramatic narrator voice perfect for legendary adventures.
 
 ## Prerequisites
 
@@ -15,17 +15,18 @@ This guide provides step-by-step instructions for deploying the AI-powered podca
 ## Feature Details
 
 **What it does:**
-- Generates high-quality podcast narrations for diary entries
-- Automatically detects language (English/German) and selects appropriate voice
-- Uses OpenAI's TTS API with professional voices (auto-detected: "alloy" for German, "onyx" for English)
+- Generates high-quality EPIC podcast narrations for diary entries
+- Uses a deep, dramatic narrator voice (onyx) for ALL languages - perfect for great adventures
+- Uses OpenAI's TTS API with the "onyx" voice (deep, epic narrator) by default
 - Stores audio as base64 data in database (no separate file storage needed)
 - Provides HTML5 audio player for playback
 - Automatically truncates long entries with localized messages
 - Restricted to DM/admin roles for generation
 
-**Recommended voices for different languages:**
-- **German**: `alloy` (clear, neutral - auto-selected), `echo` (balanced)
-- **English**: `onyx` (deep, epic - auto-selected), `fable` (storytelling)
+**Voice Selection:**
+- Default: `onyx` (deep, epic narrator voice) - works excellently for ALL languages including German
+- Alternative epic options: `fable` (storytelling), `echo` (balanced)
+- For less dramatic narration: `alloy` (clear, neutral)
 
 ## Step-by-Step Deployment
 
@@ -86,11 +87,12 @@ OPENAI_API_KEY=your-api-key-here
 # Optional: Configure TTS settings
 OPENAI_TTS_MODEL=tts-1-hd          # Options: tts-1, tts-1-hd
 
-# Voice selection (optional - auto-detected by default):
-# If not set, voice is automatically selected based on detected language:
-#   - German content: alloy (clear, neutral)
-#   - English content: onyx (deep, epic)
+# Voice selection (optional - uses "onyx" by default for ALL languages):
+# If not set, uses "onyx" - a deep, epic narrator voice perfect for
+# legendary D&D adventures in ALL languages (German, English, etc.)
 # Options: alloy, echo, fable, onyx, nova, shimmer
+# Recommended for EPIC narration: onyx (default), fable
+# For less dramatic style: alloy, echo
 # OPENAI_TTS_VOICE=onyx
 
 OPENAI_TTS_SPEED=1.0               # Range: 0.25 to 4.0
@@ -164,36 +166,33 @@ sudo journalctl -u arandor.service -f -n 50
 
 ### Voices
 
-**Language-specific recommendations:**
+**Epic Narrator Voice (Default):**
 
-The system automatically detects the language of your diary entries (currently supports English and German) and selects an appropriate voice:
-- **German content**: Uses `alloy` by default (clear, neutral voice that works well for German)
-- **English content**: Uses `onyx` by default (deep, epic voice)
-- **Other languages**: Will default to English voice selection
+The system now uses the **onyx** voice by DEFAULT for ALL languages, providing a deep, epic narrator experience perfect for legendary D&D adventures. This voice works excellently for German, English, and other languages, delivering the gravitas and drama befitting great adventures.
 
-You can override this automatic selection by setting `OPENAI_TTS_VOICE` in your `.env` file.
+You can override this selection by setting `OPENAI_TTS_VOICE` in your `.env` file.
 
-**onyx** (recommended for English D&D):
-- Deep, epic voice
+**onyx** (DEFAULT - recommended for EPIC narration in ALL languages):
+- Deep, epic, dramatic voice
 - Perfect for heroic fantasy narration
-- Male voice
-- Default for English content
+- Works excellently for German, English, and other languages
+- Provides the gravitas and power of a legendary narrator
+- Ideal for "große Abenteuer" (great adventures)
 
-**fable** (good for English storytelling):
-- Storytelling voice
-- Engaging and dramatic
-- Neutral/male voice
+**fable** (alternative epic storytelling voice):
+- Engaging storytelling voice
+- Dramatic and compelling
+- Good alternative for epic narration
 
-**alloy** (recommended for German narration):
-- Clear, neutral voice
-- Works well for German language
-- Balanced tone
-- Default for German content
-
-**echo** (alternative for German):
+**echo** (balanced alternative):
 - Balanced, clear voice
-- Good alternative for German content
-- Neutral tone
+- Good middle-ground option
+- Less dramatic than onyx
+
+**alloy** (for less dramatic narration):
+- Clear, neutral voice
+- Use if you prefer a less epic, more conversational style
+- Balanced tone
 
 **nova**, **shimmer**:
 - Various voice options

@@ -12,8 +12,8 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - Cover image uploads
   - AI-powered summaries (optional, requires OpenAI API key or compatible service)
   - AI-powered image generation (optional, requires OpenAI API key with DALL-E access)
-  - AI-powered podcast narration with realistic voices (optional, requires OpenAI API key)
-  - Automatically detects language and selects appropriate voice (German/English)
+  - AI-powered podcast narration with epic, dramatic voices (optional, requires OpenAI API key)
+  - Uses deep, narrator-quality voice for all languages - perfect for great adventures
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -137,7 +137,7 @@ The app includes optional AI-powered features for diary entries. These features 
 **Available AI Features:**
 - **AI Summaries** - Generate concise summaries of diary entries (2-3 sentences)
 - **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
-- **AI Podcast Narration** - Generate narration with realistic AI voices, automatically adapting to your language (German/English)
+- **AI Podcast Narration** - Generate EPIC narration with a deep, dramatic narrator voice perfect for legendary adventures in all languages (German/English/etc.)
 
 **Setup:**
 
@@ -171,13 +171,12 @@ OPENAI_IMAGE_QUALITY=standard
 # Text-to-Speech model (default: tts-1-hd)
 OPENAI_TTS_MODEL=tts-1-hd
 
-# TTS voice (auto-detected by default based on language)
-# If not set, voice is automatically selected:
-#   - German content: alloy (clear, neutral)
-#   - English content: onyx (deep, epic)
+# TTS voice for EPIC D&D narration (default: onyx for all languages)
+# If not set, uses "onyx" - an epic, deep narrator voice perfect for dramatic
+# D&D adventure narration in ALL languages (English, German, etc.)
 # Options: alloy, echo, fable, onyx, nova, shimmer
-# Recommended for English D&D: onyx (deep), fable (storytelling)
-# Recommended for German: alloy (clear), echo (balanced)
+# Recommended for EPIC narration: onyx (deep, epic), fable (storytelling)
+# For less dramatic style: alloy (clear), echo (balanced)
 # OPENAI_TTS_VOICE=onyx
 
 # TTS speed (default: 1.0)
