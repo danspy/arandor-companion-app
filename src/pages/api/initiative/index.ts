@@ -71,6 +71,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       type,
       hp: body.hp || null,
       maxHp: body.maxHp || null,
+      tempHp: body.tempHp || null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
       isActive: body.isActive !== undefined ? body.isActive : true,

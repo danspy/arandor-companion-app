@@ -162,6 +162,7 @@ const InitiativeTracker = defineTable({
     type: column.text(), // 'character' | 'npc' | 'monster' | 'other'
     hp: column.number({ optional: true }), // Current HP
     maxHp: column.number({ optional: true }), // Max HP
+    tempHp: column.number({ optional: true }), // Temporary HP
     ac: column.number({ optional: true }), // Armor Class
     notes: column.text({ optional: true }),
     isActive: column.boolean({ default: true }), // Whether this entry is in current combat

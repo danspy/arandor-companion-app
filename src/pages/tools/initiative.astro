@@ -234,9 +234,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     {canEdit ? (
                       <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {entry.hp !== null && entry.maxHp !== null ? (
-                          <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
+                          <span data-hp-display>
+                            {entry.hp}/{entry.maxHp}
+                            {entry.tempHp && entry.tempHp > 0 ? (
+                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                            ) : null}
+                          </span>
                         ) : entry.hp !== null ? (
-                          <span data-hp-display>{entry.hp}</span>
+                          <span data-hp-display>
+                            {entry.hp}
+                            {entry.tempHp && entry.tempHp > 0 ? (
+                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                            ) : null}
+                          </span>
                         ) : (
                           <span class="text-gray-400" data-hp-display>-</span>
                         )}
@@ -446,7 +456,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Current HP
@@ -468,6 +478,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   id="maxHp" 
                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Max HP"
+                />
+              </div>
+
+              <div>
+                <label for="tempHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Temp HP
+                </label>
+                <input 
+                  type="number" 
+                  id="tempHp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Temp HP"
                 />
               </div>
 
@@ -588,6 +610,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const typeSelect = document.getElementById('type');
       const hpInput = document.getElementById('hp');
       const maxHpInput = document.getElementById('maxHp');
+      const tempHpInput = document.getElementById('tempHp');
       const acInput = document.getElementById('ac');
       const notesInput = document.getElementById('notes');
       const isActiveInput = document.getElementById('isActive');
@@ -691,6 +714,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             typeSelect.value = entry.type;
             hpInput.value = entry.hp || '';
             maxHpInput.value = entry.maxHp || '';
+            tempHpInput.value = entry.tempHp || '';
             acInput.value = entry.ac || '';
             notesInput.value = entry.notes || '';
             isActiveInput.checked = entry.isActive;
@@ -809,6 +833,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           type: typeSelect.value,
           hp: hpInput.value ? parseInt(hpInput.value) : null,
           maxHp: maxHpInput.value ? parseInt(maxHpInput.value) : null,
+          tempHp: tempHpInput.value ? parseInt(tempHpInput.value) : null,
           ac: acInput.value ? parseInt(acInput.value) : null,
           notes: notesInput.value.trim() || null,
           isActive: isActiveInput.checked,
@@ -1062,7 +1087,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   // Update HP display
                   const hpElement = card.querySelector('[data-hp-display]');
                   if (hpElement && entry.hp !== null && entry.maxHp !== null) {
-                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                    let hpText = `${entry.hp}/${entry.maxHp}`;
+                    if (entry.tempHp && entry.tempHp > 0) {
+                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                    }
+                    hpElement.innerHTML = hpText;
                   }
                   
                   // Update AC display
@@ -1263,7 +1292,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               if (hpElement) {
                 if (canEdit) {
                   if (entry.hp !== null && entry.maxHp !== null) {
-                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                    let hpText = `${entry.hp}/${entry.maxHp}`;
+                    if (entry.tempHp && entry.tempHp > 0) {
+                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                    }
+                    hpElement.innerHTML = hpText;
                   } else if (entry.hp !== null) {
                     hpElement.textContent = entry.hp;
                   } else {

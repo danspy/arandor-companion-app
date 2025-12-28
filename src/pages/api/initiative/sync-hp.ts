@@ -62,6 +62,7 @@ export const POST: APIRoute = async ({ cookies }) => {
             .set({
               hp: hpData.hp,
               maxHp: hpData.maxHp,
+              tempHp: hpData.tempHp,
               updatedAt: new Date(),
             })
             .where(eq(InitiativeTracker.id, initiativeEntry.id));
