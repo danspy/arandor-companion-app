@@ -206,6 +206,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             
             <!-- Turn Navigation -->
             <div class="flex gap-2">
+              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="flex-1">
+                Sync HP
+              </Button>
               <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="flex-1">
                 Prev
               </Button>
@@ -213,7 +216,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                 Next
               </Button>
             </div>
-          </div>
+           </div>
           
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Control initiative turns directly from here, or use the full <a href="/tools/initiative" class="text-primary-600 dark:text-primary-400 hover:underline">Initiative Tracker</a>.
@@ -340,6 +343,24 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       </div>
     </div>
   </div>
+
+  <style>
+    /* Loading spinner animation */
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .spinner {
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      width: 1rem;
+      height: 1rem;
+      animation: spin 0.6s linear infinite;
+      display: inline-block;
+      margin-right: 0.5rem;
+    }
+  </style>
 
   <script>
     // Store current state
@@ -786,11 +807,121 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       });
     });
     
+    // Manual HP Sync Button
+    const dmSyncHpBtn = document.getElementById('dmSyncHpBtn');
+    dmSyncHpBtn?.addEventListener('click', async () => {
+      // Disable button and show loading state
+      dmSyncHpBtn.disabled = true;
+      const originalText = dmSyncHpBtn.textContent;
+      dmSyncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
+      
+      try {
+        const response = await fetch('/api/initiative/sync-hp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to sync HP');
+        }
+        
+        const result = await response.json();
+        
+        // Show success message
+        alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
+        
+        // Reload combat data to show updated HP
+        await loadCombatData();
+      } catch (error) {
+        console.error('Error syncing HP:', error);
+        alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
+      } finally {
+        // Restore button state
+        dmSyncHpBtn.disabled = false;
+        dmSyncHpBtn.textContent = originalText;
+      }
+    });
+    
     // Load combat data on init
     loadCombatData();
     
     // Refresh combat data periodically
     setInterval(loadCombatData, 5000);
+    
+    // HP Syncing for D&D Beyond
+    const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds (faster for quick updates)
+    let hpSyncInterval = null;
+    
+    // Sync HP from D&D Beyond
+    const syncHpFromDnDBeyond = async () => {
+      // Only sync when combat is active
+      if (combatState.status !== 'active') {
+        if (hpSyncInterval) {
+          clearInterval(hpSyncInterval);
+          hpSyncInterval = null;
+        }
+        return;
+      }
+      
+      try {
+        console.log('[DM Screen] Auto-syncing HP from D&D Beyond...');
+        const response = await fetch('/api/initiative/sync-hp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          console.log(`[DM Screen] HP synced: ${result.syncedCount} of ${result.totalCount} characters`);
+          
+          // Refresh combat data to show updated HP
+          await loadCombatData();
+        }
+      } catch (error) {
+        console.error('[DM Screen] Auto HP sync error:', error);
+      }
+    };
+    
+    // Start HP syncing if combat is active
+    const startHpSync = () => {
+      if (hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+      }
+      
+      if (combatState.status === 'active') {
+        console.log('[DM Screen] Starting HP sync...');
+        syncHpFromDnDBeyond(); // Sync immediately
+        hpSyncInterval = setInterval(syncHpFromDnDBeyond, HP_SYNC_INTERVAL);
+      }
+    };
+    
+    // Check combat status periodically and start/stop HP sync accordingly
+    const hpSyncStatusCheckInterval = setInterval(() => {
+      if (combatState.status === 'active' && !hpSyncInterval) {
+        startHpSync();
+      } else if (combatState.status !== 'active' && hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+        hpSyncInterval = null;
+        console.log('[DM Screen] HP sync stopped (combat not active)');
+      }
+    }, 2000);
+    
+    // Cleanup on page unload or navigation
+    const cleanup = () => {
+      if (hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+        hpSyncInterval = null;
+      }
+      if (hpSyncStatusCheckInterval) {
+        clearInterval(hpSyncStatusCheckInterval);
+      }
+    };
+    
+    window.addEventListener('beforeunload', cleanup);
+    document.addEventListener('astro:before-preparation', cleanup);
+    
+    // Start HP sync if combat is already active
+    startHpSync();
     
     // Initialize button states
     updateButtonStates();

@@ -171,6 +171,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               >
                 Add Entry
               </Button>
+            <Button
+                variant="secondary"
+                size="sm"
+                icon="refresh"
+                id="syncHpBtn"
+                title="Sync HP from D&D Beyond for all characters"
+              >
+                Sync HP
+              </Button>
           </div>
         )}
       </div>
@@ -225,9 +234,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     {canEdit ? (
                       <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {entry.hp !== null && entry.maxHp !== null ? (
-                          <span data-hp-display>{entry.hp}/{entry.maxHp}</span>
+                          <span data-hp-display>
+                            {entry.hp}/{entry.maxHp}
+                            {entry.tempHp && entry.tempHp > 0 ? (
+                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                            ) : null}
+                          </span>
                         ) : entry.hp !== null ? (
-                          <span data-hp-display>{entry.hp}</span>
+                          <span data-hp-display>
+                            {entry.hp}
+                            {entry.tempHp && entry.tempHp > 0 ? (
+                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                            ) : null}
+                          </span>
                         ) : (
                           <span class="text-gray-400" data-hp-display>-</span>
                         )}
@@ -388,9 +407,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   <option 
                     value={char.id}
                     data-name={char.name}
-                    data-hp={char.stats?.hp || ''}
-                    data-max-hp={char.stats?.maxHp || ''}
+                    data-hp={char.hp || ''}
+                    data-max-hp={char.maxHp || ''}
                     data-ac={char.stats?.ac || ''}
+                    data-dndbeyond-url={char.dndbeyondUrl || ''}
                   >
                     {char.name} ({char.class} {char.level})
                   </option>
@@ -436,7 +456,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               </p>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Current HP
@@ -458,6 +478,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   id="maxHp" 
                   class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                   placeholder="Max HP"
+                />
+              </div>
+
+              <div>
+                <label for="tempHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Temp HP
+                </label>
+                <input 
+                  type="number" 
+                  id="tempHp" 
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  placeholder="Temp HP"
                 />
               </div>
 
@@ -549,6 +581,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let nextTurnHandler = null;
     let prevTurnHandler = null;
     let combatStateInterval = null;
+    let hpSyncInterval = null; // Separate interval for HP syncing
+    let lastHpSync = 0; // Track last HP sync time
+    const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds for quick updates
     let deleteHandlers = new Map(); // Store delete button handlers
     let clearAllHandler = null; // Store clear all button handler
     let combatControlHandlers = new Map(); // Store combat control button handlers
@@ -575,6 +610,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const typeSelect = document.getElementById('type');
       const hpInput = document.getElementById('hp');
       const maxHpInput = document.getElementById('maxHp');
+      const tempHpInput = document.getElementById('tempHp');
       const acInput = document.getElementById('ac');
       const notesInput = document.getElementById('notes');
       const isActiveInput = document.getElementById('isActive');
@@ -678,6 +714,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             typeSelect.value = entry.type;
             hpInput.value = entry.hp || '';
             maxHpInput.value = entry.maxHp || '';
+            tempHpInput.value = entry.tempHp || '';
             acInput.value = entry.ac || '';
             notesInput.value = entry.notes || '';
             isActiveInput.checked = entry.isActive;
@@ -796,6 +833,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           type: typeSelect.value,
           hp: hpInput.value ? parseInt(hpInput.value) : null,
           maxHp: maxHpInput.value ? parseInt(maxHpInput.value) : null,
+          tempHp: tempHpInput.value ? parseInt(tempHpInput.value) : null,
           ac: acInput.value ? parseInt(acInput.value) : null,
           notes: notesInput.value.trim() || null,
           isActive: isActiveInput.checked,
@@ -966,6 +1004,34 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           clearInterval(combatStateInterval);
         }
         
+        // Clear old HP sync interval if it exists
+        if (hpSyncInterval) {
+          clearInterval(hpSyncInterval);
+        }
+        
+        // Start HP syncing interval (every 30 seconds)
+        const syncHpFromDnDBeyond = async () => {
+          try {
+            console.log('Auto-syncing HP from D&D Beyond...');
+            const response = await fetch('/api/initiative/sync-hp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`HP synced: ${result.syncedCount} of ${result.totalCount} characters`);
+              lastHpSync = Date.now();
+            }
+          } catch (error) {
+            console.error('Auto HP sync error:', error);
+          }
+        };
+        
+        // Sync HP immediately when combat starts, then every 30 seconds
+        syncHpFromDnDBeyond();
+        hpSyncInterval = setInterval(syncHpFromDnDBeyond, HP_SYNC_INTERVAL);
+        
         // Poll for combat state and initiative data updates every 2 seconds
         combatStateInterval = setInterval(async () => {
           try {
@@ -982,6 +1048,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 if (combatStateInterval) {
                   clearInterval(combatStateInterval);
                   combatStateInterval = null;
+                }
+                if (hpSyncInterval) {
+                  clearInterval(hpSyncInterval);
+                  hpSyncInterval = null;
                 }
                 return;
               }
@@ -1017,7 +1087,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   // Update HP display
                   const hpElement = card.querySelector('[data-hp-display]');
                   if (hpElement && entry.hp !== null && entry.maxHp !== null) {
-                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                    let hpText = `${entry.hp}/${entry.maxHp}`;
+                    if (entry.tempHp && entry.tempHp > 0) {
+                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                    }
+                    hpElement.innerHTML = hpText;
                   }
                   
                   // Update AC display
@@ -1115,6 +1189,46 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         combatControlHandlers.set('stop', stopHandler);
         stopCombatBtn.addEventListener('click', stopHandler);
       }
+      
+      // Sync HP button
+      const syncHpBtn = document.getElementById('syncHpBtn');
+      if (syncHpBtn) {
+        const syncHandler = async () => {
+          // Disable button and show loading state
+          syncHpBtn.disabled = true;
+          const originalText = syncHpBtn.textContent;
+          syncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
+          
+          try {
+            const response = await fetch('/api/initiative/sync-hp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to sync HP');
+            }
+            
+            const result = await response.json();
+            
+            // Show success message
+            alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
+            
+            // Reload to show updated HP
+            window.location.reload();
+          } catch (error) {
+            console.error('Error syncing HP:', error);
+            alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
+            
+            // Restore button state
+            syncHpBtn.disabled = false;
+            syncHpBtn.textContent = originalText;
+          }
+        };
+        
+        combatControlHandlers.set('sync', syncHandler);
+        syncHpBtn.addEventListener('click', syncHandler);
+      }
     }
     
     // Setup polling for non-edit users (players)
@@ -1178,7 +1292,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               if (hpElement) {
                 if (canEdit) {
                   if (entry.hp !== null && entry.maxHp !== null) {
-                    hpElement.textContent = `${entry.hp}/${entry.maxHp}`;
+                    let hpText = `${entry.hp}/${entry.maxHp}`;
+                    if (entry.tempHp && entry.tempHp > 0) {
+                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                    }
+                    hpElement.innerHTML = hpText;
                   } else if (entry.hp !== null) {
                     hpElement.textContent = entry.hp;
                   } else {
@@ -1302,6 +1420,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const startCombatBtn = document.getElementById('startCombatBtn');
       const pauseCombatBtn = document.getElementById('pauseCombatBtn');
       const stopCombatBtn = document.getElementById('stopCombatBtn');
+      const syncHpBtn = document.getElementById('syncHpBtn');
       if (startCombatBtn && combatControlHandlers.has('start')) {
         startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
       }
@@ -1311,12 +1430,21 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (stopCombatBtn && combatControlHandlers.has('stop')) {
         stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
       }
+      if (syncHpBtn && combatControlHandlers.has('sync')) {
+        syncHpBtn.removeEventListener('click', combatControlHandlers.get('sync'));
+      }
       combatControlHandlers.clear();
       
       // Clear polling interval
       if (combatStateInterval) {
         clearInterval(combatStateInterval);
         combatStateInterval = null;
+      }
+      
+      // Clear HP sync interval
+      if (hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+        hpSyncInterval = null;
       }
       
       // Clear player polling interval

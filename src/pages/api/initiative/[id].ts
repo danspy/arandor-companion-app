@@ -85,6 +85,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         type: body.type,
         hp: body.hp || null,
         maxHp: body.maxHp || null,
+        tempHp: body.tempHp || null,
         ac: body.ac || null,
         notes: body.notes?.trim() || null,
         isActive: body.isActive !== undefined ? body.isActive : true,
