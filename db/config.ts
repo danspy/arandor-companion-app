@@ -211,6 +211,8 @@ const DMScreenState = defineTable({
     spotlightNpcIds: column.json({ default: [] }), // Array of NPC IDs in spotlight
     customAssets: column.json({ default: [] }), // Array of custom asset URLs
     showInitiativeTracker: column.boolean({ default: false }), // Whether to show initiative tracker on player display
+    screenVisible: column.boolean({ default: true }), // Whether to show content or placeholder on player display
+    placeholderImageUrl: column.text({ optional: true }), // Placeholder/wallpaper image when screen is hidden
     updatedAt: column.date({ default: new Date() }),
   }
 });

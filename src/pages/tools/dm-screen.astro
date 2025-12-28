@@ -230,14 +230,62 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         Quick Actions
       </h2>
 
-      <div class="space-y-3">
-        <Button variant="danger" size="sm" id="clearAllBtn" class="w-full">
-          Clear Player Display
-        </Button>
+      <div class="space-y-4">
+        <!-- Show/Hide Screen Toggle -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-2">
+            <label class="text-sm font-medium text-gray-700 dark:text-gray-300">Screen Visibility</label>
+            <div class="flex items-center gap-2">
+              <span id="screenStatusText" class="text-sm text-gray-600 dark:text-gray-400">Visible</span>
+              <button 
+                id="toggleScreenBtn"
+                class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium"
+              >
+                Hide Screen
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400">
+            Hide the screen to show placeholder image while keeping your data intact.
+          </p>
+        </div>
         
-        <p class="text-xs text-gray-500 dark:text-gray-400">
-          This will clear the location, NPCs, and hide the initiative tracker on the player display.
-        </p>
+        <!-- Placeholder Image Upload -->
+        <div class="p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Placeholder Wallpaper
+          </label>
+          <div class="space-y-2">
+            <input 
+              type="text" 
+              id="placeholderImageUrl"
+              placeholder="Enter image URL or upload..."
+              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white text-sm"
+            />
+            <div class="flex gap-2">
+              <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="flex-1">
+                Save Wallpaper
+              </Button>
+              <Button variant="secondary" size="sm" id="clearPlaceholderBtn">
+                Clear
+              </Button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            This image appears when the screen is hidden.
+          </p>
+        </div>
+        
+        <!-- Clear All -->
+        <div class="pt-3 border-t border-gray-200 dark:border-gray-700">
+          <Button variant="danger" size="sm" id="clearAllBtn" class="w-full">
+            Clear Player Display
+          </Button>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            This will clear the location, NPCs, and hide the initiative tracker on the player display.
+          </p>
+        </div>
       </div>
     </div>
   </div>
@@ -249,6 +297,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       spotlightNpcIds: [],
       customAssets: [],
       showInitiativeTracker: false,
+      screenVisible: true,
+      placeholderImageUrl: null,
     };
 
     // Store locations and NPCs data
@@ -295,12 +345,37 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           
           const locationSelect = document.getElementById('locationSelect');
           const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+          const placeholderImageInput = document.getElementById('placeholderImageUrl');
           
           if (locationSelect) locationSelect.value = state.currentLocationId || '';
           if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
+          if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
+          
+          // Update screen visibility UI
+          updateScreenVisibilityUI(state.screenVisible !== false); // Default to true if undefined
         }
       } catch (error) {
         console.error('Error loading state:', error);
+      }
+    }
+    
+    // Update screen visibility UI
+    function updateScreenVisibilityUI(isVisible) {
+      const toggleBtn = document.getElementById('toggleScreenBtn');
+      const statusText = document.getElementById('screenStatusText');
+      
+      if (isVisible) {
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Hide Screen';
+          toggleBtn.className = 'px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition text-sm font-medium';
+        }
+        if (statusText) statusText.textContent = 'Visible';
+      } else {
+        if (toggleBtn) {
+          toggleBtn.textContent = 'Show Screen';
+          toggleBtn.className = 'px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition text-sm font-medium';
+        }
+        if (statusText) statusText.textContent = 'Hidden';
       }
     }
 
@@ -605,6 +680,44 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         if (showInitiativeCheckbox) showInitiativeCheckbox.checked = false;
         updateLocationPreview(null);
         updateNpcList([]);
+      }
+    });
+    
+    // Toggle screen visibility
+    const toggleScreenBtn = document.getElementById('toggleScreenBtn');
+    toggleScreenBtn?.addEventListener('click', async () => {
+      const newVisibility = !currentState.screenVisible;
+      const success = await updateState({ screenVisible: newVisibility });
+      
+      if (success) {
+        updateScreenVisibilityUI(newVisibility);
+      }
+    });
+    
+    // Save placeholder image
+    const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
+    const placeholderImageInput = document.getElementById('placeholderImageUrl');
+    savePlaceholderBtn?.addEventListener('click', async () => {
+      const imageUrl = placeholderImageInput?.value.trim();
+      if (!imageUrl) {
+        alert('Please enter an image URL');
+        return;
+      }
+      
+      const success = await updateState({ placeholderImageUrl: imageUrl });
+      if (success) {
+        alert('Placeholder wallpaper saved!');
+      }
+    });
+    
+    // Clear placeholder image
+    const clearPlaceholderBtn = document.getElementById('clearPlaceholderBtn');
+    clearPlaceholderBtn?.addEventListener('click', async () => {
+      if (!confirm('Remove the placeholder wallpaper?')) return;
+      
+      const success = await updateState({ placeholderImageUrl: null });
+      if (success) {
+        if (placeholderImageInput) placeholderImageInput.value = '';
       }
     });
 
