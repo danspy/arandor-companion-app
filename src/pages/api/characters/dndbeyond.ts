@@ -16,6 +16,9 @@ interface DnDBeyondCharacterData {
   eyes?: string;
   skin?: string;
   hair?: string;
+  hp?: number; // Current HP
+  maxHp?: number; // Maximum HP
+  tempHp?: number; // Temporary HP
   stats?: {
     strength?: number;
     dexterity?: number;
@@ -98,6 +101,34 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       skin: data.data?.skin || undefined,
       hair: data.data?.hair || undefined,
     };
+
+    // Extract HP data
+    // D&D Beyond stores HP in the following fields:
+    // - baseHitPoints: base max HP
+    // - bonusHitPoints: bonus HP from items/features (added to max)
+    // - overrideHitPoints: manual override for max HP (if set, replaces baseHitPoints + bonusHitPoints)
+    // - removedHitPoints: damage taken (subtracted from current HP)
+    // - temporaryHitPoints: temp HP
+    const baseHp = data.data?.baseHitPoints || 0;
+    const bonusHp = data.data?.bonusHitPoints || 0;
+    const overrideHp = data.data?.overrideHitPoints;
+    const removedHp = data.data?.removedHitPoints || 0;
+    const tempHp = data.data?.temporaryHitPoints || 0;
+    
+    // Calculate max HP (use override if set, otherwise base + bonus)
+    const maxHp = overrideHp !== null && overrideHp !== undefined ? overrideHp : (baseHp + bonusHp);
+    
+    // Calculate current HP (max - damage)
+    const currentHp = Math.max(0, maxHp - removedHp);
+    
+    if (maxHp > 0) {
+      characterData.maxHp = maxHp;
+      characterData.hp = currentHp;
+    }
+    
+    if (tempHp > 0) {
+      characterData.tempHp = tempHp;
+    }
 
     // Extract ability scores
     const stats = data.data?.stats;

@@ -45,6 +45,10 @@ const Character = defineTable({
     avatarUrl: column.text({ optional: true }),
     dndbeyondUrl: column.text({ optional: true }),
     stats: column.json({ optional: true }),
+    // HP tracking fields
+    hp: column.number({ optional: true }), // Current HP
+    maxHp: column.number({ optional: true }), // Maximum HP
+    tempHp: column.number({ optional: true }), // Temporary HP
     // Additional character details
     gender: column.text({ optional: true }),
     alignment: column.text({ optional: true }),

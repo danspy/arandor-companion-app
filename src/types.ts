@@ -40,6 +40,9 @@ export interface Character {
     wisdom: number;
     charisma: number;
   };
+  hp?: number; // Current HP
+  maxHp?: number; // Maximum HP
+  tempHp?: number; // Temporary HP
 }
 
 export interface NPC {

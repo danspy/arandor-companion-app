@@ -44,6 +44,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         avatarUrl: body.avatarUrl,
         dndbeyondUrl: body.dndbeyondUrl,
         stats: body.stats,
+        // HP fields (optional, can be updated manually or via sync)
+        hp: body.hp,
+        maxHp: body.maxHp,
+        tempHp: body.tempHp,
         // Additional character details
         gender: body.gender,
         alignment: body.alignment,
