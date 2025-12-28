@@ -206,6 +206,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             
             <!-- Turn Navigation -->
             <div class="flex gap-2">
+              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="flex-1">
+                Sync HP
+              </Button>
               <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="flex-1">
                 Prev
               </Button>
@@ -213,14 +216,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                 Next
               </Button>
             </div>
-            
-            <!-- HP Sync Button -->
-            <div class="flex gap-2">
-              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="w-full">
-                Sync HP
-              </Button>
-            </div>
-          </div>
+           </div>
           
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
             Control initiative turns directly from here, or use the full <a href="/tools/initiative" class="text-primary-600 dark:text-primary-400 hover:underline">Initiative Tracker</a>.
