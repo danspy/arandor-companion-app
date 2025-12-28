@@ -184,6 +184,15 @@ const COMBAT_STATE_ID = 'current-combat';
         if (loadingState) loadingState.classList.add('hidden');
         if (mainContent) mainContent.classList.remove('hidden');
 
+        // Update current state BEFORE early return so polling detects changes
+        currentDisplayState = {
+          locationId: state.currentLocationId,
+          npcIds: state.spotlightNpcIds || [],
+          showInitiative: state.showInitiativeTracker,
+          screenVisible: screenVisible,
+          placeholderImageUrl: state.placeholderImageUrl,
+        };
+
         // Check if screen is hidden - show placeholder
         if (!screenVisible) {
           showPlaceholder(state.placeholderImageUrl);
@@ -302,15 +311,6 @@ const COMBAT_STATE_ID = 'current-combat';
             await showInitiativeTracker();
           }
         }
-
-        // Update current state
-        currentDisplayState = {
-          locationId: state.currentLocationId,
-          npcIds: state.spotlightNpcIds || [],
-          showInitiative: state.showInitiativeTracker,
-          screenVisible: state.screenVisible === undefined ? true : state.screenVisible,
-          placeholderImageUrl: state.placeholderImageUrl,
-        };
       }
 
       // Show placeholder/hidden state
