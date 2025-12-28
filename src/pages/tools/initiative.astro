@@ -171,6 +171,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               >
                 Add Entry
               </Button>
+            <Button
+                variant="secondary"
+                size="sm"
+                icon="refresh"
+                id="syncHpBtn"
+                title="Sync HP from D&D Beyond for all characters"
+              >
+                Sync HP
+              </Button>
           </div>
         )}
       </div>
@@ -388,9 +397,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   <option 
                     value={char.id}
                     data-name={char.name}
-                    data-hp={char.stats?.hp || ''}
-                    data-max-hp={char.stats?.maxHp || ''}
+                    data-hp={char.hp || ''}
+                    data-max-hp={char.maxHp || ''}
                     data-ac={char.stats?.ac || ''}
+                    data-dndbeyond-url={char.dndbeyondUrl || ''}
                   >
                     {char.name} ({char.class} {char.level})
                   </option>
@@ -549,6 +559,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let nextTurnHandler = null;
     let prevTurnHandler = null;
     let combatStateInterval = null;
+    let hpSyncInterval = null; // Separate interval for HP syncing
+    let lastHpSync = 0; // Track last HP sync time
+    const HP_SYNC_INTERVAL = 30000; // Sync HP every 30 seconds
     let deleteHandlers = new Map(); // Store delete button handlers
     let clearAllHandler = null; // Store clear all button handler
     let combatControlHandlers = new Map(); // Store combat control button handlers
@@ -966,6 +979,34 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           clearInterval(combatStateInterval);
         }
         
+        // Clear old HP sync interval if it exists
+        if (hpSyncInterval) {
+          clearInterval(hpSyncInterval);
+        }
+        
+        // Start HP syncing interval (every 30 seconds)
+        const syncHpFromDnDBeyond = async () => {
+          try {
+            console.log('Auto-syncing HP from D&D Beyond...');
+            const response = await fetch('/api/initiative/sync-hp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`HP synced: ${result.syncedCount} of ${result.totalCount} characters`);
+              lastHpSync = Date.now();
+            }
+          } catch (error) {
+            console.error('Auto HP sync error:', error);
+          }
+        };
+        
+        // Sync HP immediately when combat starts, then every 30 seconds
+        syncHpFromDnDBeyond();
+        hpSyncInterval = setInterval(syncHpFromDnDBeyond, HP_SYNC_INTERVAL);
+        
         // Poll for combat state and initiative data updates every 2 seconds
         combatStateInterval = setInterval(async () => {
           try {
@@ -982,6 +1023,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 if (combatStateInterval) {
                   clearInterval(combatStateInterval);
                   combatStateInterval = null;
+                }
+                if (hpSyncInterval) {
+                  clearInterval(hpSyncInterval);
+                  hpSyncInterval = null;
                 }
                 return;
               }
@@ -1114,6 +1159,46 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (stopCombatBtn) {
         combatControlHandlers.set('stop', stopHandler);
         stopCombatBtn.addEventListener('click', stopHandler);
+      }
+      
+      // Sync HP button
+      const syncHpBtn = document.getElementById('syncHpBtn');
+      if (syncHpBtn) {
+        const syncHandler = async () => {
+          // Disable button and show loading state
+          syncHpBtn.disabled = true;
+          const originalText = syncHpBtn.textContent;
+          syncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
+          
+          try {
+            const response = await fetch('/api/initiative/sync-hp', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to sync HP');
+            }
+            
+            const result = await response.json();
+            
+            // Show success message
+            alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
+            
+            // Reload to show updated HP
+            window.location.reload();
+          } catch (error) {
+            console.error('Error syncing HP:', error);
+            alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
+            
+            // Restore button state
+            syncHpBtn.disabled = false;
+            syncHpBtn.textContent = originalText;
+          }
+        };
+        
+        combatControlHandlers.set('sync', syncHandler);
+        syncHpBtn.addEventListener('click', syncHandler);
       }
     }
     
@@ -1302,6 +1387,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const startCombatBtn = document.getElementById('startCombatBtn');
       const pauseCombatBtn = document.getElementById('pauseCombatBtn');
       const stopCombatBtn = document.getElementById('stopCombatBtn');
+      const syncHpBtn = document.getElementById('syncHpBtn');
       if (startCombatBtn && combatControlHandlers.has('start')) {
         startCombatBtn.removeEventListener('click', combatControlHandlers.get('start'));
       }
@@ -1311,12 +1397,21 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (stopCombatBtn && combatControlHandlers.has('stop')) {
         stopCombatBtn.removeEventListener('click', combatControlHandlers.get('stop'));
       }
+      if (syncHpBtn && combatControlHandlers.has('sync')) {
+        syncHpBtn.removeEventListener('click', combatControlHandlers.get('sync'));
+      }
       combatControlHandlers.clear();
       
       // Clear polling interval
       if (combatStateInterval) {
         clearInterval(combatStateInterval);
         combatStateInterval = null;
+      }
+      
+      // Clear HP sync interval
+      if (hpSyncInterval) {
+        clearInterval(hpSyncInterval);
+        hpSyncInterval = null;
       }
       
       // Clear player polling interval
