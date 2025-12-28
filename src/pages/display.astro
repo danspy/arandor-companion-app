@@ -380,9 +380,20 @@ const COMBAT_STATE_ID = 'current-combat';
           const active = sorted.filter(e => e.isActive);
 
           list.innerHTML = '';
+          
+          // Debug logging
+          console.log('Combat state:', combat);
+          console.log('Active entries:', active.length);
+          console.log('Current turn index:', combat.currentTurnIndex);
+          console.log('Combat status:', combat.status);
 
           active.forEach((entry, index) => {
             const isCurrentTurn = index === combat.currentTurnIndex && combat.status === 'active';
+            
+            // Debug log for each entry
+            if (isCurrentTurn) {
+              console.log(`Current turn: ${entry.name} (index ${index})`);
+            }
             
             const getHealthStatus = (hp, maxHp) => {
               if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };

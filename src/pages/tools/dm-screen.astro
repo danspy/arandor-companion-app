@@ -179,6 +179,39 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         <p class="text-sm text-gray-600 dark:text-gray-400">
           When enabled, players will see the initiative tracker on their display screen during combat.
         </p>
+        
+        <!-- Combat Controls -->
+        <div class="pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Combat Controls</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600 dark:text-gray-400">Round:</span>
+              <span id="dmCurrentRound" class="text-lg font-bold text-primary-600 dark:text-primary-400">1</span>
+            </div>
+          </div>
+          
+          <div class="flex gap-2 mb-3">
+            <Button variant="secondary" size="sm" id="dmPrevTurnBtn" class="flex-1">
+              ← Prev Turn
+            </Button>
+            <Button variant="secondary" size="sm" id="dmNextTurnBtn" class="flex-1">
+              Next Turn →
+            </Button>
+          </div>
+          
+          <div class="flex gap-2">
+            <Button variant="primary" size="sm" id="dmStartCombatBtn" class="flex-1">
+              Start Combat
+            </Button>
+            <Button variant="danger" size="sm" id="dmStopCombatBtn" class="flex-1">
+              Stop Combat
+            </Button>
+          </div>
+          
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Control initiative turns directly from here, or use the full <a href="/tools/initiative" class="text-primary-600 dark:text-primary-400 hover:underline">Initiative Tracker</a>.
+          </p>
+        </div>
 
         <a href="/tools/initiative" class="inline-block">
           <Button variant="secondary" size="sm">
@@ -418,6 +451,141 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const showTracker = showInitiativeCheckbox.checked;
       await updateState({ showInitiativeTracker: showTracker });
     });
+
+    // Combat controls
+    let combatState = { currentRound: 1, currentTurnIndex: 0, status: 'stopped' };
+    let initiatives = [];
+    
+    // Fetch combat state and initiatives
+    async function loadCombatData() {
+      try {
+        const [combatResponse, initiativeResponse] = await Promise.all([
+          fetch('/api/combat-state'),
+          fetch('/api/initiative')
+        ]);
+        
+        if (combatResponse.ok) {
+          combatState = await combatResponse.json();
+          const roundDisplay = document.getElementById('dmCurrentRound');
+          if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+        }
+        
+        if (initiativeResponse.ok) {
+          initiatives = await initiativeResponse.json();
+        }
+      } catch (error) {
+        console.error('Error loading combat data:', error);
+      }
+    }
+    
+    // Update combat state
+    async function updateCombatState(updates) {
+      try {
+        const response = await fetch('/api/combat-state', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        });
+        
+        if (response.ok) {
+          combatState = { ...combatState, ...updates };
+          const roundDisplay = document.getElementById('dmCurrentRound');
+          if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+          return true;
+        }
+      } catch (error) {
+        console.error('Error updating combat state:', error);
+      }
+      return false;
+    }
+    
+    // Next turn
+    const dmNextTurnBtn = document.getElementById('dmNextTurnBtn');
+    dmNextTurnBtn?.addEventListener('click', async () => {
+      await loadCombatData(); // Refresh data
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('No active combatants in initiative tracker');
+        return;
+      }
+      
+      let newIndex = combatState.currentTurnIndex + 1;
+      let newRound = combatState.currentRound;
+      
+      if (newIndex >= activeInitiatives.length) {
+        newIndex = 0;
+        newRound++;
+      }
+      
+      await updateCombatState({
+        currentTurnIndex: newIndex,
+        currentRound: newRound,
+        status: 'active'
+      });
+    });
+    
+    // Previous turn
+    const dmPrevTurnBtn = document.getElementById('dmPrevTurnBtn');
+    dmPrevTurnBtn?.addEventListener('click', async () => {
+      await loadCombatData(); // Refresh data
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('No active combatants in initiative tracker');
+        return;
+      }
+      
+      let newIndex = combatState.currentTurnIndex - 1;
+      let newRound = combatState.currentRound;
+      
+      if (newIndex < 0) {
+        newIndex = activeInitiatives.length - 1;
+        newRound = Math.max(1, newRound - 1);
+      }
+      
+      await updateCombatState({
+        currentTurnIndex: newIndex,
+        currentRound: newRound,
+        status: 'active'
+      });
+    });
+    
+    // Start combat
+    const dmStartCombatBtn = document.getElementById('dmStartCombatBtn');
+    dmStartCombatBtn?.addEventListener('click', async () => {
+      await loadCombatData();
+      
+      const activeInitiatives = initiatives.filter(e => e.isActive);
+      if (activeInitiatives.length === 0) {
+        alert('Add active combatants to the initiative tracker first');
+        return;
+      }
+      
+      await updateCombatState({
+        status: 'active',
+        currentTurnIndex: 0,
+        currentRound: 1
+      });
+    });
+    
+    // Stop combat
+    const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
+    dmStopCombatBtn?.addEventListener('click', async () => {
+      if (!confirm('Stop combat? This will reset the turn order.')) return;
+      
+      await updateCombatState({
+        status: 'stopped',
+        currentTurnIndex: 0,
+        currentRound: 1
+      });
+    });
+    
+    // Load combat data on init
+    loadCombatData();
+    
+    // Refresh combat data periodically
+    setInterval(loadCombatData, 5000);
 
     // Clear all
     const clearAllBtn = document.getElementById('clearAllBtn');
