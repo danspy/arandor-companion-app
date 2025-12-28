@@ -173,6 +173,19 @@ Possible improvements for future versions:
 - [ ] Webhook support for instant updates when HP changes in D&D Beyond
 - [ ] Bulk character import from D&D Beyond campaign
 - [ ] Sync other combat-relevant stats (conditions, spell slots, etc.)
+- [ ] Add characterId field to InitiativeTracker for robust character matching
+
+## Technical Limitations
+
+### Character Matching in Initiative Tracker
+
+Currently, the system matches characters in the initiative tracker to their database records by **name**. This has some limitations:
+
+- **Multiple characters with same name**: If two characters have identical names, only one will be matched
+- **Name changes**: If a character's name is changed, the initiative entry won't match until it's re-added
+- **Case sensitivity**: Names must match exactly (though this is typically not an issue)
+
+**Recommended Workaround**: Ensure each character has a unique name. A future enhancement will add a `characterId` field to the InitiativeTracker table for direct ID-based matching.
 
 ## Migration
 
