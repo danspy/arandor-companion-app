@@ -195,27 +195,27 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <div class="flex flex-col gap-2">
             <!-- Combat Status Buttons -->
             <div class="grid grid-cols-3 gap-2">
-              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="w-full text-xs md:text-sm" ariaLabel="Start Combat" data-status="stopped">
-                <span class="hidden md:inline">Start</span>
+              <Button variant="success" size="sm" icon="play" id="dmStartCombatBtn" class="w-full text-xs lg:text-sm" ariaLabel="Start Combat" data-status="stopped">
+                <span class="hidden lg:inline">Start</span>
               </Button>
-              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="w-full text-xs md:text-sm" ariaLabel="Pause Combat" data-status="stopped">
-                <span class="hidden md:inline">Pause</span>
+              <Button variant="warning" size="sm" icon="pause" id="dmPauseCombatBtn" class="w-full text-xs lg:text-sm" ariaLabel="Pause Combat" data-status="stopped">
+                <span class="hidden lg:inline">Pause</span>
               </Button>
-              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="w-full text-xs md:text-sm" ariaLabel="Stop Combat" data-status="stopped">
-                <span class="hidden md:inline">Stop</span>
+              <Button variant="danger" size="sm" icon="stop" id="dmStopCombatBtn" class="w-full text-xs lg:text-sm" ariaLabel="Stop Combat" data-status="stopped">
+                <span class="hidden lg:inline">Stop</span>
               </Button>
             </div>
             
             <!-- Turn Navigation -->
             <div class="grid grid-cols-3 gap-2">
-              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="w-full text-xs md:text-sm">
-                <span class="hidden md:inline">Sync HP</span>
-                <span class="md:hidden">Sync</span>
+              <Button variant="secondary" size="sm" icon="refresh" id="dmSyncHpBtn" class="w-full text-xs lg:text-sm">
+                <span class="hidden lg:inline">Sync HP</span>
+                <span class="lg:hidden">Sync</span>
               </Button>
-              <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="w-full text-xs md:text-sm">
+              <Button variant="secondary" size="sm" icon="prev" id="dmPrevTurnBtn" class="w-full text-xs lg:text-sm">
                 Prev
               </Button>
-              <Button variant="secondary" size="sm" icon="next" iconPosition="right" id="dmNextTurnBtn" class="w-full text-xs md:text-sm">
+              <Button variant="secondary" size="sm" icon="next" iconPosition="right" id="dmNextTurnBtn" class="w-full text-xs lg:text-sm">
                 Next
               </Button>
             </div>
@@ -311,7 +311,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             <div class="grid grid-cols-2 lg:grid-cols-3 gap-2">
               <label for="placeholderImageFile" class="col-span-2 lg:col-span-1">
                 <div class="cursor-pointer w-full px-3 py-2 bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg transition text-sm text-center font-medium border border-gray-300 dark:border-gray-600">
-                  📁 <span class="hidden xs:inline">Upload</span>
+                  📁 <span class="hidden lg:inline">Upload</span>
                 </div>
                 <input 
                   type="file" 
