@@ -134,15 +134,18 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         .where(eq(User.id, user.id));
 
       // If firstName was updated and user has assigned characters, update character player field
-      if (firstName !== undefined && characterIds !== undefined && characterIds.length > 0) {
+      // Only update if firstName actually changed
+      if (firstName !== undefined && firstName !== user.firstName && characterIds !== undefined && characterIds.length > 0) {
         const playerName = firstName || user.username;
         
-        // Update player field for all assigned characters
-        for (const charId of characterIds) {
-          await db.update(Character)
-            .set({ player: playerName })
-            .where(eq(Character.id, charId));
-        }
+        // Update player field for all assigned characters in parallel
+        await Promise.all(
+          characterIds.map(charId =>
+            db.update(Character)
+              .set({ player: playerName })
+              .where(eq(Character.id, charId))
+          )
+        );
       }
 
       return new Response(JSON.stringify({ 
