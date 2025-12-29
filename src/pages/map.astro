@@ -106,7 +106,7 @@ libraryEntries.forEach(entry => {
       </div>
     </div>
 
-    <!-- Map Viewport with max-height -->
+    <!-- Map Viewport with max-height: navbar (72px) + header (80px) + padding/footer (68px) = 220px -->
     <div id="mapColumn" class="relative bg-white dark:bg-black" style="height: calc(100vh - 220px); min-height: 500px;">
       <!-- Zoom controls - positioned in top-left to avoid PWA menu -->
       <div class="absolute top-4 left-4 z-20 flex gap-2">
@@ -147,7 +147,7 @@ libraryEntries.forEach(entry => {
       <div class="relative bg-[rgb(208,208,208)] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
         <!-- Draggable map container -->
         <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
-          <div id="mapContainer" class="absolute" style="width: 100%; height: 100%;">
+          <div id="mapContainer" class="absolute w-full h-full">
             <!-- SVG-based map: image + pins + path all live in a single SVG coordinate space (0..100) -->
             <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
               <g id="mapGroup">
