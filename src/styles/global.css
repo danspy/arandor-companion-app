@@ -5,8 +5,8 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --pwa-main-padding-top: max(env(safe-area-inset-top), 1rem);
-  /* Floating menu clearance: button (56px) + button padding (24px) + safe spacing (60px) = 140px */
-  --pwa-floating-menu-clearance: 140px;
+  /* Floating menu clearance: button height (56px) + button spacing (16px) + safe spacing (24px) = 96px */
+  --pwa-floating-menu-clearance: 96px;
 }
 
 html, body {
