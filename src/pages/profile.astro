@@ -569,6 +569,8 @@ const roleDisplay = {
   // Touch drag and drop handlers for favorite pages
   let touchDraggedElement: HTMLElement | null = null;
   let touchClone: HTMLElement | null = null;
+  let touchDraggedRect: DOMRect | null = null;
+  let touchHighlightedElement: HTMLElement | null = null;
 
   // Helper function to get element below touch point (hiding clone temporarily)
   function getElementBelowTouch(touch: Touch): Element | null {
@@ -585,6 +587,7 @@ const roleDisplay = {
     
     const touch = e.touches[0];
     const rect = target.getBoundingClientRect();
+    touchDraggedRect = rect;
     
     // Create a visual clone for dragging
     touchClone = target.cloneNode(true) as HTMLElement;
@@ -604,27 +607,32 @@ const roleDisplay = {
   }
 
   function handleTouchMove(e: TouchEvent) {
-    if (!touchDraggedElement || !touchClone) return;
+    if (!touchDraggedElement || !touchClone || !touchDraggedRect) return;
     
     const touch = e.touches[0];
-    const rect = touchDraggedElement.getBoundingClientRect();
     
     // Move the clone with the touch, keeping it centered under the touch point
-    touchClone.style.left = (touch.clientX - rect.width / 2) + 'px';
-    touchClone.style.top = (touch.clientY - rect.height / 2) + 'px';
+    touchClone.style.left = (touch.clientX - touchDraggedRect.width / 2) + 'px';
+    touchClone.style.top = (touch.clientY - touchDraggedRect.height / 2) + 'px';
     
     // Find the element under the touch point
     const elementBelow = getElementBelowTouch(touch);
     const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
     
-    // Clear all highlights
-    document.querySelectorAll('[data-page-id]').forEach(el => {
-      el.classList.remove('border-t-4', 'border-primary-500');
-    });
-    
-    // Highlight the drop target
-    if (targetElement && targetElement !== touchDraggedElement) {
-      targetElement.classList.add('border-t-4', 'border-primary-500');
+    // Only update highlights if the target has changed
+    if (targetElement !== touchHighlightedElement) {
+      // Clear previous highlight
+      if (touchHighlightedElement) {
+        touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
+      }
+      
+      // Highlight the new drop target
+      if (targetElement && targetElement !== touchDraggedElement) {
+        targetElement.classList.add('border-t-4', 'border-primary-500');
+        touchHighlightedElement = targetElement;
+      } else {
+        touchHighlightedElement = null;
+      }
     }
     
     e.preventDefault();
@@ -652,14 +660,16 @@ const roleDisplay = {
     
     // Cleanup
     touchDraggedElement.classList.remove('opacity-50');
-    document.querySelectorAll('[data-page-id]').forEach(el => {
-      el.classList.remove('border-t-4', 'border-primary-500');
-    });
+    if (touchHighlightedElement) {
+      touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
+    }
     
     touchClone?.remove();
     
     touchDraggedElement = null;
     touchClone = null;
+    touchDraggedRect = null;
+    touchHighlightedElement = null;
   }
 
   // Update the display of selected characters
