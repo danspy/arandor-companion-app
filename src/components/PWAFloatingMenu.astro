@@ -274,10 +274,10 @@ function isActiveLink(href: string): boolean {
 <style>
   /* CSS Custom Properties */
   :root {
-    /* Base spacing for menu button */
-    --pwa-menu-button-spacing: 24px;
-    /* Menu panel bottom position including safe area */
-    --pwa-menu-panel-bottom: calc(96px + env(safe-area-inset-bottom));
+    /* Base spacing for menu button from edges */
+    --pwa-menu-button-spacing: 16px;
+    /* Gap between button and panel */
+    --pwa-menu-panel-gap: 8px;
     /* Top spacing to prevent menu from going too high */
     --pwa-menu-top-spacing: calc(16px + env(safe-area-inset-top));
     --pwa-menu-animation-duration: 300ms; /* Menu open/close animation duration */
@@ -304,7 +304,7 @@ function isActiveLink(href: string): boolean {
   /* Menu button */
   .pwa-menu-button {
     position: fixed;
-    /* Same base spacing (24px) for both bottom and right, plus safe area insets */
+    /* Fixed spacing from edges, consistent on all pages */
     bottom: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom));
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 56px;
@@ -344,10 +344,13 @@ function isActiveLink(href: string): boolean {
   /* Menu panel */
   .pwa-menu-panel {
     position: fixed;
-    bottom: var(--pwa-menu-panel-bottom);
+    /* Position panel directly above button with a small gap */
+    /* Bottom = button bottom (spacing + safe area) + button height (56px) + gap */
+    bottom: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom) + 56px + var(--pwa-menu-panel-gap));
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 280px;
-    max-height: calc(100vh - var(--pwa-menu-panel-bottom) - var(--pwa-menu-top-spacing));
+    /* Calculate max-height: viewport height - panel bottom - top spacing */
+    max-height: calc(100vh - (var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom) + 56px + var(--pwa-menu-panel-gap)) - var(--pwa-menu-top-spacing));
     background: white;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
@@ -433,13 +436,6 @@ function isActiveLink(href: string): boolean {
   
   /* Responsive adjustments for smaller screens */
   @media (max-width: 640px) {
-    :root {
-      /* Smaller spacing for small screens */
-      --pwa-menu-button-spacing: 16px;
-      /* Adjust panel bottom: button height (56px) + button spacing (16px) + gap (16px) + safe area */
-      --pwa-menu-panel-bottom: calc(88px + env(safe-area-inset-bottom));
-    }
-    
     .pwa-menu-panel {
       width: calc(100vw - 32px);
       max-width: 320px;
