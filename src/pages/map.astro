@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import Button from '../components/Button.astro';
 import { db, Location, NPC, DiaryEntry, LibraryEntry } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
@@ -57,88 +58,110 @@ libraryEntries.forEach(entry => {
 ---
 
 <Layout title="Interactive Map">
-  <!-- Add CSS to hide the Layout's main container padding and footer -->
-  <style is:global>
-    body {
-      overflow: hidden;
-    }
-    main.container {
-      padding: 0 !important;
-      margin: 0 !important;
-      max-width: none !important;
-    }
-    footer {
-      display: none !important;
-    }
-  </style>
-
-  <!-- Fullscreen Map Container -->
-  <div id="fullscreenMapContainer" class="fixed inset-0 top-[72px] bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-900 dark:to-gray-800">
-    
-    <!-- Map Controls Overlay (top) -->
-    <div class="absolute top-0 left-0 right-0 z-30 bg-white/95 dark:bg-black/95 backdrop-blur-sm border-b border-gray-200 dark:border-gray-900 shadow-md">
-      <div class="container mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-4">
-          <h1 class="text-xl sm:text-2xl font-bold text-primary-700 dark:text-primary-400">Map of Arandor</h1>
-        </div>
-        
-        <div class="flex flex-wrap gap-2">
-          <button 
-            id="toggleSidebar"
-            class="bg-accent-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 transition text-sm flex items-center gap-2"
-            title="Toggle location details sidebar"
+  <!-- Page Header with Controls -->
+  <div class="mb-6">
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Map of Arandor</h1>
+      
+      <div class="flex flex-wrap gap-2">
+        <Button 
+          variant="primary"
+          size="sm"
+          id="toggleSidebar"
+          title="Toggle location details sidebar"
+          class="flex items-center gap-2"
+        >
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <span class="hidden sm:inline" id="sidebarToggleText">Show Details</span>
+        </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          id="toggleHeroPath"
+          title="Toggle hero path"
+          class="flex items-center gap-2"
+        >
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path>
+          </svg>
+          <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          id="toggleLegend"
+          title="Toggle legend"
+          class="flex items-center gap-2"
+        >
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+          </svg>
+          <span class="hidden sm:inline" id="legendToggleText">Show Legend</span>
+        </Button>
+        {canEdit && (
+          <Button 
+            variant="primary"
+            size="sm"
+            id="toggleEditMode"
+            class="flex items-center gap-2"
           >
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
-            <span class="hidden sm:inline" id="sidebarToggleText">Show Details</span>
-          </button>
-          <button
-            id="toggleHeroPath"
-            class="bg-white/90 dark:bg-black/90 p-2 rounded-lg hover:bg-white dark:hover:bg-gray-700 transition text-sm flex items-center gap-2"
-            title="Toggle hero path"
-          >
-            <svg class="w-4 h-4 text-amber-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path></svg>
-            <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
-          </button>
-          {canEdit && (
-            <>
-              <button 
-                id="toggleEditMode"
-                class="bg-primary-600 text-white px-3 sm:px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition text-sm"
-              >
-                <span id="editModeText">Edit Mode</span>
-              </button>
-            </>
-          )}
-        </div>
+            <span class="hidden sm:inline" id="editModeText">Edit Mode</span>
+          </Button>
+        )}
       </div>
     </div>
+  </div>
 
-    <!-- Map Viewport -->
-    <div id="mapColumn" class="absolute inset-0 bg-white dark:bg-black">
-      <!-- Zoom controls - positioned absolutely in bottom-right -->
-      <div class="absolute bottom-6 right-6 z-20 flex flex-col gap-2">
-        <button id="zoomIn" class="bg-white/90 dark:bg-black/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 p-3 rounded-lg shadow-lg transition" title="Zoom In">
-          <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+  <!-- Map Container -->
+  <div id="mapPageContainer" class="bg-gradient-to-br from-amber-50 to-green-50 dark:from-gray-900 dark:to-gray-800 rounded-lg shadow-lg overflow-hidden">
+
+    <!-- Map Viewport with max-height: navbar (72px) + external header (~120px) + container padding + footer (68px) ≈ 310px -->
+    <div id="mapColumn" class="relative bg-white dark:bg-black" style="height: calc(100vh - 310px); min-height: 500px;">
+      <!-- Zoom controls - positioned in top-left to avoid PWA menu -->
+      <div class="absolute top-4 left-4 z-20 flex gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          id="zoomIn"
+          title="Zoom In"
+          class="bg-white/90 dark:bg-black/90 backdrop-blur-sm shadow-lg"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
           </svg>
-        </button>
-        <button id="zoomOut" class="bg-white/90 dark:bg-black/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 p-3 rounded-lg shadow-lg transition" title="Zoom Out">
-          <svg class="w-5 h-5 text-gray-700 dark:text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          id="zoomOut"
+          title="Zoom Out"
+          class="bg-white/90 dark:bg-black/90 backdrop-blur-sm shadow-lg"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
           </svg>
-        </button>
-        <button id="resetZoom" class="bg-white/90 dark:bg-black/90 backdrop-blur-sm hover:bg-white dark:hover:bg-gray-700 px-3 py-2 rounded-lg shadow-lg transition text-sm text-gray-700 dark:text-gray-200" title="Reset View">
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          id="resetZoom"
+          title="Reset View"
+          class="bg-white/90 dark:bg-black/90 backdrop-blur-sm shadow-lg"
+        >
           Reset
-        </button>
+        </Button>
       </div>
 
       <!-- Map container with panning and zooming -->
       <div class="relative bg-[rgb(208,208,208)] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
         <!-- Draggable map container -->
-        <div id="mapWrapper" class="absolute inset-0" style="cursor: grab;">
-          <div id="mapContainer" class="absolute" style="min-width: 100vw; min-height: 100vh;">
+        <div id="mapWrapper" class="w-full h-full" style="cursor: grab; position: relative;">
+          <div id="mapContainer" class="absolute w-full h-full inset-0">
             <!-- SVG-based map: image + pins + path all live in a single SVG coordinate space (0..100) -->
             <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
               <g id="mapGroup">
@@ -161,9 +184,9 @@ libraryEntries.forEach(entry => {
         </div>
       </div>
 
-      <!-- Legend - positioned absolutely in bottom-left -->
-      <div class="absolute bottom-6 left-6 z-20 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg shadow-lg p-3">
-        <div class="flex flex-wrap gap-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
+      <!-- Legend - positioned in bottom-left, toggleable, hidden by default -->
+      <div id="mapLegend" class="absolute bottom-6 left-4 max-w-[calc(100%-2rem)] z-20 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
             <span>City</span>
@@ -188,20 +211,24 @@ libraryEntries.forEach(entry => {
       </div>
     </div>
 
-    <!-- Slide-in Sidebar for Location Details -->
-    <div id="locationDetails" class="absolute top-[64px] right-0 bottom-0 w-full sm:w-96 bg-white dark:bg-black shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto">
-      <!-- Sidebar Header -->
-      <div class="sticky top-0 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 p-4 flex items-center justify-between z-10">
-        <h2 id="detailsLocationName" class="text-xl font-bold text-primary-700 dark:text-primary-400">Location Details</h2>
-        <button id="closeSidebar" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 p-2">
-          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
-      </div>
+      <!-- Slide-in Sidebar for Location Details -->
+      <div id="locationDetails" class="absolute top-0 right-0 bottom-0 w-full sm:w-96 bg-white dark:bg-black shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto">
+        <!-- Sidebar Header -->
+        <div class="sticky top-0 bg-white dark:bg-black border-b border-gray-200 dark:border-gray-900 p-4 flex items-center justify-between z-10">
+          <h2 id="detailsLocationName" class="text-xl font-bold text-primary-700 dark:text-primary-400">Location Details</h2>
+          <Button
+            variant="icon"
+            size="md"
+            icon="close"
+            iconPosition="only"
+            id="closeSidebar"
+            title="Close sidebar"
+            ariaLabel="Close sidebar"
+          />
+        </div>
 
-      <!-- Sidebar Content -->
-      <div class="p-4">
+        <!-- Sidebar Content -->
+        <div class="p-4">
         <div id="locationDetailsPlaceholder" class="text-center text-gray-400 dark:text-gray-500 py-12">
           <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
@@ -239,12 +266,14 @@ libraryEntries.forEach(entry => {
                   />
                 </div>
               </div>
-              <button 
+              <Button
+                variant="primary"
+                size="md"
                 id="saveCoordinates"
-                class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 transition"
+                class="w-full"
               >
                 Save Coordinates
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -252,7 +281,7 @@ libraryEntries.forEach(entry => {
     </div>
 
     <!-- Mobile Overlay Backdrop -->
-    <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 top-16 bg-black/50 z-30" style="display: none;"></div>
+    <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 bg-black/50 z-30" style="display: none;"></div>
   </div>
 
   <!-- Upload modal removed — using built-in, non-user-uploadable map image -->
@@ -317,9 +346,21 @@ libraryEntries.forEach(entry => {
   const sidebarToggleText = document.getElementById('sidebarToggleText');
   const sidebarBackdrop = document.getElementById('sidebarBackdrop');
   const mapViewport = document.getElementById('mapViewport');
-  // removed heroPathSvg and landmarkPins; using SVG groups instead
   const heroPathToggleBtn = document.getElementById('toggleHeroPath');
   const heroPathToggleText = document.getElementById('heroPathToggleText');
+  const toggleLegendBtn = document.getElementById('toggleLegend');
+  const legendToggleText = document.getElementById('legendToggleText');
+  const mapLegend = document.getElementById('mapLegend');
+  
+  // Legend state - hidden by default on all devices
+  let isLegendVisible = false;
+  
+  // Initialize legend state on load - always hidden
+  if (mapLegend) {
+    mapLegend.style.opacity = '0';
+    mapLegend.style.pointerEvents = 'none';
+    if (legendToggleText) legendToggleText.textContent = 'Show Legend';
+  }
 
   // Make map fluid: container fills available area and SVG uses a 0-100 viewBox
   function applyMapSize() {
@@ -533,6 +574,22 @@ libraryEntries.forEach(entry => {
       heroPath.style.display = hidden ? 'block' : 'none';
       heroPath.setAttribute('data-hidden', hidden ? 'false' : 'true');
       if (heroPathToggleText) heroPathToggleText.textContent = hidden ? 'Hide Path' : 'Show Path';
+    });
+  }
+
+  // Toggle legend visibility handler
+  if (toggleLegendBtn && mapLegend) {
+    toggleLegendBtn.addEventListener('click', () => {
+      isLegendVisible = !isLegendVisible;
+      if (isLegendVisible) {
+        mapLegend.style.opacity = '1';
+        mapLegend.style.pointerEvents = 'auto';
+        if (legendToggleText) legendToggleText.textContent = 'Hide Legend';
+      } else {
+        mapLegend.style.opacity = '0';
+        mapLegend.style.pointerEvents = 'none';
+        if (legendToggleText) legendToggleText.textContent = 'Show Legend';
+      }
     });
   }
 
@@ -1249,9 +1306,9 @@ libraryEntries.forEach(entry => {
 </script>
 
 <style>
-  /* Fullscreen map container */
-  #fullscreenMapContainer {
-    z-index: 10;
+  /* Map page container */
+  #mapPageContainer {
+    position: relative;
   }
 
   /* SVG pin root: keep small by default and scale up on hover or on touch devices */
@@ -1277,7 +1334,6 @@ libraryEntries.forEach(entry => {
     transform-box: fill-box;
     transform-origin: 50% 50%;
     transform: scale(1.3);
-    /* add a subtle glow via filter if desired (SVG filter can be added later) */
   }
   
   .pin-tooltip a {
@@ -1286,12 +1342,10 @@ libraryEntries.forEach(entry => {
 
   #mapContainer {
     user-select: none;
-    /* Transition removed for better performance - transform handled by #mapSvg */
   }
   
   #mapWrapper {
     position: relative;
-    /* touch-action: none applied inline on mapViewport for consistency */
   }
   
   #mapSvg {
@@ -1318,17 +1372,6 @@ libraryEntries.forEach(entry => {
     .location-pin:active {
       transform: scale(1.2);
     }
-  }
-
-  /* Mobile-friendly control layout */
-  @media (max-width: 639px) {
-    .absolute.bottom-6.right-6.z-20 { /* zoom controls container */ }
-    .zoom-mobile { position: fixed; bottom: 12px; left: 50%; transform: translateX(-50%); z-index: 60; display: flex; gap: 8px; }
-    .zoom-mobile button { padding: 12px !important; width: 48px; height: 48px; }
-    #toggleSidebar { padding-left: 10px; padding-right: 10px; }
-    #toggleHeroPath { padding-left: 8px; padding-right: 8px; }
-    /* make legend compact */
-    .absolute.bottom-6.left-6.z-20 { left: 8px; bottom: 8px; padding: 8px; }
   }
 
   /* Mobile overlay sidebar */
