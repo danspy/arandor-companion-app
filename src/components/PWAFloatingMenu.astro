@@ -274,8 +274,9 @@ function isActiveLink(href: string): boolean {
 <style>
   /* CSS Custom Properties */
   :root {
-    /* Calculate bottom spacing: floating button (56px) + button padding (24px) + safe spacing (60px) + safe-area-inset */
-    /* Note: This should match --pwa-floating-menu-clearance (140px) in global.css */
+    /* Calculate bottom spacing including safe-area for max-height calculations */
+    /* Base value (140px) matches --pwa-floating-menu-clearance in global.css */
+    /* Safe-area-inset is added here for panel height calculations */
     --pwa-menu-button-size: 56px;
     --pwa-menu-button-padding: 24px;
     --pwa-menu-safe-spacing: 60px;
