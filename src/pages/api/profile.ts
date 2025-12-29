@@ -133,10 +133,11 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         .set(updateData)
         .where(eq(User.id, user.id));
 
-      // If firstName was updated and user has assigned characters, update character player field
-      // Only update if firstName actually changed
-      if (firstName !== undefined && firstName !== user.firstName && characterIds !== undefined && characterIds.length > 0) {
-        const playerName = firstName || user.username;
+      // Update character player fields when characterIds or firstName changes
+      // This ensures character player field is always in sync with user's profile
+      if (characterIds !== undefined && characterIds.length > 0) {
+        // Use the new firstName if provided, otherwise use existing firstName or username
+        const playerName = (firstName !== undefined ? firstName : user.firstName) || user.username;
         
         // Update player field for all assigned characters in parallel
         await Promise.all(
