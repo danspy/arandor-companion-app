@@ -391,21 +391,27 @@ libraryEntries.forEach(entry => {
     mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   }
 
-  // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
-  function fitToViewport() {
-    // With fluid sizing we start with identity scale and centered position
-    scale = 1.5;
-    // Center the map when zoomed in
+  // Calculate centered position for a given scale
+  function calculateCenteredPosition(targetScale) {
     if (mapWrapper) {
       const rect = mapWrapper.getBoundingClientRect();
       // The map fills the wrapper at scale 1, so we can calculate the offset
       // to center it when scaled up
-      translateX = rect.width * (1 - scale) / 2;
-      translateY = rect.height * (1 - scale) / 2;
-    } else {
-      translateX = 0;
-      translateY = 0;
+      return {
+        x: rect.width * (1 - targetScale) / 2,
+        y: rect.height * (1 - targetScale) / 2
+      };
     }
+    return { x: 0, y: 0 };
+  }
+
+  // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
+  function fitToViewport() {
+    // With fluid sizing we start with identity scale and centered position
+    scale = 1.5;
+    const pos = calculateCenteredPosition(scale);
+    translateX = pos.x;
+    translateY = pos.y;
     updateTransform();
   }
 
@@ -1103,17 +1109,9 @@ libraryEntries.forEach(entry => {
   
   resetZoomBtn?.addEventListener('click', () => {
     scale = 1.5;
-    // Center the map when zoomed in
-    if (mapWrapper) {
-      const rect = mapWrapper.getBoundingClientRect();
-      // The map fills the wrapper at scale 1, so we can calculate the offset
-      // to center it when scaled up
-      translateX = rect.width * (1 - scale) / 2;
-      translateY = rect.height * (1 - scale) / 2;
-    } else {
-      translateX = 0;
-      translateY = 0;
-    }
+    const pos = calculateCenteredPosition(scale);
+    translateX = pos.x;
+    translateY = pos.y;
     updateTransform();
   });
 
