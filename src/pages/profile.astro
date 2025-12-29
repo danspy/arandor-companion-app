@@ -463,11 +463,17 @@ const roleDisplay = {
       // Validate file size (max 5MB)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       if (file.size > maxSize) {
-        alert('Profile image file size must be 5MB or less');
+        if (profileFormError) {
+          profileFormError.textContent = 'Profile image file size must be 5MB or less';
+          profileFormError.classList.remove('hidden');
+        }
         (e.target as HTMLInputElement).value = ''; // Clear the input
         if (profileImagePreview) profileImagePreview.classList.add('hidden');
         return;
       }
+      
+      // Clear any previous errors
+      profileFormError?.classList.add('hidden');
       
       if (profileImagePreview && profileImagePreviewImg) {
         const reader = new FileReader();

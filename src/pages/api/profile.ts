@@ -89,7 +89,14 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           }
           // Basic URL format validation
           try {
-            new URL(profileImageUrl);
+            const url = new URL(profileImageUrl);
+            // Only allow http and https schemes
+            if (!['http:', 'https:'].includes(url.protocol)) {
+              return new Response(JSON.stringify({ error: 'Profile image URL must use http or https protocol' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
           } catch {
             // Also allow relative paths like /uploads/image.jpg
             if (!profileImageUrl.startsWith('/')) {
