@@ -321,12 +321,19 @@ const roleDisplay = {
   // Load characters and user's selected characters
   async function loadCharacters() {
     try {
-      // Fetch all characters
-      const charactersResponse = await fetch('/api/characters');
+      // Fetch user profile first to get current user's selected characters
+      const profileResponse = await fetch('/api/profile');
+      if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        selectedCharacterIds = profile.characterIds || [];
+      }
+
+      // Fetch available characters (filters out those assigned to other users)
+      const charactersResponse = await fetch('/api/characters/available');
       if (charactersResponse.ok) {
         allCharacters = await charactersResponse.json();
         
-        // Populate character dropdown
+        // Populate character dropdown with available characters
         characterSelect.innerHTML = '<option value="">-- Select Character --</option>';
         allCharacters.forEach((char: any) => {
           const option = document.createElement('option');
@@ -336,13 +343,7 @@ const roleDisplay = {
         });
       }
 
-      // Fetch user profile to get selected characters
-      const profileResponse = await fetch('/api/profile');
-      if (profileResponse.ok) {
-        const profile = await profileResponse.json();
-        selectedCharacterIds = profile.characterIds || [];
-        updateSelectedCharactersDisplay();
-      }
+      updateSelectedCharactersDisplay();
     } catch (error) {
       console.error('Error loading characters:', error);
     }

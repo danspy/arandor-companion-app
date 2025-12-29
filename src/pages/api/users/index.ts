@@ -96,6 +96,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       id: User.id,
       username: User.username,
       role: User.role,
+      characterIds: User.characterIds,
       createdAt: User.createdAt,
     }).from(User);
 
