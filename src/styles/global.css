@@ -44,8 +44,7 @@ main {
   
   /* Ensure body fills full viewport height in PWA mode */
   body {
-    height: 100vh; /* Fallback for older browsers */
-    height: 100dvh;
+    min-height: 100vh;
     height: -webkit-fill-available;
   }
   
@@ -53,7 +52,6 @@ main {
   main {
     padding-top: var(--pwa-main-padding-top);
     /* Add bottom padding to accommodate floating menu and prevent content overlap */
-    padding-bottom: var(--pwa-floating-menu-clearance);
   }
 }
 
