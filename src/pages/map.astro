@@ -396,12 +396,12 @@ libraryEntries.forEach(entry => {
     // With fluid sizing we start with identity scale and centered position
     scale = 1.5;
     // Center the map when zoomed in
-    if (mapWrapper && mapSvg) {
+    if (mapWrapper) {
       const rect = mapWrapper.getBoundingClientRect();
-      const svgRect = mapSvg.getBoundingClientRect();
-      // Calculate offset to center the scaled map in the viewport
-      translateX = (rect.width - svgRect.width * scale) / 2;
-      translateY = (rect.height - svgRect.height * scale) / 2;
+      // The map fills the wrapper at scale 1, so we can calculate the offset
+      // to center it when scaled up
+      translateX = rect.width * (1 - scale) / 2;
+      translateY = rect.height * (1 - scale) / 2;
     } else {
       translateX = 0;
       translateY = 0;
@@ -1104,12 +1104,12 @@ libraryEntries.forEach(entry => {
   resetZoomBtn?.addEventListener('click', () => {
     scale = 1.5;
     // Center the map when zoomed in
-    if (mapWrapper && mapSvg) {
+    if (mapWrapper) {
       const rect = mapWrapper.getBoundingClientRect();
-      const svgRect = mapSvg.getBoundingClientRect();
-      // Calculate offset to center the scaled map in the viewport
-      translateX = (rect.width - svgRect.width * scale) / 2;
-      translateY = (rect.height - svgRect.height * scale) / 2;
+      // The map fills the wrapper at scale 1, so we can calculate the offset
+      // to center it when scaled up
+      translateX = rect.width * (1 - scale) / 2;
+      translateY = rect.height * (1 - scale) / 2;
     } else {
       translateX = 0;
       translateY = 0;
