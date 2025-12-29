@@ -463,6 +463,11 @@ const roleDisplay = {
       pageDiv.addEventListener('drop', handleDrop);
       pageDiv.addEventListener('dragend', handleDragEnd);
       
+      // Add touch event listeners for mobile
+      pageDiv.addEventListener('touchstart', handleTouchStart);
+      pageDiv.addEventListener('touchmove', handleTouchMove);
+      pageDiv.addEventListener('touchend', handleTouchEnd);
+      
       const contentDiv = document.createElement('div');
       contentDiv.className = 'flex items-center gap-3';
       
@@ -559,6 +564,106 @@ const roleDisplay = {
       el.classList.remove('border-t-4', 'border-primary-500');
     });
     draggedElement = null;
+  }
+
+  // Touch drag and drop handlers for favorite pages
+  let touchDraggedElement: HTMLElement | null = null;
+  let touchStartY = 0;
+  let touchCurrentY = 0;
+  let touchClone: HTMLElement | null = null;
+  let touchInitialIndex = -1;
+
+  function handleTouchStart(e: TouchEvent) {
+    const target = e.currentTarget as HTMLElement;
+    touchDraggedElement = target;
+    touchInitialIndex = parseInt(target.getAttribute('data-index') || '0');
+    
+    const touch = e.touches[0];
+    touchStartY = touch.clientY;
+    touchCurrentY = touch.clientY;
+    
+    // Create a visual clone for dragging
+    touchClone = target.cloneNode(true) as HTMLElement;
+    touchClone.style.position = 'fixed';
+    touchClone.style.left = target.offsetLeft + 'px';
+    touchClone.style.top = touch.clientY + 'px';
+    touchClone.style.width = target.offsetWidth + 'px';
+    touchClone.style.opacity = '0.8';
+    touchClone.style.zIndex = '9999';
+    touchClone.style.pointerEvents = 'none';
+    document.body.appendChild(touchClone);
+    
+    target.classList.add('opacity-50');
+    
+    // Prevent scrolling while dragging
+    e.preventDefault();
+  }
+
+  function handleTouchMove(e: TouchEvent) {
+    if (!touchDraggedElement || !touchClone) return;
+    
+    const touch = e.touches[0];
+    touchCurrentY = touch.clientY;
+    
+    // Move the clone with the touch
+    touchClone.style.top = touch.clientY + 'px';
+    
+    // Find the element under the touch point
+    touchClone.style.display = 'none';
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    touchClone.style.display = 'block';
+    
+    const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
+    
+    // Clear all highlights
+    document.querySelectorAll('[data-page-id]').forEach(el => {
+      el.classList.remove('border-t-4', 'border-primary-500');
+    });
+    
+    // Highlight the drop target
+    if (targetElement && targetElement !== touchDraggedElement) {
+      targetElement.classList.add('border-t-4', 'border-primary-500');
+    }
+    
+    e.preventDefault();
+  }
+
+  function handleTouchEnd(e: TouchEvent) {
+    if (!touchDraggedElement || !touchClone) return;
+    
+    const touch = e.changedTouches[0];
+    
+    // Find the element under the touch point
+    touchClone.style.display = 'none';
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
+    
+    if (targetElement && targetElement !== touchDraggedElement) {
+      const draggedIndex = parseInt(touchDraggedElement.getAttribute('data-index') || '0');
+      const targetIndex = parseInt(targetElement.getAttribute('data-index') || '0');
+      
+      // Reorder the array
+      const [removed] = selectedFavoritePages.splice(draggedIndex, 1);
+      selectedFavoritePages.splice(targetIndex, 0, removed);
+      
+      updateSelectedFavoritePagesDisplay();
+    }
+    
+    // Cleanup
+    touchDraggedElement.classList.remove('opacity-50');
+    document.querySelectorAll('[data-page-id]').forEach(el => {
+      el.classList.remove('border-t-4', 'border-primary-500');
+    });
+    
+    if (touchClone && touchClone.parentNode) {
+      touchClone.parentNode.removeChild(touchClone);
+    }
+    
+    touchDraggedElement = null;
+    touchClone = null;
+    touchStartY = 0;
+    touchCurrentY = 0;
+    touchInitialIndex = -1;
   }
 
   // Update the display of selected characters
