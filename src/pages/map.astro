@@ -309,7 +309,7 @@ libraryEntries.forEach(entry => {
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
   // Zoom and pan state with default scale
-  let scale = 2; // Start at 2x zoom to show more detail
+  let scale = 1.5; // Start at 1.5x zoom to show more detail
   let translateX = 0;
   let translateY = 0;
   let isPanning = false;
@@ -394,9 +394,18 @@ libraryEntries.forEach(entry => {
   // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
   function fitToViewport() {
     // With fluid sizing we start with identity scale and centered position
-    scale = 2;
-    translateX = 0;
-    translateY = 0;
+    scale = 1.5;
+    // Center the map when zoomed in
+    if (mapWrapper && mapSvg) {
+      const rect = mapWrapper.getBoundingClientRect();
+      const svgRect = mapSvg.getBoundingClientRect();
+      // Calculate offset to center the scaled map in the viewport
+      translateX = (rect.width - svgRect.width * scale) / 2;
+      translateY = (rect.height - svgRect.height * scale) / 2;
+    } else {
+      translateX = 0;
+      translateY = 0;
+    }
     updateTransform();
   }
 
@@ -1093,9 +1102,18 @@ libraryEntries.forEach(entry => {
   });
   
   resetZoomBtn?.addEventListener('click', () => {
-    scale = 2;
-    translateX = 0;
-    translateY = 0;
+    scale = 1.5;
+    // Center the map when zoomed in
+    if (mapWrapper && mapSvg) {
+      const rect = mapWrapper.getBoundingClientRect();
+      const svgRect = mapSvg.getBoundingClientRect();
+      // Calculate offset to center the scaled map in the viewport
+      translateX = (rect.width - svgRect.width * scale) / 2;
+      translateY = (rect.height - svgRect.height * scale) / 2;
+    } else {
+      translateX = 0;
+      translateY = 0;
+    }
     updateTransform();
   });
 
