@@ -28,6 +28,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       firstName: user.firstName,
       profileImageUrl: user.profileImageUrl,
       characterIds: user.characterIds,
+      favoritePages: user.favoritePages || [],
       createdAt: user.createdAt,
     }), {
       status: 200,
@@ -60,7 +61,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword, firstName, profileImageUrl, characterIds } = body;
+    const { currentPassword, newPassword, firstName, profileImageUrl, characterIds, favoritePages } = body;
 
     // Handle profile information updates (firstName, profileImageUrl, characterIds)
     if (!currentPassword && !newPassword) {
@@ -126,6 +127,31 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           });
         }
         updateData.characterIds = characterIds;
+      }
+      
+      if (favoritePages !== undefined) {
+        // Validate that favoritePages is an array
+        if (!Array.isArray(favoritePages)) {
+          return new Response(JSON.stringify({ error: 'favoritePages must be an array' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        // Validate max 3 favorite pages
+        if (favoritePages.length > 3) {
+          return new Response(JSON.stringify({ error: 'You can select up to 3 favorite pages' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        // Validate each page ID is a string
+        if (favoritePages.some(id => typeof id !== 'string')) {
+          return new Response(JSON.stringify({ error: 'All favorite page IDs must be strings' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        updateData.favoritePages = favoritePages;
       }
       
       // Update user profile

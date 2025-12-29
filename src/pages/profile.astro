@@ -16,7 +16,7 @@ const roleDisplay = {
 ---
 
 <Layout title="My Profile">
-  <div class="max-w-2xl mx-auto">
+  <div class="max-w-2xl mx-auto" data-user-role={user.role}>
     <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-8">My Profile</h1>
 
     <!-- Success/Error Messages -->
@@ -143,6 +143,34 @@ const roleDisplay = {
             </div>
           </div>
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select the characters you play</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Favorite Pages (PWA Quick Access)
+          </label>
+          <div class="space-y-3">
+            <div id="selectedFavoritePages" class="space-y-2">
+              <!-- Selected favorite pages will be displayed here -->
+            </div>
+            
+            <div class="flex gap-2">
+              <select 
+                id="favoritePageSelect"
+                class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select Page --</option>
+              </select>
+              <button 
+                type="button"
+                id="addFavoritePageBtn"
+                class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition whitespace-nowrap"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select up to 3 pages for quick access in PWA mode. Drag to reorder.</p>
         </div>
 
         <div id="profileFormError" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
@@ -307,6 +335,25 @@ const roleDisplay = {
   let selectedCharacterIds: string[] = [];
   let allCharacters: any[] = [];
   let availableCharacters: any[] = [];
+  
+  // Store selected favorite pages
+  let selectedFavoritePages: string[] = [];
+  
+  // Available pages for favorites
+  const availablePages = [
+    { id: '/', name: 'Home', icon: 'home' },
+    { id: '/diary', name: 'Diary', icon: 'book' },
+    { id: '/library', name: 'Library', icon: 'library' },
+    { id: '/characters', name: 'Characters', icon: 'characters' },
+    { id: '/npcs', name: 'NPCs', icon: 'npc' },
+    { id: '/locations', name: 'Locations', icon: 'location' },
+    { id: '/map', name: 'Map', icon: 'map' },
+    { id: '/quests', name: 'Quests', icon: 'quest' },
+    { id: '/tools', name: 'Tools', icon: 'tools' },
+    { id: '/tools/initiative', name: 'Initiative Tracker', icon: 'initiative' },
+    { id: '/tools/dm-screen', name: 'DM Screen', icon: 'dm-screen', dmOnly: true },
+    { id: '/users', name: 'Users', icon: 'users', adminOnly: true },
+  ];
 
   // Load characters and user's selected characters
   async function loadCharacters() {
@@ -325,6 +372,7 @@ const roleDisplay = {
       if (profileResponse.ok) {
         const profile = await profileResponse.json();
         selectedCharacterIds = profile.characterIds || [];
+        selectedFavoritePages = profile.favoritePages || [];
       }
 
       // Fetch ALL characters to display already-selected ones
@@ -349,9 +397,168 @@ const roleDisplay = {
       }
 
       updateSelectedCharactersDisplay();
+      updateFavoritePagesDropdown();
+      updateSelectedFavoritePagesDisplay();
     } catch (error) {
       console.error('Error loading characters:', error);
     }
+  }
+  
+  // Load favorite pages dropdown with available pages
+  function updateFavoritePagesDropdown() {
+    const pageSelect = document.getElementById('favoritePageSelect') as HTMLSelectElement;
+    if (!pageSelect) return;
+    
+    // Get user role from data attribute
+    const container = document.querySelector('[data-user-role]');
+    const userRole = container?.getAttribute('data-user-role') || 'player';
+    
+    pageSelect.innerHTML = '<option value="">-- Select Page --</option>';
+    
+    availablePages.forEach((page: any) => {
+      // Filter out already selected pages
+      if (!selectedFavoritePages.includes(page.id)) {
+        // Only show DM-only pages to DM/admin users
+        if (page.dmOnly && userRole !== 'admin' && userRole !== 'dungeonmaster') {
+          return;
+        }
+        // Only show admin-only pages to admin users
+        if (page.adminOnly && userRole !== 'admin') {
+          return;
+        }
+        
+        const option = document.createElement('option');
+        option.value = page.id;
+        option.textContent = page.name;
+        pageSelect.appendChild(option);
+      }
+    });
+  }
+  
+  // Update the display of selected favorite pages
+  function updateSelectedFavoritePagesDisplay() {
+    const selFavoritePagesDiv = document.getElementById('selectedFavoritePages');
+    if (!selFavoritePagesDiv) return;
+    
+    selFavoritePagesDiv.innerHTML = '';
+    
+    if (selectedFavoritePages.length === 0) {
+      selFavoritePagesDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No favorite pages selected</p>';
+      return;
+    }
+    
+    selectedFavoritePages.forEach((pageId, index) => {
+      const page = availablePages.find(p => p.id === pageId);
+      if (!page) return;
+      
+      const pageDiv = document.createElement('div');
+      pageDiv.className = 'flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 cursor-move';
+      pageDiv.draggable = true;
+      pageDiv.setAttribute('data-page-id', pageId);
+      pageDiv.setAttribute('data-index', index.toString());
+      
+      // Add drag event listeners
+      pageDiv.addEventListener('dragstart', handleDragStart);
+      pageDiv.addEventListener('dragover', handleDragOver);
+      pageDiv.addEventListener('drop', handleDrop);
+      pageDiv.addEventListener('dragend', handleDragEnd);
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex items-center gap-3';
+      
+      // Drag handle icon
+      const dragHandle = document.createElement('div');
+      dragHandle.className = 'text-gray-400 dark:text-gray-600';
+      dragHandle.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>';
+      contentDiv.appendChild(dragHandle);
+      
+      const namePara = document.createElement('p');
+      namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
+      namePara.textContent = page.name;
+      contentDiv.appendChild(namePara);
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-favorite-page text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition';
+      removeBtn.setAttribute('data-page-id', pageId);
+      removeBtn.title = 'Remove favorite page';
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'w-5 h-5');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+      
+      svg.appendChild(path);
+      removeBtn.appendChild(svg);
+      
+      pageDiv.appendChild(contentDiv);
+      pageDiv.appendChild(removeBtn);
+      
+      selFavoritePagesDiv.appendChild(pageDiv);
+    });
+    
+    // Add event listeners to remove buttons
+    document.querySelectorAll('.remove-favorite-page').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const pageId = (e.currentTarget as HTMLElement).getAttribute('data-page-id');
+        if (pageId) {
+          selectedFavoritePages = selectedFavoritePages.filter(id => id !== pageId);
+          updateFavoritePagesDropdown();
+          updateSelectedFavoritePagesDisplay();
+        }
+      });
+    });
+  }
+  
+  // Drag and drop handlers for favorite pages
+  let draggedElement: HTMLElement | null = null;
+  
+  function handleDragStart(e: DragEvent) {
+    draggedElement = e.target as HTMLElement;
+    draggedElement.classList.add('opacity-50');
+  }
+  
+  function handleDragOver(e: DragEvent) {
+    e.preventDefault();
+    const target = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement;
+    if (target && target !== draggedElement) {
+      target.classList.add('border-t-4', 'border-primary-500');
+    }
+  }
+  
+  function handleDrop(e: DragEvent) {
+    e.preventDefault();
+    const target = (e.target as HTMLElement).closest('[data-page-id]') as HTMLElement;
+    
+    if (target && draggedElement && target !== draggedElement) {
+      const draggedIndex = parseInt(draggedElement.getAttribute('data-index') || '0');
+      const targetIndex = parseInt(target.getAttribute('data-index') || '0');
+      
+      // Reorder the array
+      const [removed] = selectedFavoritePages.splice(draggedIndex, 1);
+      selectedFavoritePages.splice(targetIndex, 0, removed);
+      
+      updateSelectedFavoritePagesDisplay();
+    }
+    
+    target?.classList.remove('border-t-4', 'border-primary-500');
+  }
+  
+  function handleDragEnd(e: DragEvent) {
+    if (draggedElement) {
+      draggedElement.classList.remove('opacity-50');
+    }
+    document.querySelectorAll('[data-page-id]').forEach(el => {
+      el.classList.remove('border-t-4', 'border-primary-500');
+    });
+    draggedElement = null;
   }
 
   // Update the display of selected characters
@@ -456,6 +663,7 @@ const roleDisplay = {
     const profileImagePreview = document.getElementById('profileImagePreview');
     const profileImagePreviewImg = document.getElementById('profileImagePreviewImg') as HTMLImageElement;
     const addCharacterBtn = document.getElementById('addCharacterBtn');
+    const addFavoritePageBtn = document.getElementById('addFavoritePageBtn');
 
     // Add character to selection
     addCharacterBtn?.addEventListener('click', () => {
@@ -474,6 +682,36 @@ const roleDisplay = {
 
       // Reset dropdown
       charSelect.value = '';
+    });
+    
+    // Add favorite page to selection
+    addFavoritePageBtn?.addEventListener('click', () => {
+      const pageSelect = document.getElementById('favoritePageSelect') as HTMLSelectElement;
+      if (!pageSelect) return;
+      
+      const selectedValue = pageSelect.value;
+      if (!selectedValue) {
+        return;
+      }
+      
+      // Check max 3 pages
+      if (selectedFavoritePages.length >= 3) {
+        if (profileFormError) {
+          profileFormError.textContent = 'You can select up to 3 favorite pages';
+          profileFormError.classList.remove('hidden');
+          setTimeout(() => profileFormError.classList.add('hidden'), 3000);
+        }
+        return;
+      }
+
+      if (!selectedFavoritePages.includes(selectedValue)) {
+        selectedFavoritePages.push(selectedValue);
+        updateFavoritePagesDropdown();
+        updateSelectedFavoritePagesDisplay();
+      }
+
+      // Reset dropdown
+      pageSelect.value = '';
     });
 
     // Handle profile image file preview
@@ -569,6 +807,7 @@ const roleDisplay = {
             firstName: firstName || null,
             profileImageUrl: profileImageUrl || null,
             characterIds: selectedCharacterIds,
+            favoritePages: selectedFavoritePages,
           }),
         });
 
