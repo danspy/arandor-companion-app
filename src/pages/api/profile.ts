@@ -137,9 +137,9 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
             headers: { 'Content-Type': 'application/json' }
           });
         }
-        // Validate max 3 favorite pages
-        if (favoritePages.length > 3) {
-          return new Response(JSON.stringify({ error: 'You can select up to 3 favorite pages' }), {
+        // Validate max 4 favorite pages
+        if (favoritePages.length > 4) {
+          return new Response(JSON.stringify({ error: 'You can select up to 4 favorite pages' }), {
             status: 400,
             headers: { 'Content-Type': 'application/json' }
           });
