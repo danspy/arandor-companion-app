@@ -109,6 +109,7 @@ const User = defineTable({
     firstName: column.text({ optional: true }), // First name for display
     profileImageUrl: column.text({ optional: true }), // Profile image URL
     characterIds: column.json({ default: [] }), // Array of character IDs this user plays
+    favoritePages: column.json({ default: [] }), // Array of favorite/quickstart page IDs (max 3)
     createdAt: column.date({ default: new Date() }),
   }
 });

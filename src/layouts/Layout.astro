@@ -3,6 +3,7 @@ import '../styles/global.css';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 import { ClientRouter } from 'astro:transitions';
 import PWAFloatingMenu from '../components/PWAFloatingMenu.astro';
+import PWAQuickAccess from '../components/PWAQuickAccess.astro';
 
 interface Props {
   title: string;
@@ -306,6 +307,9 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       isLoggedIn={isLoggedIn}
       canAccessUsers={canAccessUsers}
     />
+    
+    <!-- PWA Quick Access Buttons (only shown in standalone mode for logged-in users) -->
+    {isLoggedIn && <PWAQuickAccess />}
     
     <script>
       // Function to get theme preference from localStorage
