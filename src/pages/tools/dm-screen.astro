@@ -380,6 +380,12 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     // Store locations and NPCs data
     const locationsData = new Map();
     const npcsData = new Map();
+    
+    // Store event handler references for cleanup
+    let eventHandlers = new Map();
+    let combatDataInterval = null;
+    let hpSyncInterval = null;
+    let hpSyncStatusCheckInterval = null;
 
     // Initialize data maps
     async function initializeData() {
@@ -554,38 +560,6 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       }
     }
 
-    // Location selection change
-    const locationSelect = document.getElementById('locationSelect');
-    locationSelect?.addEventListener('change', async () => {
-      const locationId = locationSelect.value || null;
-      const success = await updateState({ currentLocationId: locationId });
-      if (success) {
-        updateLocationPreview(locationId);
-      }
-    });
-
-    // Add NPC to spotlight
-    const addNpcBtn = document.getElementById('addNpcBtn');
-    const npcSelect = document.getElementById('npcSelect');
-    
-    addNpcBtn?.addEventListener('click', async () => {
-      const npcId = npcSelect?.value;
-      if (!npcId) return;
-
-      if (currentState.spotlightNpcIds.includes(npcId)) {
-        alert('This NPC is already in the spotlight');
-        return;
-      }
-
-      const newNpcIds = [...currentState.spotlightNpcIds, npcId];
-      const success = await updateState({ spotlightNpcIds: newNpcIds });
-      
-      if (success) {
-        updateNpcList(newNpcIds);
-        if (npcSelect) npcSelect.value = '';
-      }
-    });
-
     // Remove NPC from spotlight
     async function removeNpcFromSpotlight(npcId) {
       const newNpcIds = currentState.spotlightNpcIds.filter(id => id !== npcId);
@@ -595,13 +569,54 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         updateNpcList(newNpcIds);
       }
     }
+    
+    // Initialize all event listeners
+    function initializeEventListeners() {
+      // Location selection change
+      const locationSelect = document.getElementById('locationSelect');
+      const locationChangeHandler = async () => {
+        const locationId = locationSelect.value || null;
+        const success = await updateState({ currentLocationId: locationId });
+        if (success) {
+          updateLocationPreview(locationId);
+        }
+      };
+      locationSelect?.addEventListener('change', locationChangeHandler);
+      eventHandlers.set('locationSelect', locationChangeHandler);
 
-    // Toggle initiative tracker
-    const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
-    showInitiativeCheckbox?.addEventListener('change', async () => {
-      const showTracker = showInitiativeCheckbox.checked;
-      await updateState({ showInitiativeTracker: showTracker });
-    });
+      // Add NPC to spotlight
+      const addNpcBtn = document.getElementById('addNpcBtn');
+      const npcSelect = document.getElementById('npcSelect');
+      
+      const addNpcHandler = async () => {
+        const npcId = npcSelect?.value;
+        if (!npcId) return;
+
+        if (currentState.spotlightNpcIds.includes(npcId)) {
+          alert('This NPC is already in the spotlight');
+          return;
+        }
+
+        const newNpcIds = [...currentState.spotlightNpcIds, npcId];
+        const success = await updateState({ spotlightNpcIds: newNpcIds });
+        
+        if (success) {
+          updateNpcList(newNpcIds);
+          if (npcSelect) npcSelect.value = '';
+        }
+      };
+      addNpcBtn?.addEventListener('click', addNpcHandler);
+      eventHandlers.set('addNpcBtn', addNpcHandler);
+
+      // Toggle initiative tracker
+      const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+      const initiativeChangeHandler = async () => {
+        const showTracker = showInitiativeCheckbox.checked;
+        await updateState({ showInitiativeTracker: showTracker });
+      };
+      showInitiativeCheckbox?.addEventListener('change', initiativeChangeHandler);
+      eventHandlers.set('showInitiativeCheckbox', initiativeChangeHandler);
+    }
 
     // Combat controls
     let combatState = { currentRound: 1, currentTurnIndex: 0, status: 'stopped' };
@@ -721,140 +736,298 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       return false;
     }
     
-    // Next turn
-    const dmNextTurnBtn = document.getElementById('dmNextTurnBtn');
-    dmNextTurnBtn?.addEventListener('click', async () => {
-      await loadCombatData(); // Refresh data
-      
-      const activeInitiatives = initiatives.filter(e => e.isActive);
-      if (activeInitiatives.length === 0) {
-        alert('No active combatants in initiative tracker');
-        return;
-      }
-      
-      let newIndex = combatState.currentTurnIndex + 1;
-      let newRound = combatState.currentRound;
-      
-      if (newIndex >= activeInitiatives.length) {
-        newIndex = 0;
-        newRound++;
-      }
-      
-      await updateCombatState({
-        currentTurnIndex: newIndex,
-        currentRound: newRound,
-        status: 'active'
-      });
-    });
-    
-    // Previous turn
-    const dmPrevTurnBtn = document.getElementById('dmPrevTurnBtn');
-    dmPrevTurnBtn?.addEventListener('click', async () => {
-      await loadCombatData(); // Refresh data
-      
-      const activeInitiatives = initiatives.filter(e => e.isActive);
-      if (activeInitiatives.length === 0) {
-        alert('No active combatants in initiative tracker');
-        return;
-      }
-      
-      let newIndex = combatState.currentTurnIndex - 1;
-      let newRound = combatState.currentRound;
-      
-      if (newIndex < 0) {
-        newIndex = activeInitiatives.length - 1;
-        newRound = Math.max(1, newRound - 1);
-      }
-      
-      await updateCombatState({
-        currentTurnIndex: newIndex,
-        currentRound: newRound,
-        status: 'active'
-      });
-    });
-    
-    // Start combat
-    const dmStartCombatBtn = document.getElementById('dmStartCombatBtn');
-    dmStartCombatBtn?.addEventListener('click', async () => {
-      await loadCombatData();
-      
-      const activeInitiatives = initiatives.filter(e => e.isActive);
-      if (activeInitiatives.length === 0) {
-        alert('Add active combatants to the initiative tracker first');
-        return;
-      }
-      
-      await updateCombatState({
-        status: 'active',
-        currentTurnIndex: 0,
-        currentRound: 1
-      });
-    });
-    
-    // Pause combat
-    const dmPauseCombatBtn = document.getElementById('dmPauseCombatBtn');
-    dmPauseCombatBtn?.addEventListener('click', async () => {
-      await updateCombatState({
-        status: 'paused'
-      });
-    });
-    
-    // Stop combat
-    const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
-    dmStopCombatBtn?.addEventListener('click', async () => {
-      if (!confirm('Stop combat? This will reset the turn order.')) return;
-      
-      await updateCombatState({
-        status: 'stopped',
-        currentTurnIndex: 0,
-        currentRound: 1
-      });
-    });
-    
-    // Manual HP Sync Button
-    const dmSyncHpBtn = document.getElementById('dmSyncHpBtn');
-    dmSyncHpBtn?.addEventListener('click', async () => {
-      // Disable button and show loading state
-      dmSyncHpBtn.disabled = true;
-      const originalText = dmSyncHpBtn.textContent;
-      dmSyncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
-      
-      try {
-        const response = await fetch('/api/initiative/sync-hp', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        });
+    // Initialize combat button handlers
+    function initializeCombatHandlers() {
+      // Next turn
+      const dmNextTurnBtn = document.getElementById('dmNextTurnBtn');
+      const nextTurnHandler = async () => {
+        await loadCombatData(); // Refresh data
         
-        if (!response.ok) {
-          throw new Error('Failed to sync HP');
+        const activeInitiatives = initiatives.filter(e => e.isActive);
+        if (activeInitiatives.length === 0) {
+          alert('No active combatants in initiative tracker');
+          return;
         }
         
-        const result = await response.json();
+        let newIndex = combatState.currentTurnIndex + 1;
+        let newRound = combatState.currentRound;
         
-        // Show success message
-        alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
+        if (newIndex >= activeInitiatives.length) {
+          newIndex = 0;
+          newRound++;
+        }
         
-        // Reload combat data to show updated HP
+        await updateCombatState({
+          currentTurnIndex: newIndex,
+          currentRound: newRound,
+          status: 'active'
+        });
+      };
+      dmNextTurnBtn?.addEventListener('click', nextTurnHandler);
+      eventHandlers.set('dmNextTurnBtn', nextTurnHandler);
+      
+      // Previous turn
+      const dmPrevTurnBtn = document.getElementById('dmPrevTurnBtn');
+      const prevTurnHandler = async () => {
+        await loadCombatData(); // Refresh data
+        
+        const activeInitiatives = initiatives.filter(e => e.isActive);
+        if (activeInitiatives.length === 0) {
+          alert('No active combatants in initiative tracker');
+          return;
+        }
+        
+        let newIndex = combatState.currentTurnIndex - 1;
+        let newRound = combatState.currentRound;
+        
+        if (newIndex < 0) {
+          newIndex = activeInitiatives.length - 1;
+          newRound = Math.max(1, newRound - 1);
+        }
+        
+        await updateCombatState({
+          currentTurnIndex: newIndex,
+          currentRound: newRound,
+          status: 'active'
+        });
+      };
+      dmPrevTurnBtn?.addEventListener('click', prevTurnHandler);
+      eventHandlers.set('dmPrevTurnBtn', prevTurnHandler);
+      
+      // Start combat
+      const dmStartCombatBtn = document.getElementById('dmStartCombatBtn');
+      const startCombatHandler = async () => {
         await loadCombatData();
-      } catch (error) {
-        console.error('Error syncing HP:', error);
-        alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
-      } finally {
-        // Restore button state
-        dmSyncHpBtn.disabled = false;
-        dmSyncHpBtn.textContent = originalText;
-      }
-    });
+        
+        const activeInitiatives = initiatives.filter(e => e.isActive);
+        if (activeInitiatives.length === 0) {
+          alert('Add active combatants to the initiative tracker first');
+          return;
+        }
+        
+        await updateCombatState({
+          status: 'active',
+          currentTurnIndex: 0,
+          currentRound: 1
+        });
+      };
+      dmStartCombatBtn?.addEventListener('click', startCombatHandler);
+      eventHandlers.set('dmStartCombatBtn', startCombatHandler);
+      
+      // Pause combat
+      const dmPauseCombatBtn = document.getElementById('dmPauseCombatBtn');
+      const pauseCombatHandler = async () => {
+        await updateCombatState({
+          status: 'paused'
+        });
+      };
+      dmPauseCombatBtn?.addEventListener('click', pauseCombatHandler);
+      eventHandlers.set('dmPauseCombatBtn', pauseCombatHandler);
+      
+      // Stop combat
+      const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
+      const stopCombatHandler = async () => {
+        if (!confirm('Stop combat? This will reset the turn order.')) return;
+        
+        await updateCombatState({
+          status: 'stopped',
+          currentTurnIndex: 0,
+          currentRound: 1
+        });
+      };
+      dmStopCombatBtn?.addEventListener('click', stopCombatHandler);
+      eventHandlers.set('dmStopCombatBtn', stopCombatHandler);
+      
+      // Manual HP Sync Button
+      const dmSyncHpBtn = document.getElementById('dmSyncHpBtn');
+      const syncHpHandler = async () => {
+        // Disable button and show loading state
+        dmSyncHpBtn.disabled = true;
+        const originalText = dmSyncHpBtn.textContent;
+        dmSyncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
+        
+        try {
+          const response = await fetch('/api/initiative/sync-hp', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          
+          if (!response.ok) {
+            throw new Error('Failed to sync HP');
+          }
+          
+          const result = await response.json();
+          
+          // Show success message
+          alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
+          
+          // Reload combat data to show updated HP
+          await loadCombatData();
+        } catch (error) {
+          console.error('Error syncing HP:', error);
+          alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
+        } finally {
+          // Restore button state
+          dmSyncHpBtn.disabled = false;
+          dmSyncHpBtn.textContent = originalText;
+        }
+      };
+      dmSyncHpBtn?.addEventListener('click', syncHpHandler);
+      eventHandlers.set('dmSyncHpBtn', syncHpHandler);
+    }
     
-    // Load combat data on init
-    loadCombatData();
-    
-    // Refresh combat data periodically
-    setInterval(loadCombatData, 5000);
+    // Initialize other button handlers
+    function initializeOtherHandlers() {
+      const locationSelect = document.getElementById('locationSelect');
+      const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+      const placeholderImageInput = document.getElementById('placeholderImageUrl');
+      
+      // Clear all
+      const clearAllBtn = document.getElementById('clearAllBtn');
+      const clearAllHandler = async () => {
+        if (!confirm('Clear the entire player display? This will remove the location, NPCs, and hide the initiative tracker.')) {
+          return;
+        }
+
+        const success = await updateState({
+          currentLocationId: null,
+          spotlightNpcIds: [],
+          showInitiativeTracker: false,
+        });
+
+        if (success) {
+          if (locationSelect) locationSelect.value = '';
+          if (showInitiativeCheckbox) showInitiativeCheckbox.checked = false;
+          updateLocationPreview(null);
+          updateNpcList([]);
+        }
+      };
+      clearAllBtn?.addEventListener('click', clearAllHandler);
+      eventHandlers.set('clearAllBtn', clearAllHandler);
+      
+      // Toggle screen visibility
+      const toggleScreenBtn = document.getElementById('toggleScreenBtn');
+      const toggleScreenHandler = async () => {
+        const newVisibility = !currentState.screenVisible;
+        const success = await updateState({ screenVisible: newVisibility });
+        
+        if (success) {
+          updateScreenVisibilityUI(newVisibility);
+        }
+      };
+      toggleScreenBtn?.addEventListener('click', toggleScreenHandler);
+      eventHandlers.set('toggleScreenBtn', toggleScreenHandler);
+      
+      // Save placeholder image
+      const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
+      const savePlaceholderHandler = async () => {
+        const imageUrl = placeholderImageInput?.value.trim();
+        if (!imageUrl) {
+          alert('Please enter an image URL');
+          return;
+        }
+        
+        const success = await updateState({ placeholderImageUrl: imageUrl });
+        if (success) {
+          alert('Placeholder wallpaper saved!');
+        }
+      };
+      savePlaceholderBtn?.addEventListener('click', savePlaceholderHandler);
+      eventHandlers.set('savePlaceholderBtn', savePlaceholderHandler);
+      
+      // Clear placeholder image
+      const clearPlaceholderBtn = document.getElementById('clearPlaceholderBtn');
+      const clearPlaceholderHandler = async () => {
+        if (!confirm('Remove the placeholder wallpaper?')) return;
+        
+        const success = await updateState({ placeholderImageUrl: null });
+        if (success) {
+          if (placeholderImageInput) placeholderImageInput.value = '';
+        }
+      };
+      clearPlaceholderBtn?.addEventListener('click', clearPlaceholderHandler);
+      eventHandlers.set('clearPlaceholderBtn', clearPlaceholderHandler);
+      
+      // Handle file upload for placeholder image
+      const placeholderImageFile = document.getElementById('placeholderImageFile');
+      const fileChangeHandler = async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+          alert('Please select an image file');
+          return;
+        }
+        
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          alert('Image file is too large. Maximum size is 5MB.');
+          return;
+        }
+        
+        // Convert to data URL
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+          const dataUrl = e.target?.result;
+          if (typeof dataUrl === 'string') {
+            // Update the input field with the data URL
+            if (placeholderImageInput) placeholderImageInput.value = dataUrl;
+            
+            // Automatically save
+            const success = await updateState({ placeholderImageUrl: dataUrl });
+            if (success) {
+              alert('Placeholder wallpaper uploaded and saved!');
+            }
+          }
+        };
+        reader.onerror = () => {
+          alert('Error reading file. Please try again.');
+        };
+        reader.readAsDataURL(file);
+      };
+      placeholderImageFile?.addEventListener('change', fileChangeHandler);
+      eventHandlers.set('placeholderImageFile', fileChangeHandler);
+
+      // Copy URL to clipboard
+      const copyUrlBtn = document.getElementById('copyUrlBtn');
+      const playerDisplayUrlInput = document.getElementById('playerDisplayUrl');
+      
+      const copyUrlHandler = async () => {
+        if (!playerDisplayUrlInput) return;
+        
+        try {
+          // Use modern Clipboard API
+          await navigator.clipboard.writeText(playerDisplayUrlInput.value);
+          
+          // Show feedback
+          const originalText = copyUrlBtn.textContent;
+          copyUrlBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyUrlBtn.textContent = originalText;
+          }, 2000);
+        } catch (error) {
+          // Fallback to older method if Clipboard API is not available
+          playerDisplayUrlInput.select();
+          try {
+            document.execCommand('copy');
+            const originalText = copyUrlBtn.textContent;
+            copyUrlBtn.textContent = 'Copied!';
+            setTimeout(() => {
+              copyUrlBtn.textContent = originalText;
+            }, 2000);
+          } catch (fallbackError) {
+            console.error('Failed to copy:', fallbackError);
+            alert('Failed to copy. Please copy the URL manually.');
+          }
+        }
+      };
+      copyUrlBtn?.addEventListener('click', copyUrlHandler);
+      eventHandlers.set('copyUrlBtn', copyUrlHandler);
+    }
     
     // HP Syncing for D&D Beyond
     const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds (faster for quick updates)
-    let hpSyncInterval = null;
     
     // Sync HP from D&D Beyond
     const syncHpFromDnDBeyond = async () => {
@@ -899,179 +1072,82 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       }
     };
     
-    // Check combat status periodically and start/stop HP sync accordingly
-    const hpSyncStatusCheckInterval = setInterval(() => {
-      if (combatState.status === 'active' && !hpSyncInterval) {
-        startHpSync();
-      } else if (combatState.status !== 'active' && hpSyncInterval) {
-        clearInterval(hpSyncInterval);
-        hpSyncInterval = null;
-        console.log('[DM Screen] HP sync stopped (combat not active)');
-      }
-    }, 2000);
+    // Initialize all handlers and intervals
+    async function initialize() {
+      // Clear old data
+      locationsData.clear();
+      npcsData.clear();
+      
+      // Load fresh data
+      await initializeData();
+      await loadState();
+      
+      // Initialize event listeners
+      initializeEventListeners();
+      initializeCombatHandlers();
+      initializeOtherHandlers();
+      
+      // Load combat data
+      await loadCombatData();
+      
+      // Refresh combat data periodically
+      combatDataInterval = setInterval(loadCombatData, 5000);
+      
+      // Check combat status periodically and start/stop HP sync accordingly
+      hpSyncStatusCheckInterval = setInterval(() => {
+        if (combatState.status === 'active' && !hpSyncInterval) {
+          startHpSync();
+        } else if (combatState.status !== 'active' && hpSyncInterval) {
+          clearInterval(hpSyncInterval);
+          hpSyncInterval = null;
+          console.log('[DM Screen] HP sync stopped (combat not active)');
+        }
+      }, 2000);
+      
+      // Start HP sync if combat is already active
+      startHpSync();
+      
+      // Initialize button states
+      updateButtonStates();
+    }
     
-    // Cleanup on page unload or navigation
+    // Cleanup function to remove all event listeners and intervals
     const cleanup = () => {
+      // Remove all event listeners
+      eventHandlers.forEach((handler, elementId) => {
+        const element = document.getElementById(elementId);
+        if (element && handler) {
+          element.removeEventListener('click', handler);
+          element.removeEventListener('change', handler);
+        }
+      });
+      eventHandlers.clear();
+      
+      // Clear all intervals
       if (hpSyncInterval) {
         clearInterval(hpSyncInterval);
         hpSyncInterval = null;
       }
       if (hpSyncStatusCheckInterval) {
         clearInterval(hpSyncStatusCheckInterval);
+        hpSyncStatusCheckInterval = null;
+      }
+      if (combatDataInterval) {
+        clearInterval(combatDataInterval);
+        combatDataInterval = null;
       }
     };
-    
-    window.addEventListener('beforeunload', cleanup);
-    document.addEventListener('astro:before-preparation', cleanup);
-    
-    // Start HP sync if combat is already active
-    startHpSync();
-    
-    // Initialize button states
-    updateButtonStates();
-
-    // Clear all
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    clearAllBtn?.addEventListener('click', async () => {
-      if (!confirm('Clear the entire player display? This will remove the location, NPCs, and hide the initiative tracker.')) {
-        return;
-      }
-
-      const success = await updateState({
-        currentLocationId: null,
-        spotlightNpcIds: [],
-        showInitiativeTracker: false,
-      });
-
-      if (success) {
-        if (locationSelect) locationSelect.value = '';
-        if (showInitiativeCheckbox) showInitiativeCheckbox.checked = false;
-        updateLocationPreview(null);
-        updateNpcList([]);
-      }
-    });
-    
-    // Toggle screen visibility
-    const toggleScreenBtn = document.getElementById('toggleScreenBtn');
-    toggleScreenBtn?.addEventListener('click', async () => {
-      const newVisibility = !currentState.screenVisible;
-      const success = await updateState({ screenVisible: newVisibility });
-      
-      if (success) {
-        updateScreenVisibilityUI(newVisibility);
-      }
-    });
-    
-    // Save placeholder image
-    const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
-    const placeholderImageInput = document.getElementById('placeholderImageUrl');
-    savePlaceholderBtn?.addEventListener('click', async () => {
-      const imageUrl = placeholderImageInput?.value.trim();
-      if (!imageUrl) {
-        alert('Please enter an image URL');
-        return;
-      }
-      
-      const success = await updateState({ placeholderImageUrl: imageUrl });
-      if (success) {
-        alert('Placeholder wallpaper saved!');
-      }
-    });
-    
-    // Clear placeholder image
-    const clearPlaceholderBtn = document.getElementById('clearPlaceholderBtn');
-    clearPlaceholderBtn?.addEventListener('click', async () => {
-      if (!confirm('Remove the placeholder wallpaper?')) return;
-      
-      const success = await updateState({ placeholderImageUrl: null });
-      if (success) {
-        if (placeholderImageInput) placeholderImageInput.value = '';
-      }
-    });
-    
-    // Handle file upload for placeholder image
-    const placeholderImageFile = document.getElementById('placeholderImageFile');
-    placeholderImageFile?.addEventListener('change', async (event) => {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      
-      // Validate file type
-      if (!file.type.startsWith('image/')) {
-        alert('Please select an image file');
-        return;
-      }
-      
-      // Validate file size (max 5MB)
-      if (file.size > 5 * 1024 * 1024) {
-        alert('Image file is too large. Maximum size is 5MB.');
-        return;
-      }
-      
-      // Convert to data URL
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const dataUrl = e.target?.result;
-        if (typeof dataUrl === 'string') {
-          // Update the input field with the data URL
-          if (placeholderImageInput) placeholderImageInput.value = dataUrl;
-          
-          // Automatically save
-          const success = await updateState({ placeholderImageUrl: dataUrl });
-          if (success) {
-            alert('Placeholder wallpaper uploaded and saved!');
-          }
-        }
-      };
-      reader.onerror = () => {
-        alert('Error reading file. Please try again.');
-      };
-      reader.readAsDataURL(file);
-    });
-
-    // Copy URL to clipboard
-    const copyUrlBtn = document.getElementById('copyUrlBtn');
-    const playerDisplayUrlInput = document.getElementById('playerDisplayUrl');
-    
-    copyUrlBtn?.addEventListener('click', async () => {
-      if (!playerDisplayUrlInput) return;
-      
-      try {
-        // Use modern Clipboard API
-        await navigator.clipboard.writeText(playerDisplayUrlInput.value);
-        
-        // Show feedback
-        const originalText = copyUrlBtn.textContent;
-        copyUrlBtn.textContent = 'Copied!';
-        setTimeout(() => {
-          copyUrlBtn.textContent = originalText;
-        }, 2000);
-      } catch (error) {
-        // Fallback to older method if Clipboard API is not available
-        playerDisplayUrlInput.select();
-        try {
-          document.execCommand('copy');
-          const originalText = copyUrlBtn.textContent;
-          copyUrlBtn.textContent = 'Copied!';
-          setTimeout(() => {
-            copyUrlBtn.textContent = originalText;
-          }, 2000);
-        } catch (fallbackError) {
-          console.error('Failed to copy:', fallbackError);
-          alert('Failed to copy. Please copy the URL manually.');
-        }
-      }
-    });
 
     // Initialize on page load
-    document.addEventListener('DOMContentLoaded', async () => {
-      await initializeData();
-      await loadState();
-    });
+    document.addEventListener('DOMContentLoaded', initialize);
 
     // Also initialize after Astro page transitions
-    document.addEventListener('astro:page-load', async () => {
-      await initializeData();
-      await loadState();
-    });
+    document.addEventListener('astro:page-load', initialize);
+    
+    // Cleanup before navigation
+    document.addEventListener('astro:before-preparation', cleanup);
+    
+    // Cleanup on page unload
+    window.addEventListener('beforeunload', cleanup);
   </script>
 </Layout>
