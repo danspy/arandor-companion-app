@@ -25,6 +25,9 @@ export const GET: APIRoute = async ({ cookies }) => {
       id: user.id,
       username: user.username,
       role: user.role,
+      firstName: user.firstName,
+      profileImageUrl: user.profileImageUrl,
+      characterIds: user.characterIds,
       createdAt: user.createdAt,
     }), {
       status: 200,
@@ -57,9 +60,47 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword } = body;
+    const { currentPassword, newPassword, firstName, profileImageUrl, characterIds } = body;
 
-    // Validate that both passwords are provided
+    // Handle profile information updates (firstName, profileImageUrl, characterIds)
+    if (!currentPassword && !newPassword) {
+      // Only updating profile info, no password change
+      const updateData: any = {};
+      
+      if (firstName !== undefined) {
+        updateData.firstName = firstName || null;
+      }
+      
+      if (profileImageUrl !== undefined) {
+        updateData.profileImageUrl = profileImageUrl || null;
+      }
+      
+      if (characterIds !== undefined) {
+        // Validate that characterIds is an array
+        if (!Array.isArray(characterIds)) {
+          return new Response(JSON.stringify({ error: 'characterIds must be an array' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        updateData.characterIds = characterIds;
+      }
+      
+      // Update user profile
+      await db.update(User)
+        .set(updateData)
+        .where(eq(User.id, user.id));
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Profile updated successfully'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate that both passwords are provided for password change
     if (!currentPassword || !newPassword) {
       return new Response(JSON.stringify({ error: 'Both current password and new password are required' }), {
         status: 400,

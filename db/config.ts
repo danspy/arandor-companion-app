@@ -106,6 +106,9 @@ const User = defineTable({
     username: column.text({ unique: true }),
     passwordHash: column.text(),
     role: column.text({ default: 'player' }), // 'admin' | 'dungeonmaster' | 'player'
+    firstName: column.text({ optional: true }), // First name for display
+    profileImageUrl: column.text({ optional: true }), // Profile image URL
+    characterIds: column.json({ default: [] }), // Array of character IDs this user plays
     createdAt: column.date({ default: new Date() }),
   }
 });
