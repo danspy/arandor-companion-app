@@ -305,7 +305,7 @@ function isActiveLink(href: string): boolean {
   .pwa-menu-button {
     position: fixed;
     /* Fixed spacing from edges, consistent on all pages */
-    bottom: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom));
+    bottom: var(--pwa-menu-button-spacing);
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 56px;
     height: 56px;
@@ -345,12 +345,12 @@ function isActiveLink(href: string): boolean {
   .pwa-menu-panel {
     position: fixed;
     /* Position panel directly above button with a small gap */
-    /* Bottom = button bottom (spacing + safe area) + button height (56px) + gap */
-    bottom: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom) + 56px + var(--pwa-menu-panel-gap));
+    /* Bottom = button bottom (spacing) + button height (56px) + gap */
+    bottom: calc(var(--pwa-menu-button-spacing) + 56px + var(--pwa-menu-panel-gap));
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 280px;
     /* Calculate max-height: viewport height - panel bottom - top spacing */
-    max-height: calc(100vh - (var(--pwa-menu-button-spacing) + env(safe-area-inset-bottom) + 56px + var(--pwa-menu-panel-gap)) - var(--pwa-menu-top-spacing));
+    max-height: calc(100vh - (var(--pwa-menu-button-spacing) + 56px + var(--pwa-menu-panel-gap)) - var(--pwa-menu-top-spacing));
     background: white;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);

@@ -50,7 +50,7 @@ main {
   main {
     padding-top: var(--pwa-main-padding-top);
     /* Add bottom padding to accommodate floating menu and prevent content overlap */
-    padding-bottom: calc(var(--pwa-floating-menu-clearance) + env(safe-area-inset-bottom));
+    padding-bottom: var(--pwa-floating-menu-clearance);
   }
 }
 
