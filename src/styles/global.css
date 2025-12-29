@@ -11,7 +11,9 @@
 
 html, body {
   overflow-x: clip;
-  min-height: 100vh;
+  /* Use dvh for dynamic viewport height that accounts for mobile browser UI */
+  min-height: 100vh; /* Fallback for older browsers */
+  min-height: 100dvh;
   min-height: -webkit-fill-available;
 }
 
@@ -42,7 +44,8 @@ main {
   
   /* Ensure body fills full viewport height in PWA mode */
   body {
-    height: 100vh;
+    height: 100vh; /* Fallback for older browsers */
+    height: 100dvh;
     height: -webkit-fill-available;
   }
   
