@@ -303,17 +303,6 @@ const roleDisplay = {
     }
   });
 
-  // Profile form handling
-  const profileForm = document.getElementById('profileForm') as HTMLFormElement;
-  const profileFormError = document.getElementById('profileFormError');
-  const profileImageFileInput = document.getElementById('profileImageFile') as HTMLInputElement;
-  const profileImageUrlInput = document.getElementById('profileImageUrl') as HTMLInputElement;
-  const profileImagePreview = document.getElementById('profileImagePreview');
-  const profileImagePreviewImg = document.getElementById('profileImagePreviewImg') as HTMLImageElement;
-  const characterSelect = document.getElementById('characterSelect') as HTMLSelectElement;
-  const addCharacterBtn = document.getElementById('addCharacterBtn');
-  const selectedCharactersDiv = document.getElementById('selectedCharacters');
-
   // Store selected character IDs
   let selectedCharacterIds: string[] = [];
   let allCharacters: any[] = [];
@@ -321,6 +310,15 @@ const roleDisplay = {
 
   // Load characters and user's selected characters
   async function loadCharacters() {
+    // Get fresh DOM references in case of View Transitions navigation
+    const charSelect = document.getElementById('characterSelect') as HTMLSelectElement;
+    const selCharactersDiv = document.getElementById('selectedCharacters');
+    
+    if (!charSelect || !selCharactersDiv) {
+      console.error('Required DOM elements not found');
+      return;
+    }
+    
     try {
       // Fetch user profile first to get current user's selected characters
       const profileResponse = await fetch('/api/profile');
@@ -341,12 +339,12 @@ const roleDisplay = {
         availableCharacters = await availableResponse.json();
         
         // Populate character dropdown with available characters only
-        characterSelect.innerHTML = '<option value="">-- Select Character --</option>';
+        charSelect.innerHTML = '<option value="">-- Select Character --</option>';
         availableCharacters.forEach((char: any) => {
           const option = document.createElement('option');
           option.value = char.id;
           option.textContent = `${char.name} (${char.class})`;
-          characterSelect.appendChild(option);
+          charSelect.appendChild(option);
         });
       }
 
@@ -358,12 +356,14 @@ const roleDisplay = {
 
   // Update the display of selected characters
   function updateSelectedCharactersDisplay() {
-    if (!selectedCharactersDiv) return;
+    // Get fresh DOM reference in case of View Transitions navigation
+    const selCharactersDiv = document.getElementById('selectedCharacters');
+    if (!selCharactersDiv) return;
     
-    selectedCharactersDiv.innerHTML = '';
+    selCharactersDiv.innerHTML = '';
     
     if (selectedCharacterIds.length === 0) {
-      selectedCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
+      selCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
       return;
     }
 
@@ -432,7 +432,7 @@ const roleDisplay = {
       charDiv.appendChild(contentDiv);
       charDiv.appendChild(removeBtn);
       
-      selectedCharactersDiv.appendChild(charDiv);
+      selCharactersDiv.appendChild(charDiv);
     });
 
     // Add event listeners to remove buttons
@@ -447,147 +447,153 @@ const roleDisplay = {
     });
   }
 
-  // Add character to selection
-  addCharacterBtn?.addEventListener('click', () => {
-    const selectedValue = characterSelect.value;
-    if (!selectedValue) {
-      return;
-    }
+  // Initialize profile form and character selection
+  function initializeProfileForm() {
+    const profileForm = document.getElementById('profileForm') as HTMLFormElement;
+    const profileFormError = document.getElementById('profileFormError');
+    const profileImageFileInput = document.getElementById('profileImageFile') as HTMLInputElement;
+    const profileImageUrlInput = document.getElementById('profileImageUrl') as HTMLInputElement;
+    const profileImagePreview = document.getElementById('profileImagePreview');
+    const profileImagePreviewImg = document.getElementById('profileImagePreviewImg') as HTMLImageElement;
+    const addCharacterBtn = document.getElementById('addCharacterBtn');
 
-    if (!selectedCharacterIds.includes(selectedValue)) {
-      selectedCharacterIds.push(selectedValue);
-      updateSelectedCharactersDisplay();
-    }
-
-    // Reset dropdown
-    characterSelect.value = '';
-  });
-
-  // Handle profile image file preview
-  profileImageFileInput?.addEventListener('change', (e) => {
-    const file = (e.target as HTMLInputElement).files?.[0];
-    if (file) {
-      // Validate file size (max 5MB)
-      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      if (file.size > maxSize) {
-        if (profileFormError) {
-          profileFormError.textContent = 'Profile image file size must be 5MB or less';
-          profileFormError.classList.remove('hidden');
-        }
-        (e.target as HTMLInputElement).value = ''; // Clear the input
-        if (profileImagePreview) profileImagePreview.classList.add('hidden');
+    // Add character to selection
+    addCharacterBtn?.addEventListener('click', () => {
+      const charSelect = document.getElementById('characterSelect') as HTMLSelectElement;
+      if (!charSelect) return;
+      
+      const selectedValue = charSelect.value;
+      if (!selectedValue) {
         return;
       }
-      
-      // Clear any previous errors
-      profileFormError?.classList.add('hidden');
-      
-      if (profileImagePreview && profileImagePreviewImg) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          profileImagePreviewImg.src = e.target?.result as string;
-          profileImagePreview.classList.remove('hidden');
-        };
-        reader.readAsDataURL(file);
-        // Clear URL input when file is selected
-        if (profileImageUrlInput) profileImageUrlInput.value = '';
+
+      if (!selectedCharacterIds.includes(selectedValue)) {
+        selectedCharacterIds.push(selectedValue);
+        updateSelectedCharactersDisplay();
       }
-    }
-  });
 
-  // Handle profile image URL input
-  profileImageUrlInput?.addEventListener('input', (e) => {
-    const url = (e.target as HTMLInputElement).value;
-    if (url && profileImagePreview && profileImagePreviewImg) {
-      profileImagePreviewImg.src = url;
-      profileImagePreview.classList.remove('hidden');
-      // Clear file input when URL is entered
-      if (profileImageFileInput) profileImageFileInput.value = '';
-    } else if (profileImagePreview && !url) {
-      profileImagePreview.classList.add('hidden');
-    }
-  });
+      // Reset dropdown
+      charSelect.value = '';
+    });
 
-  // Handle profile form submission
-  profileForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const formData = new FormData(profileForm);
-    const firstName = formData.get('firstName') as string;
-    
-    // Clear previous error messages
-    profileFormError?.classList.add('hidden');
-
-    try {
-      // Handle profile image upload
-      let profileImageUrl = formData.get('profileImageUrl') as string || undefined;
-      const profileImageFile = formData.get('profileImageFile') as File;
-      
-      if (profileImageFile && profileImageFile.size > 0) {
-        try {
-          const uploadFormData = new FormData();
-          uploadFormData.append('file', profileImageFile);
-          
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: uploadFormData,
-          });
-          
-          if (uploadResponse.ok) {
-            const uploadData = await uploadResponse.json();
-            profileImageUrl = uploadData.url;
-          } else {
-            const error = await uploadResponse.json();
-            throw new Error(`Failed to upload image: ${error.error || 'Unknown error'}`);
-          }
-        } catch (error) {
+    // Handle profile image file preview
+    profileImageFileInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        // Validate file size (max 5MB)
+        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+        if (file.size > maxSize) {
           if (profileFormError) {
-            profileFormError.textContent = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+            profileFormError.textContent = 'Profile image file size must be 5MB or less';
             profileFormError.classList.remove('hidden');
           }
+          (e.target as HTMLInputElement).value = ''; // Clear the input
+          if (profileImagePreview) profileImagePreview.classList.add('hidden');
           return;
         }
+        
+        // Clear any previous errors
+        profileFormError?.classList.add('hidden');
+        
+        if (profileImagePreview && profileImagePreviewImg) {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            profileImagePreviewImg.src = e.target?.result as string;
+            profileImagePreview.classList.remove('hidden');
+          };
+          reader.readAsDataURL(file);
+          // Clear URL input when file is selected
+          if (profileImageUrlInput) profileImageUrlInput.value = '';
+        }
       }
+    });
 
-      const response = await fetch('/api/profile', {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: firstName || null,
-          profileImageUrl: profileImageUrl || null,
-          characterIds: selectedCharacterIds,
-        }),
-      });
+    // Handle profile image URL input
+    profileImageUrlInput?.addEventListener('input', (e) => {
+      const url = (e.target as HTMLInputElement).value;
+      if (url && profileImagePreview && profileImagePreviewImg) {
+        profileImagePreviewImg.src = url;
+        profileImagePreview.classList.remove('hidden');
+        // Clear file input when URL is entered
+        if (profileImageFileInput) profileImageFileInput.value = '';
+      } else if (profileImagePreview && !url) {
+        profileImagePreview.classList.add('hidden');
+      }
+    });
 
-      const result = await response.json();
+    // Handle profile form submission
+    profileForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(profileForm);
+      const firstName = formData.get('firstName') as string;
+      
+      // Clear previous error messages
+      profileFormError?.classList.add('hidden');
 
-      if (response.ok) {
-        showMessage('Profile updated successfully!', 'success');
-      } else {
+      try {
+        // Handle profile image upload
+        let profileImageUrl = formData.get('profileImageUrl') as string || undefined;
+        const profileImageFile = formData.get('profileImageFile') as File;
+        
+        if (profileImageFile && profileImageFile.size > 0) {
+          try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', profileImageFile);
+            
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: uploadFormData,
+            });
+            
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              profileImageUrl = uploadData.url;
+            } else {
+              const error = await uploadResponse.json();
+              throw new Error(`Failed to upload image: ${error.error || 'Unknown error'}`);
+            }
+          } catch (error) {
+            if (profileFormError) {
+              profileFormError.textContent = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+              profileFormError.classList.remove('hidden');
+            }
+            return;
+          }
+        }
+
+        const response = await fetch('/api/profile', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName: firstName || null,
+            profileImageUrl: profileImageUrl || null,
+            characterIds: selectedCharacterIds,
+          }),
+        });
+
+        const result = await response.json();
+
+        if (response.ok) {
+          showMessage('Profile updated successfully!', 'success');
+        } else {
+          if (profileFormError) {
+            profileFormError.textContent = result.error || 'Failed to update profile. Please try again.';
+            profileFormError.classList.remove('hidden');
+          }
+        }
+      } catch (error) {
         if (profileFormError) {
-          profileFormError.textContent = result.error || 'Failed to update profile. Please try again.';
+          profileFormError.textContent = 'An error occurred. Please try again.';
           profileFormError.classList.remove('hidden');
         }
       }
-    } catch (error) {
-      if (profileFormError) {
-        profileFormError.textContent = 'An error occurred. Please try again.';
-        profileFormError.classList.remove('hidden');
-      }
-    }
-  });
-
-  // Initialize on page load
-  // Ensure DOM is ready before loading characters
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', loadCharacters);
-  } else {
-    // DOM is already ready, load immediately
-    loadCharacters();
+    });
   }
 
-  // Also reload characters when navigating to this page using View Transitions
+  // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', () => {
     loadCharacters();
+    initializeProfileForm();
   });
 </script>
