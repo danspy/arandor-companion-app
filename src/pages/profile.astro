@@ -570,6 +570,15 @@ const roleDisplay = {
   let touchDraggedElement: HTMLElement | null = null;
   let touchClone: HTMLElement | null = null;
 
+  // Helper function to get element below touch point (hiding clone temporarily)
+  function getElementBelowTouch(touch: Touch): Element | null {
+    if (!touchClone) return null;
+    touchClone.style.display = 'none';
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    touchClone.style.display = 'block';
+    return elementBelow;
+  }
+
   function handleTouchStart(e: TouchEvent) {
     const target = e.currentTarget as HTMLElement;
     touchDraggedElement = target;
@@ -605,10 +614,7 @@ const roleDisplay = {
     touchClone.style.top = (touch.clientY - rect.height / 2) + 'px';
     
     // Find the element under the touch point
-    touchClone.style.display = 'none';
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    touchClone.style.display = 'block';
-    
+    const elementBelow = getElementBelowTouch(touch);
     const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
     
     // Clear all highlights
@@ -630,8 +636,7 @@ const roleDisplay = {
     const touch = e.changedTouches[0];
     
     // Find the element under the touch point
-    touchClone.style.display = 'none';
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+    const elementBelow = getElementBelowTouch(touch);
     const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
     
     if (targetElement && targetElement !== touchDraggedElement) {
@@ -651,9 +656,7 @@ const roleDisplay = {
       el.classList.remove('border-t-4', 'border-primary-500');
     });
     
-    if (touchClone && touchClone.parentNode) {
-      touchClone.parentNode.removeChild(touchClone);
-    }
+    touchClone?.remove();
     
     touchDraggedElement = null;
     touchClone = null;
