@@ -367,27 +367,63 @@ const roleDisplay = {
       const charDiv = document.createElement('div');
       charDiv.className = 'flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3';
       
-      charDiv.innerHTML = `
-        <div class="flex items-center gap-3">
-          ${character.avatarUrl 
-            ? `<img src="${character.avatarUrl}" alt="${character.name}" class="w-10 h-10 rounded-full object-cover border-2 border-primary-300 dark:border-primary-700">`
-            : `<div class="w-10 h-10 rounded-full bg-primary-200 dark:bg-primary-800 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold">${character.name.charAt(0)}</div>`
-          }
-          <div>
-            <p class="font-semibold text-gray-900 dark:text-gray-100">${character.name}</p>
-            <p class="text-xs text-gray-600 dark:text-gray-400">${character.race} ${character.class} (Level ${character.level})</p>
-          </div>
-        </div>
-        <button 
-          type="button"
-          class="remove-character text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition"
-          data-character-id="${charId}"
-          title="Remove character"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-          </svg>
-        </button>
+      // Create character display section
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex items-center gap-3';
+      
+      // Create avatar
+      if (character.avatarUrl) {
+        const img = document.createElement('img');
+        img.src = character.avatarUrl;
+        img.alt = character.name;
+        img.className = 'w-10 h-10 rounded-full object-cover border-2 border-primary-300 dark:border-primary-700';
+        contentDiv.appendChild(img);
+      } else {
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'w-10 h-10 rounded-full bg-primary-200 dark:bg-primary-800 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold';
+        avatarDiv.textContent = character.name.charAt(0);
+        contentDiv.appendChild(avatarDiv);
+      }
+      
+      // Create character info
+      const infoDiv = document.createElement('div');
+      
+      const namePara = document.createElement('p');
+      namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
+      namePara.textContent = character.name;
+      
+      const detailsPara = document.createElement('p');
+      detailsPara.className = 'text-xs text-gray-600 dark:text-gray-400';
+      detailsPara.textContent = `${character.race} ${character.class} (Level ${character.level})`;
+      
+      infoDiv.appendChild(namePara);
+      infoDiv.appendChild(detailsPara);
+      contentDiv.appendChild(infoDiv);
+      
+      // Create remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-character text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition';
+      removeBtn.setAttribute('data-character-id', charId);
+      removeBtn.title = 'Remove character';
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'w-5 h-5');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+      
+      svg.appendChild(path);
+      removeBtn.appendChild(svg);
+      
+      charDiv.appendChild(contentDiv);
+      charDiv.appendChild(removeBtn);
       `;
       
       selectedCharactersDiv.appendChild(charDiv);
@@ -424,15 +460,26 @@ const roleDisplay = {
   // Handle profile image file preview
   profileImageFileInput?.addEventListener('change', (e) => {
     const file = (e.target as HTMLInputElement).files?.[0];
-    if (file && profileImagePreview && profileImagePreviewImg) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        profileImagePreviewImg.src = e.target?.result as string;
-        profileImagePreview.classList.remove('hidden');
-      };
-      reader.readAsDataURL(file);
-      // Clear URL input when file is selected
-      if (profileImageUrlInput) profileImageUrlInput.value = '';
+    if (file) {
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        alert('Profile image file size must be 5MB or less');
+        (e.target as HTMLInputElement).value = ''; // Clear the input
+        if (profileImagePreview) profileImagePreview.classList.add('hidden');
+        return;
+      }
+      
+      if (profileImagePreview && profileImagePreviewImg) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          profileImagePreviewImg.src = e.target?.result as string;
+          profileImagePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        // Clear URL input when file is selected
+        if (profileImageUrlInput) profileImageUrlInput.value = '';
+      }
     }
   });
 

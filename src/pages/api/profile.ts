@@ -68,10 +68,38 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       const updateData: any = {};
       
       if (firstName !== undefined) {
+        // Validate firstName
+        if (firstName && firstName.length > 100) {
+          return new Response(JSON.stringify({ error: 'First name must be 100 characters or less' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
         updateData.firstName = firstName || null;
       }
       
       if (profileImageUrl !== undefined) {
+        // Validate profileImageUrl
+        if (profileImageUrl) {
+          if (profileImageUrl.length > 500) {
+            return new Response(JSON.stringify({ error: 'Profile image URL must be 500 characters or less' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          // Basic URL format validation
+          try {
+            new URL(profileImageUrl);
+          } catch {
+            // Also allow relative paths like /uploads/image.jpg
+            if (!profileImageUrl.startsWith('/')) {
+              return new Response(JSON.stringify({ error: 'Profile image must be a valid URL or relative path' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        }
         updateData.profileImageUrl = profileImageUrl || null;
       }
       
@@ -79,6 +107,13 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         // Validate that characterIds is an array
         if (!Array.isArray(characterIds)) {
           return new Response(JSON.stringify({ error: 'characterIds must be an array' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        // Validate each character ID is a string
+        if (characterIds.some(id => typeof id !== 'string')) {
+          return new Response(JSON.stringify({ error: 'All character IDs must be strings' }), {
             status: 400,
             headers: { 'Content-Type': 'application/json' }
           });

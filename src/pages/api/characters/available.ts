@@ -27,12 +27,19 @@ export const GET: APIRoute = async ({ cookies }) => {
     const assignedCharacterIds = new Set<string>();
     allUsers.forEach(user => {
       if (user.id !== currentUser.id && user.characterIds && Array.isArray(user.characterIds)) {
-        user.characterIds.forEach((charId: string) => assignedCharacterIds.add(charId));
+        user.characterIds.forEach((charId: any) => {
+          // Validate that charId is a string
+          if (typeof charId === 'string') {
+            assignedCharacterIds.add(charId);
+          }
+        });
       }
     });
     
-    // Get current user's assigned characters
-    const currentUserCharacterIds = currentUser.characterIds || [];
+    // Get current user's assigned characters (with validation)
+    const currentUserCharacterIds = (currentUser.characterIds || []).filter(
+      (id: any) => typeof id === 'string'
+    ) as string[];
     
     // Filter characters: include only those not assigned to other users OR already assigned to current user
     const availableCharacters = allCharacters.filter(char => 
