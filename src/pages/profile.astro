@@ -463,19 +463,19 @@ const roleDisplay = {
       pageDiv.addEventListener('drop', handleDrop);
       pageDiv.addEventListener('dragend', handleDragEnd);
       
-      // Add touch event listeners for mobile
-      pageDiv.addEventListener('touchstart', handleTouchStart);
-      pageDiv.addEventListener('touchmove', handleTouchMove);
-      pageDiv.addEventListener('touchend', handleTouchEnd);
-      
       const contentDiv = document.createElement('div');
       contentDiv.className = 'flex items-center gap-3';
       
       // Drag handle icon
       const dragHandle = document.createElement('div');
-      dragHandle.className = 'text-gray-400 dark:text-gray-600';
+      dragHandle.className = 'text-gray-400 dark:text-gray-600 touch-drag-handle cursor-move';
       dragHandle.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>';
       contentDiv.appendChild(dragHandle);
+      
+      // Add touch event listeners for mobile - only on the drag handle and name
+      contentDiv.addEventListener('touchstart', handleTouchStart);
+      contentDiv.addEventListener('touchmove', handleTouchMove);
+      contentDiv.addEventListener('touchend', handleTouchEnd);
       
       const namePara = document.createElement('p');
       namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
@@ -588,9 +588,12 @@ const roleDisplay = {
   }
 
   function handleTouchStart(e: TouchEvent) {
-    const target = e.currentTarget as HTMLElement;
     const touch = e.touches[0];
     if (!touch) return;
+    
+    // Find the parent page div element
+    const target = (e.currentTarget as HTMLElement).closest('[data-page-id]') as HTMLElement;
+    if (!target) return;
     
     touchDraggedElement = target;
     
