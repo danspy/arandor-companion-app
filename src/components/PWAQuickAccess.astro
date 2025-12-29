@@ -105,6 +105,7 @@ function isActiveLink(href: string): boolean {
       {visibleFavoritePages.map((page, index) => (
         <a
           href={page.id}
+          data-astro-reload={page.id === '/map' ? true : undefined}
           class:list={[
             'pwa-quick-access-button',
             { 'pwa-quick-access-button-active': isActiveLink(page.id) }
