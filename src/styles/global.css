@@ -5,8 +5,9 @@
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --pwa-main-padding-top: max(env(safe-area-inset-top), 1rem);
+  --pwa-main-padding-bottom: max(env(safe-area-inset-bottom), 1rem);
   /* Floating menu clearance: button height (56px) + button spacing (16px) + safe spacing (24px) = 96px */
-  --pwa-floating-menu-clearance: 96px;
+  --pwa-floating-menu-clearance: 56px;
 }
 
 html, body {
@@ -50,8 +51,8 @@ main {
   
   /* Adjust main content padding when nav is hidden */
   main {
-    padding-top: var(--pwa-main-padding-top);
     /* Add bottom padding to accommodate floating menu and prevent content overlap */
+    padding-bottom: calc(var(--pwa-main-padding-bottom) + var(--pwa-floating-menu-clearance)) !important;
   }
 }
 

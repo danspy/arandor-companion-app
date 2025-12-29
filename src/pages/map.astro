@@ -164,9 +164,17 @@ libraryEntries.forEach(entry => {
           <div id="mapContainer" class="absolute w-full h-full inset-0">
             <!-- SVG-based map: image + pins + path all live in a single SVG coordinate space (0..100) -->
             <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
+              <defs>
+                <filter id="gray"
+                        x="-20%" y="-20%" width="140%" height="140%"
+                        filterUnits="objectBoundingBox"
+                        color-interpolation-filters="sRGB">
+                  <feColorMatrix type="saturate" values="0"/>
+                </filter>
+              </defs>
               <g id="mapGroup">
                 <!-- raster map image as SVG image so pins and path share the same coordinate system -->
-                <image id="mapImage" class="grayscale" href="/map.png" x="0" y="0" width="100" height="100" preserveAspectRatio="xMidYMid meet"></image>
+                <image id="mapImage" href="/map.png" x="0" y="0" width="100" height="100" filter="url(#gray)" preserveAspectRatio="xMidYMid meet"></image>
 
                 <!-- path layer -->
                 <g id="pathGroup" pointer-events="none">
