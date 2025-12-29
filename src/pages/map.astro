@@ -1232,11 +1232,10 @@ libraryEntries.forEach(entry => {
     
     // When going from 2 touches to 1 touch (one finger lifted during pinch)
     if (touches.length === 1 && wasPinching) {
-      // Reset wasPinching flag after a short delay to allow for natural re-pinch
-      // But don't start panning immediately - user needs to lift and re-place finger
+      // Don't start panning immediately - user needs to lift and re-place finger
+      // wasPinching flag will be reset when all fingers are lifted
       isPanning = false;
       // Reset pan state for the remaining finger so it doesn't jump when user starts new gesture
-      const rect = mapWrapper.getBoundingClientRect();
       startPanX = touches[0].clientX - translateX;
       startPanY = touches[0].clientY - translateY;
     }
