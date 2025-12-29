@@ -115,7 +115,6 @@ function isActiveLink(href: string): boolean {
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d={page.icon}></path>
           </svg>
-          <span class="pwa-quick-access-label">{page.name}</span>
         </a>
       ))}
     </div>
@@ -212,26 +211,6 @@ function isActiveLink(href: string): boolean {
   .pwa-quick-access-button-active svg {
     color: #fbbf24;
     filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
-  }
-  
-  /* Tooltip label */
-  .pwa-quick-access-label {
-    position: absolute;
-    left: calc(100% + 12px);
-    background: rgba(0, 0, 0, 0.9);
-    color: white;
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 14px;
-    white-space: nowrap;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-    z-index: 1;
-  }
-  
-  .pwa-quick-access-button:hover .pwa-quick-access-label {
-    opacity: 1;
   }
   
   /* Dark mode support */
