@@ -44,29 +44,30 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   )}
 
   <!-- Stats -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-primary-600 dark:text-primary-400">{characters.length}</div>
-      <div class="text-gray-600 dark:text-gray-400">Total Characters</div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{characters.length}</div>
+      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Characters</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive !== false).length}</div>
-      <div class="text-gray-600 dark:text-gray-400">Active Players</div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive !== false).length}</div>
+      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Active Players</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-400">{allClasses.length}</div>
-      <div class="text-gray-600 dark:text-gray-400">Unique Classes</div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-2xl md:text-3xl font-bold text-secondary-600 dark:text-secondary-400">{allClasses.length}</div>
+      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Unique Classes</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-3xl font-bold text-accent-600 dark:text-accent-400">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
-      <div class="text-gray-600 dark:text-gray-400">Average Level</div>
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
+      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-400">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
+      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Average Level</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
-    <div class="flex flex-col md:flex-row gap-4">
-      <div class="relative flex-1">
+    <div class="flex flex-col gap-3">
+      <!-- Search Input - Always Full Width -->
+      <div class="relative w-full">
         <input 
           type="text" 
           id="searchInput" 
@@ -77,6 +78,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
+      <!-- Filter Tags Below -->
       <div class="flex flex-wrap gap-2 items-center">
         <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
         <button 
