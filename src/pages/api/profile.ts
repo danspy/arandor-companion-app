@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, User, eq } from 'astro:db';
+import { db, User, Character, eq } from 'astro:db';
 import { getCurrentUser, hashPassword, verifyPassword } from '../../lib/auth';
 import { requireAuth } from '../../lib/middleware';
 
@@ -132,6 +132,18 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       await db.update(User)
         .set(updateData)
         .where(eq(User.id, user.id));
+
+      // If firstName was updated and user has assigned characters, update character player field
+      if (firstName !== undefined && characterIds !== undefined && characterIds.length > 0) {
+        const playerName = firstName || user.username;
+        
+        // Update player field for all assigned characters
+        for (const charId of characterIds) {
+          await db.update(Character)
+            .set({ player: playerName })
+            .where(eq(Character.id, charId));
+        }
+      }
 
       return new Response(JSON.stringify({ 
         success: true,

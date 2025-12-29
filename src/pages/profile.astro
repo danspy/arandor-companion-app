@@ -317,6 +317,7 @@ const roleDisplay = {
   // Store selected character IDs
   let selectedCharacterIds: string[] = [];
   let allCharacters: any[] = [];
+  let availableCharacters: any[] = [];
 
   // Load characters and user's selected characters
   async function loadCharacters() {
@@ -328,14 +329,20 @@ const roleDisplay = {
         selectedCharacterIds = profile.characterIds || [];
       }
 
-      // Fetch available characters (filters out those assigned to other users)
-      const charactersResponse = await fetch('/api/characters/available');
-      if (charactersResponse.ok) {
-        allCharacters = await charactersResponse.json();
+      // Fetch ALL characters to display already-selected ones
+      const allCharsResponse = await fetch('/api/characters');
+      if (allCharsResponse.ok) {
+        allCharacters = await allCharsResponse.json();
+      }
+
+      // Fetch available characters for dropdown (filters out those assigned to other users)
+      const availableResponse = await fetch('/api/characters/available');
+      if (availableResponse.ok) {
+        availableCharacters = await availableResponse.json();
         
-        // Populate character dropdown with available characters
+        // Populate character dropdown with available characters only
         characterSelect.innerHTML = '<option value="">-- Select Character --</option>';
-        allCharacters.forEach((char: any) => {
+        availableCharacters.forEach((char: any) => {
           const option = document.createElement('option');
           option.value = char.id;
           option.textContent = `${char.name} (${char.class})`;
