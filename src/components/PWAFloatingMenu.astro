@@ -296,12 +296,9 @@ function isActiveLink(href: string): boolean {
     }
   }
   
-  /* Floating menu container */
+  /* Floating menu container - not positioned since children handle their own positioning */
   .pwa-floating-menu-container {
-    position: fixed;
-    bottom: 0;
-    right: 0;
-    z-index: 9999;
+    /* Container only serves as a wrapper, children are positioned independently */
   }
   
   /* Menu button */
