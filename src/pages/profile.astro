@@ -170,7 +170,7 @@ const roleDisplay = {
               </button>
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select up to 3 pages for quick access in PWA mode. Drag to reorder.</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select up to 4 pages for quick access in PWA mode. Drag to reorder.</p>
         </div>
 
         <div id="profileFormError" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
@@ -583,9 +583,11 @@ const roleDisplay = {
 
   function handleTouchStart(e: TouchEvent) {
     const target = e.currentTarget as HTMLElement;
+    const touch = e.touches[0];
+    if (!touch) return;
+    
     touchDraggedElement = target;
     
-    const touch = e.touches[0];
     const rect = target.getBoundingClientRect();
     touchDraggedRect = rect;
     
@@ -610,6 +612,7 @@ const roleDisplay = {
     if (!touchDraggedElement || !touchClone || !touchDraggedRect) return;
     
     const touch = e.touches[0];
+    if (!touch) return;
     
     // Move the clone with the touch, keeping it centered under the touch point
     touchClone.style.left = (touch.clientX - touchDraggedRect.width / 2) + 'px';
@@ -642,6 +645,19 @@ const roleDisplay = {
     if (!touchDraggedElement || !touchClone) return;
     
     const touch = e.changedTouches[0];
+    if (!touch) {
+      // Cleanup even if no touch available
+      touchDraggedElement.classList.remove('opacity-50');
+      if (touchHighlightedElement) {
+        touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
+      }
+      touchClone?.remove();
+      touchDraggedElement = null;
+      touchClone = null;
+      touchDraggedRect = null;
+      touchHighlightedElement = null;
+      return;
+    }
     
     // Find the element under the touch point
     const elementBelow = getElementBelowTouch(touch);
@@ -805,10 +821,10 @@ const roleDisplay = {
         return;
       }
       
-      // Check max 3 pages
-      if (selectedFavoritePages.length >= 3) {
+      // Check max 4 pages
+      if (selectedFavoritePages.length >= 4) {
         if (profileFormError) {
-          profileFormError.textContent = 'You can select up to 3 favorite pages';
+          profileFormError.textContent = 'You can select up to 4 favorite pages';
           profileFormError.classList.remove('hidden');
           setTimeout(() => profileFormError.classList.add('hidden'), 3000);
         }
