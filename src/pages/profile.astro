@@ -578,5 +578,16 @@ const roleDisplay = {
   });
 
   // Initialize on page load
-  loadCharacters();
+  // Ensure DOM is ready before loading characters
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadCharacters);
+  } else {
+    // DOM is already ready, load immediately
+    loadCharacters();
+  }
+
+  // Also reload characters when navigating to this page using View Transitions
+  document.addEventListener('astro:page-load', () => {
+    loadCharacters();
+  });
 </script>
