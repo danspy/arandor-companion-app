@@ -321,6 +321,7 @@ libraryEntries.forEach(entry => {
   let touchStartScale = 1;
   let touchStartTranslateX = 0;
   let touchStartTranslateY = 0;
+  let wasPinching = false; // Track if we were just pinching to prevent immediate pan after pinch
   // Track last pointer position (relative to mapWrapper) so button zoom can use pointer as origin
   let lastPointerX = null;
   let lastPointerY = null;
@@ -1169,6 +1170,8 @@ libraryEntries.forEach(entry => {
       // Disable transition during interaction for smooth performance
       if (mapSvg) mapSvg.style.transition = 'none';
       mapWrapper.classList.add('interacting');
+      wasPinching = true;
+      isPanning = false; // Ensure panning is disabled during pinch
       touchStartDistance = getTouchDistance(touches[0], touches[1]);
       touchStartScale = scale;
       
@@ -1179,8 +1182,8 @@ libraryEntries.forEach(entry => {
       
       touchStartTranslateX = translateX;
       touchStartTranslateY = translateY;
-    } else if (touches.length === 1) {
-      // Start pan - set up state but allow tap/click to work naturally
+    } else if (touches.length === 1 && !wasPinching) {
+      // Only start pan if we weren't just pinching
       // Disable transition during interaction for smooth performance
       if (mapSvg) mapSvg.style.transition = 'none';
       mapWrapper.classList.add('interacting');
@@ -1196,6 +1199,8 @@ libraryEntries.forEach(entry => {
     if (touches.length === 2) {
       // Pinch zoom - prevent browser zoom
       e.preventDefault();
+      wasPinching = true;
+      isPanning = false; // Ensure panning is disabled during pinch
       const currentDistance = getTouchDistance(touches[0], touches[1]);
       const distanceRatio = currentDistance / touchStartDistance;
       
@@ -1213,8 +1218,8 @@ libraryEntries.forEach(entry => {
       
       scale = newScale;
       updateTransform();
-    } else if (touches.length === 1 && isPanning) {
-      // Pan with single finger - prevent scroll
+    } else if (touches.length === 1 && isPanning && !wasPinching) {
+      // Only pan if we're in panning mode and weren't just pinching
       e.preventDefault();
       translateX = touches[0].clientX - startPanX;
       translateY = touches[0].clientY - startPanY;
@@ -1225,12 +1230,25 @@ libraryEntries.forEach(entry => {
   mapWrapper?.addEventListener('touchend', (e) => {
     touches = Array.from(e.touches);
     
+    // When going from 2 touches to 1 touch (one finger lifted during pinch)
+    if (touches.length === 1 && wasPinching) {
+      // Reset wasPinching flag after a short delay to allow for natural re-pinch
+      // But don't start panning immediately - user needs to lift and re-place finger
+      isPanning = false;
+      // Reset pan state for the remaining finger so it doesn't jump when user starts new gesture
+      const rect = mapWrapper.getBoundingClientRect();
+      startPanX = touches[0].clientX - translateX;
+      startPanY = touches[0].clientY - translateY;
+    }
+    
     if (touches.length < 2) {
       touchStartDistance = 0;
     }
     
     if (touches.length === 0) {
+      // All fingers lifted - reset all touch states
       isPanning = false;
+      wasPinching = false;
       mapWrapper.classList.remove('interacting');
       // Re-enable transition after interaction ends
       if (mapSvg) mapSvg.style.transition = '';
@@ -1241,6 +1259,7 @@ libraryEntries.forEach(entry => {
     touches = [];
     touchStartDistance = 0;
     isPanning = false;
+    wasPinching = false;
     mapWrapper.classList.remove('interacting');
     // Re-enable transition after interaction ends
     if (mapSvg) mapSvg.style.transition = '';
