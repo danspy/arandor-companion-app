@@ -575,13 +575,14 @@ const roleDisplay = {
     touchDraggedElement = target;
     
     const touch = e.touches[0];
+    const rect = target.getBoundingClientRect();
     
     // Create a visual clone for dragging
     touchClone = target.cloneNode(true) as HTMLElement;
     touchClone.style.position = 'fixed';
-    touchClone.style.left = target.offsetLeft + 'px';
-    touchClone.style.top = touch.clientY + 'px';
-    touchClone.style.width = target.offsetWidth + 'px';
+    touchClone.style.left = rect.left + 'px';
+    touchClone.style.top = rect.top + 'px';
+    touchClone.style.width = rect.width + 'px';
     touchClone.style.opacity = '0.8';
     touchClone.style.zIndex = '9999';
     touchClone.style.pointerEvents = 'none';
@@ -597,9 +598,11 @@ const roleDisplay = {
     if (!touchDraggedElement || !touchClone) return;
     
     const touch = e.touches[0];
+    const rect = touchDraggedElement.getBoundingClientRect();
     
-    // Move the clone with the touch
-    touchClone.style.top = touch.clientY + 'px';
+    // Move the clone with the touch, keeping it centered under the touch point
+    touchClone.style.left = (touch.clientX - rect.width / 2) + 'px';
+    touchClone.style.top = (touch.clientY - rect.height / 2) + 'px';
     
     // Find the element under the touch point
     touchClone.style.display = 'none';
