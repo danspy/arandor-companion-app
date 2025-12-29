@@ -309,7 +309,7 @@ libraryEntries.forEach(entry => {
   const DRAG_CLICK_DEBOUNCE_MS = 100;
   
   // Zoom and pan state with default scale
-  let scale = 1; // Start at 50% zoom to show more of the map
+  let scale = 1.5; // Start at 1.5x zoom to show more detail
   let translateX = 0;
   let translateY = 0;
   let isPanning = false;
@@ -391,12 +391,27 @@ libraryEntries.forEach(entry => {
     mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
   }
 
+  // Calculate centered position for a given scale
+  function calculateCenteredPosition(targetScale) {
+    if (mapWrapper) {
+      const rect = mapWrapper.getBoundingClientRect();
+      // The map fills the wrapper at scale 1, so we can calculate the offset
+      // to center it when scaled up
+      return {
+        x: rect.width * (1 - targetScale) / 2,
+        y: rect.height * (1 - targetScale) / 2
+      };
+    }
+    return { x: 0, y: 0 };
+  }
+
   // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
   function fitToViewport() {
     // With fluid sizing we start with identity scale and centered position
-    scale = 1;
-    translateX = 0;
-    translateY = 0;
+    scale = 1.5;
+    const pos = calculateCenteredPosition(scale);
+    translateX = pos.x;
+    translateY = pos.y;
     updateTransform();
   }
 
@@ -1069,7 +1084,7 @@ libraryEntries.forEach(entry => {
     const centerX = (isPointerOverMap && lastPointerX != null) ? lastPointerX : rect.width / 2;
     const centerY = (isPointerOverMap && lastPointerY != null) ? lastPointerY : rect.height / 2;
     
-    const newScale = Math.min(scale * 1.2, 3);
+    const newScale = Math.min(scale * 1.2, 9);
     const scaleChange = newScale / scale;
     translateX = centerX - (centerX - translateX) * scaleChange;
     translateY = centerY - (centerY - translateY) * scaleChange;
@@ -1093,9 +1108,10 @@ libraryEntries.forEach(entry => {
   });
   
   resetZoomBtn?.addEventListener('click', () => {
-    scale = 1;
-    translateX = 0;
-    translateY = 0;
+    scale = 1.5;
+    const pos = calculateCenteredPosition(scale);
+    translateX = pos.x;
+    translateY = pos.y;
     updateTransform();
   });
 
@@ -1109,7 +1125,7 @@ libraryEntries.forEach(entry => {
     
     // Calculate zoom
     const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.min(Math.max(0.3, scale * delta), 3);
+    const newScale = Math.min(Math.max(0.3, scale * delta), 9);
     
     // Adjust translation to zoom towards mouse position
     const scaleChange = newScale / scale;
@@ -1183,7 +1199,7 @@ libraryEntries.forEach(entry => {
       const currentDistance = getTouchDistance(touches[0], touches[1]);
       const distanceRatio = currentDistance / touchStartDistance;
       
-      const newScale = Math.min(Math.max(0.3, touchStartScale * distanceRatio), 3);
+      const newScale = Math.min(Math.max(0.3, touchStartScale * distanceRatio), 9);
       
       const rect = mapWrapper.getBoundingClientRect();
       const center = getTouchCenter(touches[0], touches[1]);
