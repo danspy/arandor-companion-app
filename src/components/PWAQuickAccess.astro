@@ -154,21 +154,27 @@ function isActiveLink(href: string): boolean {
   }
   
   /* Quick access buttons wrapper */
-  .pwa-quick-access-buttons {
-    display: flex;
-    flex-direction: row;
-    gap: var(--pwa-quick-access-button-gap);
-    pointer-events: auto;
+  .pwa-quick-access-buttons{
+    display:flex;
+    flex-direction:row;
+    pointer-events:auto;
+    border-radius:100px;
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.1), 0 2px 4px rgba(0,0,0,.1);
+  }
+
+  :global(.dark) .pwa-quick-access-buttons {
+    background: rgba(33, 40, 51, 0.6);
+    box-shadow: 0 4px 12px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
   }
   
   /* Individual quick access button */
   .pwa-quick-access-button {
     width: var(--pwa-quick-access-button-size);
     height: var(--pwa-quick-access-button-size);
-    border-radius: 50%;
-    background: linear-gradient(135deg, #8b4545 0%, #a05858 100%);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    color: rgb(160, 88, 88);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -177,32 +183,18 @@ function isActiveLink(href: string): boolean {
     text-decoration: none;
     position: relative;
   }
-  
-  .pwa-quick-access-button:hover {
-    transform: scale(1.1);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.3);
-  }
-  
-  .pwa-quick-access-button:active {
-    transform: scale(0.95);
+
+  :global(.dark) .pwa-quick-access-button {
+    color: white;
   }
   
   /* Active state for current page */
-  .pwa-quick-access-button-active {
-    background: linear-gradient(135deg, #8b4545 0%, #a05858 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
-  }
-  
   .pwa-quick-access-button-active svg {
     color: #fbbf24;
     filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
   }
   
-  /* Dark mode support */
-  :global(.dark) .pwa-quick-access-button-active {
-    background: linear-gradient(135deg, #8b4545 0%, #a05858 100%);
-  }
-  
+  /* Dark mode support */  
   :global(.dark) .pwa-quick-access-button-active svg {
     color: #fbbf24;
   }
