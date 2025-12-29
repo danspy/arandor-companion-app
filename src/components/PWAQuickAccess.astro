@@ -65,6 +65,12 @@ const pageDefinitions = [
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     dmOnly: true
   },
+  { 
+    id: '/users', 
+    name: 'Users', 
+    icon: 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+    adminOnly: true
+  },
 ];
 
 // Filter favorite pages based on user permissions and get their definitions
@@ -74,6 +80,10 @@ const visibleFavoritePages = favoritePages
     if (!page) return false;
     // Filter out DM-only pages for non-DM users
     if (page.dmOnly && userRole !== 'admin' && userRole !== 'dungeonmaster') {
+      return false;
+    }
+    // Filter out admin-only pages for non-admin users
+    if (page.adminOnly && userRole !== 'admin') {
       return false;
     }
     return true;
@@ -147,7 +157,7 @@ function isActiveLink(href: string): boolean {
   /* Quick access buttons wrapper */
   .pwa-quick-access-buttons {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     gap: var(--pwa-quick-access-button-gap);
     pointer-events: auto;
   }
@@ -195,8 +205,13 @@ function isActiveLink(href: string): boolean {
   
   /* Active state for current page */
   .pwa-quick-access-button-active {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-    box-shadow: 0 4px 12px rgba(251, 191, 36, 0.5), 0 2px 4px rgba(251, 191, 36, 0.3);
+    background: linear-gradient(135deg, #8b4545 0%, #a05858 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .pwa-quick-access-button-active svg {
+    color: #fbbf24;
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
   }
   
   /* Tooltip label */
@@ -221,7 +236,11 @@ function isActiveLink(href: string): boolean {
   
   /* Dark mode support */
   :global(.dark) .pwa-quick-access-button-active {
-    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+    background: linear-gradient(135deg, #8b4545 0%, #a05858 100%);
+  }
+  
+  :global(.dark) .pwa-quick-access-button-active svg {
+    color: #fbbf24;
   }
   
   /* Responsive adjustments for very small screens */

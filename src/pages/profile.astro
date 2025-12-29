@@ -352,6 +352,7 @@ const roleDisplay = {
     { id: '/tools', name: 'Tools', icon: 'tools' },
     { id: '/tools/initiative', name: 'Initiative Tracker', icon: 'initiative' },
     { id: '/tools/dm-screen', name: 'DM Screen', icon: 'dm-screen', dmOnly: true },
+    { id: '/users', name: 'Users', icon: 'users', adminOnly: true },
   ];
 
   // Load characters and user's selected characters
@@ -419,6 +420,10 @@ const roleDisplay = {
       if (!selectedFavoritePages.includes(page.id)) {
         // Only show DM-only pages to DM/admin users
         if (page.dmOnly && userRole !== 'admin' && userRole !== 'dungeonmaster') {
+          return;
+        }
+        // Only show admin-only pages to admin users
+        if (page.adminOnly && userRole !== 'admin') {
           return;
         }
         
