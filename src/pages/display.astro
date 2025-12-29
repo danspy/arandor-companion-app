@@ -599,99 +599,6 @@ const COMBAT_STATE_ID = 'current-combat';
         // Poll for updates every 2 seconds
         pollInterval = setInterval(pollForUpdates, 2000);
         
-        // HP Syncing for D&D Beyond
-        const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds for quick updates
-        let hpSyncInterval = null;
-        let lastCombatStatus = 'stopped';
-        
-        // Sync HP from D&D Beyond
-        const syncHpFromDnDBeyond = async () => {
-          try {
-            // Check if combat is active
-            const combatResponse = await fetch('/api/combat-state');
-            if (!combatResponse.ok) return;
-            
-            const combat = await combatResponse.json();
-            lastCombatStatus = combat.status;
-            
-            // Only sync when combat is active
-            if (combat.status !== 'active') {
-              if (hpSyncInterval) {
-                clearInterval(hpSyncInterval);
-                hpSyncInterval = null;
-                console.log('[Display] HP sync stopped (combat not active)');
-              }
-              return;
-            }
-            
-            console.log('[Display] Auto-syncing HP from D&D Beyond...');
-            const response = await fetch('/api/initiative/sync-hp', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            });
-            
-            if (response.ok) {
-              const result = await response.json();
-              console.log(`[Display] HP synced: ${result.syncedCount} of ${result.totalCount} characters`);
-              
-              // Refresh initiative list to show updated HP
-              await updateInitiativeList();
-            }
-          } catch (error) {
-            console.error('[Display] Auto HP sync error:', error);
-          }
-        };
-        
-        // Start HP syncing if combat is active
-        const startHpSync = async () => {
-          if (hpSyncInterval) {
-            clearInterval(hpSyncInterval);
-          }
-          
-          // Check if combat is active
-          try {
-            const combatResponse = await fetch('/api/combat-state');
-            if (combatResponse.ok) {
-              const combat = await combatResponse.json();
-              lastCombatStatus = combat.status;
-              
-              if (combat.status === 'active') {
-                console.log('[Display] Starting HP sync...');
-                syncHpFromDnDBeyond(); // Sync immediately
-                hpSyncInterval = setInterval(syncHpFromDnDBeyond, HP_SYNC_INTERVAL);
-              }
-            }
-          } catch (error) {
-            console.error('[Display] Error checking combat status:', error);
-          }
-        };
-        
-        // Check combat status periodically and start/stop HP sync accordingly
-        const hpSyncStatusCheckInterval = setInterval(async () => {
-          try {
-            const combatResponse = await fetch('/api/combat-state');
-            if (combatResponse.ok) {
-              const combat = await combatResponse.json();
-              
-              if (combat.status === 'active' && !hpSyncInterval) {
-                await startHpSync();
-              } else if (combat.status !== 'active' && hpSyncInterval) {
-                clearInterval(hpSyncInterval);
-                hpSyncInterval = null;
-                console.log('[Display] HP sync stopped (combat not active)');
-              }
-            }
-          } catch (error) {
-            console.error('[Display] Error in HP sync status check:', error);
-          }
-        }, 2000);
-        
-        // Start HP sync if combat is already active
-        await startHpSync();
-        
-        // Store interval reference for cleanup
-        window.__hpSyncStatusCheckInterval = hpSyncStatusCheckInterval;
-        
         // Stop polling when page is hidden, resume when visible
         document.addEventListener('visibilitychange', () => {
           if (document.hidden) {
@@ -708,12 +615,6 @@ const COMBAT_STATE_ID = 'current-combat';
       window.addEventListener('beforeunload', () => {
         if (pollInterval) {
           clearInterval(pollInterval);
-        }
-        if (hpSyncInterval) {
-          clearInterval(hpSyncInterval);
-        }
-        if (window.__hpSyncStatusCheckInterval) {
-          clearInterval(window.__hpSyncStatusCheckInterval);
         }
       });
 

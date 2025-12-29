@@ -1,14 +1,13 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from 'astro:db';
-import { requireDungeonmasterOrAdmin, requireAuth } from '../../../lib/middleware';
+import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
-export const GET: APIRoute = async ({ cookies }) => {
-  // Require authentication to view
-  const authError = requireAuth(cookies);
-  if (authError) return authError;
-
+// GET - Fetch initiative tracker (public - no authentication required)
+// This endpoint is public because the player display page (/display) needs access
+// Players on mobile/tablet devices may not have authentication cookies
+export const GET: APIRoute = async () => {
   try {
     const initiatives = await db.select().from(InitiativeTracker);
     // Sort by initiative (descending) and then by name
