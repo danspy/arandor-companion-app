@@ -16,7 +16,7 @@ const roleDisplay = {
 ---
 
 <Layout title="My Profile">
-  <div class="max-w-2xl mx-auto">
+  <div class="max-w-2xl mx-auto" data-user-role={user.role}>
     <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-8">My Profile</h1>
 
     <!-- Success/Error Messages -->
@@ -259,11 +259,6 @@ const roleDisplay = {
   </div>
 </Layout>
 
-<script define:vars={{ userRole: user.role }}>
-  // Make user role available globally for the script below
-  (window as any).__userRole = userRole;
-</script>
-
 <script>
   const changePasswordForm = document.getElementById('changePasswordForm') as HTMLFormElement;
   const formErrorMessage = document.getElementById('formErrorMessage');
@@ -413,8 +408,9 @@ const roleDisplay = {
     const pageSelect = document.getElementById('favoritePageSelect') as HTMLSelectElement;
     if (!pageSelect) return;
     
-    // Get user role from the page - we'll need to check if user can access DM tools
-    const userRole = (window as any).__userRole || 'player';
+    // Get user role from data attribute
+    const container = document.querySelector('[data-user-role]');
+    const userRole = container?.getAttribute('data-user-role') || 'player';
     
     pageSelect.innerHTML = '<option value="">-- Select Page --</option>';
     
