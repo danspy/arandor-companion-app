@@ -572,13 +572,19 @@ const roleDisplay = {
   let touchDraggedRect: DOMRect | null = null;
   let touchHighlightedElement: HTMLElement | null = null;
 
-  // Helper function to get element below touch point (hiding clone temporarily)
-  function getElementBelowTouch(touch: Touch): Element | null {
-    if (!touchClone) return null;
-    touchClone.style.display = 'none';
-    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
-    touchClone.style.display = 'block';
-    return elementBelow;
+  // Helper function to clean up touch drag state
+  function cleanupTouchDrag() {
+    if (touchDraggedElement) {
+      touchDraggedElement.classList.remove('opacity-50');
+    }
+    if (touchHighlightedElement) {
+      touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
+    }
+    touchClone?.remove();
+    touchDraggedElement = null;
+    touchClone = null;
+    touchDraggedRect = null;
+    touchHighlightedElement = null;
   }
 
   function handleTouchStart(e: TouchEvent) {
@@ -618,8 +624,8 @@ const roleDisplay = {
     touchClone.style.left = (touch.clientX - touchDraggedRect.width / 2) + 'px';
     touchClone.style.top = (touch.clientY - touchDraggedRect.height / 2) + 'px';
     
-    // Find the element under the touch point
-    const elementBelow = getElementBelowTouch(touch);
+    // Find the element under the touch point (pointer-events: none allows this to work)
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
     
     // Only update highlights if the target has changed
@@ -647,20 +653,12 @@ const roleDisplay = {
     const touch = e.changedTouches[0];
     if (!touch) {
       // Cleanup even if no touch available
-      touchDraggedElement.classList.remove('opacity-50');
-      if (touchHighlightedElement) {
-        touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
-      }
-      touchClone?.remove();
-      touchDraggedElement = null;
-      touchClone = null;
-      touchDraggedRect = null;
-      touchHighlightedElement = null;
+      cleanupTouchDrag();
       return;
     }
     
-    // Find the element under the touch point
-    const elementBelow = getElementBelowTouch(touch);
+    // Find the element under the touch point (pointer-events: none allows this to work)
+    const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
     const targetElement = elementBelow?.closest('[data-page-id]') as HTMLElement;
     
     if (targetElement && targetElement !== touchDraggedElement) {
@@ -675,17 +673,7 @@ const roleDisplay = {
     }
     
     // Cleanup
-    touchDraggedElement.classList.remove('opacity-50');
-    if (touchHighlightedElement) {
-      touchHighlightedElement.classList.remove('border-t-4', 'border-primary-500');
-    }
-    
-    touchClone?.remove();
-    
-    touchDraggedElement = null;
-    touchClone = null;
-    touchDraggedRect = null;
-    touchHighlightedElement = null;
+    cleanupTouchDrag();
   }
 
   // Update the display of selected characters
