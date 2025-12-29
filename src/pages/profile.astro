@@ -321,6 +321,15 @@ const roleDisplay = {
 
   // Load characters and user's selected characters
   async function loadCharacters() {
+    // Get fresh DOM references in case of View Transitions navigation
+    const charSelect = document.getElementById('characterSelect') as HTMLSelectElement;
+    const selCharactersDiv = document.getElementById('selectedCharacters');
+    
+    if (!charSelect || !selCharactersDiv) {
+      console.error('Required DOM elements not found');
+      return;
+    }
+    
     try {
       // Fetch user profile first to get current user's selected characters
       const profileResponse = await fetch('/api/profile');
@@ -341,12 +350,12 @@ const roleDisplay = {
         availableCharacters = await availableResponse.json();
         
         // Populate character dropdown with available characters only
-        characterSelect.innerHTML = '<option value="">-- Select Character --</option>';
+        charSelect.innerHTML = '<option value="">-- Select Character --</option>';
         availableCharacters.forEach((char: any) => {
           const option = document.createElement('option');
           option.value = char.id;
           option.textContent = `${char.name} (${char.class})`;
-          characterSelect.appendChild(option);
+          charSelect.appendChild(option);
         });
       }
 
@@ -358,12 +367,14 @@ const roleDisplay = {
 
   // Update the display of selected characters
   function updateSelectedCharactersDisplay() {
-    if (!selectedCharactersDiv) return;
+    // Get fresh DOM reference in case of View Transitions navigation
+    const selCharactersDiv = document.getElementById('selectedCharacters');
+    if (!selCharactersDiv) return;
     
-    selectedCharactersDiv.innerHTML = '';
+    selCharactersDiv.innerHTML = '';
     
     if (selectedCharacterIds.length === 0) {
-      selectedCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
+      selCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
       return;
     }
 
@@ -432,7 +443,7 @@ const roleDisplay = {
       charDiv.appendChild(contentDiv);
       charDiv.appendChild(removeBtn);
       
-      selectedCharactersDiv.appendChild(charDiv);
+      selCharactersDiv.appendChild(charDiv);
     });
 
     // Add event listeners to remove buttons
