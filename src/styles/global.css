@@ -8,10 +8,23 @@
 
 html, body {
   overflow-x: clip;
+  min-height: 100vh;
+  min-height: -webkit-fill-available;
+}
+
+html {
+  height: -webkit-fill-available;
 }
 
 body {
   padding-top: var(--safe-top);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Main content should grow to fill available space */
+main {
+  flex: 1 0 auto;
 }
 
 /* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
@@ -27,6 +40,9 @@ body {
   /* Adjust main content padding when nav is hidden */
   main {
     padding-top: max(env(safe-area-inset-top), 1rem);
+    /* Ensure main content extends to bottom with safe area for floating menu */
+    min-height: calc(100vh - max(env(safe-area-inset-top), 1rem) - 2rem);
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
   }
 }
 
