@@ -587,6 +587,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     let deleteHandlers = new Map(); // Store delete button handlers
     let clearAllHandler = null; // Store clear all button handler
     let combatControlHandlers = new Map(); // Store combat control button handlers
+    let isInitialized = false; // Track if already initialized to prevent duplicate handlers
+    let typeChangeHandler = null; // Store type change handler
+    let characterChangeHandler = null; // Store character change handler
+    let npcChangeHandler = null; // Store NPC change handler
+    let addBtnHandler = null; // Store add button handler
+    let modalHandlers = new Map(); // Store modal button handlers
     
     function initializeInitiativeTracker() {
       const container = document.querySelector('[data-can-edit]');
@@ -595,6 +601,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       if (!canEdit) {
         return;
       }
+      
+      // Prevent duplicate initialization
+      if (isInitialized) {
+        return;
+      }
+      isInitialized = true;
+      
       const modal = document.getElementById('initiativeModal');
       const form = document.getElementById('initiativeForm');
       const modalTitle = document.getElementById('modalTitle');
@@ -622,7 +635,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const monsterCountInput = document.getElementById('monsterCount');
 
       // Show/hide dropdowns based on type selection
-      const handleTypeChange = () => {
+      typeChangeHandler = () => {
         // Hide all special containers first
         characterSelectContainer?.classList.add('hidden');
         npcSelectContainer?.classList.add('hidden');
@@ -643,10 +656,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         if (monsterCountInput) monsterCountInput.value = '1';
       };
       
-      typeSelect?.addEventListener('change', handleTypeChange);
+      typeSelect?.addEventListener('change', typeChangeHandler);
 
       // Auto-fill fields when a character is selected
-      characterSelect?.addEventListener('change', () => {
+      characterChangeHandler = () => {
         const selectedOption = characterSelect.options[characterSelect.selectedIndex];
         if (selectedOption && selectedOption.value) {
           nameInput.value = selectedOption.getAttribute('data-name') || '';
@@ -658,29 +671,32 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           if (maxHp) maxHpInput.value = maxHp;
           if (ac) acInput.value = ac;
         }
-      });
+      };
+      characterSelect?.addEventListener('change', characterChangeHandler);
 
       // Auto-fill fields when an NPC is selected
-      npcSelect?.addEventListener('change', () => {
+      npcChangeHandler = () => {
         const selectedOption = npcSelect.options[npcSelect.selectedIndex];
         if (selectedOption && selectedOption.value) {
           nameInput.value = selectedOption.getAttribute('data-name') || '';
         }
-      });
+      };
+      npcSelect?.addEventListener('change', npcChangeHandler);
 
       // Open modal for adding
-      addBtn?.addEventListener('click', () => {
+      addBtnHandler = () => {
         if (modalTitle) modalTitle.textContent = 'Add Initiative Entry';
         form.reset();
         entryIdInput.value = '';
         isActiveInput.checked = true;
         
         // Trigger type change to show correct dropdown
-        handleTypeChange();
+        if (typeChangeHandler) typeChangeHandler();
         
         modal?.classList.remove('hidden');
         modal?.classList.add('flex');
-      });
+      };
+      addBtn?.addEventListener('click', addBtnHandler);
 
       // Close modal
       const closeModal = () => {
@@ -693,7 +709,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       };
 
       closeModalBtn?.addEventListener('click', closeModal);
+      modalHandlers.set('closeModalBtn', closeModal);
       cancelBtn?.addEventListener('click', closeModal);
+      modalHandlers.set('cancelBtn', closeModal);
 
       // Edit buttons
       document.querySelectorAll('.edit-initiative-btn').forEach(btn => {
@@ -1388,6 +1406,38 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         formSubmitHandler = null;
       }
       
+      // Remove type, character, and NPC change handlers
+      const typeSelect = document.getElementById('type');
+      const characterSelect = document.getElementById('characterSelect');
+      const npcSelect = document.getElementById('npcSelect');
+      const addBtn = document.getElementById('addInitiativeBtn');
+      
+      if (typeChangeHandler && typeSelect) {
+        typeSelect.removeEventListener('change', typeChangeHandler);
+        typeChangeHandler = null;
+      }
+      if (characterChangeHandler && characterSelect) {
+        characterSelect.removeEventListener('change', characterChangeHandler);
+        characterChangeHandler = null;
+      }
+      if (npcChangeHandler && npcSelect) {
+        npcSelect.removeEventListener('change', npcChangeHandler);
+        npcChangeHandler = null;
+      }
+      if (addBtnHandler && addBtn) {
+        addBtn.removeEventListener('click', addBtnHandler);
+        addBtnHandler = null;
+      }
+      
+      // Remove modal handlers
+      modalHandlers.forEach((handler, btnId) => {
+        const btn = document.getElementById(btnId);
+        if (btn && handler) {
+          btn.removeEventListener('click', handler);
+        }
+      });
+      modalHandlers.clear();
+      
       // Remove turn navigation handlers
       const nextTurnBtn = document.getElementById('nextTurnBtn');
       const prevTurnBtn = document.getElementById('prevTurnBtn');
@@ -1455,6 +1505,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       
       // Reset polling flag
       pollingInitialized = false;
+      
+      // Reset initialization flag so it can be initialized again on next page
+      isInitialized = false;
     });
     
     // Run on initial page load
@@ -1468,11 +1521,5 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       initializeInitiativeTracker();
       setupPollingForPlayers();
     });
-    
-    // If already loaded (hot reload), run immediately
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      initializeInitiativeTracker();
-      setupPollingForPlayers();
-    }
   </script>
 </Layout>
