@@ -62,6 +62,102 @@ const roleDisplay = {
       </div>
     </div>
 
+    <!-- Editable Profile Information -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-900">
+      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Profile Information</h2>
+      
+      <form id="profileForm" class="space-y-4">
+        <div>
+          <label for="firstName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            First Name
+          </label>
+          <input 
+            type="text" 
+            id="firstName" 
+            name="firstName" 
+            value={user.firstName || ''}
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            placeholder="Enter your first name"
+          >
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This will be displayed in the player field for your characters</p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image</label>
+          <div class="space-y-2">
+            <div>
+              <label for="profileImageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+              <input 
+                type="file" 
+                id="profileImageFile" 
+                name="profileImageFile" 
+                accept="image/*"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+            <div class="flex items-center gap-2">
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
+              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+            </div>
+            <div>
+              <label for="profileImageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+              <input 
+                type="text" 
+                id="profileImageUrl" 
+                name="profileImageUrl" 
+                value={user.profileImageUrl || ''}
+                placeholder="https://example.com/image.jpg or /uploads/image.jpg"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+            </div>
+          </div>
+          <div id="profileImagePreview" class={user.profileImageUrl ? '' : 'hidden'} style="margin-top: 0.5rem;">
+            <img id="profileImagePreviewImg" src={user.profileImageUrl || ''} alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            My Characters
+          </label>
+          <div class="space-y-3">
+            <div id="selectedCharacters" class="space-y-2">
+              <!-- Selected characters will be displayed here -->
+            </div>
+            
+            <div class="flex gap-2">
+              <select 
+                id="characterSelect"
+                class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+              >
+                <option value="">-- Select Character --</option>
+              </select>
+              <button 
+                type="button"
+                id="addCharacterBtn"
+                class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition whitespace-nowrap"
+              >
+                Add
+              </button>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select the characters you play</p>
+        </div>
+
+        <div id="profileFormError" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
+
+        <div class="pt-4">
+          <button 
+            type="submit" 
+            class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+          >
+            Update Profile
+          </button>
+        </div>
+      </form>
+    </div>
+
     <!-- Change Password Form -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
       <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Change Password</h2>
@@ -205,5 +301,293 @@ const roleDisplay = {
         formErrorMessage.classList.remove('hidden');
       }
     }
+  });
+
+  // Profile form handling
+  const profileForm = document.getElementById('profileForm') as HTMLFormElement;
+  const profileFormError = document.getElementById('profileFormError');
+  const profileImageFileInput = document.getElementById('profileImageFile') as HTMLInputElement;
+  const profileImageUrlInput = document.getElementById('profileImageUrl') as HTMLInputElement;
+  const profileImagePreview = document.getElementById('profileImagePreview');
+  const profileImagePreviewImg = document.getElementById('profileImagePreviewImg') as HTMLImageElement;
+  const characterSelect = document.getElementById('characterSelect') as HTMLSelectElement;
+  const addCharacterBtn = document.getElementById('addCharacterBtn');
+  const selectedCharactersDiv = document.getElementById('selectedCharacters');
+
+  // Store selected character IDs
+  let selectedCharacterIds: string[] = [];
+  let allCharacters: any[] = [];
+  let availableCharacters: any[] = [];
+
+  // Load characters and user's selected characters
+  async function loadCharacters() {
+    try {
+      // Fetch user profile first to get current user's selected characters
+      const profileResponse = await fetch('/api/profile');
+      if (profileResponse.ok) {
+        const profile = await profileResponse.json();
+        selectedCharacterIds = profile.characterIds || [];
+      }
+
+      // Fetch ALL characters to display already-selected ones
+      const allCharsResponse = await fetch('/api/characters');
+      if (allCharsResponse.ok) {
+        allCharacters = await allCharsResponse.json();
+      }
+
+      // Fetch available characters for dropdown (filters out those assigned to other users)
+      const availableResponse = await fetch('/api/characters/available');
+      if (availableResponse.ok) {
+        availableCharacters = await availableResponse.json();
+        
+        // Populate character dropdown with available characters only
+        characterSelect.innerHTML = '<option value="">-- Select Character --</option>';
+        availableCharacters.forEach((char: any) => {
+          const option = document.createElement('option');
+          option.value = char.id;
+          option.textContent = `${char.name} (${char.class})`;
+          characterSelect.appendChild(option);
+        });
+      }
+
+      updateSelectedCharactersDisplay();
+    } catch (error) {
+      console.error('Error loading characters:', error);
+    }
+  }
+
+  // Update the display of selected characters
+  function updateSelectedCharactersDisplay() {
+    if (!selectedCharactersDiv) return;
+    
+    selectedCharactersDiv.innerHTML = '';
+    
+    if (selectedCharacterIds.length === 0) {
+      selectedCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
+      return;
+    }
+
+    selectedCharacterIds.forEach(charId => {
+      const character = allCharacters.find(c => c.id === charId);
+      if (!character) return;
+
+      const charDiv = document.createElement('div');
+      charDiv.className = 'flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3';
+      
+      // Create character display section
+      const contentDiv = document.createElement('div');
+      contentDiv.className = 'flex items-center gap-3';
+      
+      // Create avatar
+      if (character.avatarUrl) {
+        const img = document.createElement('img');
+        img.src = character.avatarUrl;
+        img.alt = character.name;
+        img.className = 'w-10 h-10 rounded-full object-cover border-2 border-primary-300 dark:border-primary-700';
+        contentDiv.appendChild(img);
+      } else {
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'w-10 h-10 rounded-full bg-primary-200 dark:bg-primary-800 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold';
+        avatarDiv.textContent = character.name.charAt(0);
+        contentDiv.appendChild(avatarDiv);
+      }
+      
+      // Create character info
+      const infoDiv = document.createElement('div');
+      
+      const namePara = document.createElement('p');
+      namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
+      namePara.textContent = character.name;
+      
+      const detailsPara = document.createElement('p');
+      detailsPara.className = 'text-xs text-gray-600 dark:text-gray-400';
+      detailsPara.textContent = `${character.race} ${character.class} (Level ${character.level})`;
+      
+      infoDiv.appendChild(namePara);
+      infoDiv.appendChild(detailsPara);
+      contentDiv.appendChild(infoDiv);
+      
+      // Create remove button
+      const removeBtn = document.createElement('button');
+      removeBtn.type = 'button';
+      removeBtn.className = 'remove-character text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition';
+      removeBtn.setAttribute('data-character-id', charId);
+      removeBtn.title = 'Remove character';
+      
+      const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svg.setAttribute('class', 'w-5 h-5');
+      svg.setAttribute('fill', 'none');
+      svg.setAttribute('stroke', 'currentColor');
+      svg.setAttribute('viewBox', '0 0 24 24');
+      
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('stroke-linecap', 'round');
+      path.setAttribute('stroke-linejoin', 'round');
+      path.setAttribute('stroke-width', '2');
+      path.setAttribute('d', 'M6 18L18 6M6 6l12 12');
+      
+      svg.appendChild(path);
+      removeBtn.appendChild(svg);
+      
+      charDiv.appendChild(contentDiv);
+      charDiv.appendChild(removeBtn);
+      
+      selectedCharactersDiv.appendChild(charDiv);
+    });
+
+    // Add event listeners to remove buttons
+    document.querySelectorAll('.remove-character').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const charId = (e.currentTarget as HTMLElement).getAttribute('data-character-id');
+        if (charId) {
+          selectedCharacterIds = selectedCharacterIds.filter(id => id !== charId);
+          updateSelectedCharactersDisplay();
+        }
+      });
+    });
+  }
+
+  // Add character to selection
+  addCharacterBtn?.addEventListener('click', () => {
+    const selectedValue = characterSelect.value;
+    if (!selectedValue) {
+      return;
+    }
+
+    if (!selectedCharacterIds.includes(selectedValue)) {
+      selectedCharacterIds.push(selectedValue);
+      updateSelectedCharactersDisplay();
+    }
+
+    // Reset dropdown
+    characterSelect.value = '';
+  });
+
+  // Handle profile image file preview
+  profileImageFileInput?.addEventListener('change', (e) => {
+    const file = (e.target as HTMLInputElement).files?.[0];
+    if (file) {
+      // Validate file size (max 5MB)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      if (file.size > maxSize) {
+        if (profileFormError) {
+          profileFormError.textContent = 'Profile image file size must be 5MB or less';
+          profileFormError.classList.remove('hidden');
+        }
+        (e.target as HTMLInputElement).value = ''; // Clear the input
+        if (profileImagePreview) profileImagePreview.classList.add('hidden');
+        return;
+      }
+      
+      // Clear any previous errors
+      profileFormError?.classList.add('hidden');
+      
+      if (profileImagePreview && profileImagePreviewImg) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          profileImagePreviewImg.src = e.target?.result as string;
+          profileImagePreview.classList.remove('hidden');
+        };
+        reader.readAsDataURL(file);
+        // Clear URL input when file is selected
+        if (profileImageUrlInput) profileImageUrlInput.value = '';
+      }
+    }
+  });
+
+  // Handle profile image URL input
+  profileImageUrlInput?.addEventListener('input', (e) => {
+    const url = (e.target as HTMLInputElement).value;
+    if (url && profileImagePreview && profileImagePreviewImg) {
+      profileImagePreviewImg.src = url;
+      profileImagePreview.classList.remove('hidden');
+      // Clear file input when URL is entered
+      if (profileImageFileInput) profileImageFileInput.value = '';
+    } else if (profileImagePreview && !url) {
+      profileImagePreview.classList.add('hidden');
+    }
+  });
+
+  // Handle profile form submission
+  profileForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const formData = new FormData(profileForm);
+    const firstName = formData.get('firstName') as string;
+    
+    // Clear previous error messages
+    profileFormError?.classList.add('hidden');
+
+    try {
+      // Handle profile image upload
+      let profileImageUrl = formData.get('profileImageUrl') as string || undefined;
+      const profileImageFile = formData.get('profileImageFile') as File;
+      
+      if (profileImageFile && profileImageFile.size > 0) {
+        try {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', profileImageFile);
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            profileImageUrl = uploadData.url;
+          } else {
+            const error = await uploadResponse.json();
+            throw new Error(`Failed to upload image: ${error.error || 'Unknown error'}`);
+          }
+        } catch (error) {
+          if (profileFormError) {
+            profileFormError.textContent = error instanceof Error ? error.message : 'Failed to upload image. Please try again.';
+            profileFormError.classList.remove('hidden');
+          }
+          return;
+        }
+      }
+
+      const response = await fetch('/api/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: firstName || null,
+          profileImageUrl: profileImageUrl || null,
+          characterIds: selectedCharacterIds,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        showMessage('Profile updated successfully!', 'success');
+      } else {
+        if (profileFormError) {
+          profileFormError.textContent = result.error || 'Failed to update profile. Please try again.';
+          profileFormError.classList.remove('hidden');
+        }
+      }
+    } catch (error) {
+      if (profileFormError) {
+        profileFormError.textContent = 'An error occurred. Please try again.';
+        profileFormError.classList.remove('hidden');
+      }
+    }
+  });
+
+  // Initialize on page load
+  // Ensure DOM is ready before loading characters
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', loadCharacters);
+  } else {
+    // DOM is already ready, load immediately
+    loadCharacters();
+  }
+
+  // Also reload characters when navigating to this page using View Transitions
+  document.addEventListener('astro:page-load', () => {
+    loadCharacters();
   });
 </script>

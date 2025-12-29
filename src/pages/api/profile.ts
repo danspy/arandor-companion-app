@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, User, eq } from 'astro:db';
+import { db, User, Character, eq } from 'astro:db';
 import { getCurrentUser, hashPassword, verifyPassword } from '../../lib/auth';
 import { requireAuth } from '../../lib/middleware';
 
@@ -25,6 +25,9 @@ export const GET: APIRoute = async ({ cookies }) => {
       id: user.id,
       username: user.username,
       role: user.role,
+      firstName: user.firstName,
+      profileImageUrl: user.profileImageUrl,
+      characterIds: user.characterIds,
       createdAt: user.createdAt,
     }), {
       status: 200,
@@ -57,9 +60,105 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword } = body;
+    const { currentPassword, newPassword, firstName, profileImageUrl, characterIds } = body;
 
-    // Validate that both passwords are provided
+    // Handle profile information updates (firstName, profileImageUrl, characterIds)
+    if (!currentPassword && !newPassword) {
+      // Only updating profile info, no password change
+      const updateData: any = {};
+      
+      if (firstName !== undefined) {
+        // Validate firstName
+        if (firstName && firstName.length > 100) {
+          return new Response(JSON.stringify({ error: 'First name must be 100 characters or less' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        updateData.firstName = firstName || null;
+      }
+      
+      if (profileImageUrl !== undefined) {
+        // Validate profileImageUrl
+        if (profileImageUrl) {
+          if (profileImageUrl.length > 500) {
+            return new Response(JSON.stringify({ error: 'Profile image URL must be 500 characters or less' }), {
+              status: 400,
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+          // Basic URL format validation
+          try {
+            const url = new URL(profileImageUrl);
+            // Only allow http and https schemes
+            if (!['http:', 'https:'].includes(url.protocol)) {
+              return new Response(JSON.stringify({ error: 'Profile image URL must use http or https protocol' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
+          } catch {
+            // Also allow relative paths like /uploads/image.jpg
+            if (!profileImageUrl.startsWith('/')) {
+              return new Response(JSON.stringify({ error: 'Profile image must be a valid URL or relative path' }), {
+                status: 400,
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
+          }
+        }
+        updateData.profileImageUrl = profileImageUrl || null;
+      }
+      
+      if (characterIds !== undefined) {
+        // Validate that characterIds is an array
+        if (!Array.isArray(characterIds)) {
+          return new Response(JSON.stringify({ error: 'characterIds must be an array' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        // Validate each character ID is a string
+        if (characterIds.some(id => typeof id !== 'string')) {
+          return new Response(JSON.stringify({ error: 'All character IDs must be strings' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        updateData.characterIds = characterIds;
+      }
+      
+      // Update user profile
+      await db.update(User)
+        .set(updateData)
+        .where(eq(User.id, user.id));
+
+      // Update character player fields when characterIds or firstName changes
+      // This ensures character player field is always in sync with user's profile
+      if (characterIds !== undefined && characterIds.length > 0) {
+        // Use the new firstName if provided, otherwise use existing firstName or username
+        const playerName = (firstName !== undefined ? firstName : user.firstName) || user.username;
+        
+        // Update player field for all assigned characters in parallel
+        await Promise.all(
+          characterIds.map(charId =>
+            db.update(Character)
+              .set({ player: playerName })
+              .where(eq(Character.id, charId))
+          )
+        );
+      }
+
+      return new Response(JSON.stringify({ 
+        success: true,
+        message: 'Profile updated successfully'
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Validate that both passwords are provided for password change
     if (!currentPassword || !newPassword) {
       return new Response(JSON.stringify({ error: 'Both current password and new password are required' }), {
         status: 400,
