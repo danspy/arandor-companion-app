@@ -40,6 +40,12 @@ main {
     display: none !important;
   }
   
+  /* Ensure body fills full viewport height in PWA mode */
+  body {
+    height: 100vh;
+    height: -webkit-fill-available;
+  }
+  
   /* Adjust main content padding when nav is hidden */
   main {
     padding-top: var(--pwa-main-padding-top);
