@@ -4,6 +4,9 @@
 
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
+  --pwa-main-padding-top: max(env(safe-area-inset-top), 1rem);
+  --pwa-main-padding-bottom: 2rem;
+  --pwa-floating-menu-clearance: 120px;
 }
 
 html, body {
@@ -39,10 +42,10 @@ main {
   
   /* Adjust main content padding when nav is hidden */
   main {
-    padding-top: max(env(safe-area-inset-top), 1rem);
+    padding-top: var(--pwa-main-padding-top);
     /* Ensure main content extends to bottom with safe area for floating menu */
-    min-height: calc(100vh - max(env(safe-area-inset-top), 1rem) - 2rem);
-    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+    min-height: calc(100vh - var(--pwa-main-padding-top) - var(--pwa-main-padding-bottom));
+    padding-bottom: calc(var(--pwa-floating-menu-clearance) + env(safe-area-inset-bottom));
   }
 }
 
