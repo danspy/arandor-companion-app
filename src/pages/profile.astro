@@ -568,19 +568,13 @@ const roleDisplay = {
 
   // Touch drag and drop handlers for favorite pages
   let touchDraggedElement: HTMLElement | null = null;
-  let touchStartY = 0;
-  let touchCurrentY = 0;
   let touchClone: HTMLElement | null = null;
-  let touchInitialIndex = -1;
 
   function handleTouchStart(e: TouchEvent) {
     const target = e.currentTarget as HTMLElement;
     touchDraggedElement = target;
-    touchInitialIndex = parseInt(target.getAttribute('data-index') || '0');
     
     const touch = e.touches[0];
-    touchStartY = touch.clientY;
-    touchCurrentY = touch.clientY;
     
     // Create a visual clone for dragging
     touchClone = target.cloneNode(true) as HTMLElement;
@@ -603,7 +597,6 @@ const roleDisplay = {
     if (!touchDraggedElement || !touchClone) return;
     
     const touch = e.touches[0];
-    touchCurrentY = touch.clientY;
     
     // Move the clone with the touch
     touchClone.style.top = touch.clientY + 'px';
@@ -661,9 +654,6 @@ const roleDisplay = {
     
     touchDraggedElement = null;
     touchClone = null;
-    touchStartY = 0;
-    touchCurrentY = 0;
-    touchInitialIndex = -1;
   }
 
   // Update the display of selected characters
