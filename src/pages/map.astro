@@ -103,7 +103,7 @@ libraryEntries.forEach(entry => {
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
             </svg>
-            <span class="hidden sm:inline" id="legendToggleText">Hide Legend</span>
+            <span class="hidden sm:inline" id="legendToggleText">Show Legend</span>
           </Button>
           {canEdit && (
             <Button 
@@ -186,8 +186,8 @@ libraryEntries.forEach(entry => {
         </div>
       </div>
 
-      <!-- Legend - positioned in bottom-left, toggleable, hidden by default on mobile -->
-      <div id="mapLegend" class="absolute bottom-6 left-4 right-4 z-20 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 transition-opacity duration-300 sm:opacity-100 opacity-0 sm:pointer-events-auto pointer-events-none">
+      <!-- Legend - positioned in bottom-left, toggleable, hidden by default -->
+      <div id="mapLegend" class="absolute bottom-6 left-4 max-w-[calc(100%-2rem)] z-20 bg-white/90 dark:bg-black/90 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
         <div class="flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm text-gray-700 dark:text-gray-200">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -354,23 +354,14 @@ libraryEntries.forEach(entry => {
   const legendToggleText = document.getElementById('legendToggleText');
   const mapLegend = document.getElementById('mapLegend');
   
-  // Legend state - hidden by default on mobile, visible on desktop
-  const isMobile = () => window.innerWidth < 640;
-  let isLegendVisible = !isMobile();
+  // Legend state - hidden by default on all devices
+  let isLegendVisible = false;
   
-  // Initialize legend state on load
+  // Initialize legend state on load - always hidden
   if (mapLegend) {
-    if (isMobile()) {
-      mapLegend.style.opacity = '0';
-      mapLegend.style.pointerEvents = 'none';
-      if (legendToggleText) legendToggleText.textContent = 'Show Legend';
-      isLegendVisible = false;
-    } else {
-      mapLegend.style.opacity = '1';
-      mapLegend.style.pointerEvents = 'auto';
-      if (legendToggleText) legendToggleText.textContent = 'Hide Legend';
-      isLegendVisible = true;
-    }
+    mapLegend.style.opacity = '0';
+    mapLegend.style.pointerEvents = 'none';
+    if (legendToggleText) legendToggleText.textContent = 'Show Legend';
   }
 
   // Make map fluid: container fills available area and SVG uses a 0-100 viewBox
