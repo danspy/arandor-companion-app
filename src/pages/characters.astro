@@ -21,6 +21,9 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'characters'));
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 
+// Prepare user name for client-side script
+const currentUserName = currentUser ? (currentUser.firstName || currentUser.username) : null;
+
 // Function to check if current user can edit a character
 const canEditCharacter = (character: typeof characters[0]) => {
   // Not logged in - no edit rights
@@ -633,15 +636,15 @@ const canEditCharacter = (character: typeof characters[0]) => {
   </div>
 </Layout>
 
-<script define:vars={{ currentUserName: currentUser ? (currentUser.firstName || currentUser.username) : null }}>
+<script define:vars={{ currentUserName }}>
   // Shared state for editing character ID
-  let editingId: string | null = null;
+  let editingId = null;
 
   // Initialize character modal and form functionality
   function initializeCharacterModal() {
     console.log('[DEBUG] Initializing character modal...');
     const modal = document.getElementById('characterModal');
-    const form = document.getElementById('characterForm') as HTMLFormElement;
+    const form = document.getElementById('characterForm');
     const modalTitle = document.getElementById('modalTitle');
     const addButton = document.getElementById('addCharacter');
     const cancelButton = document.getElementById('cancelModal');
@@ -660,7 +663,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
       if (modalTitle) modalTitle.textContent = 'New Character';
       // Auto-fill player name with current user's name
       if (currentUserName) {
-        const playerInput = document.getElementById('player') as HTMLInputElement;
+        const playerInput = document.getElementById('player');
         if (playerInput) playerInput.value = currentUserName;
       }
       // Show "Assign to me" checkbox only when creating a new character
@@ -745,7 +748,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
         race,
         class: className,
         level: parseInt(level),
-        isActive: (document.getElementById('isActive') as HTMLInputElement).checked,
+        isActive: (document.getElementById('isActive')).checked,
         avatarUrl,
         dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
         stats,
@@ -763,7 +766,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
       
       // Only include assignToUser when creating a new character
       if (!editingId) {
-        data.assignToUser = (document.getElementById('assignToMe') as HTMLInputElement).checked;
+        data.assignToUser = (document.getElementById('assignToMe')).checked;
       }
 
       try {
@@ -787,13 +790,13 @@ const canEditCharacter = (character: typeof characters[0]) => {
     });
 
     // Handle avatar file preview
-    const avatarFileInput = document.getElementById('avatarFile') as HTMLInputElement;
-    const avatarUrlInput = document.getElementById('avatarUrl') as HTMLInputElement;
+    const avatarFileInput = document.getElementById('avatarFile');
+    const avatarUrlInput = document.getElementById('avatarUrl');
     const avatarPreview = document.getElementById('avatarPreview');
-    const avatarPreviewImg = document.getElementById('avatarPreviewImg') as HTMLImageElement;
+    const avatarPreviewImg = document.getElementById('avatarPreviewImg');
 
     avatarFileInput?.addEventListener('change', (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = (e.target).files?.[0];
       if (file && avatarPreview && avatarPreviewImg) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -807,7 +810,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
     });
 
     avatarUrlInput?.addEventListener('input', (e) => {
-      const url = (e.target as HTMLInputElement).value;
+      const url = (e.target).value;
       if (url && avatarPreview && avatarPreviewImg) {
         avatarPreviewImg.src = url;
         avatarPreview.classList.remove('hidden');
@@ -820,7 +823,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
     // Fetch character data from D&D Beyond
     fetchButton?.addEventListener('click', async () => {
-      const urlInput = document.getElementById('dndbeyondUrl') as HTMLInputElement;
+      const urlInput = document.getElementById('dndbeyondUrl');
       const url = urlInput.value.trim();
       
       if (!url) {
@@ -846,31 +849,31 @@ const canEditCharacter = (character: typeof characters[0]) => {
           const data = await response.json();
           
           // Fill in the form fields
-          if (data.name) (document.getElementById('name') as HTMLInputElement).value = data.name;
-          if (data.race) (document.getElementById('race') as HTMLInputElement).value = data.race;
-          if (data.class) (document.getElementById('class') as HTMLInputElement).value = data.class;
-          if (data.level) (document.getElementById('level') as HTMLInputElement).value = data.level;
-          if (data.avatarUrl) (document.getElementById('avatarUrl') as HTMLInputElement).value = data.avatarUrl;
+          if (data.name) (document.getElementById('name')).value = data.name;
+          if (data.race) (document.getElementById('race')).value = data.race;
+          if (data.class) (document.getElementById('class')).value = data.class;
+          if (data.level) (document.getElementById('level')).value = data.level;
+          if (data.avatarUrl) (document.getElementById('avatarUrl')).value = data.avatarUrl;
           
           if (data.stats) {
-            if (data.stats.strength) (document.getElementById('strength') as HTMLInputElement).value = data.stats.strength;
-            if (data.stats.dexterity) (document.getElementById('dexterity') as HTMLInputElement).value = data.stats.dexterity;
-            if (data.stats.constitution) (document.getElementById('constitution') as HTMLInputElement).value = data.stats.constitution;
-            if (data.stats.intelligence) (document.getElementById('intelligence') as HTMLInputElement).value = data.stats.intelligence;
-            if (data.stats.wisdom) (document.getElementById('wisdom') as HTMLInputElement).value = data.stats.wisdom;
-            if (data.stats.charisma) (document.getElementById('charisma') as HTMLInputElement).value = data.stats.charisma;
+            if (data.stats.strength) (document.getElementById('strength')).value = data.stats.strength;
+            if (data.stats.dexterity) (document.getElementById('dexterity')).value = data.stats.dexterity;
+            if (data.stats.constitution) (document.getElementById('constitution')).value = data.stats.constitution;
+            if (data.stats.intelligence) (document.getElementById('intelligence')).value = data.stats.intelligence;
+            if (data.stats.wisdom) (document.getElementById('wisdom')).value = data.stats.wisdom;
+            if (data.stats.charisma) (document.getElementById('charisma')).value = data.stats.charisma;
           }
           
           // Fill in additional character details
-          if (data.background) (document.getElementById('background') as HTMLInputElement).value = data.background;
-          if (data.alignment) (document.getElementById('alignment') as HTMLInputElement).value = data.alignment;
-          if (data.gender) (document.getElementById('gender') as HTMLInputElement).value = data.gender;
-          if (data.age) (document.getElementById('age') as HTMLInputElement).value = data.age;
-          if (data.height) (document.getElementById('height') as HTMLInputElement).value = data.height;
-          if (data.weight) (document.getElementById('weight') as HTMLInputElement).value = data.weight;
-          if (data.eyes) (document.getElementById('eyes') as HTMLInputElement).value = data.eyes;
-          if (data.skin) (document.getElementById('skin') as HTMLInputElement).value = data.skin;
-          if (data.hair) (document.getElementById('hair') as HTMLInputElement).value = data.hair;
+          if (data.background) (document.getElementById('background')).value = data.background;
+          if (data.alignment) (document.getElementById('alignment')).value = data.alignment;
+          if (data.gender) (document.getElementById('gender')).value = data.gender;
+          if (data.age) (document.getElementById('age')).value = data.age;
+          if (data.height) (document.getElementById('height')).value = data.height;
+          if (data.weight) (document.getElementById('weight')).value = data.weight;
+          if (data.eyes) (document.getElementById('eyes')).value = data.eyes;
+          if (data.skin) (document.getElementById('skin')).value = data.skin;
+          if (data.hair) (document.getElementById('hair')).value = data.hair;
           
           // Show success status
           if (fetchStatus) {
@@ -908,34 +911,34 @@ const canEditCharacter = (character: typeof characters[0]) => {
           const character = await response.json();
           
           editingId = editId;
-          (document.getElementById('name') as HTMLInputElement).value = character.name;
-          (document.getElementById('player') as HTMLInputElement).value = character.player;
-          (document.getElementById('race') as HTMLInputElement).value = character.race;
-          (document.getElementById('class') as HTMLInputElement).value = character.class;
-          (document.getElementById('level') as HTMLInputElement).value = character.level;
-          (document.getElementById('isActive') as HTMLInputElement).checked = character.isActive !== false;
-          (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
-          (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+          (document.getElementById('name')).value = character.name;
+          (document.getElementById('player')).value = character.player;
+          (document.getElementById('race')).value = character.race;
+          (document.getElementById('class')).value = character.class;
+          (document.getElementById('level')).value = character.level;
+          (document.getElementById('isActive')).checked = character.isActive !== false;
+          (document.getElementById('avatarUrl')).value = character.avatarUrl || '';
+          (document.getElementById('dndbeyondUrl')).value = character.dndbeyondUrl || '';
           
           if (character.stats) {
-            (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
-            (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
-            (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
-            (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
-            (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
-            (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+            (document.getElementById('strength')).value = character.stats.strength;
+            (document.getElementById('dexterity')).value = character.stats.dexterity;
+            (document.getElementById('constitution')).value = character.stats.constitution;
+            (document.getElementById('intelligence')).value = character.stats.intelligence;
+            (document.getElementById('wisdom')).value = character.stats.wisdom;
+            (document.getElementById('charisma')).value = character.stats.charisma;
           }
           
           // Load additional character details
-          (document.getElementById('background') as HTMLInputElement).value = character.background || '';
-          (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
-          (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
-          (document.getElementById('age') as HTMLInputElement).value = character.age || '';
-          (document.getElementById('height') as HTMLInputElement).value = character.height || '';
-          (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
-          (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
-          (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
-          (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
+          (document.getElementById('background')).value = character.background || '';
+          (document.getElementById('alignment')).value = character.alignment || '';
+          (document.getElementById('gender')).value = character.gender || '';
+          (document.getElementById('age')).value = character.age || '';
+          (document.getElementById('height')).value = character.height || '';
+          (document.getElementById('weight')).value = character.weight || '';
+          (document.getElementById('eyes')).value = character.eyes || '';
+          (document.getElementById('skin')).value = character.skin || '';
+          (document.getElementById('hair')).value = character.hair || '';
           
           modalTitle.textContent = 'Edit Character';
           // Hide "Assign to me" checkbox when editing
@@ -958,7 +961,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
   // Handle character edit/delete actions with event delegation
   document.addEventListener('click', async (e) => {
-    const target = e.target as HTMLElement;
+    const target = e.target;
     console.log('[DEBUG] Click detected on:', target.className);
     const modal = document.getElementById('characterModal');
     const modalTitle = document.getElementById('modalTitle');
@@ -978,34 +981,34 @@ const canEditCharacter = (character: typeof characters[0]) => {
         const character = await response.json();
         
         editingId = id;
-        (document.getElementById('name') as HTMLInputElement).value = character.name;
-        (document.getElementById('player') as HTMLInputElement).value = character.player;
-        (document.getElementById('race') as HTMLInputElement).value = character.race;
-        (document.getElementById('class') as HTMLInputElement).value = character.class;
-        (document.getElementById('level') as HTMLInputElement).value = character.level;
-        (document.getElementById('isActive') as HTMLInputElement).checked = character.isActive !== false;
-        (document.getElementById('avatarUrl') as HTMLInputElement).value = character.avatarUrl || '';
-        (document.getElementById('dndbeyondUrl') as HTMLInputElement).value = character.dndbeyondUrl || '';
+        (document.getElementById('name')).value = character.name;
+        (document.getElementById('player')).value = character.player;
+        (document.getElementById('race')).value = character.race;
+        (document.getElementById('class')).value = character.class;
+        (document.getElementById('level')).value = character.level;
+        (document.getElementById('isActive')).checked = character.isActive !== false;
+        (document.getElementById('avatarUrl')).value = character.avatarUrl || '';
+        (document.getElementById('dndbeyondUrl')).value = character.dndbeyondUrl || '';
         
         if (character.stats) {
-          (document.getElementById('strength') as HTMLInputElement).value = character.stats.strength;
-          (document.getElementById('dexterity') as HTMLInputElement).value = character.stats.dexterity;
-          (document.getElementById('constitution') as HTMLInputElement).value = character.stats.constitution;
-          (document.getElementById('intelligence') as HTMLInputElement).value = character.stats.intelligence;
-          (document.getElementById('wisdom') as HTMLInputElement).value = character.stats.wisdom;
-          (document.getElementById('charisma') as HTMLInputElement).value = character.stats.charisma;
+          (document.getElementById('strength')).value = character.stats.strength;
+          (document.getElementById('dexterity')).value = character.stats.dexterity;
+          (document.getElementById('constitution')).value = character.stats.constitution;
+          (document.getElementById('intelligence')).value = character.stats.intelligence;
+          (document.getElementById('wisdom')).value = character.stats.wisdom;
+          (document.getElementById('charisma')).value = character.stats.charisma;
         }
         
         // Load additional character details
-        (document.getElementById('background') as HTMLInputElement).value = character.background || '';
-        (document.getElementById('alignment') as HTMLInputElement).value = character.alignment || '';
-        (document.getElementById('gender') as HTMLInputElement).value = character.gender || '';
-        (document.getElementById('age') as HTMLInputElement).value = character.age || '';
-        (document.getElementById('height') as HTMLInputElement).value = character.height || '';
-        (document.getElementById('weight') as HTMLInputElement).value = character.weight || '';
-        (document.getElementById('eyes') as HTMLInputElement).value = character.eyes || '';
-        (document.getElementById('skin') as HTMLInputElement).value = character.skin || '';
-        (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
+        (document.getElementById('background')).value = character.background || '';
+        (document.getElementById('alignment')).value = character.alignment || '';
+        (document.getElementById('gender')).value = character.gender || '';
+        (document.getElementById('age')).value = character.age || '';
+        (document.getElementById('height')).value = character.height || '';
+        (document.getElementById('weight')).value = character.weight || '';
+        (document.getElementById('eyes')).value = character.eyes || '';
+        (document.getElementById('skin')).value = character.skin || '';
+        (document.getElementById('hair')).value = character.hair || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Character';
         // Hide "Assign to me" checkbox when editing
@@ -1048,7 +1051,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
   // Initialize search and filter functionality
   function initializeFilters() {
-    const searchInput = document.getElementById('searchInput') as HTMLInputElement;
+    const searchInput = document.getElementById('searchInput');
     const filterActive = document.getElementById('filterActive') as HTMLButtonElement;
     const filterInactive = document.getElementById('filterInactive') as HTMLButtonElement;
     const filterAll = document.getElementById('filterAll') as HTMLButtonElement;
@@ -1100,7 +1103,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
         }
         // 'all' filter matches everything
         
-        (card as HTMLElement).style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
+        (card).style.display = (matchesSearch && matchesFilter) ? 'block' : 'none';
       });
     };
 
@@ -1114,7 +1117,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
     // Search functionality with localStorage persistence
     searchInput?.addEventListener('input', (e) => {
-      const searchText = (e.target as HTMLInputElement).value;
+      const searchText = (e.target).value;
       localStorage.setItem(SEARCH_STORAGE_KEY, searchText);
       applyFilters(searchText, currentFilter);
     });
