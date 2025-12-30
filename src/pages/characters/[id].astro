@@ -1,8 +1,8 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Button from '../../components/Button.astro';
-import { db, Character, DiaryEntry, eq } from 'astro:db';
-import { isAuthenticated } from '../../lib/auth';
+import { db, Character, DiaryEntry, User, eq } from 'astro:db';
+import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 
 const { id } = Astro.params;
 
@@ -25,6 +25,51 @@ const sessionCount = allDiaryEntries.filter(entry => {
 }).length;
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const currentUser = await getCurrentUser(Astro.cookies);
+
+// Fetch all users to check legacy ownership (characterIds arrays)
+const allUsers = await db.select().from(User);
+
+// Helper function to find owner of a character (checks both modern and legacy ownership)
+const findCharacterOwner = (character: typeof characters[0]) => {
+  // Check modern ownership first (character.userId field)
+  if (character.userId) {
+    return { userId: character.userId, isLegacy: false };
+  }
+  
+  // Check legacy ownership (character ID in any user's characterIds array)
+  for (const user of allUsers) {
+    if (user.characterIds && Array.isArray(user.characterIds) && user.characterIds.includes(character.id)) {
+      return { userId: user.id, isLegacy: true };
+    }
+  }
+  
+  return null; // Unowned
+};
+
+// Function to check if current user can edit this character
+const canEditCharacter = () => {
+  // Not logged in - no edit rights
+  if (!isLoggedIn) return false;
+  
+  // Admins can edit everything
+  if (userRole === 'admin') return true;
+  
+  // Find the owner of this character
+  const owner = findCharacterOwner(character);
+  
+  // If unowned, any logged-in user can edit
+  if (!owner) return true;
+  
+  // Check if current user is the owner
+  if (currentUser && owner.userId === currentUser.id) return true;
+  
+  // Otherwise, no edit rights
+  return false;
+};
+
+const canEdit = canEditCharacter();
 ---
 
 <Layout title={character.name}>
@@ -37,7 +82,7 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
         </svg>
         Back to Characters
       </a>
-      {isLoggedIn && (
+      {canEdit && (
         <div class="flex gap-2">
           <button 
             id="editCharacter"
