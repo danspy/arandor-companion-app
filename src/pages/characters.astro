@@ -3,11 +3,12 @@ import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
 import { db, Character, PageSettings, eq } from 'astro:db';
-import { isAuthenticated, getUserRole } from '../lib/auth';
+import { isAuthenticated, getUserRole, getCurrentUser } from '../lib/auth';
 
 const characters = await db.select().from(Character);
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
+const currentUser = await getCurrentUser(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Get the edit parameter from URL if present
@@ -19,6 +20,15 @@ const allClasses = [...new Set(characters.map(c => c.class).filter(Boolean))].so
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'characters'));
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
+
+// Function to check if current user can edit a character
+const canEditCharacter = (character: typeof characters[0]) => {
+  if (!isLoggedIn) return false;
+  if (userRole === 'admin') return true;
+  if (!character.userId) return true; // Unowned characters can be edited by anyone
+  if (currentUser && character.userId === currentUser.id) return true;
+  return false;
+};
 ---
 
 <Layout title="Player Characters">
@@ -154,7 +164,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <a href={`/characters/${character.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
               <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{character.name}</h2>
             </a>
-            {isLoggedIn && (
+            {canEditCharacter(character) && (
               <div class="flex gap-2 items-center flex-shrink-0">
                 <Button
                   variant="icon"
@@ -590,7 +600,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 </Layout>
 
-<script>
+<script define:vars={{ currentUserName: currentUser ? (currentUser.firstName || currentUser.username) : null }}>
   // Shared state for editing character ID
   let editingId: string | null = null;
 
@@ -610,6 +620,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       editingId = null;
       form.reset();
       if (modalTitle) modalTitle.textContent = 'New Character';
+      // Auto-fill player name with current user's name
+      if (currentUserName) {
+        const playerInput = document.getElementById('player') as HTMLInputElement;
+        if (playerInput) playerInput.value = currentUserName;
+      }
       // Show "Assign to me" checkbox only when creating a new character
       if (assignToMeContainer) {
         assignToMeContainer.classList.remove('hidden');
