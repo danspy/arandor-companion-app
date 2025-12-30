@@ -68,58 +68,60 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Validate HP values
-    if (hp !== undefined && hp !== null && typeof hp !== 'number') {
-      return new Response(JSON.stringify({ error: 'HP must be a number' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (maxHp !== undefined && maxHp !== null && typeof maxHp !== 'number') {
-      return new Response(JSON.stringify({ error: 'Max HP must be a number' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    if (tempHp !== undefined && tempHp !== null && typeof tempHp !== 'number') {
-      return new Response(JSON.stringify({ error: 'Temp HP must be a number' }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-
-    // Update HP in initiative tracker
-    const now = new Date();
-    const updateData: any = {
-      updatedAt: now,
+    // Validate HP values - helper function
+    const validateHPValue = (value: any, fieldName: string) => {
+      if (value === undefined || value === null) return null; // Allow null/undefined
+      const num = Number(value);
+      if (isNaN(num) || !Number.isInteger(num) || num < 0) {
+        throw new Error(`${fieldName} must be a non-negative integer`);
+      }
+      return num;
     };
 
-    if (hp !== undefined) updateData.hp = hp;
-    if (maxHp !== undefined) updateData.maxHp = maxHp;
-    if (tempHp !== undefined) updateData.tempHp = tempHp;
+    try {
+      const validatedHp = validateHPValue(hp, 'HP');
+      const validatedMaxHp = validateHPValue(maxHp, 'Max HP');
+      const validatedTempHp = validateHPValue(tempHp, 'Temp HP');
 
-    await db.update(InitiativeTracker)
-      .set(updateData)
-      .where(eq(InitiativeTracker.id, initiativeId));
-
-    // Also update the character's HP in the Character table
-    await db.update(Character)
-      .set({
-        hp: hp !== undefined ? hp : character.hp,
-        maxHp: maxHp !== undefined ? maxHp : character.maxHp,
-        tempHp: tempHp !== undefined ? tempHp : character.tempHp,
+      // Update HP in initiative tracker
+      const now = new Date();
+      const updateData: any = {
         updatedAt: now,
-      })
-      .where(eq(Character.id, character.id));
+      };
 
-    const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, initiativeId)).get();
-    
-    return new Response(JSON.stringify(updatedEntry), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+      if (validatedHp !== null) updateData.hp = validatedHp;
+      if (validatedMaxHp !== null) updateData.maxHp = validatedMaxHp;
+      if (validatedTempHp !== null) updateData.tempHp = validatedTempHp;
+
+      await db.update(InitiativeTracker)
+        .set(updateData)
+        .where(eq(InitiativeTracker.id, initiativeId));
+
+      // Also update the character's HP in the Character table
+      await db.update(Character)
+        .set({
+          hp: validatedHp !== null ? validatedHp : character.hp,
+          maxHp: validatedMaxHp !== null ? validatedMaxHp : character.maxHp,
+          tempHp: validatedTempHp !== null ? validatedTempHp : character.tempHp,
+          updatedAt: now,
+        })
+        .where(eq(Character.id, character.id));
+
+      const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, initiativeId)).get();
+      
+      return new Response(JSON.stringify(updatedEntry), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    } catch (validationError) {
+      if (validationError instanceof Error) {
+        return new Response(JSON.stringify({ error: validationError.message }), {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      throw validationError;
+    }
   } catch (error) {
     console.error('Error updating HP:', error);
     return new Response(JSON.stringify({ error: 'Failed to update HP' }), {

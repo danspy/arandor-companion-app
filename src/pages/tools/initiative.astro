@@ -1478,7 +1478,29 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             throw new Error(error.error || 'Failed to update HP');
           }
           
-          window.location.reload();
+          const updatedEntry = await response.json();
+          
+          // Update the HP display immediately in the UI
+          const card = document.querySelector(`[data-entry-id="${hpEntryIdInput.value}"]`);
+          if (card) {
+            const hpElement = card.querySelector('[data-hp-display]');
+            if (hpElement && updatedEntry.hp !== null && updatedEntry.maxHp !== null) {
+              let hpText = `${updatedEntry.hp}/${updatedEntry.maxHp}`;
+              if (updatedEntry.tempHp && updatedEntry.tempHp > 0) {
+                hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${updatedEntry.tempHp})</span>`;
+              }
+              hpElement.innerHTML = hpText;
+            }
+          }
+          
+          // Close modal and reset form
+          closeHpModal();
+          
+          // Reset button state
+          if (saveBtn) saveBtn.disabled = false;
+          if (saveBtnText) {
+            saveBtnText.textContent = originalText;
+          }
         } catch (error) {
           console.error('Error updating HP:', error);
           alert(error instanceof Error ? error.message : 'Failed to update HP');
