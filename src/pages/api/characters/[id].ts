@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { db, Character, eq } from 'astro:db';
+import { db, Character, User, eq } from 'astro:db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
+import { getCurrentUser, getUserRole } from '../../../lib/auth';
 
 export const GET: APIRoute = async ({ params }) => {
   try {
@@ -32,6 +33,38 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
   try {
     const body = await request.json();
     const now = new Date();
+    
+    // Get current user and their role
+    const currentUser = await getCurrentUser(cookies);
+    const userRole = await getUserRole(cookies);
+    
+    // Check if character exists and get its ownership info
+    const existingCharacter = await db.select().from(Character).where(eq(Character.id, params.id!));
+    
+    if (existingCharacter.length === 0) {
+      return new Response(JSON.stringify({ error: 'Character not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const character = existingCharacter[0];
+    
+    // Check if user has permission to edit this character
+    // Admins can edit any character
+    // Non-admins can only edit characters they own (or unowned characters)
+    const isAdmin = userRole === 'admin';
+    const isOwner = currentUser && character.userId === currentUser.id;
+    const isUnowned = !character.userId;
+    
+    if (!isAdmin && !isOwner && !isUnowned) {
+      return new Response(JSON.stringify({ 
+        error: 'You do not have permission to edit this character. Only the character owner or admins can edit it.' 
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
     
     await db.update(Character)
       .set({
@@ -81,6 +114,50 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
   if (authError) return authError;
 
   try {
+    // Get current user and their role
+    const currentUser = await getCurrentUser(cookies);
+    const userRole = await getUserRole(cookies);
+    
+    // Check if character exists and get its ownership info
+    const existingCharacter = await db.select().from(Character).where(eq(Character.id, params.id!));
+    
+    if (existingCharacter.length === 0) {
+      return new Response(JSON.stringify({ error: 'Character not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    const character = existingCharacter[0];
+    
+    // Check if user has permission to delete this character
+    // Admins can delete any character
+    // Non-admins can only delete characters they own (or unowned characters)
+    const isAdmin = userRole === 'admin';
+    const isOwner = currentUser && character.userId === currentUser.id;
+    const isUnowned = !character.userId;
+    
+    if (!isAdmin && !isOwner && !isUnowned) {
+      return new Response(JSON.stringify({ 
+        error: 'You do not have permission to delete this character. Only the character owner or admins can delete it.' 
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // If character is owned, remove it from the user's characterIds
+    if (character.userId) {
+      const owner = await db.select().from(User).where(eq(User.id, character.userId));
+      if (owner.length > 0) {
+        const currentCharacterIds = (owner[0].characterIds as string[]) || [];
+        const updatedCharacterIds = currentCharacterIds.filter(id => id !== params.id);
+        await db.update(User)
+          .set({ characterIds: updatedCharacterIds })
+          .where(eq(User.id, character.userId));
+      }
+    }
+    
     await db.delete(Character).where(eq(Character.id, params.id!));
     
     return new Response(JSON.stringify({ success: true }), {

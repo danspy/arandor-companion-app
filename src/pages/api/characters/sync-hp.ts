@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, Character, eq } from 'astro:db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { fetchDnDBeyondHP } from '../../../lib/dndbeyond';
+import { getCurrentUser, getUserRole } from '../../../lib/auth';
 
 /**
  * Sync HP data for a character from D&D Beyond
@@ -31,6 +32,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         JSON.stringify({ error: 'Character not found' }),
         { status: 404, headers: { 'Content-Type': 'application/json' } }
       );
+    }
+    
+    // Get current user and their role
+    const currentUser = await getCurrentUser(cookies);
+    const userRole = await getUserRole(cookies);
+    
+    // Check if user has permission to sync HP for this character
+    // Admins can sync HP for any character
+    // Non-admins can only sync HP for characters they own (or unowned characters)
+    const isAdmin = userRole === 'admin';
+    const isOwner = currentUser && character.userId === currentUser.id;
+    const isUnowned = !character.userId;
+    
+    if (!isAdmin && !isOwner && !isUnowned) {
+      return new Response(JSON.stringify({ 
+        error: 'You do not have permission to sync HP for this character. Only the character owner or admins can sync HP.' 
+      }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' }
+      });
     }
 
     if (!character.dndbeyondUrl) {

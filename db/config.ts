@@ -41,6 +41,7 @@ const Character = defineTable({
     level: column.number(),
     race: column.text(),
     player: column.text(),
+    userId: column.text({ optional: true }), // Foreign key to User - tracks ownership
     isActive: column.boolean({ default: true }),
     avatarUrl: column.text({ optional: true }),
     dndbeyondUrl: column.text({ optional: true }),
