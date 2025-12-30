@@ -8,6 +8,19 @@
   --pwa-main-padding-bottom: max(env(safe-area-inset-bottom), 1rem);
   /* Floating menu clearance: button height (56px) + button spacing (16px) + safe spacing (24px) = 96px */
   --pwa-floating-menu-clearance: 56px;
+  
+  /* Modal safe zone variables */
+  --modal-safe-top: max(env(safe-area-inset-top), 1rem);
+  --modal-safe-bottom: max(env(safe-area-inset-bottom), 1rem);
+  --modal-safe-left: max(env(safe-area-inset-left), 1rem);
+  --modal-safe-right: max(env(safe-area-inset-right), 1rem);
+  
+  /* Modal UI clearance for PWA elements */
+  --pwa-ui-bottom-clearance: 72px; /* Floating menu: button height (56px) + spacing (16px) = 72px */
+  --modal-extra-spacing: 2rem; /* Additional safe spacing */
+  
+  /* Modal content max height calculation */
+  --modal-content-max-height: calc(100vh - var(--modal-safe-top) - var(--modal-safe-bottom) - var(--pwa-ui-bottom-clearance) - var(--modal-extra-spacing));
 }
 
 html, body {
@@ -267,4 +280,21 @@ html[data-transition="slide-right"] ::view-transition-new(root) {
 .dark .loading-spinner {
   border-color: rgba(139, 69, 69, 0.2);
   border-top-color: #d9b4b4;
+}
+
+/* Modal Safe Zones for PWA */
+/* Apply safe zones to modal content containers in PWA standalone mode */
+@media (display-mode: standalone) and (max-width: 1024px) {
+  /* Modal overlay should respect safe areas for padding */
+  .modal-overlay-safe {
+    padding-top: var(--modal-safe-top) !important;
+    padding-bottom: var(--modal-safe-bottom) !important;
+    padding-left: var(--modal-safe-left) !important;
+    padding-right: var(--modal-safe-right) !important;
+  }
+  
+  /* Modal content should have additional bottom clearance for floating menu and quick access */
+  .modal-content-safe {
+    max-height: var(--modal-content-max-height) !important;
+  }
 }
