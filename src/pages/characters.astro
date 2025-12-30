@@ -26,15 +26,15 @@ const canEditCharacter = (character: typeof characters[0]) => {
   // Not logged in - no edit rights
   if (!isLoggedIn) return false;
   
-  // Admins can edit everything
+  // Admins can edit everything - prioritize this check
   if (userRole === 'admin') return true;
   
-  // Check if character is unowned (null, undefined, or empty string)
-  const isUnowned = !character.userId || character.userId === null || character.userId === '' || character.userId === undefined;
+  // Check if character is unowned - any logged-in user can edit
+  const isUnowned = !character.userId;
   if (isUnowned) return true;
   
   // Check if current user owns this character
-  if (currentUser && currentUser.id && character.userId === currentUser.id) return true;
+  if (currentUser && character.userId === currentUser.id) return true;
   
   // Otherwise, no edit rights
   return false;
@@ -42,8 +42,17 @@ const canEditCharacter = (character: typeof characters[0]) => {
 ---
 
 <Layout title="Player Characters">
-  <!-- Debug info (remove after debugging) -->
-  <div class="hidden" id="debug-info" data-is-logged-in={isLoggedIn ? "true" : "false"} data-user-role={userRole || "none"} data-has-current-user={currentUser ? "true" : "false"} data-current-user-id={currentUser?.id || "none"}></div>
+  <!-- Debug info (visible for debugging) -->
+  <div class="bg-yellow-100 dark:bg-yellow-900 border border-yellow-400 dark:border-yellow-600 text-yellow-800 dark:text-yellow-200 px-4 py-3 rounded mb-4" id="debug-info">
+    <strong class="font-bold">Debug Info:</strong>
+    <ul class="list-disc list-inside mt-2 text-sm">
+      <li>Logged in: <strong>{isLoggedIn ? "YES" : "NO"}</strong></li>
+      <li>User role: <strong>{userRole || "none"}</strong></li>
+      <li>Has current user: <strong>{currentUser ? "YES" : "NO"}</strong></li>
+      <li>Current user ID: <strong>{currentUser?.id || "none"}</strong></li>
+      <li>Current user name: <strong>{currentUser?.username || "none"}</strong></li>
+    </ul>
+  </div>
   
   <PageHero 
     title="Player Characters" 
@@ -176,6 +185,10 @@ const canEditCharacter = (character: typeof characters[0]) => {
                 Inactive
               </div>
             )}
+            <!-- Debug badge showing ownership and edit permission -->
+            <div class="absolute bottom-3 right-3 bg-blue-800/90 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+              {character.userId ? `Owner: ${character.userId}` : "Unowned"} | Can edit: {canEditCharacter(character) ? "YES" : "NO"}
+            </div>
           </div>
         </a>
         
