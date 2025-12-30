@@ -692,11 +692,11 @@ const canEditCharacter = (character: typeof characters[0]) => {
       const formData = new FormData(form);
       
       // Validate that required fields are filled
-      const name = formData.get('name') as string;
-      const player = formData.get('player') as string;
-      const race = formData.get('race') as string;
-      const className = formData.get('class') as string;
-      const level = formData.get('level') as string;
+      const name = formData.get('name');
+      const player = formData.get('player');
+      const race = formData.get('race');
+      const className = formData.get('class');
+      const level = formData.get('level');
       
       // Check if required fields are empty
       if (!name || !player || !race || !className || !level) {
@@ -705,8 +705,8 @@ const canEditCharacter = (character: typeof characters[0]) => {
       }
       
       // Handle avatar upload
-      let avatarUrl = formData.get('avatarUrl') as string || undefined;
-      const avatarFile = formData.get('avatarFile') as File;
+      let avatarUrl = formData.get('avatarUrl') || undefined;
+      const avatarFile = formData.get('avatarFile');
       
       if (avatarFile && avatarFile.size > 0) {
         try {
@@ -734,12 +734,12 @@ const canEditCharacter = (character: typeof characters[0]) => {
       }
       
       const stats = {
-        strength: parseInt(formData.get('strength') as string) || 10,
-        dexterity: parseInt(formData.get('dexterity') as string) || 10,
-        constitution: parseInt(formData.get('constitution') as string) || 10,
-        intelligence: parseInt(formData.get('intelligence') as string) || 10,
-        wisdom: parseInt(formData.get('wisdom') as string) || 10,
-        charisma: parseInt(formData.get('charisma') as string) || 10,
+        strength: parseInt(formData.get('strength')) || 10,
+        dexterity: parseInt(formData.get('dexterity')) || 10,
+        constitution: parseInt(formData.get('constitution')) || 10,
+        intelligence: parseInt(formData.get('intelligence')) || 10,
+        wisdom: parseInt(formData.get('wisdom')) || 10,
+        charisma: parseInt(formData.get('charisma')) || 10,
       };
       
       const data: any = {
@@ -756,9 +756,9 @@ const canEditCharacter = (character: typeof characters[0]) => {
         background: formData.get('background') || undefined,
         alignment: formData.get('alignment') || undefined,
         gender: formData.get('gender') || undefined,
-        age: formData.get('age') ? parseInt(formData.get('age') as string) : undefined,
+        age: formData.get('age') ? parseInt(formData.get('age')) : undefined,
         height: formData.get('height') || undefined,
-        weight: formData.get('weight') ? parseInt(formData.get('weight') as string) : undefined,
+        weight: formData.get('weight') ? parseInt(formData.get('weight')) : undefined,
         eyes: formData.get('eyes') || undefined,
         skin: formData.get('skin') || undefined,
         hair: formData.get('hair') || undefined,
@@ -800,7 +800,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
       if (file && avatarPreview && avatarPreviewImg) {
         const reader = new FileReader();
         reader.onload = (e) => {
-          avatarPreviewImg.src = e.target?.result as string;
+          avatarPreviewImg.src = e.target?.result;
           avatarPreview.classList.remove('hidden');
         };
         reader.readAsDataURL(file);
@@ -1052,9 +1052,9 @@ const canEditCharacter = (character: typeof characters[0]) => {
   // Initialize search and filter functionality
   function initializeFilters() {
     const searchInput = document.getElementById('searchInput');
-    const filterActive = document.getElementById('filterActive') as HTMLButtonElement;
-    const filterInactive = document.getElementById('filterInactive') as HTMLButtonElement;
-    const filterAll = document.getElementById('filterAll') as HTMLButtonElement;
+    const filterActive = document.getElementById('filterActive');
+    const filterInactive = document.getElementById('filterInactive');
+    const filterAll = document.getElementById('filterAll');
     const characterCards = document.querySelectorAll('.character-card');
     
     // Storage keys for persisting search and filter
