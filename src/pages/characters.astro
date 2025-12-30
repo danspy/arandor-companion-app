@@ -23,15 +23,28 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
 // Function to check if current user can edit a character
 const canEditCharacter = (character: typeof characters[0]) => {
+  // Not logged in - no edit rights
   if (!isLoggedIn) return false;
+  
+  // Admins can edit everything
   if (userRole === 'admin') return true;
-  if (!character.userId) return true; // Unowned characters can be edited by anyone
-  if (currentUser && character.userId === currentUser.id) return true;
+  
+  // Check if character is unowned (null, undefined, or empty string)
+  const isUnowned = !character.userId || character.userId === null || character.userId === '' || character.userId === undefined;
+  if (isUnowned) return true;
+  
+  // Check if current user owns this character
+  if (currentUser && currentUser.id && character.userId === currentUser.id) return true;
+  
+  // Otherwise, no edit rights
   return false;
 };
 ---
 
 <Layout title="Player Characters">
+  <!-- Debug info (remove after debugging) -->
+  <div class="hidden" id="debug-info" data-is-logged-in={isLoggedIn ? "true" : "false"} data-user-role={userRole || "none"} data-has-current-user={currentUser ? "true" : "false"} data-current-user-id={currentUser?.id || "none"}></div>
+  
   <PageHero 
     title="Player Characters" 
     heroImageUrl={heroImageUrl}
@@ -118,7 +131,14 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
   <div id="characterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
-      <div class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-class={character.class} data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} data-is-active={character.isActive ? "true" : "false"}>
+      <div 
+        class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" 
+        data-class={character.class} 
+        data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} 
+        data-is-active={character.isActive ? "true" : "false"}
+        data-user-id={character.userId || "unowned"}
+        data-can-edit={canEditCharacter(character) ? "true" : "false"}
+      >
         <a href={`/characters/${character.id}`} class="block">
           <div class="relative h-56 overflow-hidden">
             <!-- Blurred background -->
