@@ -46,6 +46,17 @@ main {
   flex: 1 0 auto;
 }
 
+.app-nav {
+  background: rgba(114, 54, 54, 0.8);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.dark .app-nav {
+  background: rgba(33, 40, 51, 0.6);
+  box-shadow: 0 4px 12px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
+}
+
 /* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
 @media (display-mode: standalone) and (max-width: 1024px) {
   .pwa-hide-nav {
