@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
-import { db, Character, PageSettings, eq } from 'astro:db';
+import { db, Character, PageSettings, User, eq } from 'astro:db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../lib/auth';
 
 const characters = await db.select().from(Character);
@@ -10,6 +10,9 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
 const currentUser = await getCurrentUser(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Fetch all users to check legacy ownership (characterIds arrays)
+const allUsers = await db.select().from(User);
 
 // Get the edit parameter from URL if present
 const editCharacterId = Astro.url.searchParams.get('edit');
@@ -24,6 +27,23 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 // Prepare user name for client-side script
 const currentUserName = currentUser ? (currentUser.firstName || currentUser.username) : null;
 
+// Helper function to find owner of a character (checks both modern and legacy ownership)
+const findCharacterOwner = (character: typeof characters[0]) => {
+  // Check modern ownership first (character.userId field)
+  if (character.userId) {
+    return { userId: character.userId, isLegacy: false };
+  }
+  
+  // Check legacy ownership (character ID in any user's characterIds array)
+  for (const user of allUsers) {
+    if (user.characterIds && Array.isArray(user.characterIds) && user.characterIds.includes(character.id)) {
+      return { userId: user.id, isLegacy: true };
+    }
+  }
+  
+  return null; // Unowned
+};
+
 // Function to check if current user can edit a character
 const canEditCharacter = (character: typeof characters[0]) => {
   // Not logged in - no edit rights
@@ -32,17 +52,14 @@ const canEditCharacter = (character: typeof characters[0]) => {
   // Admins can edit everything - prioritize this check
   if (userRole === 'admin') return true;
   
-  // Check if character is unowned - any logged-in user can edit
-  const isUnowned = !character.userId;
-  if (isUnowned) return true;
+  // Find the owner of this character
+  const owner = findCharacterOwner(character);
   
-  // Check if current user owns this character (two ways for backwards compatibility):
-  // 1. New way: character.userId matches current user ID
-  // 2. Legacy way: character ID is in user's characterIds array
-  if (currentUser) {
-    if (character.userId === currentUser.id) return true;
-    if (currentUser.characterIds && Array.isArray(currentUser.characterIds) && currentUser.characterIds.includes(character.id)) return true;
-  }
+  // If unowned, any logged-in user can edit
+  if (!owner) return true;
+  
+  // Check if current user is the owner
+  if (currentUser && owner.userId === currentUser.id) return true;
   
   // Otherwise, no edit rights
   return false;
@@ -50,14 +67,17 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
 // Helper function to get ownership display text
 const getOwnershipText = (character: typeof characters[0]) => {
-  if (character.userId) {
-    return `Owner: ${character.userId}`;
+  const owner = findCharacterOwner(character);
+  
+  if (!owner) {
+    return "Unowned";
   }
-  // Check if this character is in current user's characterIds (legacy ownership)
-  if (currentUser && currentUser.characterIds && Array.isArray(currentUser.characterIds) && currentUser.characterIds.includes(character.id)) {
-    return `Owner: ${currentUser.id} (legacy)`;
+  
+  if (owner.isLegacy) {
+    return `Owner: ${owner.userId} (legacy)`;
   }
-  return "Unowned";
+  
+  return `Owner: ${owner.userId}`;
 };
 ---
 
