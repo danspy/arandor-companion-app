@@ -639,6 +639,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
 
   // Initialize character modal and form functionality
   function initializeCharacterModal() {
+    console.log('[DEBUG] Initializing character modal...');
     const modal = document.getElementById('characterModal');
     const form = document.getElementById('characterForm') as HTMLFormElement;
     const modalTitle = document.getElementById('modalTitle');
@@ -648,8 +649,12 @@ const canEditCharacter = (character: typeof characters[0]) => {
     const fetchStatus = document.getElementById('fetchStatus');
     const assignToMeContainer = document.getElementById('assignToMeContainer');
 
+    console.log('[DEBUG] addButton found:', !!addButton);
+    console.log('[DEBUG] modal found:', !!modal);
+
     // Open modal for new character
     addButton?.addEventListener('click', () => {
+      console.log('[DEBUG] Add button clicked!');
       editingId = null;
       form.reset();
       if (modalTitle) modalTitle.textContent = 'New Character';
@@ -954,12 +959,15 @@ const canEditCharacter = (character: typeof characters[0]) => {
   // Handle character edit/delete actions with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
+    console.log('[DEBUG] Click detected on:', target.className);
     const modal = document.getElementById('characterModal');
     const modalTitle = document.getElementById('modalTitle');
     
     // Edit character
     if (target.classList.contains('edit-character')) {
+      console.log('[DEBUG] Edit button clicked!');
       const id = target.getAttribute('data-id');
+      console.log('[DEBUG] Character ID:', id);
       if (!id) return;
       
       try {
@@ -1015,7 +1023,9 @@ const canEditCharacter = (character: typeof characters[0]) => {
     
     // Delete character
     if (target.classList.contains('delete-character')) {
+      console.log('[DEBUG] Delete button clicked!');
       const id = target.getAttribute('data-id');
+      console.log('[DEBUG] Character ID for delete:', id);
       if (!id) return;
       
       if (confirm('Are you sure you want to delete this character?')) {
