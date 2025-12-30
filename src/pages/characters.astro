@@ -36,11 +36,28 @@ const canEditCharacter = (character: typeof characters[0]) => {
   const isUnowned = !character.userId;
   if (isUnowned) return true;
   
-  // Check if current user owns this character
-  if (currentUser && character.userId === currentUser.id) return true;
+  // Check if current user owns this character (two ways for backwards compatibility):
+  // 1. New way: character.userId matches current user ID
+  // 2. Legacy way: character ID is in user's characterIds array
+  if (currentUser) {
+    if (character.userId === currentUser.id) return true;
+    if (currentUser.characterIds && Array.isArray(currentUser.characterIds) && currentUser.characterIds.includes(character.id)) return true;
+  }
   
   // Otherwise, no edit rights
   return false;
+};
+
+// Helper function to get ownership display text
+const getOwnershipText = (character: typeof characters[0]) => {
+  if (character.userId) {
+    return `Owner: ${character.userId}`;
+  }
+  // Check if this character is in current user's characterIds (legacy ownership)
+  if (currentUser && currentUser.characterIds && Array.isArray(currentUser.characterIds) && currentUser.characterIds.includes(character.id)) {
+    return `Owner: ${currentUser.id} (legacy)`;
+  }
+  return "Unowned";
 };
 ---
 
@@ -190,7 +207,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
             )}
             <!-- Debug badge showing ownership and edit permission -->
             <div class="absolute bottom-3 right-3 bg-blue-800/90 text-white text-xs px-3 py-1 rounded-full shadow-lg">
-              {character.userId ? `Owner: ${character.userId}` : "Unowned"} | Can edit: {canEditCharacter(character) ? "YES" : "NO"}
+              {getOwnershipText(character)} | Can edit: {canEditCharacter(character) ? "YES" : "NO"}
             </div>
           </div>
         </a>
