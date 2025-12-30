@@ -742,7 +742,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
         charisma: parseInt(formData.get('charisma')) || 10,
       };
       
-      const data: any = {
+      const data = {
         name,
         player,
         race,
@@ -1063,7 +1063,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
     
     let currentFilter = localStorage.getItem(FILTER_STORAGE_KEY) || 'active';
     
-    const updateFilterButtons = (filter: string) => {
+    const updateFilterButtons = (filter) => {
       // Reset all buttons to inactive state
       [filterActive, filterInactive, filterAll].forEach(btn => {
         if (btn) {
@@ -1085,7 +1085,7 @@ const canEditCharacter = (character: typeof characters[0]) => {
       }
     };
     
-    const applyFilters = (searchText: string, filter: string) => {
+    const applyFilters = (searchText, filter) => {
       const searchTerms = searchText.toLowerCase().split(/\s+/).filter(term => term.length > 0);
       characterCards.forEach(card => {
         const searchData = card.getAttribute('data-search') || '';
