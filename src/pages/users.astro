@@ -101,7 +101,7 @@ const users = await db.select({
 
   <!-- Add User Modal -->
   <div id="addUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900">
+    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400">Add New User</h2>
         <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -184,7 +184,7 @@ const users = await db.select({
 
   <!-- Edit User Modal -->
   <div id="editUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900">
+    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400">Edit User</h2>
         <button id="closeEditModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
@@ -274,7 +274,7 @@ const users = await db.select({
 
   <!-- Delete Confirmation Modal -->
   <div id="deleteUserModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900">
+    <div class="bg-white dark:bg-black rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-900 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="text-2xl font-bold text-red-700 dark:text-red-400">Delete User</h2>
         <button id="closeDeleteModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
