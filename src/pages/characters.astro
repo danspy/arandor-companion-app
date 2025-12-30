@@ -301,6 +301,20 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <label for="isActive" class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Player</label>
         </div>
         
+        <div class="flex items-center gap-2">
+          <input 
+            type="checkbox" 
+            id="assignToMe" 
+            name="assignToMe" 
+            checked
+            class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 dark:bg-gray-700"
+          >
+          <label for="assignToMe" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Assign this character to my account
+            <span class="text-xs text-gray-500 dark:text-gray-400 block">When checked, you'll be the only one (besides admins) who can edit or delete this character</span>
+          </label>
+        </div>
+        
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label for="race" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Race</label>
@@ -673,6 +687,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         class: className,
         level: parseInt(level),
         isActive: (document.getElementById('isActive') as HTMLInputElement).checked,
+        assignToUser: (document.getElementById('assignToMe') as HTMLInputElement).checked,
         avatarUrl,
         dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
         stats,

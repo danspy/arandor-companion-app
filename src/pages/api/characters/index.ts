@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
-import { db, Character, eq } from 'astro:db';
+import { db, Character, User, eq } from 'astro:db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
+import { getCurrentUser } from '../../../lib/auth';
 
 export const GET: APIRoute = async () => {
   try {
@@ -26,6 +27,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const id = crypto.randomUUID();
     const now = new Date();
     
+    // Get current user for auto-assignment
+    const currentUser = await getCurrentUser(cookies);
+    
+    // Determine userId: use current user if assignToUser is not explicitly false
+    const assignToUser = body.assignToUser !== false;
+    const userId = assignToUser && currentUser ? currentUser.id : undefined;
+    
     await db.insert(Character).values({
       id,
       name: body.name,
@@ -33,6 +41,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       level: body.level,
       race: body.race,
       player: body.player,
+      userId: userId,
       isActive: body.isActive !== undefined ? body.isActive : true,
       avatarUrl: body.avatarUrl,
       dndbeyondUrl: body.dndbeyondUrl,
@@ -54,6 +63,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       createdAt: now,
       updatedAt: now,
     });
+
+    // If character is assigned to user, update user's characterIds array
+    if (userId && currentUser) {
+      const currentCharacterIds = (currentUser.characterIds as string[]) || [];
+      if (!currentCharacterIds.includes(id)) {
+        await db.update(User)
+          .set({ characterIds: [...currentCharacterIds, id] })
+          .where(eq(User.id, userId));
+      }
+    }
 
     const newCharacter = await db.select().from(Character).where(eq(Character.id, id));
     

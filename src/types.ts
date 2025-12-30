@@ -29,6 +29,7 @@ export interface Character {
   level: number;
   race: string;
   player: string;
+  userId?: string; // Foreign key to User - tracks ownership
   isActive?: boolean;
   avatarUrl?: string;
   dndbeyondUrl?: string;
