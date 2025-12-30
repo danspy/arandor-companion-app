@@ -16,8 +16,11 @@
   --modal-safe-right: max(env(safe-area-inset-right), 1rem);
   
   /* Modal UI clearance for PWA elements */
-  --pwa-ui-bottom-clearance: 72px; /* Floating menu button + spacing */
+  --pwa-ui-bottom-clearance: 72px; /* Floating menu: button height (56px) + spacing (16px) = 72px */
   --modal-extra-spacing: 2rem; /* Additional safe spacing */
+  
+  /* Modal content max height calculation */
+  --modal-content-max-height: calc(100vh - var(--modal-safe-top) - var(--modal-safe-bottom) - var(--pwa-ui-bottom-clearance) - var(--modal-extra-spacing));
 }
 
 html, body {
@@ -292,8 +295,6 @@ html[data-transition="slide-right"] ::view-transition-new(root) {
   
   /* Modal content should have additional bottom clearance for floating menu and quick access */
   .modal-content-safe {
-    /* Calculate max height accounting for all safe zones and PWA UI elements */
-    /* Top safe area + bottom safe area + floating menu + extra spacing */
-    max-height: calc(100vh - var(--modal-safe-top) - var(--modal-safe-bottom) - var(--pwa-ui-bottom-clearance) - var(--modal-extra-spacing)) !important;
+    max-height: var(--modal-content-max-height) !important;
   }
 }
