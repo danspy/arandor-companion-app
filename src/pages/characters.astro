@@ -301,7 +301,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <label for="isActive" class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Player</label>
         </div>
         
-        <div class="flex items-center gap-2">
+        <div id="assignToMeContainer" class="hidden flex items-center gap-2">
           <input 
             type="checkbox" 
             id="assignToMe" 
@@ -603,12 +603,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const cancelButton = document.getElementById('cancelModal');
     const fetchButton = document.getElementById('fetchFromDndBeyond');
     const fetchStatus = document.getElementById('fetchStatus');
+    const assignToMeContainer = document.getElementById('assignToMeContainer');
 
     // Open modal for new character
     addButton?.addEventListener('click', () => {
       editingId = null;
       form.reset();
       if (modalTitle) modalTitle.textContent = 'New Character';
+      // Show "Assign to me" checkbox only when creating a new character
+      if (assignToMeContainer) {
+        assignToMeContainer.classList.remove('hidden');
+        assignToMeContainer.classList.add('flex');
+      }
       modal?.classList.remove('hidden');
     });
 
@@ -680,14 +686,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         charisma: parseInt(formData.get('charisma') as string) || 10,
       };
       
-      const data = {
+      const data: any = {
         name,
         player,
         race,
         class: className,
         level: parseInt(level),
         isActive: (document.getElementById('isActive') as HTMLInputElement).checked,
-        assignToUser: (document.getElementById('assignToMe') as HTMLInputElement).checked,
         avatarUrl,
         dndbeyondUrl: formData.get('dndbeyondUrl') || undefined,
         stats,
@@ -702,6 +707,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         skin: formData.get('skin') || undefined,
         hair: formData.get('hair') || undefined,
       };
+      
+      // Only include assignToUser when creating a new character
+      if (!editingId) {
+        data.assignToUser = (document.getElementById('assignToMe') as HTMLInputElement).checked;
+      }
 
       try {
         const url = editingId ? `/api/characters/${editingId}` : '/api/characters';
@@ -875,6 +885,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
           
           modalTitle.textContent = 'Edit Character';
+          // Hide "Assign to me" checkbox when editing
+          const assignToMeContainer = document.getElementById('assignToMeContainer');
+          if (assignToMeContainer) {
+            assignToMeContainer.classList.add('hidden');
+            assignToMeContainer.classList.remove('flex');
+          }
           modal.classList.remove('hidden');
           
           // Clear the URL parameter so refreshing doesn't re-open the modal
@@ -936,6 +952,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         (document.getElementById('hair') as HTMLInputElement).value = character.hair || '';
         
         if (modalTitle) modalTitle.textContent = 'Edit Character';
+        // Hide "Assign to me" checkbox when editing
+        const assignToMeContainer = document.getElementById('assignToMeContainer');
+        if (assignToMeContainer) {
+          assignToMeContainer.classList.add('hidden');
+          assignToMeContainer.classList.remove('flex');
+        }
         modal?.classList.remove('hidden');
       } catch (error) {
         console.error('Failed to load character:', error);

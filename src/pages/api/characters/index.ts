@@ -30,8 +30,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Get current user for auto-assignment
     const currentUser = await getCurrentUser(cookies);
     
-    // Determine userId: use current user if assignToUser is not explicitly false
-    const assignToUser = body.assignToUser !== false;
+    // Determine userId: only assign if assignToUser is explicitly true
+    const assignToUser = body.assignToUser === true;
     const userId = assignToUser && currentUser ? currentUser.id : undefined;
     
     await db.insert(Character).values({
