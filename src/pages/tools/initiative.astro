@@ -114,7 +114,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     canEditHero={canEdit}
   />
 
-  <div data-can-edit={canEdit}>
+  <div data-can-edit={canEdit} data-user-id={currentUser?.id || ''}>
     <div class="mb-4 sm:mb-6">
       <!-- Mobile: Round info and buttons -->
       <!-- Desktop: Round info with buttons on the right (consistent with app layout) -->
@@ -239,6 +239,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               data-active-index={activeIndex}
               data-is-active={entry.isActive}
               data-entry-id={entry.id}
+              data-character-id={entry.characterId || ''}
+              data-can-view-hp={canViewActualHP(entry)}
+              data-can-edit-hp={canEditHP(entry)}
             >
               <div class="p-2 sm:p-3">
                 <!-- Compact layout: Single line on mobile and desktop -->
@@ -869,6 +872,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             
             if (entry.type === 'character') {
               characterSelectContainer?.classList.remove('hidden');
+              // Set character select if characterId exists
+              if (entry.characterId && characterSelect) {
+                characterSelect.value = entry.characterId;
+              }
             } else if (entry.type === 'npc') {
               npcSelectContainer?.classList.remove('hidden');
             } else if (entry.type === 'monster') {
@@ -1545,7 +1552,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               // Update HP display
               const hpElement = card.querySelector('[data-hp-display]');
               if (hpElement) {
-                if (canEdit) {
+                // Check if this player can see actual HP for this entry
+                const canViewHp = card.getAttribute('data-can-view-hp') === 'true';
+                
+                if (canViewHp) {
+                  // Show actual HP values
                   if (entry.hp !== null && entry.maxHp !== null) {
                     let hpText = `${entry.hp}/${entry.maxHp}`;
                     if (entry.tempHp && entry.tempHp > 0) {
@@ -1558,7 +1569,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     hpElement.textContent = '-';
                   }
                 } else {
-                  // Update health status for players
+                  // Show health status for players who don't own this character
                   const getHealthStatus = (hp, maxHp) => {
                     if (!hp || !maxHp || hp <= 0) {
                       if (hp === 0) return { text: 'Dead', classes: 'bg-gray-800 text-white' };
