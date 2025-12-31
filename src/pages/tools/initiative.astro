@@ -58,9 +58,16 @@ const canEditHP = (entry: typeof sortedInitiatives[0]) => {
   if (canEdit) return true;
   
   // Players can only edit their own character's HP
-  if (entry.type === 'character' && entry.characterId && currentUser) {
-    const character = activeCharacters.find(c => c.id === entry.characterId);
-    return character && character.userId === currentUser.id;
+  if (entry.type === 'character' && currentUser) {
+    // First, try to match by characterId (new way)
+    if (entry.characterId) {
+      const character = activeCharacters.find(c => c.id === entry.characterId);
+      return character && character.userId === currentUser.id;
+    }
+    
+    // Fallback: match by name for legacy entries without characterId
+    const character = activeCharacters.find(c => c.name === entry.name && c.userId === currentUser.id);
+    return !!character;
   }
   
   return false;
@@ -72,9 +79,16 @@ const canViewActualHP = (entry: typeof sortedInitiatives[0]) => {
   if (canEdit) return true;
   
   // Players can see their own character's HP
-  if (entry.type === 'character' && entry.characterId && currentUser) {
-    const character = activeCharacters.find(c => c.id === entry.characterId);
-    return character && character.userId === currentUser.id;
+  if (entry.type === 'character' && currentUser) {
+    // First, try to match by characterId (new way)
+    if (entry.characterId) {
+      const character = activeCharacters.find(c => c.id === entry.characterId);
+      return character && character.userId === currentUser.id;
+    }
+    
+    // Fallback: match by name for legacy entries without characterId
+    const character = activeCharacters.find(c => c.name === entry.name && c.userId === currentUser.id);
+    return !!character;
   }
   
   return false;

@@ -42,8 +42,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Check if this is a character entry with a characterId
-    if (entry.type !== 'character' || !entry.characterId) {
+    // Check if this is a character entry
+    if (entry.type !== 'character') {
       return new Response(JSON.stringify({ error: 'Can only update HP for character entries' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
@@ -51,7 +51,16 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     // Fetch the character to check ownership
-    const character = await db.select().from(Character).where(eq(Character.id, entry.characterId)).get();
+    let character;
+    
+    if (entry.characterId) {
+      // New way: using characterId
+      character = await db.select().from(Character).where(eq(Character.id, entry.characterId)).get();
+    } else {
+      // Fallback for legacy entries: match by name
+      const characters = await db.select().from(Character);
+      character = characters.find(c => c.name === entry.name);
+    }
     
     if (!character) {
       return new Response(JSON.stringify({ error: 'Character not found' }), {
