@@ -83,6 +83,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         name: body.name.trim(),
         initiative: body.initiative,
         type: body.type,
+        characterId: body.characterId || null,
         hp: body.hp || null,
         maxHp: body.maxHp || null,
         tempHp: body.tempHp || null,

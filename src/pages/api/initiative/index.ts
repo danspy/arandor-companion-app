@@ -68,6 +68,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       name: body.name.trim(),
       initiative: body.initiative,
       type,
+      characterId: body.characterId || null,
       hp: body.hp || null,
       maxHp: body.maxHp || null,
       tempHp: body.tempHp || null,

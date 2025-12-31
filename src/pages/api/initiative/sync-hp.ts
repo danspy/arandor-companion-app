@@ -20,13 +20,17 @@ export const POST: APIRoute = async ({ cookies }) => {
     const charactersWithDnDBeyond = characters.filter(c => c.dndbeyondUrl);
 
     // Create a map of character IDs to their initiative entries
-    // Store characterId in initiative entries for proper matching
     const characterIdToInitiative = new Map();
     initiatives.forEach(initiative => {
-      // Find matching character by name (temporary until we add characterId to InitiativeTracker)
-      const matchingChar = characters.find(c => c.name === initiative.name);
-      if (matchingChar) {
-        characterIdToInitiative.set(matchingChar.id, initiative);
+      // Use characterId field for direct matching
+      if (initiative.characterId) {
+        characterIdToInitiative.set(initiative.characterId, initiative);
+      } else {
+        // Fallback: Find matching character by name for entries without characterId
+        const matchingChar = characters.find(c => c.name === initiative.name);
+        if (matchingChar) {
+          characterIdToInitiative.set(matchingChar.id, initiative);
+        }
       }
     });
 

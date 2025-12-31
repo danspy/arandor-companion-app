@@ -2,12 +2,13 @@
 import Layout from '../../layouts/Layout.astro';
 import Button from '../../components/Button.astro';
 import PageHero from '../../components/PageHero.astro';
-import { isAuthenticated, getUserRole } from '../../lib/auth';
-import { db, InitiativeTracker, Character, PageSettings, eq } from 'astro:db';
+import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
+import { db, InitiativeTracker, Character, PageSettings, User, eq } from 'astro:db';
 
 // Initiative tracker is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
+const currentUser = await getCurrentUser(Astro.cookies);
 
 if (!isLoggedIn) {
   return Astro.redirect('/login');
@@ -30,6 +31,9 @@ const activeCharacters = await db.select().from(Character).where(eq(Character.is
 const { NPC } = await import('astro:db');
 const activeNPCs = await db.select().from(NPC);
 
+// Fetch all users to check legacy ownership (characterIds arrays)
+const allUsers = await db.select().from(User);
+
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'initiative'));
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
@@ -50,6 +54,77 @@ if (!combatState) {
   });
   combatState = { id: COMBAT_STATE_ID, currentRound: 1, currentTurnIndex: 0, status: 'stopped', updatedAt: new Date() };
 }
+
+// Helper function to find owner of a character (checks both modern and legacy ownership)
+const findCharacterOwner = (character: typeof activeCharacters[0]) => {
+  // Check modern ownership first (character.userId field)
+  if (character.userId) {
+    return { userId: character.userId, isLegacy: false };
+  }
+  
+  // Check legacy ownership (character ID in any user's characterIds array)
+  for (const user of allUsers) {
+    if (user.characterIds && Array.isArray(user.characterIds) && user.characterIds.includes(character.id)) {
+      return { userId: user.id, isLegacy: true };
+    }
+  }
+  
+  return null; // Unowned
+};
+
+// Helper function to check if current player owns this initiative entry
+const canEditHP = (entry: typeof sortedInitiatives[0]) => {
+  // DM/Admin can always edit
+  if (canEdit) return true;
+  
+  // Players can only edit their own character's HP
+  if (entry.type === 'character' && currentUser) {
+    // First, try to match by characterId (new way)
+    if (entry.characterId) {
+      const character = activeCharacters.find(c => c.id === entry.characterId);
+      if (character) {
+        const owner = findCharacterOwner(character);
+        return owner && owner.userId === currentUser.id;
+      }
+    }
+    
+    // Fallback: match by name for legacy entries without characterId
+    const character = activeCharacters.find(c => c.name === entry.name);
+    if (character) {
+      const owner = findCharacterOwner(character);
+      return owner && owner.userId === currentUser.id;
+    }
+  }
+  
+  return false;
+};
+
+// Helper function to check if player should see actual HP (not just status)
+const canViewActualHP = (entry: typeof sortedInitiatives[0]) => {
+  // DM/Admin can always see actual HP
+  if (canEdit) return true;
+  
+  // Players can see their own character's HP
+  if (entry.type === 'character' && currentUser) {
+    // First, try to match by characterId (new way)
+    if (entry.characterId) {
+      const character = activeCharacters.find(c => c.id === entry.characterId);
+      if (character) {
+        const owner = findCharacterOwner(character);
+        return owner && owner.userId === currentUser.id;
+      }
+    }
+    
+    // Fallback: match by name for legacy entries without characterId
+    const character = activeCharacters.find(c => c.name === entry.name);
+    if (character) {
+      const owner = findCharacterOwner(character);
+      return owner && owner.userId === currentUser.id;
+    }
+  }
+  
+  return false;
+};
 
 // Type badge colors
 const getTypeBadgeColor = (type: string) => {
@@ -85,7 +160,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     canEditHero={canEdit}
   />
 
-  <div data-can-edit={canEdit}>
+  <div data-can-edit={canEdit} data-user-id={currentUser?.id || ''}>
     <div class="mb-4 sm:mb-6">
       <!-- Mobile: Round info and buttons -->
       <!-- Desktop: Round info with buttons on the right (consistent with app layout) -->
@@ -210,6 +285,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               data-active-index={activeIndex}
               data-is-active={entry.isActive}
               data-entry-id={entry.id}
+              data-character-id={entry.characterId || ''}
+              data-can-view-hp={canViewActualHP(entry)}
+              data-can-edit-hp={canEditHP(entry)}
             >
               <div class="p-2 sm:p-3">
                 <!-- Compact layout: Single line on mobile and desktop -->
@@ -230,8 +308,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   </div>
                   
                   <!-- HP display (inline for all) -->
-                  <div class="flex-shrink-0">
-                    {canEdit ? (
+                  <div class="flex-shrink-0 flex items-center gap-1">
+                    {canViewActualHP(entry) ? (
                       <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
                         {entry.hp !== null && entry.maxHp !== null ? (
                           <span data-hp-display>
@@ -262,6 +340,21 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                           </span>
                         );
                       })()
+                    )}
+                    {!canEdit && canEditHP(entry) && (
+                      <button 
+                        class="edit-hp-btn text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                        data-id={entry.id}
+                        data-hp={entry.hp || ''}
+                        data-max-hp={entry.maxHp || ''}
+                        data-temp-hp={entry.tempHp || ''}
+                        data-name={entry.name}
+                        title="Edit HP"
+                      >
+                        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                        </svg>
+                      </button>
                     )}
                   </div>
                   
@@ -552,6 +645,87 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     </div>
   )}
 
+  <!-- HP Edit Modal for Players -->
+  <div id="hpEditModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full modal-content-safe">
+      <div class="p-6">
+        <div class="flex justify-between items-center mb-6">
+          <h2 id="hpModalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit HP</h2>
+          <button id="closeHpModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+          </button>
+        </div>
+
+        <form id="hpEditForm" class="space-y-4">
+          <input type="hidden" id="hpEntryId" />
+          
+          <div>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Update HP for <span id="hpCharacterName" class="font-semibold"></span>
+            </p>
+          </div>
+          
+          <div class="grid grid-cols-3 gap-4">
+            <div>
+              <label for="hpCurrent" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Current HP
+              </label>
+              <input 
+                type="number" 
+                id="hpCurrent" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="HP"
+              />
+            </div>
+
+            <div>
+              <label for="hpMax" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Max HP
+              </label>
+              <input 
+                type="number" 
+                id="hpMax" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Max HP"
+              />
+            </div>
+
+            <div>
+              <label for="hpTemp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Temp HP
+              </label>
+              <input 
+                type="number" 
+                id="hpTemp" 
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                placeholder="Temp"
+              />
+            </div>
+          </div>
+
+          <div class="flex gap-4 mt-6">
+            <button 
+              type="submit" 
+              id="saveHpBtn"
+              class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            >
+              <span id="saveHpBtnText">Save</span>
+            </button>
+            <button 
+              type="button" 
+              id="cancelHpBtn"
+              class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <style>
     /* Turn indicator - thicker yellow border */
     .initiative-card.border-yellow-500 {
@@ -744,6 +918,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
             
             if (entry.type === 'character') {
               characterSelectContainer?.classList.remove('hidden');
+              // Set character select if characterId exists
+              if (entry.characterId && characterSelect) {
+                characterSelect.value = entry.characterId;
+              }
             } else if (entry.type === 'npc') {
               npcSelectContainer?.classList.remove('hidden');
             } else if (entry.type === 'monster') {
@@ -844,11 +1022,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
 
         const id = entryIdInput.value;
         const isEdit = !!id;
+        
+        // Get characterId if a character is selected
+        let characterId = null;
+        if (typeSelect.value === 'character' && characterSelect && characterSelect.value) {
+          characterId = characterSelect.value;
+        }
 
         const baseData = {
           name: nameInput.value.trim(),
           initiative: parseInt(initiativeInput.value),
           type: typeSelect.value,
+          characterId: characterId,
           hp: hpInput.value ? parseInt(hpInput.value) : null,
           maxHp: maxHpInput.value ? parseInt(maxHpInput.value) : null,
           tempHp: tempHpInput.value ? parseInt(tempHpInput.value) : null,
@@ -1249,6 +1434,133 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       }
     }
     
+    // Setup HP editing for players (their own characters only)
+    let hpEditInitialized = false;
+    let hpFormSubmitHandler = null;
+    let hpEditHandlers = new Map();
+    
+    function setupPlayerHPEdit() {
+      if (hpEditInitialized) return;
+      
+      const container = document.querySelector('[data-can-edit]');
+      const canEdit = container?.getAttribute('data-can-edit') === 'true';
+      
+      if (canEdit) return; // Only run for non-DM/Admin users (players)
+      
+      hpEditInitialized = true;
+      
+      const hpModal = document.getElementById('hpEditModal');
+      const hpForm = document.getElementById('hpEditForm');
+      const closeHpModalBtn = document.getElementById('closeHpModalBtn');
+      const cancelHpBtn = document.getElementById('cancelHpBtn');
+      
+      const hpEntryIdInput = document.getElementById('hpEntryId');
+      const hpCharacterName = document.getElementById('hpCharacterName');
+      const hpCurrentInput = document.getElementById('hpCurrent');
+      const hpMaxInput = document.getElementById('hpMax');
+      const hpTempInput = document.getElementById('hpTemp');
+      
+      // Close modal function
+      const closeHpModal = () => {
+        hpModal?.classList.add('hidden');
+        hpModal?.classList.remove('flex');
+        hpForm?.reset();
+      };
+      
+      closeHpModalBtn?.addEventListener('click', closeHpModal);
+      cancelHpBtn?.addEventListener('click', closeHpModal);
+      
+      // HP Edit button handlers
+      document.querySelectorAll('.edit-hp-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        
+        const handler = () => {
+          const name = btn.getAttribute('data-name');
+          const hp = btn.getAttribute('data-hp');
+          const maxHp = btn.getAttribute('data-max-hp');
+          const tempHp = btn.getAttribute('data-temp-hp');
+          
+          hpEntryIdInput.value = id;
+          hpCharacterName.textContent = name;
+          hpCurrentInput.value = hp || '';
+          hpMaxInput.value = maxHp || '';
+          hpTempInput.value = tempHp || '';
+          
+          hpModal?.classList.remove('hidden');
+          hpModal?.classList.add('flex');
+        };
+        
+        hpEditHandlers.set(id, handler);
+        btn.addEventListener('click', handler);
+      });
+      
+      // Form submission handler
+      hpFormSubmitHandler = async (e) => {
+        e.preventDefault();
+        
+        const saveBtn = document.getElementById('saveHpBtn');
+        const saveBtnText = document.getElementById('saveHpBtnText');
+        const originalText = saveBtnText?.textContent || 'Save';
+        
+        if (saveBtn) saveBtn.disabled = true;
+        if (saveBtnText) {
+          saveBtnText.innerHTML = '<span class="spinner"></span>Saving...';
+        }
+        
+        try {
+          const response = await fetch('/api/initiative/update-hp', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              initiativeId: hpEntryIdInput.value,
+              hp: hpCurrentInput.value ? parseInt(hpCurrentInput.value) : null,
+              maxHp: hpMaxInput.value ? parseInt(hpMaxInput.value) : null,
+              tempHp: hpTempInput.value ? parseInt(hpTempInput.value) : null,
+            }),
+          });
+          
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update HP');
+          }
+          
+          const updatedEntry = await response.json();
+          
+          // Update the HP display immediately in the UI
+          const card = document.querySelector(`[data-entry-id="${hpEntryIdInput.value}"]`);
+          if (card) {
+            const hpElement = card.querySelector('[data-hp-display]');
+            if (hpElement && updatedEntry.hp !== null && updatedEntry.maxHp !== null) {
+              let hpText = `${updatedEntry.hp}/${updatedEntry.maxHp}`;
+              if (updatedEntry.tempHp && updatedEntry.tempHp > 0) {
+                hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${updatedEntry.tempHp})</span>`;
+              }
+              hpElement.innerHTML = hpText;
+            }
+          }
+          
+          // Close modal and reset form
+          closeHpModal();
+          
+          // Reset button state
+          if (saveBtn) saveBtn.disabled = false;
+          if (saveBtnText) {
+            saveBtnText.textContent = originalText;
+          }
+        } catch (error) {
+          console.error('Error updating HP:', error);
+          alert(error instanceof Error ? error.message : 'Failed to update HP');
+          
+          if (saveBtn) saveBtn.disabled = false;
+          if (saveBtnText) {
+            saveBtnText.textContent = originalText;
+          }
+        }
+      };
+      
+      hpForm?.addEventListener('submit', hpFormSubmitHandler);
+    }
+    
     // Setup polling for non-edit users (players)
     let pollingInitialized = false;
     let pollInterval = null;
@@ -1308,7 +1620,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
               // Update HP display
               const hpElement = card.querySelector('[data-hp-display]');
               if (hpElement) {
-                if (canEdit) {
+                // Check if this player can see actual HP for this entry
+                const canViewHp = card.getAttribute('data-can-view-hp') === 'true';
+                
+                if (canViewHp) {
+                  // Show actual HP values
                   if (entry.hp !== null && entry.maxHp !== null) {
                     let hpText = `${entry.hp}/${entry.maxHp}`;
                     if (entry.tempHp && entry.tempHp > 0) {
@@ -1321,7 +1637,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                     hpElement.textContent = '-';
                   }
                 } else {
-                  // Update health status for players
+                  // Show health status for players who don't own this character
                   const getHealthStatus = (hp, maxHp) => {
                     if (!hp || !maxHp || hp <= 0) {
                       if (hp === 0) return { text: 'Dead', classes: 'bg-gray-800 text-white' };
@@ -1506,6 +1822,24 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       // Reset polling flag
       pollingInitialized = false;
       
+      // Reset HP edit flag
+      hpEditInitialized = false;
+      
+      // Remove HP edit handlers
+      const hpForm = document.getElementById('hpEditForm');
+      if (hpFormSubmitHandler && hpForm) {
+        hpForm.removeEventListener('submit', hpFormSubmitHandler);
+        hpFormSubmitHandler = null;
+      }
+      
+      document.querySelectorAll('.edit-hp-btn').forEach(btn => {
+        const id = btn.getAttribute('data-id');
+        if (hpEditHandlers.has(id)) {
+          btn.removeEventListener('click', hpEditHandlers.get(id));
+        }
+      });
+      hpEditHandlers.clear();
+      
       // Reset initialization flag so it can be initialized again on next page
       isInitialized = false;
     });
@@ -1513,12 +1847,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
     // Run on initial page load
     document.addEventListener('DOMContentLoaded', () => {
       initializeInitiativeTracker();
+      setupPlayerHPEdit();
       setupPollingForPlayers();
     });
     
     // Run after Astro view transitions
     document.addEventListener('astro:page-load', () => {
       initializeInitiativeTracker();
+      setupPlayerHPEdit();
       setupPollingForPlayers();
     });
   </script>

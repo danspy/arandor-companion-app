@@ -165,6 +165,7 @@ const InitiativeTracker = defineTable({
     name: column.text(),
     initiative: column.number(),
     type: column.text(), // 'character' | 'npc' | 'monster' | 'other'
+    characterId: column.text({ optional: true }), // Foreign key to Character - links to character for ownership checks
     hp: column.number({ optional: true }), // Current HP
     maxHp: column.number({ optional: true }), // Max HP
     tempHp: column.number({ optional: true }), // Temporary HP
