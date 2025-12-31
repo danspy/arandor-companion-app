@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, InitiativeTracker, Character, eq } from 'astro:db';
+import { db, InitiativeTracker, Character, User, eq } from 'astro:db';
 import { requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 
@@ -69,8 +69,27 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       });
     }
 
-    // Check ownership - only the character's owner can update HP
-    if (character.userId !== currentUser.id) {
+    // Check ownership - support both modern and legacy ownership
+    let isOwner = false;
+    
+    // Check modern ownership first (character.userId field)
+    if (character.userId) {
+      isOwner = character.userId === currentUser.id;
+    } else {
+      // Check legacy ownership (character ID in user's characterIds array)
+      const allUsers = await db.select().from(User);
+      for (const user of allUsers) {
+        if (user.id === currentUser.id && 
+            user.characterIds && 
+            Array.isArray(user.characterIds) && 
+            user.characterIds.includes(character.id)) {
+          isOwner = true;
+          break;
+        }
+      }
+    }
+    
+    if (!isOwner) {
       return new Response(JSON.stringify({ error: 'You can only update HP for your own character' }), {
         status: 403,
         headers: { 'Content-Type': 'application/json' }
