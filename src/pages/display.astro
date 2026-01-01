@@ -286,7 +286,7 @@ const COMBAT_STATE_ID = 'current-combat';
               } else {
                 // Location and NPCs - both stacked vertically
                 leftPanel.style.height = '50%';
-                rightPanel.style.height = '0';
+                rightPanel.style.height = 'auto';
                 rightPanel.classList.add('hidden');
                 leftPanel.style.width = '100%';
                 
@@ -588,7 +588,7 @@ const COMBAT_STATE_ID = 'current-combat';
                   }
                 </div>
                 ${isCurrentTurn 
-                  ? `<div class="text-yellow-400 font-bold text-sm md:text-lg whitespace-nowrap">
+                  ? `<div class="text-yellow-400 font-bold text-sm md:text-lg whitespace-nowrap" aria-label="Current turn indicator">
                       ▶ <span class="hidden sm:inline">Current Turn</span>
                     </div>`
                   : ''
@@ -687,12 +687,14 @@ const COMBAT_STATE_ID = 'current-combat';
           // Debounce resize events
           clearTimeout(resizeTimeout);
           resizeTimeout = setTimeout(async () => {
-            // Re-fetch current state and re-render
-            const response = await fetch('/api/dm-screen');
-            if (response.ok) {
-              const state = await response.json();
-              await updateDisplay(state);
-            }
+            // Re-render with current state (no API call needed - just re-layout)
+            await updateDisplay({
+              currentLocationId: currentDisplayState.locationId,
+              spotlightNpcIds: currentDisplayState.npcIds,
+              showInitiativeTracker: currentDisplayState.showInitiative,
+              screenVisible: currentDisplayState.screenVisible,
+              placeholderImageUrl: currentDisplayState.placeholderImageUrl
+            });
           }, 250);
         });
       }
