@@ -43,6 +43,16 @@ function formatDate(dateStr: string): string {
   return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
 }
 
+// Helper function to format duration
+function formatDuration(minutes: number | null): string {
+  if (!minutes) return '';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
+}
+
 // Helper function to get host name
 function getHostName(hostId: string): string {
   const host = users.find(u => u.id === hostId);
@@ -127,7 +137,7 @@ function getHostName(hostId: string): string {
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
-                    <span>{event.time} ({formatDuration(event.duration)})</span>
+                    <span>{event.time}{event.duration ? ` (${formatDuration(event.duration)})` : ''}</span>
                   </div>
                   <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
