@@ -18,6 +18,7 @@ export const GET: APIRoute = async ({ params }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
+    console.error('Error fetching event:', error);
     return new Response(JSON.stringify({ error: 'Failed to fetch event' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -52,6 +53,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
+    console.error('Error updating event:', error);
     return new Response(JSON.stringify({ error: 'Failed to update event' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
@@ -71,6 +73,7 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
+    console.error('Error deleting event:', error);
     return new Response(JSON.stringify({ error: 'Failed to delete event' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
