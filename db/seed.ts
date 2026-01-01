@@ -167,13 +167,29 @@ export default async function seed() {
     }
   ]);
 
-  // Seed Admin User (username: admin, password: admin)
+  // Seed Users (username: admin, password: admin)
   await db.insert(User).values([
     {
       id: '1',
       username: 'admin',
       passwordHash: await hashPassword('admin'),
       role: 'admin',
+      createdAt: new Date(),
+    },
+    {
+      id: '2',
+      username: 'player1',
+      passwordHash: await hashPassword('player1'),
+      role: 'player',
+      firstName: 'Alice',
+      createdAt: new Date(),
+    },
+    {
+      id: '3',
+      username: 'dm',
+      passwordHash: await hashPassword('dm123'),
+      role: 'dungeonmaster',
+      firstName: 'Bob',
       createdAt: new Date(),
     }
   ]);
