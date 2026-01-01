@@ -202,6 +202,7 @@ export {
   InitiativeTracker,
   CombatState,
   DMScreenState,
+  Event,
 };
 
 const DiaryNote = defineTable({
@@ -228,6 +229,20 @@ const DMScreenState = defineTable({
   }
 });
 
+const Event = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    title: column.text(),
+    description: column.text(),
+    date: column.text(), // ISO date string (YYYY-MM-DD)
+    time: column.text(), // Time string (HH:MM)
+    duration: column.number(), // Duration in minutes
+    hostId: column.text(), // Foreign key to User - the host of the event
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -244,5 +259,6 @@ export default defineDb({
     CombatState,
     DiaryNote,
     DMScreenState,
+    Event,
   }
 });
