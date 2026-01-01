@@ -164,45 +164,57 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 
   <!-- Next Event Card -->
   {isLoggedIn && nextEvent && (
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 dark:border dark:border-gray-900 mb-8">
-      <div class="flex justify-between items-center mb-3">
-        <h2 class="text-xl font-semibold text-primary-600 dark:text-primary-400">Next Event</h2>
-        <a href="/calendar" class="text-xs text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Next Event</h2>
+        <a href="/calendar" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
           View Calendar →
         </a>
       </div>
       
-      <div class="flex flex-col gap-3">
-        <div class="flex items-start justify-between">
-          <h3 class="text-lg font-bold text-gray-900 dark:text-gray-100">{nextEvent.title}</h3>
-        </div>
-        
+      <div class="rounded-lg p-6">
+        <h3 class="text-2xl font-bold text-primary-800 dark:text-primary-300 mb-3">{nextEvent.title}</h3>
         {nextEvent.description && (
-          <p class="text-sm text-gray-600 dark:text-gray-400">{nextEvent.description}</p>
+          <p class="text-gray-700 dark:text-gray-300 mb-4">{nextEvent.description}</p>
         )}
         
-        <div class="flex flex-wrap gap-3 text-sm">
-          <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span>{formatDate(nextEvent.date)}</span>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Date</div>
+              <div class="font-semibold text-gray-800 dark:text-gray-200">{formatDate(nextEvent.date)}</div>
+            </div>
           </div>
           
           {nextEvent.time && (
-            <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-              <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-              </svg>
-              <span>{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</span>
+            <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+              <div class="flex-shrink-0 w-10 h-10 bg-secondary-100 dark:bg-secondary-900/40 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">Time & Duration</div>
+                <div class="font-semibold text-gray-800 dark:text-gray-200">{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</div>
+              </div>
             </div>
           )}
           
-          <div class="flex items-center gap-2 bg-accent-100 dark:bg-accent-900/40 text-accent-700 dark:text-accent-300 px-3 py-1 rounded-full">
-            <svg class="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            <span class="font-medium">{getHostName(nextEvent.hostId)}</span>
+          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Host</div>
+              <div class="font-semibold text-gray-800 dark:text-gray-200">{getHostName(nextEvent.hostId)}</div>
+            </div>
           </div>
         </div>
       </div>
