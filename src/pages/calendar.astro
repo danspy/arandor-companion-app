@@ -108,6 +108,31 @@ function getHostName(hostId: string): string {
     </div>
   </div>
 
+  <!-- Filter -->
+  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+    <div class="flex flex-wrap gap-2 items-center">
+      <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
+      <button 
+        class="event-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+        data-filter="all"
+      >
+        All ({events.length})
+      </button>
+      <button 
+        class="event-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+        data-filter="upcoming"
+      >
+        Upcoming ({upcomingEventsCount})
+      </button>
+      <button 
+        class="event-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+        data-filter="past"
+      >
+        Past ({pastEventsCount})
+      </button>
+    </div>
+  </div>
+
   <!-- Events List -->
   <div class="space-y-4">
     {events.length === 0 ? (
@@ -124,9 +149,10 @@ function getHostName(hostId: string): string {
       sortedEvents.map(event => {
         const eventDateTime = new Date(`${event.date}T${event.time}`);
         const isPast = eventDateTime < new Date();
+        const filterStatus = isPast ? 'past' : 'upcoming';
         
         return (
-          <div class={`bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 event-item ${isPast ? 'opacity-60' : ''}`} data-event-id={event.id}>
+          <div class={`bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 event-item ${isPast ? 'opacity-60' : ''}`} data-event-id={event.id} data-filter-status={filterStatus}>
             <div class="flex justify-between items-start mb-4">
               <div class="flex-1">
                 <div class="flex items-center gap-3 mb-2">
@@ -355,6 +381,48 @@ function getHostName(hostId: string): string {
       const eventTimeInput = document.getElementById('eventTime');
       const eventDurationInput = document.getElementById('eventDuration');
       const eventHostSelect = document.getElementById('eventHost');
+
+      // Filter functionality
+      let currentFilter = 'upcoming'; // Default to upcoming
+      const filterButtons = document.querySelectorAll('.event-filter');
+      const eventItems = document.querySelectorAll('.event-item');
+
+      function applyFilter(filter) {
+        currentFilter = filter;
+        
+        // Update button styles
+        filterButtons.forEach(btn => {
+          const isActive = btn.getAttribute('data-filter') === filter;
+          if (isActive) {
+            btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            btn.classList.add('bg-primary-600', 'text-white');
+          } else {
+            btn.classList.remove('bg-primary-600', 'text-white');
+            btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          }
+        });
+
+        // Filter events
+        eventItems.forEach(item => {
+          const filterStatus = item.getAttribute('data-filter-status');
+          if (filter === 'all' || filterStatus === filter) {
+            item.style.display = '';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+      }
+
+      // Set up filter button listeners
+      filterButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+          const filter = btn.getAttribute('data-filter');
+          applyFilter(filter);
+        });
+      });
+
+      // Apply default filter on page load
+      applyFilter(currentFilter);
 
       const closeEventModal = () => {
         eventModal?.classList.add('hidden');
