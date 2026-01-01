@@ -294,7 +294,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   </div>
 
   <!-- Next Event Card -->
-  {nextEvent && (
+  {isLoggedIn && nextEvent && (
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
       <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Next Event</h2>

@@ -3,14 +3,18 @@ import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
 import { db, Event, User, PageSettings, eq } from 'astro:db';
-import { getUserRole } from '../lib/auth';
+import { isAuthenticated, getUserRole } from '../lib/auth';
 
-// Calendar page is viewable by everyone, editable by dungeonmaster and admin
+// Calendar page is only accessible to logged-in users
+const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect('/login');
+}
 
 const events = await db.select().from(Event);
 const users = await db.select().from(User);
-const isLoggedIn = !!userRole;
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Filter out admin users for host dropdown
