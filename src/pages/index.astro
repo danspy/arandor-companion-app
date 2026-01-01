@@ -38,6 +38,15 @@ const getHostName = (hostId: string): string => {
   return host ? (host.firstName || host.username) : 'Unknown';
 };
 
+// Helper to get host info including profile image
+const getHostInfo = (hostId: string): { name: string, imageUrl: string | null } => {
+  const host = users.find(u => u.id === hostId);
+  return {
+    name: host ? (host.firstName || host.username) : 'Unknown',
+    imageUrl: host?.profileImageUrl || null
+  };
+};
+
 // Helper to format date
 const formatDate = (dateStr: string): string => {
   const date = new Date(dateStr);
@@ -206,10 +215,18 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           )}
           
           <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
-            <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center">
-              <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-              </svg>
+            <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center overflow-hidden">
+              {getHostInfo(nextEvent.hostId).imageUrl ? (
+                <img 
+                  src={getHostInfo(nextEvent.hostId).imageUrl} 
+                  alt={getHostInfo(nextEvent.hostId).name}
+                  class="w-full h-full object-cover"
+                />
+              ) : (
+                <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              )}
             </div>
             <div>
               <div class="text-xs text-gray-500 dark:text-gray-400">Host</div>

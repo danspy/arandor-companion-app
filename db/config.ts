@@ -233,10 +233,10 @@ const Event = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     title: column.text(),
-    description: column.text(),
+    description: column.text({ optional: true }),
     date: column.text(), // ISO date string (YYYY-MM-DD)
     time: column.text(), // Time string (HH:MM)
-    duration: column.number(), // Duration in minutes
+    duration: column.number({ optional: true }), // Duration in minutes
     hostId: column.text(), // Foreign key to User - the host of the event
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
