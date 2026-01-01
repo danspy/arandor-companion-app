@@ -17,6 +17,8 @@ const events = await db.select().from(Event);
 const users = await db.select().from(User);
 // All logged-in users can add/edit events
 const canEdit = isLoggedIn;
+// Only admin/DM can edit hero image
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Filter out admin users for host dropdown
 const nonAdminUsers = users.filter(u => u.role !== 'admin');
@@ -73,7 +75,7 @@ function getHostName(hostId: string): string {
     title="Calendar" 
     heroImageUrl={heroImageUrl}
     pageName="calendar"
-    canEditHero={canEdit}
+    canEditHero={canEditHero}
   />
 
   {canEdit && (
@@ -133,33 +135,50 @@ function getHostName(hostId: string): string {
                     <span class="text-xs px-2 py-1 bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">Past</span>
                   )}
                 </div>
-                <p class="text-gray-600 dark:text-gray-400 mb-3">{event.description}</p>
+                {event.description && (
+                  <p class="text-gray-600 dark:text-gray-400 mb-3">{event.description}</p>
+                )}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                  <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-                    </svg>
-                    <span>{formatDate(event.date)}</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                    </svg>
-                    <span>{event.time}{event.duration ? ` (${formatDuration(event.duration)})` : ''}</span>
-                  </div>
-                  <div class="flex items-center gap-2 text-gray-700 dark:text-gray-300">
-                    {getHostInfo(event.hostId).imageUrl ? (
-                      <img 
-                        src={getHostInfo(event.hostId).imageUrl} 
-                        alt={getHostInfo(event.hostId).name}
-                        class="w-4 h-4 rounded-full object-cover"
-                      />
-                    ) : (
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                  <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+                      <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                       </svg>
-                    )}
-                    <span>Host: {getHostName(event.hostId)}</span>
+                    </div>
+                    <div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Date</div>
+                      <div class="font-semibold text-gray-800 dark:text-gray-200">{formatDate(event.date)}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-secondary-100 dark:bg-secondary-900/40 rounded-full flex items-center justify-center">
+                      <svg class="w-5 h-5 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                      </svg>
+                    </div>
+                    <div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Time & Duration</div>
+                      <div class="font-semibold text-gray-800 dark:text-gray-200">{event.time}{event.duration ? ` (${formatDuration(event.duration)})` : ''}</div>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+                    <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center overflow-hidden">
+                      {getHostInfo(event.hostId).imageUrl ? (
+                        <img 
+                          src={getHostInfo(event.hostId).imageUrl} 
+                          alt={getHostInfo(event.hostId).name}
+                          class="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                      )}
+                    </div>
+                    <div>
+                      <div class="text-xs text-gray-500 dark:text-gray-400">Host</div>
+                      <div class="font-semibold text-gray-800 dark:text-gray-200">{getHostName(event.hostId)}</div>
+                    </div>
                   </div>
                 </div>
               </div>
