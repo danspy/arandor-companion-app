@@ -249,9 +249,11 @@ const COMBAT_STATE_ID = 'current-combat';
         if (state.timerStatus === 'stopped') {
           return state.timerDuration;
         } else if (state.timerStatus === 'paused') {
+          if (!state.timerPausedAt || !state.timerStartedAt) return state.timerDuration;
           const elapsed = (state.timerPausedAt - state.timerStartedAt) / 1000;
           return Math.max(0, state.timerDuration - elapsed);
         } else if (state.timerStatus === 'running') {
+          if (!state.timerStartedAt) return state.timerDuration;
           const elapsed = (Date.now() - state.timerStartedAt) / 1000;
           return Math.max(0, state.timerDuration - elapsed);
         }
@@ -393,7 +395,7 @@ const COMBAT_STATE_ID = 'current-combat';
         // Hide placeholder when screen is visible
         document.getElementById('placeholderState')?.classList.add('hidden');
 
-        // Count active sections (timer and initiative are mutually exclusive in the same slot, but timer takes priority)
+        // Count active sections (timer shows on top of or instead of initiative)
         const activeCount = [hasLocation, hasNpcs, showInitiative || showTimer].filter(Boolean).length;
         
         if (activeCount === 0) {
@@ -541,8 +543,6 @@ const COMBAT_STATE_ID = 'current-combat';
                   initiativeDisplay?.classList.remove('hidden');
                   await showInitiativeTracker();
                 }
-                
-                await showInitiativeTracker();
                 
                 if (hasLocation) {
                   locationDisplay?.classList.remove('hidden');

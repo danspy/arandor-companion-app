@@ -506,7 +506,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
           if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
           if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
-          if (timerMinutesInput && state.timerDuration) {
+          if (timerMinutesInput && state.timerDuration !== undefined) {
             timerMinutesInput.value = Math.floor(state.timerDuration / 60);
           }
           
@@ -548,9 +548,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       if (currentState.timerStatus === 'stopped') {
         return currentState.timerDuration;
       } else if (currentState.timerStatus === 'paused') {
+        if (!currentState.timerPausedAt || !currentState.timerStartedAt) return currentState.timerDuration;
         const elapsed = (currentState.timerPausedAt - currentState.timerStartedAt) / 1000;
         return Math.max(0, currentState.timerDuration - elapsed);
       } else if (currentState.timerStatus === 'running') {
+        if (!currentState.timerStartedAt) return currentState.timerDuration;
         const elapsed = (Date.now() - currentState.timerStartedAt) / 1000;
         return Math.max(0, currentState.timerDuration - elapsed);
       }
@@ -1199,10 +1201,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const timerMinutesInput = document.getElementById('timerMinutes');
       
       const startTimerHandler = async () => {
-        const minutes = parseInt(timerMinutesInput?.value || '5');
+        const minutes = parseInt(timerMinutesInput?.value || '5', 10);
         const durationSeconds = minutes * 60;
         
-        if (currentState.timerStatus === 'paused') {
+        if (currentState.timerStatus === 'paused' && currentState.timerPausedAt && currentState.timerStartedAt) {
           // Resume from paused state
           const elapsed = (currentState.timerPausedAt - currentState.timerStartedAt) / 1000;
           const newStartTime = Date.now() - (elapsed * 1000);
