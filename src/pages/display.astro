@@ -33,14 +33,52 @@ const COMBAT_STATE_ID = 'current-combat';
   </head>
   <body class="bg-gray-900 text-white min-h-screen md:overflow-hidden">
     <div id="displayContainer" class="w-full h-screen flex items-center justify-center">
+      <!-- Mobile/Tablet Warning - Only shown on smaller screens -->
+      <div id="mobileWarning" class="hidden lg:hidden w-full h-full flex items-center justify-center p-8">
+        <div class="text-center max-w-2xl">
+          <svg class="w-24 h-24 mx-auto mb-6 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+          </svg>
+          <h1 class="text-3xl md:text-4xl font-bold mb-4 text-gray-100">Please Use a Larger Screen</h1>
+          <p class="text-lg md:text-xl text-gray-300 mb-6">
+            The Player Display is designed for larger screens such as desktops, laptops, or TVs for the best D&D session experience.
+          </p>
+          <div class="bg-secondary-900/30 border-2 border-secondary-700 rounded-lg p-6 text-left">
+            <p class="text-sm md:text-base text-gray-400 mb-3">
+              <strong class="text-secondary-400">Recommended devices:</strong>
+            </p>
+            <ul class="text-sm md:text-base text-gray-400 space-y-2">
+              <li class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Desktop computers or laptops
+              </li>
+              <li class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Large displays or TVs
+              </li>
+              <li class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                Second monitors for your game sessions
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      
       <!-- Loading state -->
       <div id="loadingState" class="text-center">
         <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-primary-500 mx-auto mb-4"></div>
         <p class="text-xl text-gray-400">Connecting to DM...</p>
       </div>
 
-      <!-- Main content container -->
-      <div id="mainContent" class="hidden w-full h-full">
+      <!-- Main content container - Hidden on small screens -->
+      <div id="mainContent" class="hidden lg:block w-full h-full">
         <!-- Placeholder/Hidden state -->
         <div id="placeholderState" class="hidden h-full">
           <div id="placeholderImage" class="hidden h-full">
@@ -173,6 +211,37 @@ const COMBAT_STATE_ID = 'current-combat';
         }
       }
 
+      // Check if screen is large enough for player display
+      function isLargeScreen() {
+        return window.innerWidth >= 1024; // lg breakpoint in Tailwind
+      }
+
+      // Show or hide mobile warning based on screen size
+      function updateMobileWarning() {
+        const mobileWarning = document.getElementById('mobileWarning');
+        const mainContent = document.getElementById('mainContent');
+        
+        if (!isLargeScreen()) {
+          // Show mobile warning on small screens
+          if (mobileWarning) {
+            mobileWarning.classList.remove('hidden');
+            mobileWarning.classList.add('flex');
+          }
+          if (mainContent) {
+            mainContent.classList.add('hidden');
+            mainContent.classList.remove('block');
+          }
+          return true; // Indicates mobile warning is showing
+        } else {
+          // Hide mobile warning on large screens
+          if (mobileWarning) {
+            mobileWarning.classList.add('hidden');
+            mobileWarning.classList.remove('flex');
+          }
+          return false; // Indicates mobile warning is not showing
+        }
+      }
+
       // Update display based on state
       async function updateDisplay(state) {
         const hasLocation = state.currentLocationId;
@@ -180,11 +249,24 @@ const COMBAT_STATE_ID = 'current-combat';
         const showInitiative = state.showInitiativeTracker;
         const screenVisible = state.screenVisible === undefined ? true : state.screenVisible; // Default to true if undefined
 
-        // Hide loading, show main content
+        // Hide loading
         const loadingState = document.getElementById('loadingState');
-        const mainContent = document.getElementById('mainContent');
         if (loadingState) loadingState.classList.add('hidden');
-        if (mainContent) mainContent.classList.remove('hidden');
+        
+        // Check screen size and show mobile warning if needed
+        const showingMobileWarning = updateMobileWarning();
+        
+        // If showing mobile warning, don't proceed with normal display logic
+        if (showingMobileWarning) {
+          return;
+        }
+        
+        // Show main content on large screens
+        const mainContent = document.getElementById('mainContent');
+        if (mainContent) {
+          mainContent.classList.remove('hidden');
+          mainContent.classList.add('block');
+        }
 
         // Update current state BEFORE early return so polling detects changes
         currentDisplayState = {
@@ -694,6 +776,14 @@ const COMBAT_STATE_ID = 'current-combat';
           // Debounce resize events
           clearTimeout(resizeTimeout);
           resizeTimeout = setTimeout(async () => {
+            // Check if we should show mobile warning
+            const showingMobileWarning = updateMobileWarning();
+            
+            // If showing mobile warning, don't re-render display
+            if (showingMobileWarning) {
+              return;
+            }
+            
             // Re-render with current state (no API call needed - just re-layout)
             await updateDisplay({
               currentLocationId: currentDisplayState.locationId,
