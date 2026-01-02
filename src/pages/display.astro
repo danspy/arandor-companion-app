@@ -147,8 +147,31 @@ const COMBAT_STATE_ID = 'current-combat';
             </div>
           </div>
 
-          <!-- Right panel - Initiative tracker (40% width when split on desktop, 100% on mobile) -->
+          <!-- Right panel - Timer and Initiative tracker (40% width when split on desktop, 100% on mobile) -->
           <div id="rightPanel" class="h-full overflow-auto">
+            <!-- Timer Display -->
+            <div id="timerDisplay" class="hidden">
+              <div class="flex flex-col p-4 md:p-8">
+                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-secondary-600 p-6 md:p-8">
+                  <div class="flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 md:w-12 md:h-12 text-secondary-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                    <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold">Timer</h2>
+                  </div>
+                  <div class="text-center">
+                    <div id="playerTimerDisplay" class="text-6xl md:text-8xl font-bold text-secondary-400 mb-2 font-mono">
+                      00:00
+                    </div>
+                    <div id="playerTimerStatus" class="text-lg md:text-xl text-gray-400">
+                      Ready
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Initiative Display -->
             <div id="initiativeDisplay" class="hidden h-full">
               <div class="h-full flex flex-col p-4 md:p-8">
                 <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-4 md:p-6 flex-1 flex flex-col">
@@ -183,11 +206,19 @@ const COMBAT_STATE_ID = 'current-combat';
         showInitiative: false,
         screenVisible: true,
         placeholderImageUrl: null,
+        showTimer: false,
+        timerDuration: 0,
+        timerStartedAt: null,
+        timerPausedAt: null,
+        timerStatus: 'stopped',
       };
 
       // Data caches
       const locationsCache = new Map();
       const npcsCache = new Map();
+      
+      // Timer update interval
+      let timerUpdateInterval = null;
 
       // Load reference data
       async function loadReferenceData() {
@@ -208,6 +239,67 @@ const COMBAT_STATE_ID = 'current-combat';
           }
         } catch (error) {
           console.error('Error loading reference data:', error);
+        }
+      }
+      
+      // Timer utility functions
+      function getRemainingTime(state) {
+        if (!state.timerDuration) return 0;
+        
+        if (state.timerStatus === 'stopped') {
+          return state.timerDuration;
+        } else if (state.timerStatus === 'paused') {
+          if (!state.timerPausedAt || !state.timerStartedAt) return state.timerDuration;
+          const elapsed = (state.timerPausedAt - state.timerStartedAt) / 1000;
+          return Math.max(0, state.timerDuration - elapsed);
+        } else if (state.timerStatus === 'running') {
+          if (!state.timerStartedAt) return state.timerDuration;
+          const elapsed = (Date.now() - state.timerStartedAt) / 1000;
+          return Math.max(0, state.timerDuration - elapsed);
+        }
+        return 0;
+      }
+      
+      function formatTime(seconds) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+      }
+      
+      function updatePlayerTimerDisplay() {
+        const timerDisplayEl = document.getElementById('playerTimerDisplay');
+        const timerStatusEl = document.getElementById('playerTimerStatus');
+        
+        const remaining = getRemainingTime(currentDisplayState);
+        if (timerDisplayEl) timerDisplayEl.textContent = formatTime(remaining);
+        
+        if (timerStatusEl) {
+          let statusText = 'Ready';
+          if (currentDisplayState.timerStatus === 'running') {
+            statusText = remaining <= 0 ? 'Time\'s Up!' : 'Running';
+          } else if (currentDisplayState.timerStatus === 'paused') {
+            statusText = 'Paused';
+          }
+          timerStatusEl.textContent = statusText;
+          
+          // Add visual indicator when time is up
+          if (remaining <= 0 && currentDisplayState.timerStatus === 'running') {
+            timerDisplayEl.className = 'text-6xl md:text-8xl font-bold text-red-500 mb-2 font-mono animate-pulse';
+          } else {
+            timerDisplayEl.className = 'text-6xl md:text-8xl font-bold text-secondary-400 mb-2 font-mono';
+          }
+        }
+      }
+      
+      function startPlayerTimerUpdates() {
+        if (timerUpdateInterval) {
+          clearInterval(timerUpdateInterval);
+        }
+        
+        if (currentDisplayState.timerStatus === 'running') {
+          timerUpdateInterval = setInterval(() => {
+            updatePlayerTimerDisplay();
+          }, 100); // Update every 100ms for smooth countdown
         }
       }
 
@@ -247,6 +339,7 @@ const COMBAT_STATE_ID = 'current-combat';
         const hasLocation = state.currentLocationId;
         const hasNpcs = state.spotlightNpcIds && state.spotlightNpcIds.length > 0;
         const showInitiative = state.showInitiativeTracker;
+        const showTimer = state.showTimer;
         const screenVisible = state.screenVisible === undefined ? true : state.screenVisible; // Default to true if undefined
 
         // Hide loading
@@ -275,7 +368,23 @@ const COMBAT_STATE_ID = 'current-combat';
           showInitiative: state.showInitiativeTracker,
           screenVisible: screenVisible,
           placeholderImageUrl: state.placeholderImageUrl,
+          showTimer: state.showTimer,
+          timerDuration: state.timerDuration,
+          timerStartedAt: state.timerStartedAt,
+          timerPausedAt: state.timerPausedAt,
+          timerStatus: state.timerStatus || 'stopped',
         };
+        
+        // Update timer display
+        updatePlayerTimerDisplay();
+        
+        // Start or stop timer updates based on status
+        if (state.timerStatus === 'running') {
+          startPlayerTimerUpdates();
+        } else if (timerUpdateInterval) {
+          clearInterval(timerUpdateInterval);
+          timerUpdateInterval = null;
+        }
 
         // Check if screen is hidden - show placeholder
         if (!screenVisible) {
@@ -286,8 +395,8 @@ const COMBAT_STATE_ID = 'current-combat';
         // Hide placeholder when screen is visible
         document.getElementById('placeholderState')?.classList.add('hidden');
 
-        // Count active sections
-        const activeCount = [hasLocation, hasNpcs, showInitiative].filter(Boolean).length;
+        // Count active sections (timer shows on top of or instead of initiative)
+        const activeCount = [hasLocation, hasNpcs, showInitiative || showTimer].filter(Boolean).length;
         
         if (activeCount === 0) {
           // Show empty state
@@ -302,16 +411,19 @@ const COMBAT_STATE_ID = 'current-combat';
           const locationDisplay = document.getElementById('locationDisplay');
           const npcSpotlight = document.getElementById('npcSpotlight');
           const initiativeDisplay = document.getElementById('initiativeDisplay');
+          const timerDisplay = document.getElementById('timerDisplay');
           
           // Reset all displays and their heights
           locationDisplay?.classList.add('hidden');
           npcSpotlight?.classList.add('hidden');
           initiativeDisplay?.classList.add('hidden');
+          timerDisplay?.classList.add('hidden');
           
           // Reset all heights to allow dynamic resizing
           if (locationDisplay) locationDisplay.style.height = '';
           if (npcSpotlight) npcSpotlight.style.height = '';
           if (initiativeDisplay) initiativeDisplay.style.height = '';
+          if (timerDisplay) timerDisplay.style.height = '';
           
           // Check if we're on mobile (< 768px)
           const isMobile = window.innerWidth < 768;
@@ -333,13 +445,26 @@ const COMBAT_STATE_ID = 'current-combat';
               leftPanel.classList.remove('hidden');
               npcSpotlight?.classList.remove('hidden');
               showNpcs(state.spotlightNpcIds, false); // Pass false - no initiative shown
-            } else if (showInitiative) {
+            } else if (showTimer || showInitiative) {
               leftPanel.style.width = '0';
               leftPanel.classList.add('hidden');
               rightPanel.style.width = '100%';
               rightPanel.classList.remove('hidden');
-              initiativeDisplay?.classList.remove('hidden');
-              await showInitiativeTracker();
+              
+              // Timer takes priority over initiative if both are shown
+              if (showTimer) {
+                timerDisplay?.classList.remove('hidden');
+                if (showInitiative) {
+                  // Show both: timer on top, initiative below
+                  timerDisplay.style.height = 'auto';
+                  initiativeDisplay?.classList.remove('hidden');
+                  initiativeDisplay.style.height = 'auto';
+                  await showInitiativeTracker();
+                }
+              } else if (showInitiative) {
+                initiativeDisplay?.classList.remove('hidden');
+                await showInitiativeTracker();
+              }
             }
           } else if (activeCount === 2) {
             // Two items
@@ -351,12 +476,24 @@ const COMBAT_STATE_ID = 'current-combat';
               leftPanel.style.width = '100%';
               rightPanel.style.width = '100%';
               
-              if (showInitiative) {
-                // Initiative on bottom half
+              if (showTimer || showInitiative) {
+                // Timer/Initiative on bottom half
                 leftPanel.style.height = '50%';
                 rightPanel.style.height = '50%';
-                initiativeDisplay?.classList.remove('hidden');
-                await showInitiativeTracker();
+                
+                if (showTimer) {
+                  timerDisplay?.classList.remove('hidden');
+                  if (showInitiative) {
+                    // Both timer and initiative
+                    timerDisplay.style.height = 'auto';
+                    initiativeDisplay?.classList.remove('hidden');
+                    initiativeDisplay.style.height = 'auto';
+                    await showInitiativeTracker();
+                  }
+                } else if (showInitiative) {
+                  initiativeDisplay?.classList.remove('hidden');
+                  await showInitiativeTracker();
+                }
                 
                 if (hasLocation) {
                   locationDisplay?.classList.remove('hidden');
@@ -388,12 +525,24 @@ const COMBAT_STATE_ID = 'current-combat';
               leftPanel.style.height = '';
               rightPanel.style.height = '';
               
-              if (showInitiative) {
-                // Initiative always on right when present
+              if (showTimer || showInitiative) {
+                // Timer/Initiative always on right when present
                 leftPanel.style.width = '60%';
                 rightPanel.style.width = '40%';
-                initiativeDisplay?.classList.remove('hidden');
-                await showInitiativeTracker();
+                
+                if (showTimer) {
+                  timerDisplay?.classList.remove('hidden');
+                  if (showInitiative) {
+                    // Both timer and initiative
+                    timerDisplay.style.height = 'auto';
+                    initiativeDisplay?.classList.remove('hidden');
+                    initiativeDisplay.style.height = 'auto';
+                    await showInitiativeTracker();
+                  }
+                } else if (showInitiative) {
+                  initiativeDisplay?.classList.remove('hidden');
+                  await showInitiativeTracker();
+                }
                 
                 if (hasLocation) {
                   locationDisplay?.classList.remove('hidden');
@@ -426,11 +575,11 @@ const COMBAT_STATE_ID = 'current-combat';
             rightPanel.classList.remove('hidden');
             
             if (isMobile) {
-              // Mobile: Stack all three vertically - location and NPCs at 50% height each, initiative scrollable below
+              // Mobile: Stack all three vertically - location and NPCs at 50% height each, timer/initiative scrollable below
               leftPanel.style.width = '100%';
               rightPanel.style.width = '100%';
               leftPanel.style.height = '100dvh'; // Full dynamic viewport height for location and NPCs
-              rightPanel.style.height = 'auto'; // Auto height for initiative (scrollable)
+              rightPanel.style.height = 'auto'; // Auto height for timer/initiative (scrollable)
               
               // Split left panel vertically for location and NPCs
               locationDisplay?.classList.remove('hidden');
@@ -439,13 +588,23 @@ const COMBAT_STATE_ID = 'current-combat';
               
               npcSpotlight?.classList.remove('hidden');
               npcSpotlight.style.height = '50%';
-              showNpcs(state.spotlightNpcIds, true); // Pass true because initiative is shown
+              showNpcs(state.spotlightNpcIds, true); // Pass true because timer/initiative is shown
               
-              // Initiative on bottom (scrollable)
-              initiativeDisplay?.classList.remove('hidden');
-              await showInitiativeTracker();
+              // Timer/Initiative on bottom (scrollable)
+              if (showTimer) {
+                timerDisplay?.classList.remove('hidden');
+                if (showInitiative) {
+                  timerDisplay.style.height = 'auto';
+                  initiativeDisplay?.classList.remove('hidden');
+                  initiativeDisplay.style.height = 'auto';
+                  await showInitiativeTracker();
+                }
+              } else if (showInitiative) {
+                initiativeDisplay?.classList.remove('hidden');
+                await showInitiativeTracker();
+              }
             } else {
-              // Desktop: Location + NPCs on left (60%), Initiative on right (40%)
+              // Desktop: Location + NPCs on left (60%), Timer/Initiative on right (40%)
               leftPanel.style.width = '60%';
               rightPanel.style.width = '40%';
               leftPanel.style.height = '';
@@ -458,11 +617,21 @@ const COMBAT_STATE_ID = 'current-combat';
               
               npcSpotlight?.classList.remove('hidden');
               npcSpotlight.style.height = '50%';
-              showNpcs(state.spotlightNpcIds, true); // Pass true because initiative is shown
+              showNpcs(state.spotlightNpcIds, true); // Pass true because timer/initiative is shown
               
-              // Initiative on right
-              initiativeDisplay?.classList.remove('hidden');
-              await showInitiativeTracker();
+              // Timer/Initiative on right
+              if (showTimer) {
+                timerDisplay?.classList.remove('hidden');
+                if (showInitiative) {
+                  timerDisplay.style.height = 'auto';
+                  initiativeDisplay?.classList.remove('hidden');
+                  initiativeDisplay.style.height = 'auto';
+                  await showInitiativeTracker();
+                }
+              } else if (showInitiative) {
+                initiativeDisplay?.classList.remove('hidden');
+                await showInitiativeTracker();
+              }
             }
           }
         }
@@ -724,7 +893,12 @@ const COMBAT_STATE_ID = 'current-combat';
             JSON.stringify(state.spotlightNpcIds) !== JSON.stringify(currentDisplayState.npcIds) ||
             state.showInitiativeTracker !== currentDisplayState.showInitiative ||
             screenVisible !== currentDisplayState.screenVisible ||
-            state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl;
+            state.placeholderImageUrl !== currentDisplayState.placeholderImageUrl ||
+            state.showTimer !== currentDisplayState.showTimer ||
+            state.timerDuration !== currentDisplayState.timerDuration ||
+            state.timerStartedAt !== currentDisplayState.timerStartedAt ||
+            state.timerPausedAt !== currentDisplayState.timerPausedAt ||
+            state.timerStatus !== currentDisplayState.timerStatus;
 
           if (stateChanged) {
             await updateDisplay(state);
@@ -733,6 +907,11 @@ const COMBAT_STATE_ID = 'current-combat';
           // If showing initiative, update the list on every poll to catch turn changes
           if (state.showInitiativeTracker) {
             await updateInitiativeList();
+          }
+          
+          // If showing timer, update the display on every poll
+          if (state.showTimer) {
+            updatePlayerTimerDisplay();
           }
         } catch (error) {
           console.error('Error polling for updates:', error);
@@ -790,7 +969,12 @@ const COMBAT_STATE_ID = 'current-combat';
               spotlightNpcIds: currentDisplayState.npcIds,
               showInitiativeTracker: currentDisplayState.showInitiative,
               screenVisible: currentDisplayState.screenVisible,
-              placeholderImageUrl: currentDisplayState.placeholderImageUrl
+              placeholderImageUrl: currentDisplayState.placeholderImageUrl,
+              showTimer: currentDisplayState.showTimer,
+              timerDuration: currentDisplayState.timerDuration,
+              timerStartedAt: currentDisplayState.timerStartedAt,
+              timerPausedAt: currentDisplayState.timerPausedAt,
+              timerStatus: currentDisplayState.timerStatus
             });
           }, 250);
         });
@@ -800,6 +984,9 @@ const COMBAT_STATE_ID = 'current-combat';
       window.addEventListener('beforeunload', () => {
         if (pollInterval) {
           clearInterval(pollInterval);
+        }
+        if (timerUpdateInterval) {
+          clearInterval(timerUpdateInterval);
         }
       });
 
