@@ -225,6 +225,12 @@ const DMScreenState = defineTable({
     showInitiativeTracker: column.boolean({ default: false }), // Whether to show initiative tracker on player display
     screenVisible: column.boolean({ default: true }), // Whether to show content or placeholder on player display
     placeholderImageUrl: column.text({ optional: true }), // Placeholder/wallpaper image when screen is hidden
+    // Timer fields
+    showTimer: column.boolean({ default: false }), // Whether to show timer on player display
+    timerDuration: column.number({ default: 0 }), // Timer duration in seconds
+    timerStartedAt: column.number({ optional: true }), // Timestamp when timer started (Unix timestamp)
+    timerPausedAt: column.number({ optional: true }), // Timestamp when timer was paused (Unix timestamp)
+    timerStatus: column.text({ default: 'stopped' }), // 'running' | 'paused' | 'stopped'
     updatedAt: column.date({ default: new Date() }),
   }
 });

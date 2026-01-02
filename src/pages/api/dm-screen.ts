@@ -20,6 +20,11 @@ export const GET: APIRoute = async () => {
         showInitiativeTracker: false,
         screenVisible: true,
         placeholderImageUrl: null,
+        showTimer: false,
+        timerDuration: 0,
+        timerStartedAt: null,
+        timerPausedAt: null,
+        timerStatus: 'stopped',
         updatedAt: new Date(),
       });
       state = { 
@@ -30,6 +35,11 @@ export const GET: APIRoute = async () => {
         showInitiativeTracker: false,
         screenVisible: true,
         placeholderImageUrl: null,
+        showTimer: false,
+        timerDuration: 0,
+        timerStartedAt: null,
+        timerPausedAt: null,
+        timerStatus: 'stopped',
         updatedAt: new Date() 
       };
     }
@@ -75,6 +85,11 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
         screenVisible: updates.screenVisible ?? true,
         placeholderImageUrl: updates.placeholderImageUrl ?? null,
+        showTimer: updates.showTimer ?? false,
+        timerDuration: updates.timerDuration ?? 0,
+        timerStartedAt: updates.timerStartedAt ?? null,
+        timerPausedAt: updates.timerPausedAt ?? null,
+        timerStatus: updates.timerStatus ?? 'stopped',
         updatedAt: new Date(),
       });
     } else {
@@ -87,6 +102,11 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
           screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,
           placeholderImageUrl: updates.placeholderImageUrl !== undefined ? updates.placeholderImageUrl : state.placeholderImageUrl,
+          showTimer: updates.showTimer !== undefined ? updates.showTimer : state.showTimer,
+          timerDuration: updates.timerDuration !== undefined ? updates.timerDuration : state.timerDuration,
+          timerStartedAt: updates.timerStartedAt !== undefined ? updates.timerStartedAt : state.timerStartedAt,
+          timerPausedAt: updates.timerPausedAt !== undefined ? updates.timerPausedAt : state.timerPausedAt,
+          timerStatus: updates.timerStatus !== undefined ? updates.timerStatus : state.timerStatus,
           updatedAt: new Date(),
         })
         .where(eq(DMScreenState.id, DM_SCREEN_STATE_ID));
