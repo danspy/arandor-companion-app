@@ -33,13 +33,20 @@ const upcomingEvents = events
 const nextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : null;
 
 // Helper to get host name
-const getHostName = (hostId: string): string => {
+const getHostName = (hostId: string | null): string => {
+  if (!hostId) return 'TBD';
   const host = users.find(u => u.id === hostId);
   return host ? (host.firstName || host.username) : 'Unknown';
 };
 
 // Helper to get host info including profile image
-const getHostInfo = (hostId: string): { name: string, imageUrl: string | null } => {
+const getHostInfo = (hostId: string | null): { name: string, imageUrl: string | null } => {
+  if (!hostId) {
+    return {
+      name: 'TBD',
+      imageUrl: null
+    };
+  }
   const host = users.find(u => u.id === hostId);
   return {
     name: host ? (host.firstName || host.username) : 'Unknown',
