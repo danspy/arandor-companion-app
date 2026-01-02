@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
 // Dashboard is viewable by everyone, editable by dungeonmaster and admin
@@ -14,10 +14,60 @@ const characters = await db.select().from(Character);
 const campaignProgressData = await db.select().from(CampaignProgress);
 const libraryEntries = await db.select().from(LibraryEntry);
 const factions = await db.select().from(Faction);
+const events = await db.select().from(Event);
+const users = await db.select().from(User);
 
 // Get combat state
 const combatStateData = await db.select().from(CombatState);
 const combatState = combatStateData.length > 0 ? combatStateData[0] : null;
+
+// Find next upcoming event
+const now = new Date();
+const upcomingEvents = events
+  .filter(e => new Date(`${e.date}T${e.time}`) >= now)
+  .sort((a, b) => {
+    const dateTimeA = new Date(`${a.date}T${a.time}`).getTime();
+    const dateTimeB = new Date(`${b.date}T${b.time}`).getTime();
+    return dateTimeA - dateTimeB;
+  });
+const nextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : null;
+
+// Helper to get host name
+const getHostName = (hostId: string | null): string => {
+  if (!hostId) return 'TBD';
+  const host = users.find(u => u.id === hostId);
+  return host ? (host.firstName || host.username) : 'Unknown';
+};
+
+// Helper to get host info including profile image
+const getHostInfo = (hostId: string | null): { name: string, imageUrl: string | null } => {
+  if (!hostId) {
+    return {
+      name: 'TBD',
+      imageUrl: null
+    };
+  }
+  const host = users.find(u => u.id === hostId);
+  return {
+    name: host ? (host.firstName || host.username) : 'Unknown',
+    imageUrl: host?.profileImageUrl || null
+  };
+};
+
+// Helper to format date
+const formatDate = (dateStr: string): string => {
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('en-US', { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+};
+
+// Helper to format duration
+const formatDuration = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  if (hours > 0 && mins > 0) return `${hours}h ${mins}m`;
+  if (hours > 0) return `${hours}h`;
+  return `${mins}m`;
+};
 
 // Status to color mapping for progress bars
 const statusToColor = (status: string): string => {
@@ -125,6 +175,73 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           </div>
         </div>
       </a>
+    </div>
+  )}
+
+  <!-- Next Event Card -->
+  {isLoggedIn && nextEvent && (
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Next Event</h2>
+        <a href="/calendar" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+          View Calendar →
+        </a>
+      </div>
+      
+      <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{nextEvent.title}</h3>
+        {nextEvent.description && (
+          <p class="text-gray-700 dark:text-gray-300 mb-4">{nextEvent.description}</p>
+        )}
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
+              <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Date</div>
+              <div class="font-semibold text-gray-800 dark:text-gray-200">{formatDate(nextEvent.date)}</div>
+            </div>
+          </div>
+          
+          {nextEvent.time && (
+            <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+              <div class="flex-shrink-0 w-10 h-10 bg-secondary-100 dark:bg-secondary-900/40 rounded-full flex items-center justify-center">
+                <svg class="w-5 h-5 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-gray-500 dark:text-gray-400">Time & Duration</div>
+                <div class="font-semibold text-gray-800 dark:text-gray-200">{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</div>
+              </div>
+            </div>
+          )}
+          
+          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
+            <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center overflow-hidden">
+              {getHostInfo(nextEvent.hostId).imageUrl ? (
+                <img 
+                  src={getHostInfo(nextEvent.hostId).imageUrl} 
+                  alt={getHostInfo(nextEvent.hostId).name}
+                  class="w-full h-full object-cover"
+                />
+              ) : (
+                <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              )}
+            </div>
+            <div>
+              <div class="text-xs text-gray-500 dark:text-gray-400">Host</div>
+              <div class="font-semibold text-gray-800 dark:text-gray-200">{getHostName(nextEvent.hostId)}</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )}
 
