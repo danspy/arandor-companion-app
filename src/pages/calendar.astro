@@ -583,20 +583,40 @@ function getHostName(hostId: string | null): string {
         calendarUrlDisplay.value = calendarUrl;
       }
 
-      // Copy calendar URL functionality
+      // Copy calendar URL functionality with fallback
       const copyToClipboard = async (text: string) => {
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+          try {
+            await navigator.clipboard.writeText(text);
+            return { success: true, method: 'clipboard' };
+          } catch (err) {
+            console.error('Failed to copy with clipboard API:', err);
+          }
+        }
+        
+        // Fallback to text selection method
         try {
-          await navigator.clipboard.writeText(text);
-          return true;
+          const textArea = document.createElement('textarea');
+          textArea.value = text;
+          textArea.style.position = 'fixed';
+          textArea.style.left = '-999999px';
+          textArea.style.top = '-999999px';
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+          const successful = document.execCommand('copy');
+          textArea.remove();
+          return { success: successful, method: 'execCommand' };
         } catch (err) {
-          console.error('Failed to copy:', err);
-          return false;
+          console.error('Failed to copy with fallback method:', err);
+          return { success: false, method: 'none' };
         }
       };
 
       copyCalendarUrlBtn?.addEventListener('click', async () => {
-        const success = await copyToClipboard(calendarUrl);
-        if (success) {
+        const result = await copyToClipboard(calendarUrl);
+        if (result.success) {
           const originalText = copyCalendarUrlBtn.innerHTML;
           copyCalendarUrlBtn.innerHTML = `
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -607,16 +627,20 @@ function getHostName(hostId: string | null): string {
           setTimeout(() => {
             copyCalendarUrlBtn.innerHTML = originalText;
           }, 2000);
+        } else {
+          alert('Could not copy to clipboard. Please copy the URL manually from the instructions dialog.');
         }
       });
 
       copyUrlBtn?.addEventListener('click', async () => {
-        const success = await copyToClipboard(calendarUrl);
-        if (success) {
+        const result = await copyToClipboard(calendarUrl);
+        if (result.success) {
           copyUrlBtn.textContent = 'Copied!';
           setTimeout(() => {
             copyUrlBtn.textContent = 'Copy';
           }, 2000);
+        } else {
+          alert('Could not copy to clipboard. Please select and copy the URL manually.');
         }
       });
 

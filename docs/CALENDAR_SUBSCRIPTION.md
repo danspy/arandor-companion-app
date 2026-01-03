@@ -111,12 +111,15 @@ The iCal feed automatically includes all events from the Event table with the fo
 ## Technical Notes
 
 ### Time Zones
-- All event times are stored as-is in the database
-- When generating the iCal feed, times are converted to UTC
-- Calendar applications will convert to the user's local timezone automatically
+- Event times are stored as simple date (YYYY-MM-DD) and time (HH:MM) strings in the database
+- When generating the iCal feed, times are interpreted as the **server's local timezone** and then converted to UTC
+- Calendar applications automatically convert UTC times to the user's local timezone for display
+- **Important**: For best results, ensure all events are entered in the same timezone (the campaign's local timezone)
+- Users viewing the calendar in different timezones will see the events adjusted to their local time
 
 ### Updates
 - When events are added, modified, or deleted in the app, the iCal feed updates immediately
+- The feed is cached for 5 minutes to reduce server load while maintaining reasonable update frequency
 - Calendar apps typically refresh subscribed calendars every 1-24 hours (varies by app/settings)
 - Users can force a refresh in their calendar app settings
 

@@ -39,7 +39,8 @@ export const GET: APIRoute = async () => {
       headers: {
         'Content-Type': 'text/calendar; charset=utf-8',
         'Content-Disposition': 'attachment; filename="arandor-calendar.ics"',
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        // Allow 5 minutes of caching to reduce server load while maintaining reasonable update frequency
+        'Cache-Control': 'public, max-age=300, must-revalidate',
       }
     });
   } catch (error) {

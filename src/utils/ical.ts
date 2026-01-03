@@ -38,9 +38,17 @@ function formatICalDateTime(date: Date): string {
 
 /**
  * Generate a single VEVENT component
+ * 
+ * Note: Input times are assumed to be in the local timezone of the campaign.
+ * They are then converted to UTC for the iCal format, and calendar apps will
+ * display them in the user's local timezone.
  */
 function generateVEvent(event: ICalEvent): string {
-  const startDateTime = new Date(`${event.date}T${event.time}`);
+  // Parse the date and time strings. The Date constructor will interpret these
+  // as local time (server timezone). Since most D&D groups schedule in their
+  // local timezone, this behavior is acceptable. Calendar apps will convert
+  // to the viewer's timezone automatically.
+  const startDateTime = new Date(`${event.date}T${event.time}:00`);
   const endDateTime = new Date(startDateTime);
   
   // If duration is provided, add it to the end time
