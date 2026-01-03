@@ -98,6 +98,55 @@ function getHostName(hostId: string | null): string {
     </div>
   )}
 
+  <!-- Calendar Subscription Section -->
+  <div class="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-700">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex-1">
+        <h2 class="text-lg font-semibold text-primary-700 dark:text-primary-400 mb-2 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Subscribe to Calendar
+        </h2>
+        <p class="text-sm text-gray-600 dark:text-gray-400">
+          Add this calendar to Google Calendar, Apple Calendar, Outlook, or any calendar app that supports iCal subscriptions.
+        </p>
+      </div>
+      <div class="flex gap-2">
+        <button
+          id="copyCalendarUrl"
+          class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+          title="Copy subscription URL"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+          </svg>
+          <span>Copy URL</span>
+        </button>
+        <button
+          id="downloadCalendar"
+          class="flex items-center gap-2 px-4 py-2 bg-secondary-600 hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+          title="Download calendar file"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+          </svg>
+          <span>Download</span>
+        </button>
+        <button
+          id="showInstructions"
+          class="flex items-center gap-2 px-4 py-2 bg-accent-600 hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+          title="Show subscription instructions"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span class="hidden md:inline">Instructions</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Stats -->
   <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 mb-8">
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
@@ -373,6 +422,135 @@ function getHostName(hostId: string | null): string {
     </div>
   )}
 
+  <!-- Instructions Modal -->
+  <div id="instructionsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full p-6 dark:border dark:border-gray-700 modal-content-safe max-h-[90vh] overflow-y-auto">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-xl font-semibold text-primary-700 dark:text-primary-400">Calendar Subscription Instructions</h3>
+        <button id="closeInstructionsBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="space-y-6">
+        <!-- Subscription URL -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Calendar Subscription URL
+          </label>
+          <div class="flex gap-2">
+            <input 
+              type="text" 
+              id="calendarUrlDisplay" 
+              readonly
+              class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 dark:text-gray-100 font-mono text-sm"
+            />
+            <button 
+              id="copyUrlBtn"
+              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition"
+            >
+              Copy
+            </button>
+          </div>
+        </div>
+
+        <!-- Google Calendar Instructions -->
+        <div class="border-t dark:border-gray-700 pt-4">
+          <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-primary-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M12 0C5.383 0 0 5.383 0 12s5.383 12 12 12 12-5.383 12-12S18.617 0 12 0zm-1 18h-2v-8h2v8zm0-10h-2V6h2v2zm5 10h-2v-5h2v5zm0-7h-2V9h2v2z"/>
+            </svg>
+            Google Calendar
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li>Open <a href="https://calendar.google.com" target="_blank" class="text-primary-600 hover:underline">Google Calendar</a></li>
+            <li>Click the "+" next to "Other calendars" on the left sidebar</li>
+            <li>Select "From URL"</li>
+            <li>Paste the subscription URL above</li>
+            <li>Click "Add calendar"</li>
+          </ol>
+        </div>
+
+        <!-- Apple Calendar Instructions -->
+        <div class="border-t dark:border-gray-700 pt-4">
+          <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/>
+            </svg>
+            Apple Calendar (macOS/iOS)
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li>Open the Calendar app</li>
+            <li>On Mac: Go to File → New Calendar Subscription</li>
+            <li>On iPhone/iPad: Go to Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar</li>
+            <li>Paste the subscription URL above</li>
+            <li>Click "Subscribe" and customize the settings as desired</li>
+          </ol>
+        </div>
+
+        <!-- Outlook Instructions -->
+        <div class="border-t dark:border-gray-700 pt-4">
+          <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-blue-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.87 0-.44.11-.86.1-.43.33-.75.22-.32.57-.51.35-.19.85-.19t.86.19q.35.18.58.51.22.32.33.75.1.42.1.86M24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.62q0-.48.33-.8.33-.33.8-.33h14.75q.46 0 .8.33.32.32.32.8z"/>
+            </svg>
+            Microsoft Outlook
+          </h4>
+          <ol class="list-decimal list-inside space-y-2 text-sm text-gray-600 dark:text-gray-400">
+            <li>Open <a href="https://outlook.live.com/calendar" target="_blank" class="text-primary-600 hover:underline">Outlook Calendar</a></li>
+            <li>Click "Add calendar" in the left sidebar</li>
+            <li>Select "Subscribe from web"</li>
+            <li>Paste the subscription URL above</li>
+            <li>Enter a calendar name and click "Import"</li>
+          </ol>
+        </div>
+
+        <!-- Android Instructions -->
+        <div class="border-t dark:border-gray-700 pt-4">
+          <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+            <svg class="w-5 h-5 text-green-600" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M17.6 9.48l1.84-3.18c.16-.31.04-.69-.26-.85-.29-.15-.65-.06-.83.22l-1.88 3.24a11.43 11.43 0 0 0-8.94 0L5.65 5.67c-.19-.28-.54-.37-.83-.22-.3.16-.42.54-.26.85l1.84 3.18C2.92 12.3 1.11 16.91 1 22h22c-.11-5.09-1.92-9.7-5.4-12.52M7 18c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1m10 0c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1"/>
+            </svg>
+            Android
+          </h4>
+          <p class="text-sm text-gray-600 dark:text-gray-400">
+            Most Android calendar apps don't support direct URL subscriptions. We recommend:
+          </p>
+          <ul class="list-disc list-inside space-y-1 text-sm text-gray-600 dark:text-gray-400 mt-2 ml-4">
+            <li>Use Google Calendar app and follow the Google Calendar instructions above</li>
+            <li>Or download the calendar file using the "Download" button and import it manually (note: this is a one-time import, not a subscription)</li>
+          </ul>
+        </div>
+
+        <!-- Note about updates -->
+        <div class="border-t dark:border-gray-700 pt-4">
+          <div class="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div class="flex gap-3">
+              <svg class="w-5 h-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+              </svg>
+              <div class="text-sm text-blue-800 dark:text-blue-200">
+                <p class="font-medium mb-1">Calendar Updates</p>
+                <p>When you subscribe to the calendar, your calendar app will automatically check for updates. Any new events or changes will appear in your calendar within a few hours.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="flex justify-end gap-3 mt-6 pt-4 border-t dark:border-gray-700">
+        <button 
+          id="closeInstructionsBtn2"
+          class="px-4 py-2 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-lg transition"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     function initializeCalendar() {
       const addEventBtn = document.getElementById('addEvent');
@@ -388,6 +566,84 @@ function getHostName(hostId: string | null): string {
       const eventTimeInput = document.getElementById('eventTime');
       const eventDurationInput = document.getElementById('eventDuration');
       const eventHostSelect = document.getElementById('eventHost');
+
+      // Calendar subscription elements
+      const copyCalendarUrlBtn = document.getElementById('copyCalendarUrl');
+      const downloadCalendarBtn = document.getElementById('downloadCalendar');
+      const showInstructionsBtn = document.getElementById('showInstructions');
+      const instructionsModal = document.getElementById('instructionsModal');
+      const closeInstructionsBtn = document.getElementById('closeInstructionsBtn');
+      const closeInstructionsBtn2 = document.getElementById('closeInstructionsBtn2');
+      const calendarUrlDisplay = document.getElementById('calendarUrlDisplay');
+      const copyUrlBtn = document.getElementById('copyUrlBtn');
+
+      // Get the calendar subscription URL
+      const calendarUrl = `${window.location.origin}/api/calendar/ics.ics`;
+      if (calendarUrlDisplay) {
+        calendarUrlDisplay.value = calendarUrl;
+      }
+
+      // Copy calendar URL functionality
+      const copyToClipboard = async (text: string) => {
+        try {
+          await navigator.clipboard.writeText(text);
+          return true;
+        } catch (err) {
+          console.error('Failed to copy:', err);
+          return false;
+        }
+      };
+
+      copyCalendarUrlBtn?.addEventListener('click', async () => {
+        const success = await copyToClipboard(calendarUrl);
+        if (success) {
+          const originalText = copyCalendarUrlBtn.innerHTML;
+          copyCalendarUrlBtn.innerHTML = `
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            <span>Copied!</span>
+          `;
+          setTimeout(() => {
+            copyCalendarUrlBtn.innerHTML = originalText;
+          }, 2000);
+        }
+      });
+
+      copyUrlBtn?.addEventListener('click', async () => {
+        const success = await copyToClipboard(calendarUrl);
+        if (success) {
+          copyUrlBtn.textContent = 'Copied!';
+          setTimeout(() => {
+            copyUrlBtn.textContent = 'Copy';
+          }, 2000);
+        }
+      });
+
+      // Download calendar file
+      downloadCalendarBtn?.addEventListener('click', () => {
+        window.location.href = calendarUrl;
+      });
+
+      // Show instructions modal
+      showInstructionsBtn?.addEventListener('click', () => {
+        instructionsModal?.classList.remove('hidden');
+      });
+
+      // Close instructions modal
+      const closeInstructions = () => {
+        instructionsModal?.classList.add('hidden');
+      };
+
+      closeInstructionsBtn?.addEventListener('click', closeInstructions);
+      closeInstructionsBtn2?.addEventListener('click', closeInstructions);
+
+      // Close modal on background click
+      instructionsModal?.addEventListener('click', (e) => {
+        if (e.target === instructionsModal) {
+          closeInstructions();
+        }
+      });
 
       // Filter functionality
       let currentFilter = 'upcoming'; // Default to upcoming
