@@ -5,12 +5,9 @@ import { requirePlayerOrAbove } from '../../../lib/middleware';
 export const GET: APIRoute = async () => {
   try {
     const entries = await db.select().from(TimelineEntry);
-    // Sort by year (string comparison) and then by sortOrder
+    // Sort entries and labels by sortOrder
     const sorted = entries.sort((a, b) => {
-      // First compare years (natural string comparison)
-      const yearCompare = a.year.localeCompare(b.year, undefined, { numeric: true, sensitivity: 'base' });
-      if (yearCompare !== 0) return yearCompare;
-      // If years are equal, sort by sortOrder (nulls last)
+      // Sort by sortOrder (nulls last)
       if (a.sortOrder === null || a.sortOrder === undefined) return 1;
       if (b.sortOrder === null || b.sortOrder === undefined) return -1;
       return a.sortOrder - b.sortOrder;
@@ -36,24 +33,41 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const id = crypto.randomUUID();
     const now = new Date();
     
-    await db.insert(TimelineEntry).values({
+    // Build insert values based on entry type
+    const values: any = {
       id,
       entryType: body.entryType || 'event',
-      year: body.year,
       sortOrder: body.sortOrder || null,
-      headline: body.headline,
-      shortDescription: body.shortDescription || null,
-      fullDescription: body.fullDescription || null,
-      imageUrl: body.imageUrl || null,
-      diaryEntryIds: body.diaryEntryIds || [],
-      libraryDocsEntryIds: body.libraryDocsEntryIds || [],
-      npcIds: body.npcIds || [],
-      locationIds: body.locationIds || [],
-      characterIds: body.characterIds || [],
-      questIds: body.questIds || [],
       createdAt: now,
       updatedAt: now,
-    });
+    };
+
+    if (body.entryType === 'label') {
+      // Labels only need label text
+      values.label = body.label;
+      // Set empty arrays for connection fields
+      values.diaryEntryIds = [];
+      values.libraryDocsEntryIds = [];
+      values.npcIds = [];
+      values.locationIds = [];
+      values.characterIds = [];
+      values.questIds = [];
+    } else {
+      // Events need year and other fields
+      values.year = body.year;
+      values.headline = body.headline;
+      values.shortDescription = body.shortDescription || null;
+      values.fullDescription = body.fullDescription || null;
+      values.imageUrl = body.imageUrl || null;
+      values.diaryEntryIds = body.diaryEntryIds || [];
+      values.libraryDocsEntryIds = body.libraryDocsEntryIds || [];
+      values.npcIds = body.npcIds || [];
+      values.locationIds = body.locationIds || [];
+      values.characterIds = body.characterIds || [];
+      values.questIds = body.questIds || [];
+    }
+    
+    await db.insert(TimelineEntry).values(values);
 
     const newEntry = await db.select().from(TimelineEntry).where(eq(TimelineEntry.id, id));
     

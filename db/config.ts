@@ -254,13 +254,17 @@ const TimelineEntry = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     entryType: column.text({ default: 'event' }), // 'event' or 'label' - labels are dividers like "100 years later"
-    year: column.text(), // Text field for flexibility: "1492 DR", "Ancient Times", "Year 0", etc.
-    sortOrder: column.number({ optional: true }), // For sorting entries within the same year
-    headline: column.text(),
+    // For events: numeric year (0-9999+)
+    year: column.number({ optional: true }), // Numeric year for events
+    // For labels: just the label text, no year needed
+    label: column.text({ optional: true }), // Label text for dividers (only for entryType='label')
+    sortOrder: column.number({ optional: true }), // For sorting entries and labels on timeline
+    // Event-specific fields (not used for labels)
+    headline: column.text({ optional: true }), // Required for events, not used for labels
     shortDescription: column.text({ optional: true }),
     fullDescription: column.text({ optional: true }), // Markdown content
     imageUrl: column.text({ optional: true }), // Optional image for the entry
-    // Connection IDs to other content
+    // Connection IDs to other content (not used for labels)
     diaryEntryIds: column.json({ default: [] }), // Array of DiaryEntry IDs
     libraryDocsEntryIds: column.json({ default: [] }), // Array of LibraryEntry IDs (docs)
     npcIds: column.json({ default: [] }), // Array of NPC IDs

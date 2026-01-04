@@ -33,23 +33,47 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     const body = await request.json();
     const now = new Date();
     
+    // Build update values based on entry type
+    const values: any = {
+      entryType: body.entryType || 'event',
+      sortOrder: body.sortOrder !== undefined ? body.sortOrder : null,
+      updatedAt: now,
+    };
+
+    if (body.entryType === 'label') {
+      // Labels only need label text
+      values.label = body.label;
+      // Clear event-specific fields
+      values.year = null;
+      values.headline = null;
+      values.shortDescription = null;
+      values.fullDescription = null;
+      values.imageUrl = null;
+      values.diaryEntryIds = [];
+      values.libraryDocsEntryIds = [];
+      values.npcIds = [];
+      values.locationIds = [];
+      values.characterIds = [];
+      values.questIds = [];
+    } else {
+      // Events need year and other fields
+      values.year = body.year;
+      values.headline = body.headline;
+      values.shortDescription = body.shortDescription || null;
+      values.fullDescription = body.fullDescription || null;
+      values.imageUrl = body.imageUrl || null;
+      values.diaryEntryIds = body.diaryEntryIds || [];
+      values.libraryDocsEntryIds = body.libraryDocsEntryIds || [];
+      values.npcIds = body.npcIds || [];
+      values.locationIds = body.locationIds || [];
+      values.characterIds = body.characterIds || [];
+      values.questIds = body.questIds || [];
+      // Clear label field
+      values.label = null;
+    }
+    
     await db.update(TimelineEntry)
-      .set({
-        entryType: body.entryType || 'event',
-        year: body.year,
-        sortOrder: body.sortOrder !== undefined ? body.sortOrder : null,
-        headline: body.headline,
-        shortDescription: body.shortDescription || null,
-        fullDescription: body.fullDescription || null,
-        imageUrl: body.imageUrl || null,
-        diaryEntryIds: body.diaryEntryIds || [],
-        libraryDocsEntryIds: body.libraryDocsEntryIds || [],
-        npcIds: body.npcIds || [],
-        locationIds: body.locationIds || [],
-        characterIds: body.characterIds || [],
-        questIds: body.questIds || [],
-        updatedAt: now,
-      })
+      .set(values)
       .where(eq(TimelineEntry.id, params.id!));
 
     const updatedEntry = await db.select().from(TimelineEntry).where(eq(TimelineEntry.id, params.id!));
