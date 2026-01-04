@@ -1,11 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
-import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest } from 'astro:db';
+import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest, PageSettings, eq } from 'astro:db';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
 // Fetch all timeline entries sorted by year
 const timelineEntries = await db.select().from(TimelineEntry);
@@ -27,6 +29,10 @@ const locationMap = new Map(locations.map(l => [l.id, l]));
 const characterMap = new Map(characters.map(c => [c.id, c]));
 const questMap = new Map(quests.map(q => [q.id, q]));
 
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'timeline'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
+
 ---
 
 <Layout title="Timeline">
@@ -39,10 +45,12 @@ const questMap = new Map(quests.map(q => [q.id, q]));
     </a>
   </div>
 
-  <div class="mb-8">
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-4">Campaign Timeline</h1>
-    <p class="text-gray-600 dark:text-gray-400">Chronological view of campaign events and milestones</p>
-  </div>
+  <PageHero 
+    title="Campaign Timeline" 
+    heroImageUrl={heroImageUrl}
+    pageName="timeline"
+    canEditHero={canEditHero}
+  />
 
   {isLoggedIn && (
     <div class="flex justify-end mb-6">

@@ -29,9 +29,9 @@ const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
-<Layout title="Library">
+<Layout title="Docs">
   <PageHero 
-    title="Library" 
+    title="Docs" 
     heroImageUrl={heroImageUrl}
     pageName="library"
     canEditHero={canEditHero}
@@ -186,7 +186,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   <!-- Modal for Add/Edit Entry -->
   <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="libraryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Library Entry</h2>
+      <h2 id="libraryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Docs Entry</h2>
       <form id="libraryEntryForm" class="space-y-4">
         <input type="hidden" id="libraryEntryId" name="id">
         
@@ -368,7 +368,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     editingId = null;
     form.reset();
     document.getElementById('libraryEntryId')?.setAttribute('value', '');
-    if (modalTitle) modalTitle.textContent = 'New Library Entry';
+    if (modalTitle) modalTitle.textContent = 'New Docs Entry';
     previewDiv?.classList.add('hidden');
     modal?.classList.remove('hidden');
   });
@@ -452,7 +452,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
           locationEl.value = entry.locationId || '';
           
-          modalTitle.textContent = 'Edit Library Entry';
+          modalTitle.textContent = 'Edit Docs Entry';
           previewDiv?.classList.add('hidden');
           modal.classList.remove('hidden');
           
@@ -504,7 +504,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
         locationEl.value = entry.locationId || '';
         
-        if (modalTitle) modalTitle.textContent = 'Edit Library Entry';
+        if (modalTitle) modalTitle.textContent = 'Edit Docs Entry';
         previewDiv?.classList.add('hidden');
         modal?.classList.remove('hidden');
       } catch (error) {
