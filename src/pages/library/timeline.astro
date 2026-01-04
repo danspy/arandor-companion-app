@@ -487,19 +487,19 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     const modalTitle = document.getElementById('timelineModalTitle');
     const cancelButton = document.getElementById('cancelTimelineModal');
     const closeDetailButton = document.getElementById('closeDetailModal');
-    const fileInput = document.getElementById('imageFile') as HTMLInputElement;
-    const urlInput = document.getElementById('imageUrl') as HTMLInputElement;
+    const fileInput = document.getElementById('imageFile');
+    const urlInput = document.getElementById('imageUrl');
     const imagePreview = document.getElementById('imagePreview');
-    const previewImg = document.getElementById('previewImg') as HTMLImageElement;
+    const previewImg = document.getElementById('previewImg');
     
     // Handle image file selection and preview
     fileInput?.addEventListener('change', (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
+      const file = e.target.files?.[0];
       if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
           if (previewImg && imagePreview) {
-            previewImg.src = e.target?.result as string;
+            previewImg.src = e.target?.result;
             imagePreview.classList.remove('hidden');
           }
           // Clear URL input when file is selected
@@ -513,7 +513,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     
     // Handle URL input and preview
     urlInput?.addEventListener('input', (e) => {
-      const url = (e.target as HTMLInputElement).value;
+      const url = e.target.value;
       if (url) {
         if (previewImg && imagePreview) {
           previewImg.src = url;
@@ -564,12 +564,12 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       const formData = new FormData(form);
       
       // Get selected values from multi-select fields
-      const diarySelect = document.getElementById('diaryEntryIds') as HTMLSelectElement;
-      const libraryDocsSelect = document.getElementById('libraryDocsEntryIds') as HTMLSelectElement;
-      const npcsSelect = document.getElementById('npcIds') as HTMLSelectElement;
-      const locationsSelect = document.getElementById('locationIds') as HTMLSelectElement;
-      const charactersSelect = document.getElementById('characterIds') as HTMLSelectElement;
-      const questsSelect = document.getElementById('questIds') as HTMLSelectElement;
+      const diarySelect = document.getElementById('diaryEntryIds');
+      const libraryDocsSelect = document.getElementById('libraryDocsEntryIds');
+      const npcsSelect = document.getElementById('npcIds');
+      const locationsSelect = document.getElementById('locationIds');
+      const charactersSelect = document.getElementById('characterIds');
+      const questsSelect = document.getElementById('questIds');
       
       const diaryEntryIds = Array.from(diarySelect.selectedOptions).map(option => option.value);
       const libraryDocsEntryIds = Array.from(libraryDocsSelect.selectedOptions).map(option => option.value);
@@ -579,8 +579,8 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       const questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
       
       // Handle image upload if file is selected
-      let imageUrl = formData.get('imageUrl') as string || null;
-      const imageFile = formData.get('imageFile') as File;
+      let imageUrl = formData.get('imageUrl') || null;
+      const imageFile = formData.get('imageFile');
       
       if (imageFile && imageFile.size > 0) {
         try {
@@ -681,7 +681,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           
           if (detailDescription) {
             // Use the renderMarkdown function from the window object
-            detailDescription.innerHTML = (window as any).renderMarkdown(entry.fullDescription);
+            detailDescription.innerHTML = window.renderMarkdown(entry.fullDescription);
           }
           
           // Build connections section
@@ -770,7 +770,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           
           // Set selected options in multi-select dropdowns
           const setSelectedOptions = (selectId, ids) => {
-            const select = document.getElementById(selectId) as HTMLSelectElement;
+            const select = document.getElementById(selectId);
             if (select && ids) {
               Array.from(select.options).forEach(option => {
                 option.selected = ids.includes(option.value);
@@ -839,9 +839,9 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
   });
   
   // Make renderMarkdown function available globally for the other script
-  (window as any).renderMarkdown = function(content: string): string {
+  window.renderMarkdown = function(content) {
     if (!content) return '';
-    return marked.parse(content) as string;
+    return marked.parse(content);
   };
 </script>
 
