@@ -424,9 +424,17 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
   questMap: Object.fromEntries(questMap),
   sortedEntries
 }}>
-  import { renderMarkdown } from '../../utils/markdown';
-  
   let editingId = null;
+  
+  // Simple markdown-like rendering for client side
+  function simpleMarkdownRender(text) {
+    if (!text) return '';
+    // Basic markdown rendering - convert line breaks to <br>, paragraphs to <p>
+    return text
+      .split('\n\n')
+      .map(para => `<p class="mb-4">${para.replace(/\n/g, '<br>')}</p>`)
+      .join('');
+  }
   
   // Initialize timeline functionality
   function initializeTimeline() {
@@ -549,7 +557,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           }
           
           if (detailDescription) {
-            detailDescription.innerHTML = renderMarkdown(entry.fullDescription);
+            detailDescription.innerHTML = simpleMarkdownRender(entry.fullDescription);
           }
           
           // Build connections section
