@@ -9,25 +9,43 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
-// Fetch all timeline entries sorted by year (natural string sorting)
+// Fetch all timeline entries
 const timelineEntries = await db.select().from(TimelineEntry);
-const sortedEntries = timelineEntries.sort((a, b) => {
-  // Natural string comparison for year
-  const yearCompare = a.year.localeCompare(b.year, undefined, { numeric: true, sensitivity: 'base' });
+
+// Separate events and labels
+const events = timelineEntries.filter(e => e.entryType === 'event').sort((a, b) => {
+  const yearCompare = (a.year || 0) - (b.year || 0);
   if (yearCompare !== 0) return yearCompare;
-  // If years are equal, sort by sortOrder (nulls last)
-  if (a.sortOrder === null || a.sortOrder === undefined) return 1;
-  if (b.sortOrder === null || b.sortOrder === undefined) return -1;
-  return a.sortOrder - b.sortOrder;
+  return (a.sortOrder || 0) - (b.sortOrder || 0);
 });
 
-// Group entries by year for display
-const entriesByYear = new Map();
-sortedEntries.forEach(entry => {
-  if (!entriesByYear.has(entry.year)) {
-    entriesByYear.set(entry.year, []);
+const labels = timelineEntries.filter(e => e.entryType === 'label').sort((a, b) => {
+  return (a.sortOrder || 0) - (b.sortOrder || 0);
+});
+
+// Calculate year range for timeline scale
+let minYear = 0;
+let maxYear = 1000;
+if (events.length > 0) {
+  const eventYears = events.map(e => e.year || 0);
+  minYear = Math.floor(Math.min(...eventYears) / 100) * 100;
+  maxYear = Math.ceil(Math.max(...eventYears) / 100) * 100 + 100;
+}
+
+// Generate year markers at 100-year intervals
+const yearMarkers = [];
+for (let year = minYear; year <= maxYear; year += 100) {
+  yearMarkers.push(year);
+}
+
+// Map events to their year markers
+const eventsByYear = new Map();
+events.forEach(event => {
+  const year = event.year || 0;
+  if (!eventsByYear.has(year)) {
+    eventsByYear.set(year, []);
   }
-  entriesByYear.get(entry.year).push(entry);
+  eventsByYear.get(year).push(event);
 });
 
 // Fetch all related data for connections
@@ -74,95 +92,93 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
   )}
 
-  {sortedEntries.length === 0 && (
+  {timelineEntries.length === 0 && (
     <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
       <p class="text-gray-500 dark:text-gray-400 text-lg">No timeline entries yet. Start documenting your campaign history!</p>
     </div>
   )}
 
-  {/* Desktop: Horizontal scrolling timeline with visual line */}
+  {/* Label Dividers Section (float above timeline) */}
+  {labels.length > 0 && (
+    <div class="mb-8 flex flex-wrap gap-3">
+      {labels.map((label) => (
+        <div class="timeline-label" data-entry-id={label.id}>
+          <div class="inline-block bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-4 py-2">
+            <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+              {label.label}
+            </span>
+            {isLoggedIn && (
+              <span class="ml-2 space-x-1">
+                <button
+                  class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                  data-id={label.id}
+                  title="Edit label"
+                  aria-label="Edit label"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                </button>
+                <button
+                  class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                  data-id={label.id}
+                  title="Delete label"
+                  aria-label="Delete label"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </button>
+              </span>
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )}
+
+  {/* Desktop: Horizontal timeline with numeric year scale */}
   <div class="hidden md:block relative">
     <div class="overflow-x-auto pb-8">
       {/* Timeline line */}
       <div class="absolute top-16 left-0 right-0 h-1 bg-primary-300 dark:bg-primary-800 mx-4" style="z-index: 0;"></div>
       
       <div class="flex gap-6 min-w-max px-4 relative" style="z-index: 1;">
-        {Array.from(entriesByYear.entries()).map(([year, entries], yearIndex) => {
+        {yearMarkers.map((year) => {
+          const eventsAtYear = eventsByYear.get(year) || [];
           return (
-            <div class="timeline-year-group flex-shrink-0" key={year}>
+            <div class="timeline-year-marker flex-shrink-0" key={year}>
               {/* Year marker with line connector */}
               <div class="text-center mb-4 relative">
                 <div class="absolute top-8 left-1/2 w-1 h-8 bg-primary-400 dark:bg-primary-700 transform -translate-x-1/2"></div>
-                <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950">
-                  <div class="text-3xl font-bold">{year}</div>
+                <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950">
+                  <div class="text-2xl font-bold">{year}</div>
                 </div>
               </div>
               
-              {/* Entries for this year */}
-              <div class="space-y-4">
-                {entries.map((entry) => {
-                  // Label/Divider entries
-                  if (entry.entryType === 'label') {
-                    return (
-                      <div class="timeline-entry-card w-80" data-entry-id={entry.id}>
-                        <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-md dark:border dark:border-accent-800/50 p-4 text-center">
-                          <h3 class="text-lg font-bold text-accent-700 dark:text-accent-400 italic">
-                            {entry.headline}
-                          </h3>
-                          {isLoggedIn && (
-                            <div class="flex gap-2 mt-3">
-                              <Button
-                                variant="icon"
-                                size="sm"
-                                icon="edit"
-                                iconPosition="only"
-                                class="edit-timeline-entry flex-1"
-                                data-id={entry.id}
-                                title="Edit label"
-                                ariaLabel="Edit label"
-                              />
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                icon="delete"
-                                iconPosition="only"
-                                class="delete-timeline-entry hover:text-red-600 dark:hover:text-red-400 flex-1"
-                                data-id={entry.id}
-                                title="Delete label"
-                                ariaLabel="Delete label"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  // Regular event entries
-                  return (
-                    <div class="timeline-entry-card w-80" data-entry-id={entry.id}>
+              {/* Events for this year */}
+              {eventsAtYear.length > 0 && (
+                <div class="space-y-4">
+                  {eventsAtYear.map((event) => (
+                    <div class="timeline-entry-card w-80" data-entry-id={event.id}>
                       <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition">
-                        {entry.imageUrl && (
+                        {event.imageUrl && (
                           <img 
-                            src={entry.imageUrl} 
-                            alt={entry.headline}
+                            src={event.imageUrl} 
+                            alt={event.headline}
                             class="w-full h-48 object-cover rounded-lg mb-4"
                           />
                         )}
                         
                         <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                          {entry.headline}
+                          {event.headline}
                         </h3>
                         
-                        {entry.shortDescription && (
+                        {event.shortDescription && (
                           <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
-                            {entry.shortDescription}
+                            {event.shortDescription}
                           </p>
                         )}
                         
                         <button 
                           class="view-timeline-detail w-full bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
-                          data-entry-id={entry.id}
+                          data-entry-id={event.id}
                         >
                           + More
                         </button>
@@ -175,9 +191,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                               icon="edit"
                               iconPosition="only"
                               class="edit-timeline-entry flex-1"
-                              data-id={entry.id}
-                              title="Edit entry"
-                              ariaLabel="Edit entry"
+                              data-id={event.id}
+                              title="Edit event"
+                              ariaLabel="Edit event"
                             />
                             <Button
                               variant="ghost"
@@ -185,17 +201,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                               icon="delete"
                               iconPosition="only"
                               class="delete-timeline-entry hover:text-red-600 dark:hover:text-red-400 flex-1"
-                              data-id={entry.id}
-                              title="Delete entry"
-                              ariaLabel="Delete entry"
+                              data-id={event.id}
+                              title="Delete event"
+                              ariaLabel="Delete event"
                             />
                           </div>
                         )}
                       </div>
                     </div>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
@@ -203,87 +219,50 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
   </div>
 
-  {/* Mobile: Vertical timeline with connecting line */}
+  {/* Mobile: Vertical timeline with numeric year scale */}
   <div class="md:hidden relative">
     {/* Vertical timeline line */}
     <div class="absolute left-6 top-0 bottom-0 w-1 bg-primary-300 dark:bg-primary-800" style="z-index: 0;"></div>
     
     <div class="space-y-8 relative" style="z-index: 1;">
-      {Array.from(entriesByYear.entries()).map(([year, entries], yearIndex) => {
+      {yearMarkers.map((year) => {
+        const eventsAtYear = eventsByYear.get(year) || [];
         return (
-          <div class="timeline-year-group-mobile" key={year}>
+          <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
             <div class="flex items-center mb-4">
-              <div class="flex-shrink-0 bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10">
-                <div class="text-2xl font-bold">{year}</div>
+              <div class="flex-shrink-0 bg-primary-600 dark:bg-primary-700 text-white px-3 py-1.5 rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10">
+                <div class="text-lg font-bold">{year}</div>
               </div>
             </div>
             
-            {/* Entries for this year */}
-            <div class="space-y-4 pl-14">
-              {entries.map((entry) => {
-                // Label/Divider entries
-                if (entry.entryType === 'label') {
-                  return (
-                    <div class="timeline-entry-card" data-entry-id={entry.id}>
-                      <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-md dark:border dark:border-accent-800/50 p-4 text-center">
-                        <h3 class="text-lg font-bold text-accent-700 dark:text-accent-400 italic">
-                          {entry.headline}
-                        </h3>
-                        {isLoggedIn && (
-                          <div class="flex gap-2 mt-3">
-                            <Button
-                              variant="icon"
-                              size="sm"
-                              icon="edit"
-                              iconPosition="only"
-                              class="edit-timeline-entry flex-1"
-                              data-id={entry.id}
-                              title="Edit label"
-                              ariaLabel="Edit label"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              icon="delete"
-                              iconPosition="only"
-                              class="delete-timeline-entry hover:text-red-600 dark:hover:text-red-400 flex-1"
-                              data-id={entry.id}
-                              title="Delete label"
-                              ariaLabel="Delete label"
-                            />
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                }
-                
-                // Regular event entries
-                return (
-                  <div class="timeline-entry-card" data-entry-id={entry.id}>
+            {/* Events for this year */}
+            {eventsAtYear.length > 0 && (
+              <div class="space-y-4 pl-14">
+                {eventsAtYear.map((event) => (
+                  <div class="timeline-entry-card" data-entry-id={event.id}>
                     <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
-                      {entry.imageUrl && (
+                      {event.imageUrl && (
                         <img 
-                          src={entry.imageUrl} 
-                          alt={entry.headline}
+                          src={event.imageUrl} 
+                          alt={event.headline}
                           class="w-full h-48 object-cover rounded-lg mb-4"
                         />
                       )}
                       
                       <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                        {entry.headline}
+                        {event.headline}
                       </h3>
                       
-                      {entry.shortDescription && (
+                      {event.shortDescription && (
                         <p class="text-gray-600 dark:text-gray-400 mb-4">
-                          {entry.shortDescription}
+                          {event.shortDescription}
                         </p>
                       )}
                       
                       <button 
                         class="view-timeline-detail w-full bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
-                        data-entry-id={entry.id}
+                        data-entry-id={event.id}
                       >
                         + More
                       </button>
@@ -296,9 +275,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                             icon="edit"
                             iconPosition="only"
                             class="edit-timeline-entry flex-1"
-                            data-id={entry.id}
-                            title="Edit entry"
-                            ariaLabel="Edit entry"
+                            data-id={event.id}
+                            title="Edit event"
+                            ariaLabel="Edit event"
                           />
                           <Button
                             variant="ghost"
@@ -306,17 +285,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                             icon="delete"
                             iconPosition="only"
                             class="delete-timeline-entry hover:text-red-600 dark:hover:text-red-400 flex-1"
-                            data-id={entry.id}
-                            title="Delete entry"
-                            ariaLabel="Delete entry"
+                            data-id={event.id}
+                            title="Delete event"
+                            ariaLabel="Delete event"
                           />
                         </div>
                       )}
                     </div>
                   </div>
-                );
-              })}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         );
       })}
@@ -367,36 +346,48 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <option value="event">Event</option>
             <option value="label">Label / Divider</option>
           </select>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Labels are used to separate timeline sections (e.g., "100 years later")</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Events appear on timeline at specific years. Labels are floating dividers.</p>
         </div>
         
-        <div>
-          <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Year
-            <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(e.g., "1492 DR", "Ancient Times", "Year 0")</span>
-          </label>
+        {/* Label field (only for labels) */}
+        <div id="labelFieldContainer" style="display: none;">
+          <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label Text <span class="text-red-500">*</span></label>
           <input 
             type="text" 
-            id="year" 
-            name="year" 
-            required 
-            placeholder="e.g., 1492 DR"
+            id="label" 
+            name="label" 
+            placeholder="e.g., 100 years later..."
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
           />
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter the text for the divider label</p>
         </div>
         
-        <div>
-          <label for="headline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Headline</label>
-          <input 
-            type="text" 
-            id="headline" 
-            name="headline" 
-            required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          />
-        </div>
-        
+        {/* Event fields (only for events) */}
         <div id="eventFieldsContainer">
+          <div>
+            <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Year <span class="text-red-500">*</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(numeric, e.g., 0, 900, 1492)</span>
+            </label>
+            <input 
+              type="number" 
+              id="year" 
+              name="year" 
+              placeholder="e.g., 900"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <label for="headline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Headline <span class="text-red-500">*</span></label>
+            <input 
+              type="text" 
+              id="headline" 
+              name="headline" 
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+          
           <div>
             <label for="shortDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Description (optional)</label>
             <textarea 
@@ -605,15 +596,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const previewImg = document.getElementById('previewImg');
     const entryTypeSelect = document.getElementById('entryType');
     const eventFieldsContainer = document.getElementById('eventFieldsContainer');
+    const labelFieldContainer = document.getElementById('labelFieldContainer');
     
     // Handle entry type change to show/hide fields
     entryTypeSelect?.addEventListener('change', (e) => {
       const isLabel = e.target.value === 'label';
-      if (eventFieldsContainer) {
+      if (eventFieldsContainer && labelFieldContainer) {
         if (isLabel) {
           eventFieldsContainer.style.display = 'none';
+          labelFieldContainer.style.display = 'block';
         } else {
           eventFieldsContainer.style.display = 'block';
+          labelFieldContainer.style.display = 'none';
         }
       }
     });
@@ -658,9 +652,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       form?.reset();
       imagePreview?.classList.add('hidden');
       if (modalTitle) modalTitle.textContent = 'New Timeline Entry';
-      // Reset entry type to event and show all fields
+      // Reset entry type to event and show event fields, hide label field
       if (entryTypeSelect) entryTypeSelect.value = 'event';
       if (eventFieldsContainer) eventFieldsContainer.style.display = 'block';
+      if (labelFieldContainer) labelFieldContainer.style.display = 'none';
       modal?.classList.remove('hidden');
     });
     
@@ -736,20 +731,30 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         }
       }
       
+      const entryType = formData.get('entryType') || 'event';
+      
       const data = {
-        entryType: formData.get('entryType') || 'event',
-        year: formData.get('year'), // Keep as string
-        headline: formData.get('headline'),
-        shortDescription: formData.get('shortDescription'),
-        fullDescription: formData.get('fullDescription'),
-        imageUrl,
-        diaryEntryIds,
-        libraryDocsEntryIds,
-        npcIds,
-        locationIds,
-        characterIds,
-        questIds,
+        entryType,
       };
+      
+      // For labels, only include label field
+      if (entryType === 'label') {
+        data.label = formData.get('label');
+        data.sortOrder = 0; // Default sort order for labels
+      } else {
+        // For events, include all event fields
+        data.year = parseInt(formData.get('year')) || 0;
+        data.headline = formData.get('headline');
+        data.shortDescription = formData.get('shortDescription');
+        data.fullDescription = formData.get('fullDescription');
+        data.imageUrl = imageUrl;
+        data.diaryEntryIds = diaryEntryIds;
+        data.libraryDocsEntryIds = libraryDocsEntryIds;
+        data.npcIds = npcIds;
+        data.locationIds = locationIds;
+        data.characterIds = characterIds;
+        data.questIds = questIds;
+      }
       
       try {
         const url = editingId ? `/api/timeline/${editingId}` : '/api/timeline';
@@ -988,38 +993,49 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           
           // Populate form
           document.getElementById('entryType').value = entry.entryType || 'event';
-          document.getElementById('year').value = entry.year;
-          document.getElementById('headline').value = entry.headline;
-          document.getElementById('shortDescription').value = entry.shortDescription || '';
-          document.getElementById('fullDescription').value = entry.fullDescription || '';
-          document.getElementById('imageUrl').value = entry.imageUrl || '';
           
-          // Show/hide event fields based on entry type
+          // Show/hide fields based on entry type
+          const isLabel = entry.entryType === 'label';
           if (eventFieldsContainer) {
-            eventFieldsContainer.style.display = entry.entryType === 'label' ? 'none' : 'block';
+            eventFieldsContainer.style.display = isLabel ? 'none' : 'block';
+          }
+          if (labelFieldContainer) {
+            labelFieldContainer.style.display = isLabel ? 'block' : 'none';
           }
           
-          // Set selected options in multi-select dropdowns
-          const setSelectedOptions = (selectId, ids) => {
-            const select = document.getElementById(selectId);
-            if (select && ids) {
-              Array.from(select.options).forEach(option => {
-                option.selected = ids.includes(option.value);
-              });
+          if (isLabel) {
+            // Populate label field
+            document.getElementById('label').value = entry.label || '';
+          } else {
+            // Populate event fields
+            document.getElementById('year').value = entry.year;
+            document.getElementById('headline').value = entry.headline;
+            document.getElementById('shortDescription').value = entry.shortDescription || '';
+            document.getElementById('fullDescription').value = entry.fullDescription || '';
+            document.getElementById('imageUrl').value = entry.imageUrl || '';
+            
+            // Set selected options in multi-select dropdowns
+            const setSelectedOptions = (selectId, ids) => {
+              const select = document.getElementById(selectId);
+              if (select && ids) {
+                Array.from(select.options).forEach(option => {
+                  option.selected = ids.includes(option.value);
+                });
+              }
+            };
+            
+            setSelectedOptions('diaryEntryIds', entry.diaryEntryIds || []);
+            setSelectedOptions('libraryDocsEntryIds', entry.libraryDocsEntryIds || []);
+            setSelectedOptions('npcIds', entry.npcIds || []);
+            setSelectedOptions('locationIds', entry.locationIds || []);
+            setSelectedOptions('characterIds', entry.characterIds || []);
+            setSelectedOptions('questIds', entry.questIds || []);
+            
+            // Show image preview if URL exists
+            if (entry.imageUrl && previewImg && imagePreview) {
+              previewImg.src = entry.imageUrl;
+              imagePreview.classList.remove('hidden');
             }
-          };
-          
-          setSelectedOptions('diaryEntryIds', entry.diaryEntryIds || []);
-          setSelectedOptions('libraryDocsEntryIds', entry.libraryDocsEntryIds || []);
-          setSelectedOptions('npcIds', entry.npcIds || []);
-          setSelectedOptions('locationIds', entry.locationIds || []);
-          setSelectedOptions('characterIds', entry.characterIds || []);
-          setSelectedOptions('questIds', entry.questIds || []);
-          
-          // Show image preview if URL exists
-          if (entry.imageUrl && previewImg && imagePreview) {
-            previewImg.src = entry.imageUrl;
-            imagePreview.classList.remove('hidden');
           }
           
           if (modalTitle) modalTitle.textContent = 'Edit Timeline Entry';
