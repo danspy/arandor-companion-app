@@ -20,6 +20,8 @@ const events = timelineEntries.filter(e => e.entryType === 'event').sort((a, b) 
 });
 
 const labels = timelineEntries.filter(e => e.entryType === 'label').sort((a, b) => {
+  const yearCompare = (a.year || 0) - (b.year || 0);
+  if (yearCompare !== 0) return yearCompare;
   return (a.sortOrder || 0) - (b.sortOrder || 0);
 });
 
