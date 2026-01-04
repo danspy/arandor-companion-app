@@ -35,10 +35,12 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     
     await db.update(TimelineEntry)
       .set({
+        entryType: body.entryType || 'event',
         year: body.year,
+        sortOrder: body.sortOrder !== undefined ? body.sortOrder : null,
         headline: body.headline,
-        shortDescription: body.shortDescription,
-        fullDescription: body.fullDescription,
+        shortDescription: body.shortDescription || null,
+        fullDescription: body.fullDescription || null,
         imageUrl: body.imageUrl || null,
         diaryEntryIds: body.diaryEntryIds || [],
         libraryDocsEntryIds: body.libraryDocsEntryIds || [],

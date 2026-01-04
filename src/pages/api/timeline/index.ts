@@ -5,8 +5,16 @@ import { requirePlayerOrAbove } from '../../../lib/middleware';
 export const GET: APIRoute = async () => {
   try {
     const entries = await db.select().from(TimelineEntry);
-    // Sort by year
-    const sorted = entries.sort((a, b) => a.year - b.year);
+    // Sort by year (string comparison) and then by sortOrder
+    const sorted = entries.sort((a, b) => {
+      // First compare years (natural string comparison)
+      const yearCompare = a.year.localeCompare(b.year, undefined, { numeric: true, sensitivity: 'base' });
+      if (yearCompare !== 0) return yearCompare;
+      // If years are equal, sort by sortOrder (nulls last)
+      if (a.sortOrder === null || a.sortOrder === undefined) return 1;
+      if (b.sortOrder === null || b.sortOrder === undefined) return -1;
+      return a.sortOrder - b.sortOrder;
+    });
     return new Response(JSON.stringify(sorted), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -30,10 +38,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     
     await db.insert(TimelineEntry).values({
       id,
+      entryType: body.entryType || 'event',
       year: body.year,
+      sortOrder: body.sortOrder || null,
       headline: body.headline,
-      shortDescription: body.shortDescription,
-      fullDescription: body.fullDescription,
+      shortDescription: body.shortDescription || null,
+      fullDescription: body.fullDescription || null,
       imageUrl: body.imageUrl || null,
       diaryEntryIds: body.diaryEntryIds || [],
       libraryDocsEntryIds: body.libraryDocsEntryIds || [],

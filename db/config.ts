@@ -253,10 +253,12 @@ const Event = defineTable({
 const TimelineEntry = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
-    year: column.number(), // Year in the campaign timeline
+    entryType: column.text({ default: 'event' }), // 'event' or 'label' - labels are dividers like "100 years later"
+    year: column.text(), // Text field for flexibility: "1492 DR", "Ancient Times", "Year 0", etc.
+    sortOrder: column.number({ optional: true }), // For sorting entries within the same year
     headline: column.text(),
-    shortDescription: column.text(),
-    fullDescription: column.text(), // Markdown content
+    shortDescription: column.text({ optional: true }),
+    fullDescription: column.text({ optional: true }), // Markdown content
     imageUrl: column.text({ optional: true }), // Optional image for the entry
     // Connection IDs to other content
     diaryEntryIds: column.json({ default: [] }), // Array of DiaryEntry IDs
