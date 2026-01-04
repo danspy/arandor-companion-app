@@ -40,7 +40,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       fullDescription: body.fullDescription,
       imageUrl: body.imageUrl || null,
       diaryEntryIds: body.diaryEntryIds || [],
-      libraryEntryIds: body.libraryEntryIds || [],
+      libraryDocsEntryIds: body.libraryDocsEntryIds || [],
       npcIds: body.npcIds || [],
       locationIds: body.locationIds || [],
       characterIds: body.characterIds || [],

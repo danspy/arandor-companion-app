@@ -261,7 +261,7 @@ const TimelineEntry = defineTable({
     imageUrl: column.text({ optional: true }), // Optional image for the entry
     // Connection IDs to other content
     diaryEntryIds: column.json({ default: [] }), // Array of DiaryEntry IDs
-    libraryEntryIds: column.json({ default: [] }), // Array of LibraryEntry IDs
+    libraryDocsEntryIds: column.json({ default: [] }), // Array of LibraryEntry IDs (docs)
     npcIds: column.json({ default: [] }), // Array of NPC IDs
     locationIds: column.json({ default: [] }), // Array of Location IDs
     characterIds: column.json({ default: [] }), // Array of Character IDs

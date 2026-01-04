@@ -311,84 +311,137 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
         </div>
         
         <div>
-          <label for="imageUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image URL (optional)</label>
-          <input 
-            type="url" 
-            id="imageUrl" 
-            name="imageUrl" 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          />
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
+          <div class="space-y-3">
+            <div>
+              <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+              <input 
+                type="file" 
+                id="imageFile" 
+                name="imageFile" 
+                accept="image/*"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              />
+            </div>
+            <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+            <div>
+              <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+              <input 
+                type="url" 
+                id="imageUrl" 
+                name="imageUrl" 
+                placeholder="https://example.com/image.jpg"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              />
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
+            </div>
+          </div>
+          
+          <!-- Image Preview -->
+          <div id="imagePreview" class="hidden mt-4">
+            <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-lg" />
+          </div>
         </div>
         
         <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
           <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Connections (optional)</h3>
-          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Enter IDs separated by commas</p>
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Select entries to connect to this timeline event</p>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="diaryEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diary Entry IDs</label>
-              <input 
-                type="text" 
+              <label for="diaryEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diary Entries</label>
+              <select 
                 id="diaryEntryIds" 
                 name="diaryEntryIds" 
-                placeholder="diary-id-1, diary-id-2"
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {diaryEntries.map(entry => (
+                  <option value={entry.id}>Session {entry.session}: {entry.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="libraryEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Library Entry IDs</label>
-              <input 
-                type="text" 
-                id="libraryEntryIds" 
-                name="libraryEntryIds" 
-                placeholder="lib-id-1, lib-id-2"
+              <label for="libraryDocsEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Library Docs</label>
+              <select 
+                id="libraryDocsEntryIds" 
+                name="libraryDocsEntryIds" 
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {libraryEntries.map(entry => (
+                  <option value={entry.id}>{entry.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="npcIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPC IDs</label>
-              <input 
-                type="text" 
+              <label for="npcIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPCs</label>
+              <select 
                 id="npcIds" 
                 name="npcIds" 
-                placeholder="npc-id-1, npc-id-2"
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {npcs.map(npc => (
+                  <option value={npc.id}>{npc.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="locationIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location IDs</label>
-              <input 
-                type="text" 
+              <label for="locationIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Locations</label>
+              <select 
                 id="locationIds" 
                 name="locationIds" 
-                placeholder="loc-id-1, loc-id-2"
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {locations.map(location => (
+                  <option value={location.id}>{location.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="characterIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Character IDs</label>
-              <input 
-                type="text" 
+              <label for="characterIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Characters</label>
+              <select 
                 id="characterIds" 
                 name="characterIds" 
-                placeholder="char-id-1, char-id-2"
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {characters.map(character => (
+                  <option value={character.id}>{character.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="questIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quest IDs</label>
-              <input 
-                type="text" 
+              <label for="questIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quests</label>
+              <select 
                 id="questIds" 
                 name="questIds" 
-                placeholder="quest-id-1, quest-id-2"
+                multiple 
+                size="4"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-              />
+              >
+                {quests.map(quest => (
+                  <option value={quest.id}>{quest.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
           </div>
         </div>
@@ -425,16 +478,6 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
 }}>
   let editingId = null;
   
-  // Simple markdown-like rendering for client side
-  function simpleMarkdownRender(text) {
-    if (!text) return '';
-    // Basic markdown rendering - convert line breaks to <br>, paragraphs to <p>
-    return text
-      .split('\n\n')
-      .map(para => `<p class="mb-4">${para.replace(/\n/g, '<br>')}</p>`)
-      .join('');
-  }
-  
   // Initialize timeline functionality
   function initializeTimeline() {
     const addButton = document.getElementById('addTimelineEntry');
@@ -444,11 +487,50 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     const modalTitle = document.getElementById('timelineModalTitle');
     const cancelButton = document.getElementById('cancelTimelineModal');
     const closeDetailButton = document.getElementById('closeDetailModal');
+    const fileInput = document.getElementById('imageFile') as HTMLInputElement;
+    const urlInput = document.getElementById('imageUrl') as HTMLInputElement;
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg') as HTMLImageElement;
+    
+    // Handle image file selection and preview
+    fileInput?.addEventListener('change', (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (previewImg && imagePreview) {
+            previewImg.src = e.target?.result as string;
+            imagePreview.classList.remove('hidden');
+          }
+          // Clear URL input when file is selected
+          if (urlInput) urlInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        imagePreview?.classList.add('hidden');
+      }
+    });
+    
+    // Handle URL input and preview
+    urlInput?.addEventListener('input', (e) => {
+      const url = (e.target as HTMLInputElement).value;
+      if (url) {
+        if (previewImg && imagePreview) {
+          previewImg.src = url;
+          imagePreview.classList.remove('hidden');
+        }
+        // Clear file input when URL is entered
+        if (fileInput) fileInput.value = '';
+      } else {
+        imagePreview?.classList.add('hidden');
+      }
+    });
     
     // Open add modal
     addButton?.addEventListener('click', () => {
       editingId = null;
       form?.reset();
+      imagePreview?.classList.add('hidden');
       if (modalTitle) modalTitle.textContent = 'New Timeline Entry';
       modal?.classList.remove('hidden');
     });
@@ -481,7 +563,49 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       
       const formData = new FormData(form);
       
-      const parseIds = (str) => str ? str.split(',').map(s => s.trim()).filter(s => s) : [];
+      // Get selected values from multi-select fields
+      const diarySelect = document.getElementById('diaryEntryIds') as HTMLSelectElement;
+      const libraryDocsSelect = document.getElementById('libraryDocsEntryIds') as HTMLSelectElement;
+      const npcsSelect = document.getElementById('npcIds') as HTMLSelectElement;
+      const locationsSelect = document.getElementById('locationIds') as HTMLSelectElement;
+      const charactersSelect = document.getElementById('characterIds') as HTMLSelectElement;
+      const questsSelect = document.getElementById('questIds') as HTMLSelectElement;
+      
+      const diaryEntryIds = Array.from(diarySelect.selectedOptions).map(option => option.value);
+      const libraryDocsEntryIds = Array.from(libraryDocsSelect.selectedOptions).map(option => option.value);
+      const npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
+      const locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
+      const characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
+      const questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
+      
+      // Handle image upload if file is selected
+      let imageUrl = formData.get('imageUrl') as string || null;
+      const imageFile = formData.get('imageFile') as File;
+      
+      if (imageFile && imageFile.size > 0) {
+        try {
+          const uploadFormData = new FormData();
+          uploadFormData.append('file', imageFile);
+          
+          const uploadResponse = await fetch('/api/upload', {
+            method: 'POST',
+            body: uploadFormData,
+          });
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            imageUrl = uploadData.url;
+          } else {
+            const error = await uploadResponse.json();
+            alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+            return;
+          }
+        } catch (error) {
+          console.error('Upload error:', error);
+          alert('Failed to upload image. Please try again.');
+          return;
+        }
+      }
       
       const data = {
         year: parseInt(formData.get('year')),
@@ -489,13 +613,13 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
         headline: formData.get('headline'),
         shortDescription: formData.get('shortDescription'),
         fullDescription: formData.get('fullDescription'),
-        imageUrl: formData.get('imageUrl') || null,
-        diaryEntryIds: parseIds(formData.get('diaryEntryIds')),
-        libraryEntryIds: parseIds(formData.get('libraryEntryIds')),
-        npcIds: parseIds(formData.get('npcIds')),
-        locationIds: parseIds(formData.get('locationIds')),
-        characterIds: parseIds(formData.get('characterIds')),
-        questIds: parseIds(formData.get('questIds')),
+        imageUrl,
+        diaryEntryIds,
+        libraryDocsEntryIds,
+        npcIds,
+        locationIds,
+        characterIds,
+        questIds,
       };
       
       try {
@@ -556,7 +680,8 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           }
           
           if (detailDescription) {
-            detailDescription.innerHTML = simpleMarkdownRender(entry.fullDescription);
+            // Use the renderMarkdown function from the window object
+            detailDescription.innerHTML = (window as any).renderMarkdown(entry.fullDescription);
           }
           
           // Build connections section
@@ -586,8 +711,8 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
             if (entry.diaryEntryIds && entry.diaryEntryIds.length > 0) {
               addSection('Diary Entries', entry.diaryEntryIds, diaryMap, '/diary');
             }
-            if (entry.libraryEntryIds && entry.libraryEntryIds.length > 0) {
-              addSection('Library Entries', entry.libraryEntryIds, libraryMap, '/library');
+            if (entry.libraryDocsEntryIds && entry.libraryDocsEntryIds.length > 0) {
+              addSection('Library Docs', entry.libraryDocsEntryIds, libraryMap, '/library');
             }
             if (entry.npcIds && entry.npcIds.length > 0) {
               addSection('NPCs', entry.npcIds, npcMap, '/npcs');
@@ -642,12 +767,29 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           document.getElementById('shortDescription').value = entry.shortDescription;
           document.getElementById('fullDescription').value = entry.fullDescription;
           document.getElementById('imageUrl').value = entry.imageUrl || '';
-          document.getElementById('diaryEntryIds').value = (entry.diaryEntryIds || []).join(', ');
-          document.getElementById('libraryEntryIds').value = (entry.libraryEntryIds || []).join(', ');
-          document.getElementById('npcIds').value = (entry.npcIds || []).join(', ');
-          document.getElementById('locationIds').value = (entry.locationIds || []).join(', ');
-          document.getElementById('characterIds').value = (entry.characterIds || []).join(', ');
-          document.getElementById('questIds').value = (entry.questIds || []).join(', ');
+          
+          // Set selected options in multi-select dropdowns
+          const setSelectedOptions = (selectId, ids) => {
+            const select = document.getElementById(selectId) as HTMLSelectElement;
+            if (select && ids) {
+              Array.from(select.options).forEach(option => {
+                option.selected = ids.includes(option.value);
+              });
+            }
+          };
+          
+          setSelectedOptions('diaryEntryIds', entry.diaryEntryIds || []);
+          setSelectedOptions('libraryDocsEntryIds', entry.libraryDocsEntryIds || []);
+          setSelectedOptions('npcIds', entry.npcIds || []);
+          setSelectedOptions('locationIds', entry.locationIds || []);
+          setSelectedOptions('characterIds', entry.characterIds || []);
+          setSelectedOptions('questIds', entry.questIds || []);
+          
+          // Show image preview if URL exists
+          if (entry.imageUrl && previewImg && imagePreview) {
+            previewImg.src = entry.imageUrl;
+            imagePreview.classList.remove('hidden');
+          }
           
           if (modalTitle) modalTitle.textContent = 'Edit Timeline Entry';
           modal?.classList.remove('hidden');
@@ -685,6 +827,22 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
   
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeTimeline);
+</script>
+
+<script>
+  import { marked } from 'marked';
+  
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+  
+  // Make renderMarkdown function available globally for the other script
+  (window as any).renderMarkdown = function(content: string): string {
+    if (!content) return '';
+    return marked.parse(content) as string;
+  };
 </script>
 
 <style>
