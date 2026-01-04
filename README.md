@@ -66,6 +66,13 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
     - Generate shareable link for player display screen
     - Real-time synchronization between DM control and player display
   - Coming soon: Dice Roller, Session Timer
+- **Calendar** - Schedule and track D&D sessions with:
+  - Event management with date, time, duration, and host
+  - **Calendar Subscription** - Subscribe to events via iCal feed
+  - Works with Google Calendar, Apple Calendar, Outlook, and any app supporting iCal
+  - Automatic updates when events are added or changed
+  - Download calendar file or copy subscription URL
+  - Comprehensive instructions for all major calendar apps
 
 ### Additional Features
 
@@ -368,6 +375,11 @@ The following REST API endpoints are available:
 **Campaign Progress:**
 - `GET/PUT /api/campaign-progress/[id]` - Campaign progress
 
+**Events/Calendar:**
+- `GET/POST /api/events` - Events
+- `GET/PUT/DELETE /api/events/[id]` - Single event
+- `GET /api/calendar/ics.ics` - iCal feed for calendar subscriptions (public)
+
 **Initiative Tracker:**
 - `GET/POST /api/initiative` - Initiative entries (GET: all users, POST: DM/admin only)
 - `GET/PUT/DELETE /api/initiative/[id]` - Single initiative entry (GET: all users, PUT/DELETE: DM/admin only)
@@ -427,6 +439,7 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [ ] Full D&D Beyond character import/export
 - [ ] Image uploads for characters/NPCs
 - [ ] Session scheduling and reminders
+- [x] Calendar subscription (iCal/ICS feed for Google Calendar, Apple Calendar, Outlook)
 - [ ] Dice roller integration
 
 ## Contributing
