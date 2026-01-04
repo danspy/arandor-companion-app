@@ -9,9 +9,26 @@ const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 
-// Fetch all timeline entries sorted by year
+// Fetch all timeline entries sorted by year (natural string sorting)
 const timelineEntries = await db.select().from(TimelineEntry);
-const sortedEntries = timelineEntries.sort((a, b) => a.year - b.year);
+const sortedEntries = timelineEntries.sort((a, b) => {
+  // Natural string comparison for year
+  const yearCompare = a.year.localeCompare(b.year, undefined, { numeric: true, sensitivity: 'base' });
+  if (yearCompare !== 0) return yearCompare;
+  // If years are equal, sort by sortOrder (nulls last)
+  if (a.sortOrder === null || a.sortOrder === undefined) return 1;
+  if (b.sortOrder === null || b.sortOrder === undefined) return -1;
+  return a.sortOrder - b.sortOrder;
+});
+
+// Group entries by year for display
+const entriesByYear = new Map();
+sortedEntries.forEach(entry => {
+  if (!entriesByYear.has(entry.year)) {
+    entriesByYear.set(entry.year, []);
+  }
+  entriesByYear.get(entry.year).push(entry);
+});
 
 // Fetch all related data for connections
 const diaryEntries = await db.select().from(DiaryEntry);
@@ -234,6 +251,19 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       <h2 id="timelineModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Timeline Entry</h2>
       <form id="timelineEntryForm" class="space-y-4">
         <input type="hidden" id="timelineEntryId" name="id">
+        
+        <div>
+          <label for="entryType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Entry Type</label>
+          <select 
+            id="entryType" 
+            name="entryType" 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="event">Event</option>
+            <option value="label">Label / Divider</option>
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Labels are used to separate timeline sections (e.g., "100 years later")</p>
+        </div>
         
         <div>
           <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -583,7 +613,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       }
       
       const data = {
-        year: parseInt(formData.get('year')),
+        entryType: formData.get('entryType') || 'event',
+        year: formData.get('year'), // Keep as string
         headline: formData.get('headline'),
         shortDescription: formData.get('shortDescription'),
         fullDescription: formData.get('fullDescription'),
@@ -762,7 +793,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Library Docs</h4>
                   <div class="space-y-2">
                     ${libraryDocs.map(doc => `
-                      <a href="/library/${doc.id}" class="block p-3 border border-primary-200 dark:border-primary-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-400 dark:hover:border-primary-700 transition">
+                      <a href="/library/${doc.id}" class="block p-3 border border-purple-200 dark:border-purple-900 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-400 dark:hover:border-purple-700 transition">
                         <div class="font-semibold text-gray-900 dark:text-gray-100">${doc.title}</div>
                       </a>
                     `).join('')}
@@ -827,10 +858,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           editingId = id;
           
           // Populate form
+          document.getElementById('entryType').value = entry.entryType || 'event';
           document.getElementById('year').value = entry.year;
           document.getElementById('headline').value = entry.headline;
-          document.getElementById('shortDescription').value = entry.shortDescription;
-          document.getElementById('fullDescription').value = entry.fullDescription;
+          document.getElementById('shortDescription').value = entry.shortDescription || '';
+          document.getElementById('fullDescription').value = entry.fullDescription || '';
           document.getElementById('imageUrl').value = entry.imageUrl || '';
           
           // Set selected options in multi-select dropdowns
