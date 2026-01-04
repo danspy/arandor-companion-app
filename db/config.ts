@@ -254,7 +254,6 @@ const TimelineEntry = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     year: column.number(), // Year in the campaign timeline
-    month: column.number(), // Month (1-12)
     headline: column.text(),
     shortDescription: column.text(),
     fullDescription: column.text(), // Markdown content

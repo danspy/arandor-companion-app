@@ -5,11 +5,8 @@ import { requirePlayerOrAbove } from '../../../lib/middleware';
 export const GET: APIRoute = async () => {
   try {
     const entries = await db.select().from(TimelineEntry);
-    // Sort by year and month
-    const sorted = entries.sort((a, b) => {
-      if (a.year !== b.year) return a.year - b.year;
-      return a.month - b.month;
-    });
+    // Sort by year
+    const sorted = entries.sort((a, b) => a.year - b.year);
     return new Response(JSON.stringify(sorted), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
@@ -34,7 +31,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     await db.insert(TimelineEntry).values({
       id,
       year: body.year,
-      month: body.month,
       headline: body.headline,
       shortDescription: body.shortDescription,
       fullDescription: body.fullDescription,

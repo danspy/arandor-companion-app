@@ -7,12 +7,9 @@ import { isAuthenticated, getUserRole } from '../../lib/auth';
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
 
-// Fetch all timeline entries sorted by year and month
+// Fetch all timeline entries sorted by year
 const timelineEntries = await db.select().from(TimelineEntry);
-const sortedEntries = timelineEntries.sort((a, b) => {
-  if (a.year !== b.year) return a.year - b.year;
-  return a.month - b.month;
-});
+const sortedEntries = timelineEntries.sort((a, b) => a.year - b.year);
 
 // Fetch all related data for connections
 const diaryEntries = await db.select().from(DiaryEntry);
@@ -30,9 +27,6 @@ const locationMap = new Map(locations.map(l => [l.id, l]));
 const characterMap = new Map(characters.map(c => [c.id, c]));
 const questMap = new Map(quests.map(q => [q.id, q]));
 
-// Month names
-const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
-                    'July', 'August', 'September', 'October', 'November', 'December'];
 ---
 
 <Layout title="Timeline">
@@ -75,14 +69,12 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
     <div class="overflow-x-auto pb-8">
       <div class="flex gap-6 min-w-max px-4">
         {sortedEntries.map((entry, index) => {
-          const monthName = monthNames[entry.month - 1] || 'Unknown';
           return (
             <div class="timeline-entry-card w-80 flex-shrink-0" data-entry-id={entry.id}>
               {/* Date header */}
               <div class="text-center mb-4">
-                <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md">
-                  <div class="text-sm font-medium">{monthName}</div>
-                  <div class="text-2xl font-bold">{entry.year}</div>
+                <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-md">
+                  <div class="text-3xl font-bold">{entry.year}</div>
                 </div>
               </div>
               
@@ -146,13 +138,12 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
   {/* Mobile: Vertical timeline */}
   <div class="md:hidden space-y-6">
     {sortedEntries.map((entry, index) => {
-      const monthName = monthNames[entry.month - 1] || 'Unknown';
       return (
         <div class="timeline-entry-card" data-entry-id={entry.id}>
           {/* Date header */}
           <div class="mb-4">
-            <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md">
-              <div class="text-sm font-medium">{monthName} {entry.year}</div>
+            <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-6 py-3 rounded-lg shadow-md">
+              <div class="text-2xl font-bold">{entry.year}</div>
             </div>
           </div>
           
@@ -245,31 +236,15 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       <form id="timelineEntryForm" class="space-y-4">
         <input type="hidden" id="timelineEntryId" name="id">
         
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
-            <input 
-              type="number" 
-              id="year" 
-              name="year" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            />
-          </div>
-          
-          <div>
-            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month</label>
-            <select 
-              id="month" 
-              name="month" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
-              {monthNames.map((name, idx) => (
-                <option value={idx + 1}>{name}</option>
-              ))}
-            </select>
-          </div>
+        <div>
+          <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Year</label>
+          <input 
+            type="number" 
+            id="year" 
+            name="year" 
+            required 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          />
         </div>
         
         <div>
@@ -327,10 +302,10 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
             <div>
               <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
               <input 
-                type="url" 
+                type="text" 
                 id="imageUrl" 
                 name="imageUrl" 
-                placeholder="https://example.com/image.jpg"
+                placeholder="https://example.com/image.jpg or /uploads/image.jpg"
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
               />
               <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
@@ -467,7 +442,6 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
 </Layout>
 
 <script define:vars={{ 
-  monthNames,
   diaryMap: Object.fromEntries(diaryMap),
   libraryMap: Object.fromEntries(libraryMap),
   npcMap: Object.fromEntries(npcMap),
@@ -609,7 +583,6 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
       
       const data = {
         year: parseInt(formData.get('year')),
-        month: parseInt(formData.get('month')),
         headline: formData.get('headline'),
         shortDescription: formData.get('shortDescription'),
         fullDescription: formData.get('fullDescription'),
@@ -662,8 +635,7 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           const detailConnections = document.getElementById('detailConnections');
           
           if (detailDate) {
-            const monthName = monthNames[entry.month - 1] || 'Unknown';
-            detailDate.innerHTML = `<div class="text-sm font-medium">${monthName} ${entry.year}</div>`;
+            detailDate.innerHTML = `<div class="text-2xl font-bold">${entry.year}</div>`;
           }
           
           if (detailHeadline) detailHeadline.textContent = entry.headline;
@@ -688,54 +660,149 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           if (detailConnections) {
             let connectionsHtml = '';
             
-            const addSection = (title, ids, map, route) => {
-              const items = ids.map(id => map[id]).filter(Boolean);
-              if (items.length > 0) {
-                connectionsHtml += `
-                  <div class="bg-gray-50 dark:bg-gray-900 rounded-lg p-4">
-                    <h4 class="font-semibold text-gray-900 dark:text-gray-100 mb-2">${title}</h4>
-                    <ul class="space-y-1">
-                      ${items.map(item => `
-                        <li>
-                          <a href="${route}/${item.id}" class="text-primary-600 dark:text-primary-400 hover:underline">
-                            ${item.title || item.name}
-                          </a>
-                        </li>
-                      `).join('')}
-                    </ul>
+            // NPCs - with avatars
+            const npcs = (entry.npcIds || []).map(id => npcMap[id]).filter(Boolean);
+            if (npcs.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">NPCs</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${npcs.map(npc => `
+                      <a href="/npcs/${npc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${npc.avatarUrl ? 
+                          `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center text-xl font-bold text-primary-700 dark:text-primary-400">${npc.name.charAt(0)}</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${npc.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${npc.race}${npc.occupation ? ` • ${npc.occupation}` : ''}</div>
+                        </div>
+                      </a>
+                    `).join('')}
                   </div>
-                `;
-              }
-            };
+                </div>
+              `;
+            }
             
-            if (entry.diaryEntryIds && entry.diaryEntryIds.length > 0) {
-              addSection('Diary Entries', entry.diaryEntryIds, diaryMap, '/diary');
+            // Characters - with avatars
+            const characters = (entry.characterIds || []).map(id => characterMap[id]).filter(Boolean);
+            if (characters.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Characters</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${characters.map(char => `
+                      <a href="/characters/${char.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${char.avatarUrl ? 
+                          `<img src="${char.avatarUrl}" alt="${char.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center text-xl font-bold text-secondary-700 dark:text-secondary-400">${char.name.charAt(0)}</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${char.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${char.class} ${char.level}</div>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
             }
-            if (entry.libraryDocsEntryIds && entry.libraryDocsEntryIds.length > 0) {
-              addSection('Library Docs', entry.libraryDocsEntryIds, libraryMap, '/library');
+            
+            // Locations - with images
+            const locations = (entry.locationIds || []).map(id => locationMap[id]).filter(Boolean);
+            if (locations.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Locations</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${locations.map(loc => `
+                      <a href="/locations/${loc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${loc.imageUrl ? 
+                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-accent-100 dark:bg-accent-900 rounded flex items-center justify-center text-xl font-bold text-accent-700 dark:text-accent-400">📍</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${loc.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${loc.type}</div>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
             }
-            if (entry.npcIds && entry.npcIds.length > 0) {
-              addSection('NPCs', entry.npcIds, npcMap, '/npcs');
+            
+            // Diary Entries - with cover images
+            const diaryEntries = (entry.diaryEntryIds || []).map(id => diaryMap[id]).filter(Boolean);
+            if (diaryEntries.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Diary Entries</h4>
+                  <div class="space-y-3">
+                    ${diaryEntries.map(diary => `
+                      <a href="/diary/${diary.id}" class="block p-4 border border-secondary-200 dark:border-secondary-800 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition">
+                        <div class="flex items-start justify-between mb-2">
+                          <h5 class="font-semibold text-gray-900 dark:text-gray-100">${diary.title}</h5>
+                          <span class="bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-400 px-2 py-1 rounded text-sm whitespace-nowrap ml-2">Session ${diary.session}</span>
+                        </div>
+                        ${diary.summary ? `<p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">${diary.summary}</p>` : ''}
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
             }
-            if (entry.locationIds && entry.locationIds.length > 0) {
-              addSection('Locations', entry.locationIds, locationMap, '/locations');
+            
+            // Library Docs
+            const libraryDocs = (entry.libraryDocsEntryIds || []).map(id => libraryMap[id]).filter(Boolean);
+            if (libraryDocs.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Library Docs</h4>
+                  <div class="space-y-2">
+                    ${libraryDocs.map(doc => `
+                      <a href="/library/${doc.id}" class="block p-3 border border-primary-200 dark:border-primary-800 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 hover:border-primary-400 dark:hover:border-primary-700 transition">
+                        <div class="font-semibold text-gray-900 dark:text-gray-100">${doc.title}</div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
             }
-            if (entry.characterIds && entry.characterIds.length > 0) {
-              addSection('Characters', entry.characterIds, characterMap, '/characters');
-            }
-            if (entry.questIds && entry.questIds.length > 0) {
-              addSection('Quests', entry.questIds, questMap, '/quests');
+            
+            // Quests
+            const quests = (entry.questIds || []).map(id => questMap[id]).filter(Boolean);
+            if (quests.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quests</h4>
+                  <div class="space-y-2">
+                    ${quests.map(quest => `
+                      <a href="/quests/${quest.id}" class="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-accent-300 dark:hover:border-accent-600 transition">
+                        <div class="flex items-center justify-between">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100">${quest.title}</div>
+                          <span class="px-2 py-1 rounded text-xs ${
+                            quest.status === 'completed' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                            quest.status === 'failed' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                            'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                          }">${quest.status}</span>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
             }
             
             if (connectionsHtml) {
               detailConnections.innerHTML = `
-                <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Connected Entries</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  ${connectionsHtml}
-                </div>
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">Connected Entries</h3>
+                ${connectionsHtml}
               `;
             } else {
               detailConnections.innerHTML = '';
+            }
+          }
             }
           }
           
@@ -762,7 +829,6 @@ const monthNames = ['January', 'February', 'March', 'April', 'May', 'June',
           
           // Populate form
           document.getElementById('year').value = entry.year;
-          document.getElementById('month').value = entry.month;
           document.getElementById('headline').value = entry.headline;
           document.getElementById('shortDescription').value = entry.shortDescription;
           document.getElementById('fullDescription').value = entry.fullDescription;
