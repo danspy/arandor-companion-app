@@ -37,7 +37,7 @@ const renderedContent = renderMarkdown(entry.content);
   <div class="max-w-4xl mx-auto">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/library/docs" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
+      <a href="/library/docs" class="text-secondary-600 dark:text-secondary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
         <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -94,7 +94,7 @@ const renderedContent = renderMarkdown(entry.content);
           {entry.tags.map((tag: string) => (
             <a 
               href={`/library/docs?tag=${encodeURIComponent(tag)}`}
-              class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-primary-900/30 transition"
+              class="bg-secondary-100 dark:bg-secondary-900/20 dark:border dark:border-secondary-800 text-secondary-700 dark:text-secondary-400 px-3 py-1 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-primary-900/30 transition"
             >
               #{tag}
             </a>
@@ -162,7 +162,7 @@ const renderedContent = renderMarkdown(entry.content);
   }
   
   .prose :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400;
+    @apply text-secondary-600 dark:text-secondary-400;
   }
   
   .prose :where(h3):not(:where([class~="not-prose"] *)) {
@@ -170,7 +170,7 @@ const renderedContent = renderMarkdown(entry.content);
   }
   
   .prose :where(a):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
+    @apply text-secondary-600 dark:text-secondary-400 no-underline hover:underline;
   }
   
   .prose :where(strong):not(:where([class~="not-prose"] *)) {
