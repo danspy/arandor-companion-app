@@ -8,13 +8,13 @@ import { renderMarkdown } from '../../utils/markdown';
 const { id } = Astro.params;
 
 if (!id) {
-  return Astro.redirect('/library');
+  return Astro.redirect('/library/docs');
 }
 
 const entries = await db.select().from(LibraryEntry).where(eq(LibraryEntry.id, id));
 
 if (entries.length === 0) {
-  return Astro.redirect('/library');
+  return Astro.redirect('/library/docs');
 }
 
 const entry = entries[0];
@@ -37,7 +37,7 @@ const renderedContent = renderMarkdown(entry.content);
   <div class="max-w-4xl mx-auto">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/library" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
+      <a href="/library/docs" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
         <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -93,7 +93,7 @@ const renderedContent = renderMarkdown(entry.content);
         <div class="flex gap-2 flex-wrap mb-6">
           {entry.tags.map((tag: string) => (
             <a 
-              href={`/library?tag=${encodeURIComponent(tag)}`}
+              href={`/library/docs?tag=${encodeURIComponent(tag)}`}
               class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-primary-900/30 transition"
             >
               #{tag}
@@ -121,7 +121,7 @@ const renderedContent = renderMarkdown(entry.content);
     editBtn?.addEventListener('click', () => {
       const entryId = editBtn.getAttribute('data-id');
       if (entryId) {
-        window.location.href = `/library?edit=${entryId}`;
+        window.location.href = `/library/docs?edit=${entryId}`;
       }
     });
     
@@ -136,7 +136,7 @@ const renderedContent = renderMarkdown(entry.content);
           });
           
           if (response.ok) {
-            window.location.href = '/library';
+            window.location.href = '/library/docs';
           } else {
             alert('Failed to delete entry. Please try again.');
           }

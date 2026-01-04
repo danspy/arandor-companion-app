@@ -203,6 +203,7 @@ export {
   CombatState,
   DMScreenState,
   Event,
+  TimelineEntry,
 };
 
 const DiaryNote = defineTable({
@@ -249,6 +250,27 @@ const Event = defineTable({
   }
 });
 
+const TimelineEntry = defineTable({
+  columns: {
+    id: column.text({ primaryKey: true }),
+    year: column.number(), // Year in the campaign timeline
+    month: column.number(), // Month (1-12)
+    headline: column.text(),
+    shortDescription: column.text(),
+    fullDescription: column.text(), // Markdown content
+    imageUrl: column.text({ optional: true }), // Optional image for the entry
+    // Connection IDs to other content
+    diaryEntryIds: column.json({ default: [] }), // Array of DiaryEntry IDs
+    libraryEntryIds: column.json({ default: [] }), // Array of LibraryEntry IDs
+    npcIds: column.json({ default: [] }), // Array of NPC IDs
+    locationIds: column.json({ default: [] }), // Array of Location IDs
+    characterIds: column.json({ default: [] }), // Array of Character IDs
+    questIds: column.json({ default: [] }), // Array of Quest IDs
+    createdAt: column.date({ default: new Date() }),
+    updatedAt: column.date({ default: new Date() }),
+  }
+});
+
 export default defineDb({
   tables: {
     DiaryEntry,
@@ -266,5 +288,6 @@ export default defineDb({
     DiaryNote,
     DMScreenState,
     Event,
+    TimelineEntry,
   }
 });
