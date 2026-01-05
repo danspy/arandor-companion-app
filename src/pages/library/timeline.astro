@@ -139,13 +139,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         {yearMarkers.map((year) => {
           const eventsAtYear = eventsByYear.get(year) || [];
           const labelsAtYear = labels.filter(l => l.year === year);
+          const isCenturyMarker = year % 100 === 0;
           return (
             <div class="timeline-year-marker flex-shrink-0" key={year}>
               {/* Year marker with line connector */}
               <div class="text-center mb-4 relative">
-                <div class="absolute top-8 left-1/2 w-1 h-8 bg-primary-400 dark:bg-primary-700 transform -translate-x-1/2"></div>
-                <div class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950">
-                  <div class="text-2xl font-bold">{year}</div>
+                <div class={`absolute top-8 left-1/2 w-1 h-8 bg-primary-400 dark:bg-primary-700 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`}></div>
+                <div class={`inline-block bg-primary-600 dark:bg-primary-700 text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950`}>
+                  <div class={isCenturyMarker ? 'text-2xl font-bold' : 'text-sm font-semibold'}>{year}</div>
                 </div>
               </div>
               
@@ -268,12 +269,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       {yearMarkers.map((year) => {
         const eventsAtYear = eventsByYear.get(year) || [];
         const labelsAtYear = labels.filter(l => l.year === year);
+        const isCenturyMarker = year % 100 === 0;
         return (
           <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
             <div class="flex items-center mb-4">
-              <div class="flex-shrink-0 bg-primary-600 dark:bg-primary-700 text-white px-3 py-1.5 rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10">
-                <div class="text-lg font-bold">{year}</div>
+              <div class={`flex-shrink-0 bg-primary-600 dark:bg-primary-700 text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10 ${isCenturyMarker ? '' : 'opacity-75'}`}>
+                <div class={isCenturyMarker ? 'text-lg font-bold' : 'text-sm font-semibold'}>{year}</div>
               </div>
             </div>
             
@@ -811,51 +813,63 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       
       const formData = new FormData(form);
       
-      // Get selected values from multi-select fields
-      const diarySelect = document.getElementById('diaryEntryIds');
-      const libraryDocsSelect = document.getElementById('libraryDocsEntryIds');
-      const npcsSelect = document.getElementById('npcIds');
-      const locationsSelect = document.getElementById('locationIds');
-      const charactersSelect = document.getElementById('characterIds');
-      const questsSelect = document.getElementById('questIds');
+      const entryType = formData.get('entryType') || 'event';
       
-      const diaryEntryIds = Array.from(diarySelect.selectedOptions).map(option => option.value);
-      const libraryDocsEntryIds = Array.from(libraryDocsSelect.selectedOptions).map(option => option.value);
-      const npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
-      const locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
-      const characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
-      const questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
+      // Get selected values from multi-select fields (only for events)
+      let diaryEntryIds = [];
+      let libraryDocsEntryIds = [];
+      let npcIds = [];
+      let locationIds = [];
+      let characterIds = [];
+      let questIds = [];
       
-      // Handle image upload if file is selected
-      let imageUrl = formData.get('imageUrl') || null;
-      const imageFile = formData.get('imageFile');
-      
-      if (imageFile && imageFile.size > 0) {
-        try {
-          const uploadFormData = new FormData();
-          uploadFormData.append('file', imageFile);
-          
-          const uploadResponse = await fetch('/api/upload', {
-            method: 'POST',
-            body: uploadFormData,
-          });
-          
-          if (uploadResponse.ok) {
-            const uploadData = await uploadResponse.json();
-            imageUrl = uploadData.url;
-          } else {
-            const error = await uploadResponse.json();
-            alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
-            return;
-          }
-        } catch (error) {
-          console.error('Upload error:', error);
-          alert('Failed to upload image. Please try again.');
-          return;
-        }
+      if (entryType === 'event') {
+        const diarySelect = document.getElementById('diaryEntryIds');
+        const libraryDocsSelect = document.getElementById('libraryDocsEntryIds');
+        const npcsSelect = document.getElementById('npcIds');
+        const locationsSelect = document.getElementById('locationIds');
+        const charactersSelect = document.getElementById('characterIds');
+        const questsSelect = document.getElementById('questIds');
+        
+        if (diarySelect) diaryEntryIds = Array.from(diarySelect.selectedOptions).map(option => option.value);
+        if (libraryDocsSelect) libraryDocsEntryIds = Array.from(libraryDocsSelect.selectedOptions).map(option => option.value);
+        if (npcsSelect) npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
+        if (locationsSelect) locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
+        if (charactersSelect) characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
+        if (questsSelect) questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
       }
       
-      const entryType = formData.get('entryType') || 'event';
+      // Handle image upload if file is selected (only for events)
+      let imageUrl = null;
+      if (entryType === 'event') {
+        imageUrl = formData.get('imageUrl') || null;
+        const imageFile = formData.get('imageFile');
+        
+        if (imageFile && imageFile.size > 0) {
+          try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', imageFile);
+            
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: uploadFormData,
+            });
+            
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              imageUrl = uploadData.url;
+            } else {
+              const error = await uploadResponse.json();
+              alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+              return;
+            }
+          } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload image. Please try again.');
+            return;
+          }
+        }
+      }
       
       const data = {
         entryType,
