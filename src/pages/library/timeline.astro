@@ -100,40 +100,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
   )}
 
-  {/* Label Dividers Section (float above timeline) */}
-  {labels.length > 0 && (
-    <div class="mb-8 flex flex-wrap gap-3">
-      {labels.map((label) => (
-        <div class="timeline-label" data-entry-id={label.id}>
-          <div class="inline-block bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-4 py-2">
-            <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
-              {label.label}
-            </span>
-            {isLoggedIn && (
-              <span class="ml-2 space-x-1">
-                <button
-                  class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
-                  data-id={label.id}
-                  title="Edit label"
-                  aria-label="Edit label"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
-                </button>
-                <button
-                  class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
-                  data-id={label.id}
-                  title="Delete label"
-                  aria-label="Delete label"
-                >
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </button>
-              </span>
-            )}
-          </div>
-        </div>
-      ))}
-    </div>
-  )}
+
 
   {/* Desktop: Horizontal timeline with numeric year scale */}
   <div class="hidden md:block relative">
@@ -144,6 +111,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       <div class="flex gap-6 min-w-max px-4 relative" style="z-index: 1;">
         {yearMarkers.map((year) => {
           const eventsAtYear = eventsByYear.get(year) || [];
+          const labelsAtYear = labels.filter(l => l.year === year);
           return (
             <div class="timeline-year-marker flex-shrink-0" key={year}>
               {/* Year marker with line connector */}
@@ -153,6 +121,43 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   <div class="text-2xl font-bold">{year}</div>
                 </div>
               </div>
+              
+              {/* Labels for this year (positioned above events) */}
+              {labelsAtYear.length > 0 && (
+                <div class="space-y-2 mb-4">
+                  {labelsAtYear.map((label) => (
+                    <div class="timeline-label w-80" data-entry-id={label.id}>
+                      <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                            {label.label}
+                          </span>
+                          {isLoggedIn && (
+                            <span class="flex gap-1">
+                              <button
+                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                data-id={label.id}
+                                title="Edit label"
+                                aria-label="Edit label"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                              </button>
+                              <button
+                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                data-id={label.id}
+                                title="Delete label"
+                                aria-label="Delete label"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
               
               {/* Events for this year */}
               {eventsAtYear.length > 0 && (
@@ -229,6 +234,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     <div class="space-y-8 relative" style="z-index: 1;">
       {yearMarkers.map((year) => {
         const eventsAtYear = eventsByYear.get(year) || [];
+        const labelsAtYear = labels.filter(l => l.year === year);
         return (
           <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
@@ -237,6 +243,43 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="text-lg font-bold">{year}</div>
               </div>
             </div>
+            
+            {/* Labels for this year (positioned above events) */}
+            {labelsAtYear.length > 0 && (
+              <div class="space-y-2 pl-14 mb-4">
+                {labelsAtYear.map((label) => (
+                  <div class="timeline-label" data-entry-id={label.id}>
+                    <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                          {label.label}
+                        </span>
+                        {isLoggedIn && (
+                          <span class="flex gap-1">
+                            <button
+                              class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                              data-id={label.id}
+                              title="Edit label"
+                              aria-label="Edit label"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button
+                              class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                              data-id={label.id}
+                              title="Delete label"
+                              aria-label="Delete label"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Events for this year */}
             {eventsAtYear.length > 0 && (
@@ -351,17 +394,34 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Events appear on timeline at specific years. Labels are floating dividers.</p>
         </div>
         
-        {/* Label field (only for labels) */}
+        {/* Label fields (only for labels) */}
         <div id="labelFieldContainer" style="display: none;">
-          <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label Text <span class="text-red-500">*</span></label>
-          <input 
-            type="text" 
-            id="label" 
-            name="label" 
-            placeholder="e.g., 100 years later..."
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          />
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter the text for the divider label</p>
+          <div>
+            <label for="labelYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Year <span class="text-red-500">*</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(where to position the label on timeline)</span>
+            </label>
+            <input 
+              type="number" 
+              id="labelYear" 
+              name="labelYear" 
+              placeholder="e.g., 500"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Year determines where the label appears on the timeline</p>
+          </div>
+          
+          <div>
+            <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label Text <span class="text-red-500">*</span></label>
+            <input 
+              type="text" 
+              id="label" 
+              name="label" 
+              placeholder="e.g., 100 years later..."
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter the text for the divider label (year will not be displayed)</p>
+          </div>
         </div>
         
         {/* Event fields (only for events) */}
@@ -739,8 +799,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         entryType,
       };
       
-      // For labels, only include label field
+      // For labels, include label field and year field
       if (entryType === 'label') {
+        data.year = parseInt(formData.get('labelYear')) || 0;
         data.label = formData.get('label');
         data.sortOrder = 0; // Default sort order for labels
       } else {
@@ -1006,7 +1067,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           }
           
           if (isLabel) {
-            // Populate label field
+            // Populate label fields (year and label text)
+            document.getElementById('labelYear').value = entry.year || 0;
             document.getElementById('label').value = entry.label || '';
           } else {
             // Populate event fields
