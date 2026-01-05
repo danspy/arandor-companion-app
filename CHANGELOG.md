@@ -1,5 +1,3 @@
-# Changelog
-
 All notable changes to the Arandor Companion App will be documented in this file.
 
 ## Recent Features
@@ -80,7 +78,3 @@ All notable changes to the Arandor Companion App will be documented in this file
 - Full D&D Beyond character import/export
 - Image uploads for characters/NPCs
 - Dice roller integration
-
----
-
-For detailed feature documentation and setup instructions, see [README.md](README.md).
