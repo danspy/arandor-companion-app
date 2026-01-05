@@ -1,0 +1,70 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { marked } from 'marked';
+import fs from 'fs';
+import path from 'path';
+
+// Read the CHANGELOG.md file
+const changelogPath = path.join(process.cwd(), 'CHANGELOG.md');
+const changelogContent = fs.readFileSync(changelogPath, 'utf-8');
+
+// Convert markdown to HTML
+const htmlContent = marked(changelogContent);
+---
+
+<Layout title="Changelog">
+  <div class="max-w-4xl mx-auto">
+    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-8">Changelog</h1>
+    
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-900">
+      <div class="prose prose-primary dark:prose-invert max-w-none" set:html={htmlContent} />
+    </div>
+    
+    <div class="mt-8 text-center">
+      <a 
+        href="/profile" 
+        class="inline-block bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+      >
+        ← Back to Profile
+      </a>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  :global(.prose) {
+    @apply text-gray-900 dark:text-gray-100;
+  }
+  
+  :global(.prose h2) {
+    @apply text-2xl font-bold text-primary-700 dark:text-primary-400 mt-8 mb-4;
+  }
+  
+  :global(.prose h3) {
+    @apply text-xl font-semibold text-primary-600 dark:text-primary-500 mt-6 mb-3;
+  }
+  
+  :global(.prose ul) {
+    @apply list-disc list-inside space-y-2 ml-4;
+  }
+  
+  :global(.prose li) {
+    @apply text-gray-800 dark:text-gray-200;
+  }
+  
+  :global(.prose strong) {
+    @apply font-semibold text-gray-900 dark:text-gray-100;
+  }
+  
+  :global(.prose a) {
+    @apply text-primary-600 dark:text-primary-400 hover:underline;
+  }
+  
+  :global(.prose hr) {
+    @apply border-gray-300 dark:border-gray-700 my-8;
+  }
+  
+  :global(.prose code) {
+    @apply bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 rounded text-sm;
+  }
+</style>
