@@ -254,9 +254,10 @@ const TimelineEntry = defineTable({
   columns: {
     id: column.text({ primaryKey: true }),
     entryType: column.text({ default: 'event' }), // 'event' or 'label' - labels are dividers like "100 years later"
-    // For events: numeric year (0-9999+)
-    year: column.number({ optional: true }), // Numeric year for events
-    // For labels: just the label text, no year needed
+    // For both events and labels: numeric year (0-9999+)
+    year: column.number(), // Numeric year - required for positioning on timeline
+    month: column.number({ optional: true }), // Optional month (1-12) for fantasy calendar
+    // For labels: just the label text
     label: column.text({ optional: true }), // Label text for dividers (only for entryType='label')
     sortOrder: column.number({ optional: true }), // For sorting entries and labels on timeline
     // Event-specific fields (not used for labels)
