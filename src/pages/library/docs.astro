@@ -25,7 +25,7 @@ const sortedEntries = libraryEntries.slice().sort((a, b) =>
 const locationMap = new Map(locations.map(loc => [loc.id, loc.name]));
 
 // Get page settings for hero image
-const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'library'));
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'library-docs'));
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 ---
 
@@ -33,7 +33,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   <PageHero 
     title="Docs" 
     heroImageUrl={heroImageUrl}
-    pageName="library"
+    pageName="library-docs"
     canEditHero={canEditHero}
   />
 
