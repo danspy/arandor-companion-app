@@ -200,6 +200,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                           />
                         )}
                         
+                        {event.month && (
+                          <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                            {monthNames[event.month]}
+                          </div>
+                        )}
+                        
                         <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
                           {event.headline}
                         </h3>
@@ -320,6 +326,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                           alt={event.headline}
                           class="w-full h-48 object-cover rounded-lg mb-4"
                         />
+                      )}
+                      
+                      {event.month && (
+                        <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                          {monthNames[event.month]}
+                        </div>
                       )}
                       
                       <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
@@ -465,6 +477,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               placeholder="e.g., 900"
               class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             />
+          </div>
+          
+          <div>
+            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month (optional)</label>
+            <select 
+              id="month" 
+              name="month"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            >
+              <option value="">-- Select Month --</option>
+              <option value="1">Jalun</option>
+              <option value="2">Forun</option>
+              <option value="3">Myrt</option>
+              <option value="4">Adrel</option>
+              <option value="5">Mel</option>
+              <option value="6">Juton</option>
+              <option value="7">Jilu</option>
+              <option value="8">Aykast</option>
+              <option value="9">Sibton</option>
+              <option value="10">Oni</option>
+              <option value="11">Novrum</option>
+              <option value="12">Decetra</option>
+            </select>
           </div>
           
           <div>
@@ -834,6 +869,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       } else {
         // For events, include all event fields
         data.year = parseInt(formData.get('year')) || 0;
+        const monthValue = formData.get('month');
+        data.month = monthValue && monthValue !== '' ? parseInt(monthValue) : null;
         data.headline = formData.get('headline');
         data.shortDescription = formData.get('shortDescription');
         data.fullDescription = formData.get('fullDescription');
@@ -891,7 +928,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           const detailConnections = document.getElementById('detailConnections');
           
           if (detailDate) {
-            detailDate.innerHTML = `<div class="text-2xl font-bold">${entry.year}</div>`;
+            let dateText = `<div class="text-2xl font-bold">${entry.year}</div>`;
+            if (entry.month) {
+              const monthNames = ['', 'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton', 'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'];
+              dateText = `<div class="text-sm font-medium">${monthNames[entry.month]}</div><div class="text-2xl font-bold">${entry.year}</div>`;
+            }
+            detailDate.innerHTML = dateText;
           }
           
           if (detailHeadline) detailHeadline.textContent = entry.headline;
@@ -1071,7 +1113,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Edit entry
     document.querySelectorAll('.edit-timeline-entry').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const id = e.target.getAttribute('data-id');
+        e.preventDefault();
+        e.stopPropagation();
+        // Get ID from the button element itself (not the clicked target which might be an SVG)
+        const button = e.currentTarget;
+        const id = button.getAttribute('data-id');
         if (!id) return;
         
         try {
@@ -1100,6 +1146,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           } else {
             // Populate event fields
             document.getElementById('year').value = entry.year;
+            document.getElementById('month').value = entry.month || '';
             document.getElementById('headline').value = entry.headline;
             document.getElementById('shortDescription').value = entry.shortDescription || '';
             document.getElementById('fullDescription').value = entry.fullDescription || '';
@@ -1141,7 +1188,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Delete entry
     document.querySelectorAll('.delete-timeline-entry').forEach(btn => {
       btn.addEventListener('click', async (e) => {
-        const id = e.target.getAttribute('data-id');
+        e.preventDefault();
+        e.stopPropagation();
+        // Get ID from the button element itself (not the clicked target which might be an SVG)
+        const button = e.currentTarget;
+        const id = button.getAttribute('data-id');
         if (!id) return;
         
         if (confirm('Are you sure you want to delete this timeline entry?')) {
