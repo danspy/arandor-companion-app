@@ -1,0 +1,1275 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import Button from '../../components/Button.astro';
+import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest, PageSettings, eq } from 'astro:db';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
+
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Fetch all timeline entries
+const timelineEntries = await db.select().from(TimelineEntry);
+
+// Separate events and labels
+const events = timelineEntries.filter(e => e.entryType === 'event').sort((a, b) => {
+  const yearCompare = (a.year || 0) - (b.year || 0);
+  if (yearCompare !== 0) return yearCompare;
+  return (a.sortOrder || 0) - (b.sortOrder || 0);
+});
+
+const labels = timelineEntries.filter(e => e.entryType === 'label').sort((a, b) => {
+  const yearCompare = (a.year || 0) - (b.year || 0);
+  if (yearCompare !== 0) return yearCompare;
+  return (a.sortOrder || 0) - (b.sortOrder || 0);
+});
+
+// Calculate year range for timeline scale
+let minYear = 0;
+let maxYear = 1000;
+const allYears = [...events.map(e => e.year || 0), ...labels.map(l => l.year || 0)];
+if (allYears.length > 0) {
+  minYear = Math.floor(Math.min(...allYears) / 100) * 100;
+  maxYear = Math.ceil(Math.max(...allYears) / 100) * 100 + 100;
+}
+
+// Generate ALL year markers (both 100-year and event-specific years)
+const majorYearMarkers = []; // 100-year intervals
+const allYearMarkers = new Set(); // All years that need markers
+
+for (let year = minYear; year <= maxYear; year += 100) {
+  majorYearMarkers.push(year);
+  allYearMarkers.add(year);
+}
+
+// Add all event and label years
+events.forEach(event => allYearMarkers.add(event.year || 0));
+labels.forEach(label => allYearMarkers.add(label.year || 0));
+
+// Convert to sorted array
+const yearMarkers = Array.from(allYearMarkers).sort((a, b) => a - b);
+
+// Map events to their year markers
+const eventsByYear = new Map();
+events.forEach(event => {
+  const year = event.year || 0;
+  if (!eventsByYear.has(year)) {
+    eventsByYear.set(year, []);
+  }
+  eventsByYear.get(year).push(event);
+});
+
+// Map labels to their year markers
+const labelsByYear = new Map();
+labels.forEach(label => {
+  const year = label.year || 0;
+  if (!labelsByYear.has(year)) {
+    labelsByYear.set(year, []);
+  }
+  labelsByYear.get(year).push(label);
+});
+
+// Fantasy month names
+const monthNames = [
+  '', // 0 index (no month)
+  'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton',
+  'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'
+];
+
+// Fetch all related data for connections
+const diaryEntries = await db.select().from(DiaryEntry);
+const libraryEntries = await db.select().from(LibraryEntry);
+const npcs = await db.select().from(NPC);
+const locations = await db.select().from(Location);
+const characters = await db.select().from(Character);
+const quests = await db.select().from(Quest);
+
+// Create lookup maps
+const diaryMap = new Map(diaryEntries.map(d => [d.id, d]));
+const libraryMap = new Map(libraryEntries.map(l => [l.id, l]));
+const npcMap = new Map(npcs.map(n => [n.id, n]));
+const locationMap = new Map(locations.map(l => [l.id, l]));
+const characterMap = new Map(characters.map(c => [c.id, c]));
+const questMap = new Map(quests.map(q => [q.id, q]));
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'timeline'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
+
+---
+
+<Layout title="Timeline">
+  <PageHero 
+    title="Campaign Timeline" 
+    heroImageUrl={heroImageUrl}
+    pageName="timeline"
+    canEditHero={canEditHero}
+  />
+
+  {isLoggedIn && (
+    <div class="flex justify-end mb-6">
+      <Button 
+        variant="primary"
+        size="md"
+        icon="add"
+        id="addTimelineEntry"
+        title="Add new Timeline Entry"
+      >
+        Add Entry
+      </Button>
+    </div>
+  )}
+
+  {timelineEntries.length === 0 && (
+    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
+      <p class="text-gray-500 dark:text-gray-400 text-lg">No timeline entries yet. Start documenting your campaign history!</p>
+    </div>
+  )}
+
+
+
+  {/* Desktop: Horizontal timeline with numeric year scale */}
+  <div class="hidden md:block relative">
+    <div class="overflow-x-auto pb-8">
+      {/* Timeline line */}
+      <div class="absolute top-16 left-0 right-0 h-1 bg-primary-300 dark:bg-primary-800 mx-4" style="z-index: 0;"></div>
+      
+      <div class="flex gap-6 min-w-max px-4 relative" style="z-index: 1;">
+        {yearMarkers.map((year) => {
+          const eventsAtYear = eventsByYear.get(year) || [];
+          const labelsAtYear = labels.filter(l => l.year === year);
+          const isCenturyMarker = year % 100 === 0;
+          return (
+            <div class="timeline-year-marker flex-shrink-0" key={year} style="min-width: 320px;">
+              {/* Year marker with line connector */}
+              <div class="text-center mb-4 relative" style="min-height: 80px;">
+                <div class={`absolute top-8 left-1/2 w-1 h-8 bg-primary-400 dark:bg-primary-700 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`}></div>
+                <div class={`inline-block ${isCenturyMarker ? 'bg-primary-600 dark:bg-primary-700' : 'bg-primary-700 dark:bg-primary-800'} text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950 ${isCenturyMarker ? '' : 'opacity-90'}`}>
+                  <div class={isCenturyMarker ? 'text-2xl font-bold' : 'text-sm font-semibold'}>{year}</div>
+                </div>
+              </div>
+              
+              {/* Labels for this year (positioned above events) */}
+              {labelsAtYear.length > 0 && (
+                <div class="space-y-2 mb-4">
+                  {labelsAtYear.map((label) => (
+                    <div class="timeline-label w-80" data-entry-id={label.id}>
+                      <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                        <div class="flex items-center justify-between">
+                          <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                            {label.label}
+                          </span>
+                          {isLoggedIn && (
+                            <span class="flex gap-1">
+                              <button
+                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                data-id={label.id}
+                                title="Edit label"
+                                aria-label="Edit label"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                              </button>
+                              <button
+                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                data-id={label.id}
+                                title="Delete label"
+                                aria-label="Delete label"
+                              >
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              
+              {/* Events for this year */}
+              {eventsAtYear.length > 0 && (
+                <div class="space-y-4">
+                  {eventsAtYear.map((event) => (
+                    <div class="timeline-entry-card w-80" data-entry-id={event.id}>
+                      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition">
+                        {event.imageUrl && (
+                          <img 
+                            src={event.imageUrl} 
+                            alt={event.headline}
+                            class="w-full h-48 object-cover rounded-lg mb-4"
+                          />
+                        )}
+                        
+                        {event.month && (
+                          <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                            {monthNames[event.month]}
+                          </div>
+                        )}
+                        
+                        <div class="flex items-center justify-between mb-3">
+                          <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                            {event.headline}
+                          </h3>
+                          {isLoggedIn && (
+                            <span class="flex gap-1">
+                              <button
+                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                data-id={event.id}
+                                title="Edit event"
+                                aria-label="Edit event"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                              </button>
+                              <button
+                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                data-id={event.id}
+                                title="Delete event"
+                                aria-label="Delete event"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                              </button>
+                            </span>
+                          )}
+                        </div>
+                        
+                        {event.shortDescription && (
+                          <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                            {event.shortDescription}
+                          </p>
+                        )}
+                        
+                        <button 
+                          class="view-timeline-detail w-full bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+                          data-entry-id={event.id}
+                        >
+                          + More
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+
+  {/* Mobile: Vertical timeline with numeric year scale */}
+  <div class="md:hidden relative">
+    {/* Vertical timeline line */}
+    <div class="absolute left-6 top-0 bottom-0 w-1 bg-primary-300 dark:bg-primary-800" style="z-index: 0;"></div>
+    
+    <div class="space-y-8 relative" style="z-index: 1;">
+      {yearMarkers.map((year) => {
+        const eventsAtYear = eventsByYear.get(year) || [];
+        const labelsAtYear = labels.filter(l => l.year === year);
+        const isCenturyMarker = year % 100 === 0;
+        return (
+          <div class="timeline-year-marker-mobile" key={year}>
+            {/* Year marker with line connector */}
+            <div class="flex items-center mb-4" style="min-height: 60px;">
+              <div class={`flex-shrink-0 ${isCenturyMarker ? 'bg-primary-600 dark:bg-primary-700' : 'bg-primary-700 dark:bg-primary-800'} text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`}>
+                <div class={isCenturyMarker ? 'text-lg font-bold' : 'text-sm font-semibold'}>{year}</div>
+              </div>
+            </div>
+            
+            {/* Labels for this year (positioned above events) */}
+            {labelsAtYear.length > 0 && (
+              <div class="space-y-2 pl-14 mb-4">
+                {labelsAtYear.map((label) => (
+                  <div class="timeline-label" data-entry-id={label.id}>
+                    <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                      <div class="flex items-center justify-between">
+                        <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                          {label.label}
+                        </span>
+                        {isLoggedIn && (
+                          <span class="flex gap-1">
+                            <button
+                              class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                              data-id={label.id}
+                              title="Edit label"
+                              aria-label="Edit label"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button
+                              class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                              data-id={label.id}
+                              title="Delete label"
+                              aria-label="Delete label"
+                            >
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {/* Events for this year */}
+            {eventsAtYear.length > 0 && (
+              <div class="space-y-4 pl-14">
+                {eventsAtYear.map((event) => (
+                  <div class="timeline-entry-card" data-entry-id={event.id}>
+                    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+                      {event.imageUrl && (
+                        <img 
+                          src={event.imageUrl} 
+                          alt={event.headline}
+                          class="w-full h-48 object-cover rounded-lg mb-4"
+                        />
+                      )}
+                      
+                      {event.month && (
+                        <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                          {monthNames[event.month]}
+                        </div>
+                      )}
+                      
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          {event.headline}
+                        </h3>
+                        {isLoggedIn && (
+                          <span class="flex gap-1">
+                            <button
+                              class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                              data-id={event.id}
+                              title="Edit event"
+                              aria-label="Edit event"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                            </button>
+                            <button
+                              class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                              data-id={event.id}
+                              title="Delete event"
+                              aria-label="Delete event"
+                            >
+                              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                          </span>
+                        )}
+                      </div>
+                      
+                      {event.shortDescription && (
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                          {event.shortDescription}
+                        </p>
+                      )}
+                      
+                      <div class="flex items-center justify-between gap-2">
+                        <button 
+                          class="view-timeline-detail flex-1 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+                          data-entry-id={event.id}
+                        >
+                          + More
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  </div>
+
+  {/* Detail Modal */}
+  <div id="timelineDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
+      <div class="flex justify-between items-start mb-6">
+        <div>
+          <div id="detailDate" class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md mb-4">
+            <div class="text-sm font-medium">Month Year</div>
+          </div>
+          <h2 id="detailHeadline" class="text-3xl font-bold text-primary-700 dark:text-primary-400"></h2>
+        </div>
+        <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div id="detailImage" class="hidden mb-6">
+        <img src="" alt="" class="w-full h-64 object-cover rounded-lg" />
+      </div>
+      
+      <div id="detailDescription" class="prose dark:prose-invert max-w-none mb-6"></div>
+      
+      <div id="detailConnections" class="space-y-4"></div>
+    </div>
+  </div>
+
+  {/* Add/Edit Modal */}
+  <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="bg-white dark:bg-black rounded-lg p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
+      <h2 id="timelineModalTitle" class="text-2xl font-bold mb-6 text-primary-700 dark:text-primary-400">New Timeline Entry</h2>
+      <form id="timelineEntryForm" class="space-y-6">
+        <input type="hidden" id="timelineEntryId" name="id">
+        
+        <div>
+          <label for="entryType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Entry Type</label>
+          <select 
+            id="entryType" 
+            name="entryType" 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          >
+            <option value="event">Event</option>
+            <option value="label">Label / Divider</option>
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Events appear on timeline at specific years. Labels are floating dividers.</p>
+        </div>
+        
+        {/* Label fields (only for labels) */}
+        <div id="labelFieldContainer" style="display: none;">
+          <div>
+            <label for="labelYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Year <span class="text-red-500">*</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(where to position the label on timeline)</span>
+            </label>
+            <input 
+              type="number" 
+              id="labelYear" 
+              name="labelYear" 
+              placeholder="e.g., 500"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Year determines where the label appears on the timeline</p>
+          </div>
+          
+          <div>
+            <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label Text <span class="text-red-500">*</span></label>
+            <input 
+              type="text" 
+              id="label" 
+              name="label" 
+              placeholder="e.g., 100 years later..."
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter the text for the divider label (year will not be displayed)</p>
+          </div>
+        </div>
+        
+        {/* Event fields (only for events) */}
+        <div id="eventFieldsContainer">
+          <div>
+            <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Year <span class="text-red-500">*</span>
+              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(numeric, e.g., 0, 900, 1492)</span>
+            </label>
+            <input 
+              type="number" 
+              id="year" 
+              name="year" 
+              placeholder="e.g., 900"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month (optional)</label>
+            <select 
+              id="month" 
+              name="month"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            >
+              <option value="">-- Select Month --</option>
+              <option value="1">Jalun</option>
+              <option value="2">Forun</option>
+              <option value="3">Myrt</option>
+              <option value="4">Adrel</option>
+              <option value="5">Mel</option>
+              <option value="6">Juton</option>
+              <option value="7">Jilu</option>
+              <option value="8">Aykast</option>
+              <option value="9">Sibton</option>
+              <option value="10">Oni</option>
+              <option value="11">Novrum</option>
+              <option value="12">Decetra</option>
+            </select>
+          </div>
+          
+          <div>
+            <label for="headline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Headline <span class="text-red-500">*</span></label>
+            <input 
+              type="text" 
+              id="headline" 
+              name="headline" 
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            />
+          </div>
+          
+          <div>
+            <label for="shortDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Description (optional)</label>
+            <textarea 
+              id="shortDescription" 
+              name="shortDescription" 
+              rows="3"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            ></textarea>
+          </div>
+          
+          <div>
+            <label for="fullDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Full Description (optional, Markdown supported)
+              <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="text-xs text-primary-600 dark:text-primary-400 hover:underline ml-2">
+                Markdown Guide ↗
+              </a>
+            </label>
+            <textarea 
+              id="fullDescription" 
+              name="fullDescription" 
+              rows="8"
+              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 font-mono text-sm"
+            ></textarea>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
+            <div class="space-y-3">
+              <div>
+                <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+                <input 
+                  type="file" 
+                  id="imageFile" 
+                  name="imageFile" 
+                  accept="image/*"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                />
+              </div>
+              <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+              <div>
+                <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+                <input 
+                  type="text" 
+                  id="imageUrl" 
+                  name="imageUrl" 
+                  placeholder="https://example.com/image.jpg or /uploads/image.jpg"
+                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                />
+                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
+              </div>
+            </div>
+            
+            <!-- Image Preview -->
+            <div id="imagePreview" class="hidden mt-4">
+              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-lg" />
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Connections (optional)</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Select entries to connect to this timeline event</p>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label for="diaryEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diary Entries</label>
+              <select 
+                id="diaryEntryIds" 
+                name="diaryEntryIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {diaryEntries.map(entry => (
+                  <option value={entry.id}>Session {entry.session}: {entry.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+            
+            <div>
+              <label for="libraryDocsEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Library Docs</label>
+              <select 
+                id="libraryDocsEntryIds" 
+                name="libraryDocsEntryIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {libraryEntries.map(entry => (
+                  <option value={entry.id}>{entry.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+            
+            <div>
+              <label for="npcIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPCs</label>
+              <select 
+                id="npcIds" 
+                name="npcIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {npcs.map(npc => (
+                  <option value={npc.id}>{npc.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+            
+            <div>
+              <label for="locationIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Locations</label>
+              <select 
+                id="locationIds" 
+                name="locationIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {locations.map(location => (
+                  <option value={location.id}>{location.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+            
+            <div>
+              <label for="characterIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Characters</label>
+              <select 
+                id="characterIds" 
+                name="characterIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {characters.map(character => (
+                  <option value={character.id}>{character.name}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+            
+            <div>
+              <label for="questIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quests</label>
+              <select 
+                id="questIds" 
+                name="questIds" 
+                multiple 
+                size="4"
+                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              >
+                {quests.map(quest => (
+                  <option value={quest.id}>{quest.title}</option>
+                ))}
+              </select>
+              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            </div>
+          </div>
+        </div>
+        </div>
+        
+        <div class="flex gap-4 pt-4">
+          <button 
+            type="submit" 
+            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+          >
+            Save Entry
+          </button>
+          <button 
+            type="button" 
+            id="cancelTimelineModal"
+            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</Layout>
+
+<script define:vars={{ 
+  diaryMap: Object.fromEntries(diaryMap),
+  libraryMap: Object.fromEntries(libraryMap),
+  npcMap: Object.fromEntries(npcMap),
+  locationMap: Object.fromEntries(locationMap),
+  characterMap: Object.fromEntries(characterMap),
+  questMap: Object.fromEntries(questMap),
+  timelineEntries
+}}>
+  let editingId = null;
+  
+  // Initialize timeline functionality
+  function initializeTimeline() {
+    const addButton = document.getElementById('addTimelineEntry');
+    const modal = document.getElementById('timelineEntryModal');
+    const detailModal = document.getElementById('timelineDetailModal');
+    const form = document.getElementById('timelineEntryForm');
+    const modalTitle = document.getElementById('timelineModalTitle');
+    const cancelButton = document.getElementById('cancelTimelineModal');
+    const closeDetailButton = document.getElementById('closeDetailModal');
+    const fileInput = document.getElementById('imageFile');
+    const urlInput = document.getElementById('imageUrl');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const entryTypeSelect = document.getElementById('entryType');
+    const eventFieldsContainer = document.getElementById('eventFieldsContainer');
+    const labelFieldContainer = document.getElementById('labelFieldContainer');
+    
+    // Handle entry type change to show/hide fields
+    entryTypeSelect?.addEventListener('change', (e) => {
+      const isLabel = e.target.value === 'label';
+      if (eventFieldsContainer && labelFieldContainer) {
+        if (isLabel) {
+          eventFieldsContainer.style.display = 'none';
+          labelFieldContainer.style.display = 'block';
+        } else {
+          eventFieldsContainer.style.display = 'block';
+          labelFieldContainer.style.display = 'none';
+        }
+      }
+    });
+    
+    // Handle image file selection and preview
+    fileInput?.addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (previewImg && imagePreview) {
+            previewImg.src = e.target?.result;
+            imagePreview.classList.remove('hidden');
+          }
+          // Clear URL input when file is selected
+          if (urlInput) urlInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      } else {
+        imagePreview?.classList.add('hidden');
+      }
+    });
+    
+    // Handle URL input and preview
+    urlInput?.addEventListener('input', (e) => {
+      const url = e.target.value;
+      if (url) {
+        if (previewImg && imagePreview) {
+          previewImg.src = url;
+          imagePreview.classList.remove('hidden');
+        }
+        // Clear file input when URL is entered
+        if (fileInput) fileInput.value = '';
+      } else {
+        imagePreview?.classList.add('hidden');
+      }
+    });
+    
+    // Open add modal
+    addButton?.addEventListener('click', () => {
+      editingId = null;
+      form?.reset();
+      imagePreview?.classList.add('hidden');
+      if (modalTitle) modalTitle.textContent = 'New Timeline Entry';
+      // Reset entry type to event and show event fields, hide label field
+      if (entryTypeSelect) entryTypeSelect.value = 'event';
+      if (eventFieldsContainer) eventFieldsContainer.style.display = 'block';
+      if (labelFieldContainer) labelFieldContainer.style.display = 'none';
+      modal?.classList.remove('hidden');
+    });
+    
+    // Close modals
+    cancelButton?.addEventListener('click', () => {
+      modal?.classList.add('hidden');
+    });
+    
+    closeDetailButton?.addEventListener('click', () => {
+      detailModal?.classList.add('hidden');
+    });
+    
+    // Close modals on background click
+    modal?.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+    
+    detailModal?.addEventListener('click', (e) => {
+      if (e.target === detailModal) {
+        detailModal.classList.add('hidden');
+      }
+    });
+    
+    // Handle form submission
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const formData = new FormData(form);
+      
+      const entryType = formData.get('entryType') || 'event';
+      
+      // Get selected values from multi-select fields (only for events)
+      let diaryEntryIds = [];
+      let libraryDocsEntryIds = [];
+      let npcIds = [];
+      let locationIds = [];
+      let characterIds = [];
+      let questIds = [];
+      
+      if (entryType === 'event') {
+        const diarySelect = document.getElementById('diaryEntryIds');
+        const libraryDocsSelect = document.getElementById('libraryDocsEntryIds');
+        const npcsSelect = document.getElementById('npcIds');
+        const locationsSelect = document.getElementById('locationIds');
+        const charactersSelect = document.getElementById('characterIds');
+        const questsSelect = document.getElementById('questIds');
+        
+        if (diarySelect) diaryEntryIds = Array.from(diarySelect.selectedOptions).map(option => option.value);
+        if (libraryDocsSelect) libraryDocsEntryIds = Array.from(libraryDocsSelect.selectedOptions).map(option => option.value);
+        if (npcsSelect) npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
+        if (locationsSelect) locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
+        if (charactersSelect) characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
+        if (questsSelect) questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
+      }
+      
+      // Handle image upload if file is selected (only for events)
+      let imageUrl = null;
+      if (entryType === 'event') {
+        imageUrl = formData.get('imageUrl') || null;
+        const imageFile = formData.get('imageFile');
+        
+        if (imageFile && imageFile.size > 0) {
+          try {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', imageFile);
+            
+            const uploadResponse = await fetch('/api/upload', {
+              method: 'POST',
+              body: uploadFormData,
+            });
+            
+            if (uploadResponse.ok) {
+              const uploadData = await uploadResponse.json();
+              imageUrl = uploadData.url;
+            } else {
+              const error = await uploadResponse.json();
+              alert(`Failed to upload image: ${error.error || 'Unknown error'}`);
+              return;
+            }
+          } catch (error) {
+            console.error('Upload error:', error);
+            alert('Failed to upload image. Please try again.');
+            return;
+          }
+        }
+      }
+      
+      const data = {
+        entryType,
+      };
+      
+      // For labels, include label field and year field
+      if (entryType === 'label') {
+        data.year = parseInt(formData.get('labelYear')) || 0;
+        data.label = formData.get('label');
+        data.sortOrder = 0; // Default sort order for labels
+      } else {
+        // For events, include all event fields
+        data.year = parseInt(formData.get('year')) || 0;
+        const monthValue = formData.get('month');
+        data.month = monthValue && monthValue !== '' ? parseInt(monthValue) : null;
+        data.headline = formData.get('headline');
+        data.shortDescription = formData.get('shortDescription');
+        data.fullDescription = formData.get('fullDescription');
+        data.imageUrl = imageUrl;
+        data.diaryEntryIds = diaryEntryIds;
+        data.libraryDocsEntryIds = libraryDocsEntryIds;
+        data.npcIds = npcIds;
+        data.locationIds = locationIds;
+        data.characterIds = characterIds;
+        data.questIds = questIds;
+      }
+      
+      try {
+        const url = editingId ? `/api/timeline/${editingId}` : '/api/timeline';
+        const method = editingId ? 'PUT' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        
+        if (response.ok) {
+          window.location.reload();
+        } else {
+          alert('Failed to save entry. Please try again.');
+        }
+      } catch (error) {
+        alert('An error occurred. Please try again.');
+      }
+    });
+    
+    // View detail modal
+    document.querySelectorAll('.view-timeline-detail').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        const entryId = e.target.getAttribute('data-entry-id');
+        if (!entryId) return;
+        
+        try {
+          const response = await fetch(`/api/timeline/${entryId}`);
+          if (!response.ok) throw new Error('Failed to fetch entry');
+          
+          const entry = await response.json();
+          
+          // Skip if this is a label entry (labels don't have detail view)
+          if (entry.entryType === 'label') {
+            return;
+          }
+          
+          // Update modal content
+          const detailDate = document.getElementById('detailDate');
+          const detailHeadline = document.getElementById('detailHeadline');
+          const detailImage = document.getElementById('detailImage');
+          const detailDescription = document.getElementById('detailDescription');
+          const detailConnections = document.getElementById('detailConnections');
+          
+          if (detailDate) {
+            let dateText = `<div class="text-2xl font-bold">${entry.year}</div>`;
+            if (entry.month) {
+              const monthNames = ['', 'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton', 'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'];
+              dateText = `<div class="text-sm font-medium">${monthNames[entry.month]}</div><div class="text-2xl font-bold">${entry.year}</div>`;
+            }
+            detailDate.innerHTML = dateText;
+          }
+          
+          if (detailHeadline) detailHeadline.textContent = entry.headline;
+          
+          if (entry.imageUrl && detailImage) {
+            detailImage.classList.remove('hidden');
+            const img = detailImage.querySelector('img');
+            if (img) {
+              img.src = entry.imageUrl;
+              img.alt = entry.headline;
+            }
+          } else if (detailImage) {
+            detailImage.classList.add('hidden');
+          }
+          
+          if (detailDescription) {
+            // Use the renderMarkdown function from the window object
+            detailDescription.innerHTML = window.renderMarkdown(entry.fullDescription);
+          }
+          
+          // Build connections section
+          if (detailConnections) {
+            let connectionsHtml = '';
+            
+            // NPCs - with avatars
+            const npcs = (entry.npcIds || []).map(id => npcMap[id]).filter(Boolean);
+            if (npcs.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">NPCs</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${npcs.map(npc => `
+                      <a href="/npcs/${npc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${npc.avatarUrl ? 
+                          `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center text-xl font-bold text-primary-700 dark:text-primary-400">${npc.name.charAt(0)}</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${npc.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${npc.race}${npc.occupation ? ` • ${npc.occupation}` : ''}</div>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Characters - with avatars
+            const characters = (entry.characterIds || []).map(id => characterMap[id]).filter(Boolean);
+            if (characters.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Characters</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${characters.map(char => `
+                      <a href="/characters/${char.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${char.avatarUrl ? 
+                          `<img src="${char.avatarUrl}" alt="${char.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center text-xl font-bold text-secondary-700 dark:text-secondary-400">${char.name.charAt(0)}</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${char.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${char.class} ${char.level}</div>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Locations - with images
+            const locations = (entry.locationIds || []).map(id => locationMap[id]).filter(Boolean);
+            if (locations.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Locations</h4>
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    ${locations.map(loc => `
+                      <a href="/locations/${loc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                        ${loc.imageUrl ? 
+                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded object-cover border-2 border-gray-200 dark:border-gray-600" />` :
+                          `<div class="w-12 h-12 bg-accent-100 dark:bg-accent-900 rounded flex items-center justify-center text-xl font-bold text-accent-700 dark:text-accent-400">📍</div>`
+                        }
+                        <div class="flex-1 min-w-0">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${loc.name}</div>
+                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${loc.type}</div>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Diary Entries - with cover images
+            const diaryEntries = (entry.diaryEntryIds || []).map(id => diaryMap[id]).filter(Boolean);
+            if (diaryEntries.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Diary Entries</h4>
+                  <div class="space-y-3">
+                    ${diaryEntries.map(diary => `
+                      <a href="/diary/${diary.id}" class="block p-4 border border-secondary-200 dark:border-secondary-800 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition">
+                        <div class="flex items-start justify-between mb-2">
+                          <h5 class="font-semibold text-gray-900 dark:text-gray-100">${diary.title}</h5>
+                          <span class="bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-400 px-2 py-1 rounded text-sm whitespace-nowrap ml-2">Session ${diary.session}</span>
+                        </div>
+                        ${diary.summary ? `<p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">${diary.summary}</p>` : ''}
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Library Docs
+            const libraryDocs = (entry.libraryDocsEntryIds || []).map(id => libraryMap[id]).filter(Boolean);
+            if (libraryDocs.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Library Docs</h4>
+                  <div class="space-y-2">
+                    ${libraryDocs.map(doc => `
+                      <a href="/library/${doc.id}" class="block p-3 border border-purple-200 dark:border-purple-900 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-400 dark:hover:border-purple-700 transition">
+                        <div class="font-semibold text-gray-900 dark:text-gray-100">${doc.title}</div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            // Quests
+            const quests = (entry.questIds || []).map(id => questMap[id]).filter(Boolean);
+            if (quests.length > 0) {
+              connectionsHtml += `
+                <div class="mb-6">
+                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quests</h4>
+                  <div class="space-y-2">
+                    ${quests.map(quest => `
+                      <a href="/quests/${quest.id}" class="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-accent-300 dark:hover:border-accent-600 transition">
+                        <div class="flex items-center justify-between">
+                          <div class="font-semibold text-gray-900 dark:text-gray-100">${quest.title}</div>
+                          <span class="px-2 py-1 rounded text-xs ${
+                            quest.status === 'completed' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
+                            quest.status === 'failed' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
+                            'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                          }">${quest.status}</span>
+                        </div>
+                      </a>
+                    `).join('')}
+                  </div>
+                </div>
+              `;
+            }
+            
+            if (connectionsHtml) {
+              detailConnections.innerHTML = `
+                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">Connected Entries</h3>
+                ${connectionsHtml}
+              `;
+            } else {
+              detailConnections.innerHTML = '';
+            }
+          }
+          
+          detailModal?.classList.remove('hidden');
+        } catch (error) {
+          console.error('Failed to load timeline entry:', error);
+          alert('Failed to load entry details. Please try again.');
+        }
+      });
+    });
+    
+    // Edit entry
+    document.querySelectorAll('.edit-timeline-entry').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Get ID from the button element itself (not the clicked target which might be an SVG)
+        const button = e.currentTarget;
+        const id = button.getAttribute('data-id');
+        if (!id) return;
+        
+        try {
+          const response = await fetch(`/api/timeline/${id}`);
+          if (!response.ok) throw new Error('Failed to fetch entry');
+          
+          const entry = await response.json();
+          editingId = id;
+          
+          // Populate form
+          document.getElementById('entryType').value = entry.entryType || 'event';
+          
+          // Show/hide fields based on entry type
+          const isLabel = entry.entryType === 'label';
+          if (eventFieldsContainer) {
+            eventFieldsContainer.style.display = isLabel ? 'none' : 'block';
+          }
+          if (labelFieldContainer) {
+            labelFieldContainer.style.display = isLabel ? 'block' : 'none';
+          }
+          
+          if (isLabel) {
+            // Populate label fields (year and label text)
+            document.getElementById('labelYear').value = entry.year || 0;
+            document.getElementById('label').value = entry.label || '';
+          } else {
+            // Populate event fields
+            document.getElementById('year').value = entry.year;
+            document.getElementById('month').value = entry.month || '';
+            document.getElementById('headline').value = entry.headline;
+            document.getElementById('shortDescription').value = entry.shortDescription || '';
+            document.getElementById('fullDescription').value = entry.fullDescription || '';
+            document.getElementById('imageUrl').value = entry.imageUrl || '';
+            
+            // Set selected options in multi-select dropdowns
+            const setSelectedOptions = (selectId, ids) => {
+              const select = document.getElementById(selectId);
+              if (select && ids) {
+                Array.from(select.options).forEach(option => {
+                  option.selected = ids.includes(option.value);
+                });
+              }
+            };
+            
+            setSelectedOptions('diaryEntryIds', entry.diaryEntryIds || []);
+            setSelectedOptions('libraryDocsEntryIds', entry.libraryDocsEntryIds || []);
+            setSelectedOptions('npcIds', entry.npcIds || []);
+            setSelectedOptions('locationIds', entry.locationIds || []);
+            setSelectedOptions('characterIds', entry.characterIds || []);
+            setSelectedOptions('questIds', entry.questIds || []);
+            
+            // Show image preview if URL exists
+            if (entry.imageUrl && previewImg && imagePreview) {
+              previewImg.src = entry.imageUrl;
+              imagePreview.classList.remove('hidden');
+            }
+          }
+          
+          if (modalTitle) modalTitle.textContent = 'Edit Timeline Entry';
+          modal?.classList.remove('hidden');
+        } catch (error) {
+          console.error('Failed to load timeline entry:', error);
+          alert('Failed to load entry. Please try again.');
+        }
+      });
+    });
+    
+    // Delete entry
+    document.querySelectorAll('.delete-timeline-entry').forEach(btn => {
+      btn.addEventListener('click', async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // Get ID from the button element itself (not the clicked target which might be an SVG)
+        const button = e.currentTarget;
+        const id = button.getAttribute('data-id');
+        if (!id) return;
+        
+        if (confirm('Are you sure you want to delete this timeline entry?')) {
+          try {
+            const response = await fetch(`/api/timeline/${id}`, {
+              method: 'DELETE',
+            });
+            
+            if (response.ok) {
+              window.location.reload();
+            } else {
+              alert('Failed to delete entry. Please try again.');
+            }
+          } catch (error) {
+            alert('An error occurred. Please try again.');
+          }
+        }
+      });
+    });
+  }
+  
+  // Run on initial page load and after View Transitions navigation
+  document.addEventListener('astro:page-load', initializeTimeline);
+</script>
+
+<script>
+  import { marked } from 'marked';
+  
+  // Configure marked for safe rendering
+  marked.setOptions({
+    breaks: true,
+    gfm: true,
+  });
+  
+  // Make renderMarkdown function available globally for the other script
+  window.renderMarkdown = function(content) {
+    if (!content) return '';
+    return marked.parse(content);
+  };
+</script>
+
+<style>
+  /* Horizontal scrolling for desktop */
+  @media (min-width: 768px) {
+    .overflow-x-auto::-webkit-scrollbar {
+      height: 8px;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 4px;
+    }
+    
+    .dark .overflow-x-auto::-webkit-scrollbar-thumb {
+      background: #475569;
+    }
+  }
+  
+  /* Line clamp utility */
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+</style>
