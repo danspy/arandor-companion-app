@@ -1,8 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { marked } from 'marked';
-import fs from 'fs';
-import path from 'path';
+import changelogContent from '../../CHANGELOG.md?raw';
 
 // Configure marked with safe rendering options
 marked.setOptions({
@@ -10,18 +9,9 @@ marked.setOptions({
   breaks: true,
 });
 
-// Read the CHANGELOG.md file with error handling
-let htmlContent = '<p>Changelog is currently unavailable.</p>';
-try {
-  const changelogPath = path.join(process.cwd(), 'CHANGELOG.md');
-  const changelogContent = fs.readFileSync(changelogPath, 'utf-8');
-  
-  // Convert markdown to HTML (marked sanitizes by default in recent versions)
-  htmlContent = marked(changelogContent);
-} catch (error) {
-  console.error('Error reading CHANGELOG.md:', error);
-  htmlContent = '<p>Unable to load changelog. Please check back later.</p>';
-}
+// Convert markdown to HTML (marked sanitizes by default in recent versions)
+// Using Vite's ?raw import suffix bundles the file content at build time
+const htmlContent = marked(changelogContent);
 ---
 
 <Layout title="Changelog">
