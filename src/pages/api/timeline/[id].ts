@@ -41,10 +41,11 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     };
 
     if (body.entryType === 'label') {
-      // Labels only need label text
+      // Labels need year for positioning and label text
+      values.year = body.year;
       values.label = body.label;
       // Clear event-specific fields
-      values.year = null;
+      values.month = null;
       values.headline = null;
       values.shortDescription = null;
       values.fullDescription = null;
@@ -56,8 +57,9 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       values.characterIds = [];
       values.questIds = [];
     } else {
-      // Events need year and other fields
+      // Events need year, month and other fields
       values.year = body.year;
+      values.month = body.month || null;
       values.headline = body.headline;
       values.shortDescription = body.shortDescription || null;
       values.fullDescription = body.fullDescription || null;

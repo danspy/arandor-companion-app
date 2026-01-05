@@ -43,7 +43,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     };
 
     if (body.entryType === 'label') {
-      // Labels only need label text
+      // Labels need year for positioning and label text
+      values.year = body.year;
       values.label = body.label;
       // Set empty arrays for connection fields
       values.diaryEntryIds = [];
@@ -53,8 +54,9 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       values.characterIds = [];
       values.questIds = [];
     } else {
-      // Events need year and other fields
+      // Events need year, month and other fields
       values.year = body.year;
+      values.month = body.month || null;
       values.headline = body.headline;
       values.shortDescription = body.shortDescription || null;
       values.fullDescription = body.fullDescription || null;
