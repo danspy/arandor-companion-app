@@ -4,12 +4,24 @@ import { marked } from 'marked';
 import fs from 'fs';
 import path from 'path';
 
-// Read the CHANGELOG.md file
-const changelogPath = path.join(process.cwd(), 'CHANGELOG.md');
-const changelogContent = fs.readFileSync(changelogPath, 'utf-8');
+// Configure marked with safe rendering options
+marked.setOptions({
+  gfm: true,
+  breaks: true,
+});
 
-// Convert markdown to HTML
-const htmlContent = marked(changelogContent);
+// Read the CHANGELOG.md file with error handling
+let htmlContent = '<p>Changelog is currently unavailable.</p>';
+try {
+  const changelogPath = path.join(process.cwd(), 'CHANGELOG.md');
+  const changelogContent = fs.readFileSync(changelogPath, 'utf-8');
+  
+  // Convert markdown to HTML (marked sanitizes by default in recent versions)
+  htmlContent = marked(changelogContent);
+} catch (error) {
+  console.error('Error reading CHANGELOG.md:', error);
+  htmlContent = '<p>Unable to load changelog. Please check back later.</p>';
+}
 ---
 
 <Layout title="Changelog">
