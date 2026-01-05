@@ -28,17 +28,27 @@ const labels = timelineEntries.filter(e => e.entryType === 'label').sort((a, b) 
 // Calculate year range for timeline scale
 let minYear = 0;
 let maxYear = 1000;
-if (events.length > 0) {
-  const eventYears = events.map(e => e.year || 0);
-  minYear = Math.floor(Math.min(...eventYears) / 100) * 100;
-  maxYear = Math.ceil(Math.max(...eventYears) / 100) * 100 + 100;
+const allYears = [...events.map(e => e.year || 0), ...labels.map(l => l.year || 0)];
+if (allYears.length > 0) {
+  minYear = Math.floor(Math.min(...allYears) / 100) * 100;
+  maxYear = Math.ceil(Math.max(...allYears) / 100) * 100 + 100;
 }
 
-// Generate year markers at 100-year intervals
-const yearMarkers = [];
+// Generate ALL year markers (both 100-year and event-specific years)
+const majorYearMarkers = []; // 100-year intervals
+const allYearMarkers = new Set(); // All years that need markers
+
 for (let year = minYear; year <= maxYear; year += 100) {
-  yearMarkers.push(year);
+  majorYearMarkers.push(year);
+  allYearMarkers.add(year);
 }
+
+// Add all event and label years
+events.forEach(event => allYearMarkers.add(event.year || 0));
+labels.forEach(label => allYearMarkers.add(label.year || 0));
+
+// Convert to sorted array
+const yearMarkers = Array.from(allYearMarkers).sort((a, b) => a - b);
 
 // Map events to their year markers
 const eventsByYear = new Map();
@@ -49,6 +59,23 @@ events.forEach(event => {
   }
   eventsByYear.get(year).push(event);
 });
+
+// Map labels to their year markers
+const labelsByYear = new Map();
+labels.forEach(label => {
+  const year = label.year || 0;
+  if (!labelsByYear.has(year)) {
+    labelsByYear.set(year, []);
+  }
+  labelsByYear.get(year).push(label);
+});
+
+// Fantasy month names
+const monthNames = [
+  '', // 0 index (no month)
+  'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton',
+  'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'
+];
 
 // Fetch all related data for connections
 const diaryEntries = await db.select().from(DiaryEntry);
