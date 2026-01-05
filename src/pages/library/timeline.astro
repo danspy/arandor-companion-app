@@ -207,9 +207,31 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                           </div>
                         )}
                         
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                          {event.headline}
-                        </h3>
+                        <div class="flex items-center justify-between mb-3">
+                          <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                            {event.headline}
+                          </h3>
+                          {isLoggedIn && (
+                            <span class="flex gap-1">
+                              <button
+                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                data-id={event.id}
+                                title="Edit event"
+                                aria-label="Edit event"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                              </button>
+                              <button
+                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                data-id={event.id}
+                                title="Delete event"
+                                aria-label="Delete event"
+                              >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                              </button>
+                            </span>
+                          )}
+                        </div>
                         
                         {event.shortDescription && (
                           <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
@@ -223,31 +245,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                         >
                           + More
                         </button>
-                        
-                        {isLoggedIn && (
-                          <div class="flex gap-2 mt-4 pt-4 border-t border-gray-200 dark:border-gray-800">
-                            <Button
-                              variant="icon"
-                              size="sm"
-                              icon="edit"
-                              iconPosition="only"
-                              class="edit-timeline-entry flex-1"
-                              data-id={event.id}
-                              title="Edit event"
-                              ariaLabel="Edit event"
-                            />
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              icon="delete"
-                              iconPosition="only"
-                              class="delete-timeline-entry hover:text-red-600 dark:hover:text-red-400 flex-1"
-                              data-id={event.id}
-                              title="Delete event"
-                              ariaLabel="Delete event"
-                            />
-                          </div>
-                        )}
                       </div>
                     </div>
                   ))}
@@ -336,23 +333,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                         </div>
                       )}
                       
-                      <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-3">
-                        {event.headline}
-                      </h3>
-                      
-                      {event.shortDescription && (
-                        <p class="text-gray-600 dark:text-gray-400 mb-4">
-                          {event.shortDescription}
-                        </p>
-                      )}
-                      
-                      <div class="flex items-center justify-between gap-2">
-                        <button 
-                          class="view-timeline-detail flex-1 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
-                          data-entry-id={event.id}
-                        >
-                          + More
-                        </button>
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          {event.headline}
+                        </h3>
                         {isLoggedIn && (
                           <span class="flex gap-1">
                             <button
@@ -373,6 +357,21 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                             </button>
                           </span>
                         )}
+                      </div>
+                      
+                      {event.shortDescription && (
+                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                          {event.shortDescription}
+                        </p>
+                      )}
+                      
+                      <div class="flex items-center justify-between gap-2">
+                        <button 
+                          class="view-timeline-detail flex-1 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+                          data-entry-id={event.id}
+                        >
+                          + More
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -414,9 +413,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {/* Add/Edit Modal */}
   <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="timelineModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Timeline Entry</h2>
-      <form id="timelineEntryForm" class="space-y-4">
+    <div class="bg-white dark:bg-black rounded-lg p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
+      <h2 id="timelineModalTitle" class="text-2xl font-bold mb-6 text-primary-700 dark:text-primary-400">New Timeline Entry</h2>
+      <form id="timelineEntryForm" class="space-y-6">
         <input type="hidden" id="timelineEntryId" name="id">
         
         <div>
