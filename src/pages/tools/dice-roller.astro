@@ -366,7 +366,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       }
     });
 
-    const modifier = parseInt(modifierInput.value || '0');
+    const modifier = parseInt(modifierInput.value || '0', 10);
     if (modifier !== 0) {
       parts.push(modifier > 0 ? `+${modifier}` : `${modifier}`);
     }
@@ -411,6 +411,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     updateSelectionDisplay();
   });
 
+  // Helper function to roll a die
+  function rollDie(sides: number): number {
+    return Math.floor(Math.random() * sides) + 1;
+  }
+
   // Roll dice
   rollButton.addEventListener('click', async () => {
     const rolls: number[] = [];
@@ -419,16 +424,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Collect all dice rolls
     Object.entries(diceSelection).forEach(([dice, count]) => {
       if (count > 0) {
-        const sides = parseInt(dice.substring(1));
+        const sides = parseInt(dice.substring(1), 10);
         for (let i = 0; i < count; i++) {
-          const roll = Math.floor(Math.random() * sides) + 1;
+          const roll = rollDie(sides);
           rolls.push(roll);
           diceTypes.push(dice);
         }
       }
     });
 
-    const modifier = parseInt(modifierInput.value || '0');
+    const modifier = parseInt(modifierInput.value || '0', 10);
     const total = rolls.reduce((sum, roll) => sum + roll, 0) + modifier;
 
     // Build formula
