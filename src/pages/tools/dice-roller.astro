@@ -1,0 +1,532 @@
+---
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import Button from '../../components/Button.astro';
+import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { db, PageSettings, eq } from 'astro:db';
+
+// Dice roller is only accessible to logged-in users
+const isLoggedIn = isAuthenticated(Astro.cookies);
+const userRole = await getUserRole(Astro.cookies);
+
+if (!isLoggedIn) {
+  return Astro.redirect('/login');
+}
+
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+
+// Get page settings for hero image
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dice-roller'));
+const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
+---
+
+<Layout title="Dice Roller">
+  <PageHero 
+    title="Dice Roller" 
+    heroImageUrl={heroImageUrl}
+    pageName="dice-roller"
+    canEditHero={canEdit}
+  />
+
+  <div class="mb-8">
+    <p class="text-gray-600 dark:text-gray-400">Roll dice for attacks, saves, and skill checks</p>
+  </div>
+
+  <!-- Dice Roller Interface -->
+  <div class="max-w-6xl mx-auto">
+    <!-- Dice Selection -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 mb-6">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Dice</h2>
+      
+      <!-- Dice Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-6">
+        <!-- D4 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d4"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <polygon points="50,10 90,85 10,85" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d4</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D6 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d6"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <rect x="20" y="20" width="60" height="60" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d6</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D8 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d8"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <polygon points="50,10 90,50 50,90 10,50" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d8</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D10 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d10"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <polygon points="50,5 85,30 85,70 50,95 15,70 15,30" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d10</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D12 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d12"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <polygon points="50,5 75,20 85,45 75,70 50,85 25,70 15,45 25,20" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d12</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D20 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/30 dark:to-secondary-800/30 border-2 border-secondary-200 dark:border-secondary-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d20"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-secondary-600 dark:text-secondary-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <polygon points="50,5 70,15 85,30 90,50 85,70 70,85 50,95 30,85 15,70 10,50 15,30 30,15" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d20</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-secondary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+
+        <!-- D100 -->
+        <button
+          type="button"
+          class="dice-selector group relative bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/30 border-2 border-accent-200 dark:border-accent-700 rounded-lg p-6 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          data-dice="d100"
+        >
+          <div class="text-center">
+            <div class="text-4xl font-bold text-accent-600 dark:text-accent-400 mb-2">
+              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor">
+                <circle cx="35" cy="50" r="25" />
+                <circle cx="65" cy="50" r="25" />
+              </svg>
+            </div>
+            <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d100</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-accent-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Modifier Input -->
+      <div class="flex items-center gap-4 mb-6">
+        <label for="modifier" class="text-sm font-medium text-gray-700 dark:text-gray-300">Modifier:</label>
+        <input
+          type="number"
+          id="modifier"
+          class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          value="0"
+          placeholder="0"
+        />
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap gap-4">
+        <button
+          id="rollButton"
+          type="button"
+          class="flex-1 min-w-[200px] bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white font-bold py-4 px-8 rounded-lg transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled
+        >
+          <span class="flex items-center justify-center gap-2">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            Roll Dice
+          </span>
+        </button>
+        <button
+          id="clearButton"
+          type="button"
+          class="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-lg transition shadow-lg hover:shadow-xl"
+        >
+          Clear Selection
+        </button>
+      </div>
+
+      <!-- Current Selection Display -->
+      <div id="currentSelection" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hidden">
+        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Selection:</p>
+        <p id="selectionText" class="text-lg font-bold text-primary-600 dark:text-primary-400"></p>
+      </div>
+    </div>
+
+    <!-- Roll Result -->
+    <div id="rollResult" class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-8 mb-6 hidden">
+      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Result</h2>
+      
+      <!-- Animated Dice Container -->
+      <div id="animatedDice" class="flex flex-wrap justify-center gap-4 mb-6 min-h-[100px]"></div>
+      
+      <!-- Result Display -->
+      <div class="text-center">
+        <div id="resultBreakdown" class="text-gray-600 dark:text-gray-400 mb-2"></div>
+        <div class="text-5xl font-bold text-primary-600 dark:text-primary-400 mb-2" id="totalResult">0</div>
+        <p class="text-sm text-gray-500 dark:text-gray-500">Total</p>
+      </div>
+    </div>
+
+    <!-- Roll History -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Roll History</h2>
+        <button
+          id="clearHistoryButton"
+          type="button"
+          class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+        >
+          Clear History
+        </button>
+      </div>
+      <div id="rollHistory" class="space-y-2">
+        <p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  /* 3D Dice Animation */
+  @keyframes diceRoll {
+    0% {
+      transform: rotateX(0deg) rotateY(0deg) scale(1);
+    }
+    25% {
+      transform: rotateX(180deg) rotateY(180deg) scale(1.2);
+    }
+    50% {
+      transform: rotateX(360deg) rotateY(360deg) scale(1);
+    }
+    75% {
+      transform: rotateX(540deg) rotateY(540deg) scale(1.2);
+    }
+    100% {
+      transform: rotateX(720deg) rotateY(720deg) scale(1);
+    }
+  }
+
+  @keyframes diceAppear {
+    0% {
+      opacity: 0;
+      transform: scale(0) translateY(-50px);
+    }
+    50% {
+      transform: scale(1.2) translateY(0);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+  }
+
+  .dice-rolling {
+    animation: diceRoll 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  .dice-appear {
+    animation: diceAppear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Critical Success/Failure */
+  @keyframes criticalSuccess {
+    0%, 100% {
+      transform: scale(1);
+    }
+    25% {
+      transform: scale(1.2) rotate(-10deg);
+    }
+    75% {
+      transform: scale(1.2) rotate(10deg);
+    }
+  }
+
+  .critical-success {
+    animation: criticalSuccess 0.5s ease-in-out;
+    color: #10b981 !important;
+  }
+
+  .critical-fail {
+    animation: criticalSuccess 0.5s ease-in-out;
+    color: #ef4444 !important;
+  }
+</style>
+
+<script>
+  // Dice selection state
+  const diceSelection: Record<string, number> = {
+    d4: 0,
+    d6: 0,
+    d8: 0,
+    d10: 0,
+    d12: 0,
+    d20: 0,
+    d100: 0,
+  };
+
+  // Roll history
+  let rollHistory: Array<{
+    formula: string;
+    rolls: number[];
+    modifier: number;
+    total: number;
+    timestamp: Date;
+  }> = [];
+
+  // DOM elements
+  const diceSelectors = document.querySelectorAll('.dice-selector');
+  const rollButton = document.getElementById('rollButton') as HTMLButtonElement;
+  const clearButton = document.getElementById('clearButton') as HTMLButtonElement;
+  const currentSelection = document.getElementById('currentSelection') as HTMLDivElement;
+  const selectionText = document.getElementById('selectionText') as HTMLParagraphElement;
+  const rollResult = document.getElementById('rollResult') as HTMLDivElement;
+  const animatedDice = document.getElementById('animatedDice') as HTMLDivElement;
+  const totalResult = document.getElementById('totalResult') as HTMLDivElement;
+  const resultBreakdown = document.getElementById('resultBreakdown') as HTMLDivElement;
+  const rollHistoryEl = document.getElementById('rollHistory') as HTMLDivElement;
+  const clearHistoryButton = document.getElementById('clearHistoryButton') as HTMLButtonElement;
+  const modifierInput = document.getElementById('modifier') as HTMLInputElement;
+
+  // Update dice count display
+  function updateDiceCount(dice: string, count: number) {
+    const selector = document.querySelector(`[data-dice="${dice}"]`);
+    if (selector) {
+      const countEl = selector.querySelector('.dice-count') as HTMLDivElement;
+      if (count > 0) {
+        countEl.textContent = count.toString();
+        countEl.classList.remove('hidden');
+      } else {
+        countEl.classList.add('hidden');
+      }
+    }
+  }
+
+  // Update selection display
+  function updateSelectionDisplay() {
+    const parts: string[] = [];
+    let totalDice = 0;
+
+    Object.entries(diceSelection).forEach(([dice, count]) => {
+      if (count > 0) {
+        parts.push(`${count}${dice}`);
+        totalDice += count;
+      }
+    });
+
+    const modifier = parseInt(modifierInput.value || '0');
+    if (modifier !== 0) {
+      parts.push(modifier > 0 ? `+${modifier}` : `${modifier}`);
+    }
+
+    if (totalDice > 0) {
+      currentSelection.classList.remove('hidden');
+      selectionText.textContent = parts.join(' ');
+      rollButton.disabled = false;
+    } else {
+      currentSelection.classList.add('hidden');
+      rollButton.disabled = true;
+    }
+  }
+
+  // Handle dice selection
+  diceSelectors.forEach((selector) => {
+    selector.addEventListener('click', () => {
+      const dice = selector.getAttribute('data-dice') as string;
+      diceSelection[dice]++;
+      updateDiceCount(dice, diceSelection[dice]);
+      updateSelectionDisplay();
+    });
+
+    // Right-click to remove
+    selector.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const dice = selector.getAttribute('data-dice') as string;
+      if (diceSelection[dice] > 0) {
+        diceSelection[dice]--;
+        updateDiceCount(dice, diceSelection[dice]);
+        updateSelectionDisplay();
+      }
+    });
+  });
+
+  // Clear selection
+  clearButton.addEventListener('click', () => {
+    Object.keys(diceSelection).forEach((dice) => {
+      diceSelection[dice] = 0;
+      updateDiceCount(dice, 0);
+    });
+    updateSelectionDisplay();
+  });
+
+  // Roll dice
+  rollButton.addEventListener('click', async () => {
+    const rolls: number[] = [];
+    const diceTypes: string[] = [];
+
+    // Collect all dice rolls
+    Object.entries(diceSelection).forEach(([dice, count]) => {
+      if (count > 0) {
+        const sides = parseInt(dice.substring(1));
+        for (let i = 0; i < count; i++) {
+          const roll = Math.floor(Math.random() * sides) + 1;
+          rolls.push(roll);
+          diceTypes.push(dice);
+        }
+      }
+    });
+
+    const modifier = parseInt(modifierInput.value || '0');
+    const total = rolls.reduce((sum, roll) => sum + roll, 0) + modifier;
+
+    // Build formula
+    const parts: string[] = [];
+    Object.entries(diceSelection).forEach(([dice, count]) => {
+      if (count > 0) {
+        parts.push(`${count}${dice}`);
+      }
+    });
+    if (modifier !== 0) {
+      parts.push(modifier > 0 ? `+${modifier}` : `${modifier}`);
+    }
+    const formula = parts.join(' ');
+
+    // Add to history
+    rollHistory.unshift({
+      formula,
+      rolls,
+      modifier,
+      total,
+      timestamp: new Date(),
+    });
+
+    // Display result with animation
+    rollResult.classList.remove('hidden');
+    animatedDice.innerHTML = '';
+
+    // Create animated dice
+    rolls.forEach((roll, index) => {
+      const diceEl = document.createElement('div');
+      diceEl.className = 'dice-appear bg-primary-100 dark:bg-primary-900 border-2 border-primary-300 dark:border-primary-700 rounded-lg p-4 min-w-[80px]';
+      diceEl.innerHTML = `
+        <div class="text-center">
+          <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">${diceTypes[index]}</div>
+          <div class="text-3xl font-bold text-primary-600 dark:text-primary-400 dice-rolling">${roll}</div>
+        </div>
+      `;
+      animatedDice.appendChild(diceEl);
+    });
+
+    // Display breakdown
+    const rollsText = rolls.map((r, i) => `${diceTypes[i]}: ${r}`).join(', ');
+    resultBreakdown.textContent = `${rollsText}${modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`;
+
+    // Display total with critical effect
+    totalResult.textContent = total.toString();
+    totalResult.className = 'text-5xl font-bold text-primary-600 dark:text-primary-400 mb-2';
+    
+    // Check for natural 20 or 1 (only if rolling a single d20)
+    if (diceTypes.length === 1 && diceTypes[0] === 'd20') {
+      if (rolls[0] === 20) {
+        totalResult.classList.add('critical-success');
+      } else if (rolls[0] === 1) {
+        totalResult.classList.add('critical-fail');
+      }
+    }
+
+    // Update history display
+    updateHistoryDisplay();
+
+    // Scroll to result
+    rollResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+
+  // Update history display
+  function updateHistoryDisplay() {
+    if (rollHistory.length === 0) {
+      rollHistoryEl.innerHTML = '<p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>';
+      return;
+    }
+
+    rollHistoryEl.innerHTML = rollHistory
+      .slice(0, 10)
+      .map((roll) => {
+        const time = roll.timestamp.toLocaleTimeString();
+        return `
+          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+            <div class="flex-1">
+              <span class="font-medium text-gray-900 dark:text-gray-100">${roll.formula}</span>
+              <span class="text-gray-500 dark:text-gray-500 text-sm ml-2">${time}</span>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${roll.total}</div>
+            </div>
+          </div>
+        `;
+      })
+      .join('');
+  }
+
+  // Clear history
+  clearHistoryButton.addEventListener('click', () => {
+    if (confirm('Are you sure you want to clear the roll history?')) {
+      rollHistory = [];
+      updateHistoryDisplay();
+    }
+  });
+
+  // Update display when modifier changes
+  modifierInput.addEventListener('input', updateSelectionDisplay);
+</script>
