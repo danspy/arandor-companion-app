@@ -48,13 +48,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-                <!-- 3D Tetrahedron (d4) with visible edges -->
-                <polygon points="50,15 85,80 15,80" fill="currentColor" opacity="0.9" />
-                <line x1="50" y1="15" x2="85" y2="80" stroke="currentColor" opacity="0.4" />
-                <line x1="50" y1="15" x2="15" y2="80" stroke="currentColor" opacity="0.4" />
-                <line x1="15" y1="80" x2="85" y2="80" stroke="currentColor" opacity="0.4" />
-                <line x1="50" y1="15" x2="50" y2="55" stroke="currentColor" opacity="0.3" />
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Tetrahedron (d4) -->
+                <!-- Back face -->
+                <polygon points="60,20 100,90 20,90" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" opacity="0.6" />
+                <!-- Front left face -->
+                <polygon points="60,20 20,90 45,75" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Front right face -->
+                <polygon points="60,20 100,90 75,75" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Bottom face -->
+                <polygon points="20,90 100,90 60,70" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Number on visible face -->
+                <text x="60" y="60" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">4</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d4</span>
@@ -70,20 +75,21 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round">
-                <!-- 3D Cube (d6) with visible edges -->
-                <!-- Front face -->
-                <polygon points="35,35 65,35 65,65 35,65" fill="currentColor" opacity="0.9" />
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Cube (d6) -->
                 <!-- Top face -->
-                <polygon points="35,35 50,25 80,25 65,35" fill="currentColor" opacity="0.7" />
+                <polygon points="30,35 60,20 90,35 60,50" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Left face -->
+                <polygon points="30,35 30,75 60,90 60,50" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
                 <!-- Right face -->
-                <polygon points="65,35 80,25 80,55 65,65" fill="currentColor" opacity="0.8" />
-                <!-- Edges -->
-                <line x1="35" y1="35" x2="50" y2="25" />
-                <line x1="65" y1="35" x2="80" y2="25" />
-                <line x1="65" y1="65" x2="80" y2="55" />
-                <line x1="50" y1="25" x2="80" y2="25" />
-                <line x1="80" y1="25" x2="80" y2="55" />
+                <polygon points="60,50 60,90 90,75 90,35" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Pips on top face -->
+                <circle cx="45" cy="32" r="3" fill="#ffffff" />
+                <circle cx="60" cy="35" r="3" fill="#ffffff" />
+                <circle cx="75" cy="38" r="3" fill="#ffffff" />
+                <circle cx="45" cy="42" r="3" fill="#ffffff" />
+                <circle cx="60" cy="45" r="3" fill="#ffffff" />
+                <circle cx="75" cy="48" r="3" fill="#ffffff" />
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d6</span>
@@ -99,17 +105,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-                <!-- 3D Octahedron (d8) with visible edges -->
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Octahedron (d8) -->
                 <!-- Top pyramid -->
-                <polygon points="50,15 75,50 50,85 25,50" fill="currentColor" opacity="0.9" />
-                <polygon points="50,15 75,50 25,50" fill="currentColor" opacity="0.7" />
-                <!-- Edges -->
-                <line x1="50" y1="15" x2="75" y2="50" />
-                <line x1="50" y1="15" x2="25" y2="50" />
-                <line x1="75" y1="50" x2="50" y2="85" />
-                <line x1="25" y1="50" x2="50" y2="85" />
-                <line x1="25" y1="50" x2="75" y2="50" stroke-dasharray="3,3" opacity="0.5" />
+                <polygon points="60,15 85,50 60,60" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,15 35,50 60,60" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Bottom pyramid -->
+                <polygon points="60,60 85,50 60,95" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,60 35,50 60,95" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Number -->
+                <text x="60" y="55" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">8</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d8</span>
@@ -125,22 +130,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-                <!-- 3D Pentagonal Trapezohedron (d10) with visible edges -->
-                <!-- Front faces -->
-                <polygon points="50,10 70,35 60,60 40,60 30,35" fill="currentColor" opacity="0.9" />
-                <polygon points="50,10 70,35 80,50" fill="currentColor" opacity="0.7" />
-                <polygon points="50,10 30,35 20,50" fill="currentColor" opacity="0.6" />
-                <!-- Edges -->
-                <line x1="50" y1="10" x2="70" y2="35" />
-                <line x1="50" y1="10" x2="30" y2="35" />
-                <line x1="70" y1="35" x2="60" y2="60" />
-                <line x1="30" y1="35" x2="40" y2="60" />
-                <line x1="40" y1="60" x2="60" y2="60" />
-                <line x1="70" y1="35" x2="80" y2="50" />
-                <line x1="30" y1="35" x2="20" y2="50" />
-                <line x1="60" y1="60" x2="50" y2="85" stroke-dasharray="2,2" opacity="0.4" />
-                <line x1="40" y1="60" x2="50" y2="85" stroke-dasharray="2,2" opacity="0.4" />
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Pentagonal Trapezohedron (d10) -->
+                <polygon points="60,15 80,40 70,70 50,70 40,40" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,15 80,40 95,50" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,15 40,40 25,50" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="70,70 80,40 95,50 85,80" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="50,70 40,40 25,50 35,80" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Number -->
+                <text x="60" y="48" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">10</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d10</span>
@@ -156,28 +154,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-primary-600 dark:text-primary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-                <!-- 3D Dodecahedron (d12) with visible edges -->
-                <!-- Front pentagonal face -->
-                <polygon points="50,20 68,28 62,48 38,48 32,28" fill="currentColor" opacity="0.9" />
-                <!-- Top faces -->
-                <polygon points="50,20 68,28 75,18" fill="currentColor" opacity="0.7" />
-                <polygon points="50,20 32,28 25,18" fill="currentColor" opacity="0.6" />
-                <!-- Side faces -->
-                <polygon points="68,28 75,42 62,48" fill="currentColor" opacity="0.75" />
-                <polygon points="32,28 25,42 38,48" fill="currentColor" opacity="0.65" />
-                <!-- Edges -->
-                <line x1="50" y1="20" x2="68" y2="28" />
-                <line x1="50" y1="20" x2="32" y2="28" />
-                <line x1="68" y1="28" x2="62" y2="48" />
-                <line x1="32" y1="28" x2="38" y2="48" />
-                <line x1="38" y1="48" x2="62" y2="48" />
-                <line x1="68" y1="28" x2="75" y2="18" />
-                <line x1="32" y1="28" x2="25" y2="18" />
-                <line x1="68" y1="28" x2="75" y2="42" />
-                <line x1="32" y1="28" x2="25" y2="42" />
-                <line x1="75" y1="42" x2="62" y2="48" />
-                <line x1="25" y1="42" x2="38" y2="48" />
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Dodecahedron (d12) -->
+                <polygon points="60,20 78,30 72,52 48,52 42,30" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,20 78,30 88,22" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="60,20 42,30 32,22" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="78,30 88,45 82,60 72,52" fill="#a05555" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="42,30 32,45 38,60 48,52" fill="#954f4f" stroke="#5f2f2f" stroke-width="2" />
+                <polygon points="48,52 38,60 45,80 60,85 75,80 82,60 72,52" fill="#8b4545" stroke="#5f2f2f" stroke-width="2" />
+                <!-- Number -->
+                <text x="60" y="45" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">12</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d12</span>
@@ -193,30 +179,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-secondary-600 dark:text-secondary-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round">
-                <!-- 3D Icosahedron (d20) with visible edges -->
-                <!-- Center pentagon -->
-                <polygon points="50,30 65,38 60,53 40,53 35,38" fill="currentColor" opacity="0.9" />
-                <!-- Top triangular faces -->
-                <polygon points="50,15 65,38 35,38" fill="currentColor" opacity="0.7" />
-                <!-- Side triangular faces -->
-                <polygon points="65,38 72,48 60,53" fill="currentColor" opacity="0.8" />
-                <polygon points="35,38 28,48 40,53" fill="currentColor" opacity="0.75" />
-                <!-- Bottom faces hint -->
-                <polygon points="60,53 50,68 40,53" fill="currentColor" opacity="0.85" />
-                <!-- Edges -->
-                <line x1="50" y1="15" x2="65" y2="38" />
-                <line x1="50" y1="15" x2="35" y2="38" />
-                <line x1="65" y1="38" x2="60" y2="53" />
-                <line x1="35" y1="38" x2="40" y2="53" />
-                <line x1="40" y1="53" x2="60" y2="53" />
-                <line x1="65" y1="38" x2="72" y2="48" />
-                <line x1="35" y1="38" x2="28" y2="48" />
-                <line x1="72" y1="48" x2="60" y2="53" />
-                <line x1="28" y1="48" x2="40" y2="53" />
-                <line x1="60" y1="53" x2="50" y2="68" />
-                <line x1="40" y1="53" x2="50" y2="68" />
-                <line x1="35" y1="38" x2="65" y2="38" stroke-dasharray="2,2" opacity="0.4" />
+              <svg viewBox="0 0 120 120" class="w-16 h-16 mx-auto">
+                <!-- 3D Icosahedron (d20) -->
+                <polygon points="60,20 75,35 60,45" fill="#d97706" stroke="#b45309" stroke-width="2" />
+                <polygon points="60,20 45,35 60,45" fill="#ea7c08" stroke="#b45309" stroke-width="2" />
+                <polygon points="45,35 30,45 60,45" fill="#d97706" stroke="#b45309" stroke-width="2" />
+                <polygon points="75,35 90,45 60,45" fill="#ea7c08" stroke="#b45309" stroke-width="2" />
+                <polygon points="30,45 45,60 60,45" fill="#c76d05" stroke="#b45309" stroke-width="2" />
+                <polygon points="90,45 75,60 60,45" fill="#d97706" stroke="#b45309" stroke-width="2" />
+                <polygon points="45,60 60,75 60,45" fill="#ea7c08" stroke="#b45309" stroke-width="2" />
+                <polygon points="75,60 60,75 60,45" fill="#d97706" stroke="#b45309" stroke-width="2" />
+                <!-- Number -->
+                <text x="60" y="50" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">20</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d20</span>
@@ -232,25 +206,19 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <div class="text-4xl font-bold text-accent-600 dark:text-accent-400 mb-2">
-              <svg viewBox="0 0 100 100" class="w-16 h-16 mx-auto" fill="none" stroke="currentColor" stroke-width="1.5">
+              <svg viewBox="0 0 140 100" class="w-16 h-16 mx-auto">
                 <!-- Two d10s for d100 (percentile dice) -->
-                <!-- Left d10 -->
-                <polygon points="25,20 38,30 35,48 15,48 12,30" fill="currentColor" opacity="0.8" stroke-linejoin="round" />
-                <line x1="25" y1="20" x2="38" y2="30" />
-                <line x1="25" y1="20" x2="12" y2="30" />
-                <line x1="38" y1="30" x2="35" y2="48" />
-                <line x1="12" y1="30" x2="15" y2="48" />
-                <line x1="15" y1="48" x2="35" y2="48" />
-                <!-- Right d10 -->
-                <polygon points="75,20 88,30 85,48 65,48 62,30" fill="currentColor" opacity="0.8" stroke-linejoin="round" />
-                <line x1="75" y1="20" x2="88" y2="30" />
-                <line x1="75" y1="20" x2="62" y2="30" />
-                <line x1="88" y1="30" x2="85" y2="48" />
-                <line x1="62" y1="30" x2="65" y2="48" />
-                <line x1="65" y1="48" x2="85" y2="48" />
-                <!-- Label "%" on left die and "0" on right -->
-                <text x="25" y="38" font-size="12" fill="currentColor" text-anchor="middle" opacity="0.6">%</text>
-                <text x="75" y="38" font-size="12" fill="currentColor" text-anchor="middle" opacity="0.6">0</text>
+                <!-- Left d10 (tens) -->
+                <polygon points="30,20 42,35 38,55 22,55 18,35" fill="#64748b" stroke="#475569" stroke-width="2" />
+                <polygon points="30,20 42,35 50,42" fill="#708090" stroke="#475569" stroke-width="2" />
+                <polygon points="30,20 18,35 10,42" fill="#5f6f7f" stroke="#475569" stroke-width="2" />
+                <text x="30" y="42" font-size="16" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">00</text>
+                
+                <!-- Right d10 (ones) -->
+                <polygon points="110,20 122,35 118,55 102,55 98,35" fill="#708090" stroke="#475569" stroke-width="2" />
+                <polygon points="110,20 122,35 130,42" fill="#64748b" stroke="#475569" stroke-width="2" />
+                <polygon points="110,20 98,35 90,42" fill="#5f6f7f" stroke="#475569" stroke-width="2" />
+                <text x="110" y="42" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle" dominant-baseline="middle">0</text>
               </svg>
             </div>
             <span class="text-sm font-semibold text-gray-700 dark:text-gray-300">d100</span>
@@ -353,29 +321,31 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   /* 3D Dice Rolling Animation - moves across screen */
   @keyframes diceRollAcross {
     0% {
-      transform: translateX(-100px) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
+      transform: translateX(-150px) translateY(0) rotateX(0deg) rotateY(0deg) rotateZ(0deg) scale(1);
       opacity: 0;
     }
     10% {
       opacity: 1;
     }
     50% {
-      transform: translateX(50vw) translateY(-30px) rotateX(720deg) rotateY(720deg) rotateZ(360deg) scale(1.3);
+      transform: translateX(calc(50vw - 50px)) translateY(-50px) rotateX(1080deg) rotateY(1080deg) rotateZ(540deg) scale(1.5);
     }
     90% {
       opacity: 1;
     }
     100% {
-      transform: translateX(calc(100vw + 100px)) translateY(0) rotateX(1440deg) rotateY(1440deg) rotateZ(720deg) scale(1);
+      transform: translateX(calc(100vw + 150px)) translateY(0) rotateX(2160deg) rotateY(2160deg) rotateZ(1080deg) scale(1);
       opacity: 0;
     }
   }
 
   .dice-roll-across {
-    animation: diceRollAcross 1.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    animation: diceRollAcross 2s cubic-bezier(0.34, 1.56, 0.64, 1);
     position: absolute;
-    font-size: 48px;
-    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.3));
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.5));
+    will-change: transform, opacity;
   }
 
   /* 3D Dice Animation for result display */
@@ -574,18 +544,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     return Math.floor(Math.random() * sides) + 1;
   }
 
-  // Function to get dice emoji/symbol for animation
-  function getDiceSymbol(diceType: string): string {
-    const symbols: Record<string, string> = {
-      d4: '▲',
-      d6: '⬛',
-      d8: '◆',
-      d10: '⬟',
-      d12: '⬢',
-      d20: '◉',
-      d100: '💯',
+  // Function to create SVG dice for animation
+  function createDiceSVG(diceType: string): string {
+    const svgs: Record<string, string> = {
+      d4: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="60,20 100,90 20,90" fill="#8b4545" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,20 20,90 45,75" fill="#a05555" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,20 100,90 75,75" fill="#954f4f" stroke="#5f2f2f" stroke-width="3"/><text x="60" y="60" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">4</text></svg>`,
+      d6: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="30,35 60,20 90,35 60,50" fill="#a05555" stroke="#5f2f2f" stroke-width="3"/><polygon points="30,35 30,75 60,90 60,50" fill="#8b4545" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,50 60,90 90,75 90,35" fill="#954f4f" stroke="#5f2f2f" stroke-width="3"/><circle cx="45" cy="32" r="4" fill="#ffffff"/><circle cx="60" cy="35" r="4" fill="#ffffff"/><circle cx="75" cy="38" r="4" fill="#ffffff"/><circle cx="45" cy="42" r="4" fill="#ffffff"/><circle cx="60" cy="45" r="4" fill="#ffffff"/><circle cx="75" cy="48" r="4" fill="#ffffff"/></svg>`,
+      d8: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="60,15 85,50 60,60" fill="#a05555" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,15 35,50 60,60" fill="#8b4545" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,60 85,50 60,95" fill="#954f4f" stroke="#5f2f2f" stroke-width="3"/><text x="60" y="55" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle">8</text></svg>`,
+      d10: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="60,15 80,40 70,70 50,70 40,40" fill="#a05555" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,15 80,40 95,50" fill="#954f4f" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,15 40,40 25,50" fill="#8b4545" stroke="#5f2f2f" stroke-width="3"/><text x="60" y="48" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">10</text></svg>`,
+      d12: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="60,20 78,30 72,52 48,52 42,30" fill="#a05555" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,20 78,30 88,22" fill="#954f4f" stroke="#5f2f2f" stroke-width="3"/><polygon points="60,20 42,30 32,22" fill="#8b4545" stroke="#5f2f2f" stroke-width="3"/><text x="60" y="45" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">12</text></svg>`,
+      d20: `<svg viewBox="0 0 120 120" width="80" height="80"><polygon points="60,20 75,35 60,45" fill="#d97706" stroke="#b45309" stroke-width="3"/><polygon points="60,20 45,35 60,45" fill="#ea7c08" stroke="#b45309" stroke-width="3"/><polygon points="45,35 30,45 60,45" fill="#d97706" stroke="#b45309" stroke-width="3"/><polygon points="75,35 90,45 60,45" fill="#ea7c08" stroke="#b45309" stroke-width="3"/><polygon points="30,45 45,60 60,45" fill="#c76d05" stroke="#b45309" stroke-width="3"/><polygon points="90,45 75,60 60,45" fill="#d97706" stroke="#b45309" stroke-width="3"/><text x="60" y="50" font-size="24" font-weight="bold" fill="#ffffff" text-anchor="middle">20</text></svg>`,
+      d100: `<svg viewBox="0 0 140 100" width="100" height="70"><polygon points="30,20 42,35 38,55 22,55 18,35" fill="#64748b" stroke="#475569" stroke-width="3"/><polygon points="30,20 42,35 50,42" fill="#708090" stroke="#475569" stroke-width="3"/><text x="30" y="42" font-size="18" font-weight="bold" fill="#ffffff" text-anchor="middle">00</text><polygon points="110,20 122,35 118,55 102,55 98,35" fill="#708090" stroke="#475569" stroke-width="3"/><polygon points="110,20 122,35 130,42" fill="#64748b" stroke="#475569" stroke-width="3"/><text x="110" y="42" font-size="20" font-weight="bold" fill="#ffffff" text-anchor="middle">0</text></svg>`
     };
-    return symbols[diceType] || '🎲';
+    return svgs[diceType] || svgs['d6'];
   }
 
   // Create and animate rolling dice across the screen
@@ -603,29 +573,20 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       setTimeout(() => {
         const diceEl = document.createElement('div');
         diceEl.className = 'dice-roll-across';
-        diceEl.textContent = getDiceSymbol(diceType);
+        diceEl.innerHTML = createDiceSVG(diceType);
         
-        // Random vertical position
-        const topPosition = 20 + Math.random() * 60; // 20% to 80% from top
+        // Random vertical position (centered around middle)
+        const topPosition = 40 + Math.random() * 20; // 40% to 60% from top
         diceEl.style.top = `${topPosition}%`;
-        diceEl.style.left = '-100px';
-        
-        // Add color based on dice type
-        if (diceType === 'd20') {
-          diceEl.style.color = '#d97706'; // secondary color
-        } else if (diceType === 'd100') {
-          diceEl.style.color = '#475569'; // accent color
-        } else {
-          diceEl.style.color = '#8b4545'; // primary color
-        }
+        diceEl.style.left = '-150px';
         
         overlay!.appendChild(diceEl);
         
         // Remove after animation
         setTimeout(() => {
           diceEl.remove();
-        }, 1500);
-      }, index * 150); // Stagger the dice
+        }, 2000);
+      }, index * 200); // Stagger the dice
     });
   }
 
@@ -664,8 +625,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Animate rolling dice across screen
     animateRollingDice(diceTypes);
 
-    // Wait for animation to start before showing results
-    await new Promise(resolve => setTimeout(resolve, 800));
+    // Wait for animation before showing results (slightly longer for visibility)
+    await new Promise(resolve => setTimeout(resolve, 1200));
 
     // Add to history
     rollHistory.unshift({
