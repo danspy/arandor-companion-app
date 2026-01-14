@@ -402,7 +402,7 @@ const renderedContent = renderMarkdown(entry.content);
             </h3>
             <div class="space-y-3">
               {relatedNPCs.map(npc => (
-                <a href={`/npcs/${npc.id}`} class="flex items-center gap-3 p-3 border-l-2 border-primary-300 dark:border-primary-700 hover:bg-gray-50 dark:hover:bg-gray-900 rounded transition">
+                <a href={`/npcs/${npc.id}`} class="flex items-center gap-3 p-3 hover:bg-gray-50 border border-gray-50 dark:border dark:border-gray-900 dark:hover:bg-gray-900 rounded transition">
                   {npc.avatarUrl ? (
                     <img src={npc.avatarUrl} alt={npc.name} class="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 flex-shrink-0" />
                   ) : (
@@ -430,7 +430,7 @@ const renderedContent = renderMarkdown(entry.content);
             </h3>
             <div class="space-y-3">
               {relatedLocations.map(location => (
-                <a href={`/locations/${location.id}`} class="flex items-center gap-3 p-3 border-l-2 border-primary-300 dark:border-primary-700 hover:bg-gray-50 dark:hover:bg-gray-900 rounded transition">
+                <a href={`/locations/${location.id}`} class="flex items-center gap-3 p-3 hover:bg-gray-50 border border-gray-50 dark:border dark:border-gray-900 dark:hover:bg-gray-900 rounded transition">
                   {location.imageUrl ? (
                     <img src={location.imageUrl} alt={location.name} class="w-10 h-10 rounded object-cover border-2 border-gray-200 dark:border-gray-600 flex-shrink-0" />
                   ) : (
@@ -457,7 +457,7 @@ const renderedContent = renderMarkdown(entry.content);
             </h3>
             <div class="space-y-3">
               {relatedCharacters.map(character => (
-                <a href={`/characters/${character.id}`} class="flex items-center gap-3 p-3 border-l-2 border-primary-300 dark:border-primary-700 hover:bg-gray-50 dark:hover:bg-gray-900 rounded transition">
+                <a href={`/characters/${character.id}`} class="flex items-center gap-3 p-3 hover:bg-gray-50 border border-gray-50 dark:border dark:border-gray-900 dark:hover:bg-gray-900 rounded transition">
                   {character.avatarUrl ? (
                     <img src={character.avatarUrl} alt={character.name} class="w-10 h-10 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600 flex-shrink-0" />
                   ) : (
