@@ -178,113 +178,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     </div>
   )}
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
-    <!-- Latest Diary Entries Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Latest Diary</h2>
-      <div class="space-y-3">
-        {latestEntries.map(entry => (
-          <a href={`/diary/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
-            <div>
-              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
-            </div>
-            <div class="text-right">
-              <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Session {entry.session}</span>
-            </div>
-          </a>
-        ))}
-      </div>
-      <a href="/diary" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all diary →
-      </a>
-    </div>
-
-    <!-- Party Members Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Characters</h2>
-      <div class="space-y-3">
-        {characters.filter(char => char.isActive !== false).map(char => (
-          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-lg hover:shadow-md transition cursor-pointer group">
-            <div class="relative h-24 overflow-hidden">
-              {/* Character teaser image */}
-              {char.avatarUrl ? (
-                <img 
-                  src={char.avatarUrl} 
-                  alt={char.name}
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div class="w-full h-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
-                  <span class="text-4xl font-bold text-white opacity-40">{char.name.charAt(0)}</span>
-                </div>
-              )}
-              {/* Overlay gradient */}
-              <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
-              {/* Character info overlay */}
-              <div class="absolute inset-0 flex items-center px-4">
-                <div class="flex-1">
-                  <h3 class="font-bold text-white text-lg drop-shadow-lg">{char.name}</h3>
-                  <p class="text-sm text-white/90 drop-shadow-md">{char.race} {char.class}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-medium text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded">Level {char.level}</span>
-                    <span class="text-xs text-white/80">{char.player}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-      <a href="/characters" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all characters →
-      </a>
-    </div>
-
-    <!-- Latest Library Entries Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400 flex items-center gap-2">
-        Latest Library
-      </h2>
-      <div class="space-y-3">
-        {latestLibraryEntries.map(entry => (
-          <a href={`/library/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
-            <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
-            </div>
-          </a>
-        ))}
-      </div>
-      <a href="/library" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all library →
-      </a>
-    </div>
-
-    <!-- Active Quests Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Quests</h2>
-      <div class="space-y-3">
-        {activeQuests.map(quest => (
-          <div class="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
-            <h3 class="font-semibold dark:text-gray-100">{quest.title}</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{quest.description.substring(0, 80)}{quest.description.length > 80 ? '...' : ''}</p>
-            <span class={`inline-block px-2 py-1 text-xs rounded mt-2 ${
-              quest.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-              quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400' :
-              'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-            }`}>
-              {quest.priority}
-            </span>
-          </div>
-        ))}
-      </div>
-      <a href="/quests" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all quests →
-      </a>
-    </div>
-  </div>
-
   <!-- Next Event Card -->
   {isLoggedIn && nextEvent && (
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
@@ -401,6 +294,113 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           <div class="text-xs text-gray-500 dark:text-gray-400">Next</div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+    <!-- Latest Diary Entries Card -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Latest Diary</h2>
+      <div class="space-y-3">
+        {latestEntries.map(entry => (
+          <a href={`/diary/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
+            <div>
+              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
+            </div>
+            <div class="text-right">
+              <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Session {entry.session}</span>
+            </div>
+          </a>
+        ))}
+      </div>
+      <a href="/diary" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+        View all diary →
+      </a>
+    </div>
+
+    <!-- Party Members Card -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Characters</h2>
+      <div class="space-y-3">
+        {characters.filter(char => char.isActive !== false).map(char => (
+          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-lg hover:shadow-md transition cursor-pointer group">
+            <div class="relative h-24 overflow-hidden">
+              {/* Character teaser image */}
+              {char.avatarUrl ? (
+                <img 
+                  src={char.avatarUrl} 
+                  alt={char.name}
+                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              ) : (
+                <div class="w-full h-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
+                  <span class="text-4xl font-bold text-white opacity-40">{char.name.charAt(0)}</span>
+                </div>
+              )}
+              {/* Overlay gradient */}
+              <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
+              {/* Character info overlay */}
+              <div class="absolute inset-0 flex items-center px-4">
+                <div class="flex-1">
+                  <h3 class="font-bold text-white text-lg drop-shadow-lg">{char.name}</h3>
+                  <p class="text-sm text-white/90 drop-shadow-md">{char.race} {char.class}</p>
+                  <div class="flex items-center gap-2 mt-1">
+                    <span class="text-xs font-medium text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded">Level {char.level}</span>
+                    <span class="text-xs text-white/80">{char.player}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </a>
+        ))}
+      </div>
+      <a href="/characters" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+        View all characters →
+      </a>
+    </div>
+
+    <!-- Latest Library Entries Card -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400 flex items-center gap-2">
+        Latest Library
+      </h2>
+      <div class="space-y-3">
+        {latestLibraryEntries.map(entry => (
+          <a href={`/library/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
+            <div class="flex-1 min-w-0">
+              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
+              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+      <a href="/library" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+        View all library →
+      </a>
+    </div>
+
+    <!-- Active Quests Card -->
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
+      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Quests</h2>
+      <div class="space-y-3">
+        {activeQuests.map(quest => (
+          <div class="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
+            <h3 class="font-semibold dark:text-gray-100">{quest.title}</h3>
+            <p class="text-sm text-gray-600 dark:text-gray-400">{quest.description.substring(0, 80)}{quest.description.length > 80 ? '...' : ''}</p>
+            <span class={`inline-block px-2 py-1 text-xs rounded mt-2 ${
+              quest.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
+              quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400' :
+              'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+            }`}>
+              {quest.priority}
+            </span>
+          </div>
+        ))}
+      </div>
+      <a href="/quests" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
+        View all quests →
+      </a>
     </div>
   </div>
 
