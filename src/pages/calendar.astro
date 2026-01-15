@@ -99,56 +99,83 @@ function getHostName(hostId: string | null): string {
   )}
 
   <!-- Calendar Subscription Section -->
-  <div class="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-700">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div class="flex-1">
-        <h2 class="text-lg font-semibold text-primary-700 dark:text-primary-400 mb-2 flex items-center gap-2">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
+  <div class="bg-gradient-to-br from-primary-50 to-secondary-50 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-md mb-6 dark:border dark:border-gray-700 overflow-hidden">
+    <!-- Accordion Header -->
+    <button 
+      id="subscriptionAccordionToggle"
+      class="w-full p-4 flex items-center justify-between"
+      aria-expanded="false"
+      aria-controls="subscriptionAccordionContent"
+    >
+      <div class="flex items-center gap-2">
+        <svg class="w-5 h-5 text-primary-700 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+        </svg>
+        <h2 class="text-lg font-semibold text-primary-700 dark:text-primary-400">
           Subscribe to Calendar
         </h2>
-        <p class="text-sm text-gray-600 dark:text-gray-400">
-          Add this calendar to Google Calendar, Apple Calendar, Outlook, or any calendar app that supports iCal subscriptions.
-        </p>
       </div>
-      <div class="flex gap-2">
-        <button
-          id="copyCalendarUrl"
-          class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
-          title="Copy subscription URL"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
-          </svg>
-          <span>Copy URL</span>
-        </button>
-        <button
-          id="downloadCalendar"
-          class="flex items-center gap-2 px-4 py-2 bg-secondary-600 hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
-          title="Download calendar file"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-          </svg>
-          <span>Download</span>
-        </button>
-        <button
-          id="showInstructions"
-          class="flex items-center gap-2 px-4 py-2 bg-accent-600 hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
-          title="Show subscription instructions"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span class="hidden md:inline">Instructions</span>
-        </button>
+      <svg 
+        id="subscriptionAccordionIcon" 
+        class="w-5 h-5 text-primary-700 dark:text-primary-400 transition-transform duration-200"
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+    </button>
+    
+    <!-- Accordion Content -->
+    <div 
+      id="subscriptionAccordionContent"
+      class="overflow-hidden transition-all duration-300 ease-in-out max-h-0"
+      aria-hidden="true"
+    >
+      <div class="p-6 pt-0 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex-1">
+          <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            Add this calendar to Google Calendar, Apple Calendar, Outlook, or any calendar app that supports iCal subscriptions.
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <button
+            id="copyCalendarUrl"
+            class="flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+            title="Copy subscription URL"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+            </svg>
+            <span>Copy URL</span>
+          </button>
+          <button
+            id="downloadCalendar"
+            class="flex items-center gap-2 px-4 py-2 bg-secondary-600 hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+            title="Download calendar file"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+            </svg>
+            <span>Download</span>
+          </button>
+          <button
+            id="showInstructions"
+            class="flex items-center gap-2 px-4 py-2 bg-accent-600 hover:bg-accent-700 dark:bg-accent-700 dark:hover:bg-accent-600 text-white rounded-lg transition-all duration-200 hover:shadow-md active:scale-95"
+            title="Show subscription instructions"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <span class="hidden md:inline">Instructions</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>
 
   <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 mb-8">
+  <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
     <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
       <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{events.length}</div>
       <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Events</div>
@@ -566,6 +593,31 @@ function getHostName(hostId: string | null): string {
       const eventTimeInput = document.getElementById('eventTime');
       const eventDurationInput = document.getElementById('eventDuration');
       const eventHostSelect = document.getElementById('eventHost');
+
+      // Accordion functionality
+      const accordionToggle = document.getElementById('subscriptionAccordionToggle');
+      const accordionContent = document.getElementById('subscriptionAccordionContent');
+      const accordionIcon = document.getElementById('subscriptionAccordionIcon');
+
+      accordionToggle?.addEventListener('click', () => {
+        const isExpanded = accordionToggle.getAttribute('aria-expanded') === 'true';
+        
+        if (isExpanded) {
+          // Collapse
+          accordionToggle.setAttribute('aria-expanded', 'false');
+          accordionContent?.setAttribute('aria-hidden', 'true');
+          accordionContent?.classList.remove('max-h-96');
+          accordionContent?.classList.add('max-h-0');
+          accordionIcon?.classList.remove('rotate-180');
+        } else {
+          // Expand
+          accordionToggle.setAttribute('aria-expanded', 'true');
+          accordionContent?.setAttribute('aria-hidden', 'false');
+          accordionContent?.classList.remove('max-h-0');
+          accordionContent?.classList.add('max-h-96');
+          accordionIcon?.classList.add('rotate-180');
+        }
+      });
 
       // Calendar subscription elements
       const copyCalendarUrlBtn = document.getElementById('copyCalendarUrl');
