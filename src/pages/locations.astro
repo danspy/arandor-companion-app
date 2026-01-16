@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
+import StatsGrid from '../components/StatsGrid.astro';
+import SearchFilter from '../components/SearchFilter.astro';
 import { db, Location, PageSettings, eq } from 'astro:db';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 
@@ -43,71 +45,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
   )}
 
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{locations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Locations</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{visitedLocations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Visited</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-gray-600 dark:text-gray-400">{unvisitedLocations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">To Explore</div>
-    </div>
-  </div>
+  <StatsGrid 
+    stats={[
+      { label: 'Total Locations', value: locations.length, color: 'primary' },
+      { label: 'Visited', value: visitedLocations.length, color: 'green' },
+      { label: 'To Explore', value: unvisitedLocations.length, color: 'gray' }
+    ]}
+    columns={3}
+  />
 
-  <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
-    <div class="flex flex-col gap-3">
-      <!-- Search Input - Always Full Width -->
-      <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="Search locations by name, type, region, or description..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-        >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-      </div>
-      <!-- Type Filter Below -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" 
-          data-filter="all"
-        >
-          All ({locations.length})
-        </button>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
-          data-filter="visited"
-        >
-          Visited ({visitedLocations.length})
-        </button>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
-          data-filter="unvisited"
-        >
-          Unvisited ({unvisitedLocations.length})
-        </button>
-        {allTypes.map(type => {
-          const count = locations.filter(l => l.type === type).length;
-          return (
-            <button 
-              class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
-              data-filter={type}
-            >
-              {type} ({count})
-            </button>
-          );
-        })}
-      </div>
-    </div>
+  <SearchFilter 
+    searchPlaceholder="Search locations by name, type, region, or description..."
+    filterClass="filter-btn"
+    filters={[
+      { id: 'all', label: 'All', count: locations.length, active: true },
+      { id: 'visited', label: 'Visited', count: visitedLocations.length },
+      { id: 'unvisited', label: 'Unvisited', count: unvisitedLocations.length },
+      ...allTypes.map(type => ({
+        id: type,
+        label: type,
+        count: locations.filter(l => l.type === type).length
+      }))
+    ]}
+  />
   </div>
 
   <div id="locationGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
