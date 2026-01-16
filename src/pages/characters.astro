@@ -2,6 +2,8 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
+import StatsGrid from '../components/StatsGrid.astro';
+import SearchFilter from '../components/SearchFilter.astro';
 import { db, Character, PageSettings, User, eq } from 'astro:db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../lib/auth';
 
@@ -103,68 +105,21 @@ const getOwnershipText = (character: typeof characters[0]) => {
     </div>
   )}
 
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{characters.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Characters</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive !== false).length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Active Players</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-secondary-600 dark:text-secondary-400">{allClasses.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Unique Classes</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-400">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Average Level</div>
-    </div>
-  </div>
+  <StatsGrid stats={[
+    { label: 'Total Characters', value: characters.length, color: 'primary' },
+    { label: 'Active Players', value: characters.filter(c => c.isActive !== false).length, color: 'green' },
+    { label: 'Unique Classes', value: allClasses.length, color: 'secondary' },
+    { label: 'Average Level', value: characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0, color: 'accent' }
+  ]} />
 
-  <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
-    <div class="flex flex-col gap-3">
-      <!-- Search Input - Always Full Width -->
-      <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
-          placeholder="Search characters by name, race, class, or player..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
-        >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-        </svg>
-      </div>
-      <!-- Filter Tags Below -->
-      <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-        <button 
-          id="filterActive" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
-          data-active="true"
-        >
-          Active ({characters.filter(c => c.isActive !== false).length})
-        </button>
-        <button 
-          id="filterInactive" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
-          data-active="false"
-        >
-          Inactive ({characters.filter(c => c.isActive === false).length})
-        </button>
-        <button 
-          id="filterAll" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
-          data-active="false"
-        >
-          All ({characters.length})
-        </button>
-      </div>
-    </div>
-  </div>
+  <SearchFilter 
+    searchPlaceholder="Search characters by name, race, class, or player..."
+    filters={[
+      { id: 'active', label: 'Active', count: characters.filter(c => c.isActive !== false).length, active: true },
+      { id: 'inactive', label: 'Inactive', count: characters.filter(c => c.isActive === false).length },
+      { id: 'all', label: 'All', count: characters.length }
+    ]}
+  />
 
   <div id="characterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
@@ -1063,9 +1018,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
   // Initialize search and filter functionality
   function initializeFilters() {
     const searchInput = document.getElementById('searchInput');
-    const filterActive = document.getElementById('filterActive');
-    const filterInactive = document.getElementById('filterInactive');
-    const filterAll = document.getElementById('filterAll');
+    const filterButtons = document.querySelectorAll('.filter-btn');
     const characterCards = document.querySelectorAll('.character-card');
     
     // Storage keys for persisting search and filter
@@ -1075,25 +1028,16 @@ const getOwnershipText = (character: typeof characters[0]) => {
     let currentFilter = localStorage.getItem(FILTER_STORAGE_KEY) || 'active';
     
     const updateFilterButtons = (filter) => {
-      // Reset all buttons to inactive state
-      [filterActive, filterInactive, filterAll].forEach(btn => {
-        if (btn) {
-          btn.classList.remove('bg-primary-600', 'text-white', 'hover:bg-primary-700');
-          btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
-          btn.setAttribute('data-active', 'false');
+      filterButtons.forEach(btn => {
+        const btnFilter = btn.getAttribute('data-filter');
+        if (btnFilter === filter) {
+          btn.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+          btn.classList.add('bg-primary-600', 'text-white');
+        } else {
+          btn.classList.remove('bg-primary-600', 'text-white');
+          btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
         }
       });
-      
-      // Activate the selected button
-      let activeButton = filterActive;
-      if (filter === 'inactive') activeButton = filterInactive;
-      if (filter === 'all') activeButton = filterAll;
-      
-      if (activeButton) {
-        activeButton.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
-        activeButton.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700');
-        activeButton.setAttribute('data-active', 'true');
-      }
     };
     
     const applyFilters = (searchText, filter) => {
@@ -1134,25 +1078,16 @@ const getOwnershipText = (character: typeof characters[0]) => {
     });
     
     // Filter button handlers
-    filterActive?.addEventListener('click', () => {
-      currentFilter = 'active';
-      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
-      updateFilterButtons(currentFilter);
-      applyFilters(searchInput?.value || '', currentFilter);
-    });
-    
-    filterInactive?.addEventListener('click', () => {
-      currentFilter = 'inactive';
-      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
-      updateFilterButtons(currentFilter);
-      applyFilters(searchInput?.value || '', currentFilter);
-    });
-    
-    filterAll?.addEventListener('click', () => {
-      currentFilter = 'all';
-      localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
-      updateFilterButtons(currentFilter);
-      applyFilters(searchInput?.value || '', currentFilter);
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter');
+        if (filter) {
+          currentFilter = filter;
+          localStorage.setItem(FILTER_STORAGE_KEY, currentFilter);
+          updateFilterButtons(currentFilter);
+          applyFilters(searchInput?.value || '', currentFilter);
+        }
+      });
     });
   }
 

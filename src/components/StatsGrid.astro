@@ -1,0 +1,38 @@
+---
+interface StatItem {
+  label: string;
+  value: number | string;
+  color: 'primary' | 'secondary' | 'accent' | 'green' | 'red' | 'gray' | 'blue' | 'purple' | 'amber' | 'yellow';
+}
+
+interface Props {
+  stats: StatItem[];
+  columns?: 2 | 3 | 4;
+}
+
+const { stats, columns = 4 } = Astro.props;
+
+const colorClasses = {
+  primary: 'text-primary-600 dark:text-primary-400',
+  secondary: 'text-secondary-600 dark:text-secondary-400',
+  accent: 'text-accent-600 dark:text-accent-400',
+  green: 'text-green-600 dark:text-green-400',
+  red: 'text-red-600 dark:text-red-400',
+  gray: 'text-gray-600 dark:text-gray-400',
+  blue: 'text-blue-600 dark:text-blue-400',
+  purple: 'text-purple-600 dark:text-purple-400',
+  amber: 'text-amber-600 dark:text-amber-400',
+  yellow: 'text-yellow-600 dark:text-yellow-400',
+};
+
+const gridColsClass = columns === 2 ? 'md:grid-cols-2' : columns === 3 ? 'md:grid-cols-3' : 'md:grid-cols-4';
+---
+
+<div class={`grid grid-cols-2 ${gridColsClass} gap-2 md:gap-4 mb-8`}>
+  {stats.map(stat => (
+    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
+      <div class={`text-2xl md:text-3xl font-bold ${colorClasses[stat.color]}`}>{stat.value}</div>
+      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">{stat.label}</div>
+    </div>
+  ))}
+</div>
