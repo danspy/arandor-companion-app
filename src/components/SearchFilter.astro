@@ -40,11 +40,11 @@ const {
       <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
       {filters.map(filter => (
         <button 
-          class={`${filterClass} px-3 py-1.5 rounded-full text-sm font-medium ${
+          class={`${filterClass} px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 active:scale-95 ${
             filter.active 
-              ? 'bg-primary-600 text-white' 
-              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-          } transition-all duration-200 hover:bg-${filter.active ? 'primary-700' : 'gray-300'} dark:hover:bg-${filter.active ? 'primary-700' : 'gray-600'} hover:shadow-md active:scale-95`}
+              ? 'bg-primary-600 text-white hover:bg-primary-700' 
+              : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md'
+          }`}
           data-filter={filter.id}
         >
           {filter.label} ({filter.count})
