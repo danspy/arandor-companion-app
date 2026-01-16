@@ -1,0 +1,95 @@
+---
+interface Props {
+  id: string;
+  title?: string;
+  maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl';
+}
+
+const { id, title, maxWidth = '4xl' } = Astro.props;
+
+const maxWidthClasses = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
+  '4xl': 'max-w-4xl'
+};
+---
+
+<div 
+  id={id} 
+  class="modal-overlay hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe"
+>
+  <div class={`modal-content bg-white dark:bg-black rounded-lg p-4 sm:p-8 ${maxWidthClasses[maxWidth]} w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe`}>
+    {title && (
+      <div class="flex items-center justify-between mb-4 sm:mb-6">
+        <h2 class="modal-title text-xl sm:text-2xl font-bold text-primary-700 dark:text-primary-400">{title}</h2>
+        <button 
+          class="modal-close text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition"
+          aria-label="Close modal"
+        >
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    )}
+    <div class="modal-body">
+      <slot />
+    </div>
+  </div>
+</div>
+
+<script>
+  function initializeModal(modalId: string) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return;
+
+    const closeBtn = modal.querySelector('.modal-close');
+    
+    // Close on background click
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+    
+    // Close on close button click
+    closeBtn?.addEventListener('click', () => {
+      modal.classList.add('hidden');
+    });
+    
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !modal.classList.contains('hidden')) {
+        modal.classList.add('hidden');
+      }
+    });
+  }
+
+  // Export function to open modal
+  (window as any).openModal = (modalId: string) => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.remove('hidden');
+    }
+  };
+
+  // Export function to close modal
+  (window as any).closeModal = (modalId: string) => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.classList.add('hidden');
+    }
+  };
+
+  // Initialize all modals on page load
+  document.addEventListener('astro:page-load', () => {
+    document.querySelectorAll('.modal-overlay').forEach((modal) => {
+      if (modal.id) {
+        initializeModal(modal.id);
+      }
+    });
+  });
+</script>
