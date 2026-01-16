@@ -2,6 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
+import StatsGrid from '../components/StatsGrid.astro';
 import { db, Event, User, PageSettings, eq } from 'astro:db';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 
@@ -174,21 +175,14 @@ function getHostName(hostId: string | null): string {
     </div>
   </div>
 
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{events.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Events</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-400">{upcomingEventsCount}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Upcoming</div>
-    </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-gray-600 dark:text-gray-400">{pastEventsCount}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Past</div>
-    </div>
-  </div>
+  <StatsGrid 
+    stats={[
+      { label: 'Total Events', value: events.length, color: 'primary' },
+      { label: 'Upcoming', value: upcomingEventsCount, color: 'accent' },
+      { label: 'Past', value: pastEventsCount, color: 'gray' }
+    ]}
+    columns={3}
+  />
 
   <!-- Filter -->
   <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
