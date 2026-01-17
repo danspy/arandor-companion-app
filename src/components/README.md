@@ -39,6 +39,7 @@ Header for detail pages with back button and optional edit/delete actions.
 - `deleteId` (string) - ID for delete button
 - `editClass` (string) - CSS class for edit button
 - `deleteClass` (string) - CSS class for delete button
+- `entityId` (string) - ID of the entity (for edit/delete operations)
 
 **Usage:**
 ```astro
@@ -48,6 +49,7 @@ Header for detail pages with back button and optional edit/delete actions.
   canEdit={true}
   editId="editCharacter"
   deleteId="deleteCharacter"
+  entityId={character.id}
 />
 ```
 
