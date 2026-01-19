@@ -23,6 +23,8 @@ This document provides comprehensive API documentation for building a native iOS
    - [Initiative Tracker](#initiative-tracker-endpoints)
    - [DM Screen](#dm-screen-endpoints)
    - [Timeline](#timeline-endpoints)
+   - [Combat State](#combat-state-endpoints)
+   - [Page Settings](#page-settings-endpoints)
    - [File Upload](#file-upload-endpoints)
 6. [Error Handling](#error-handling)
 7. [Best Practices](#best-practices-for-ios-integration)
@@ -340,6 +342,30 @@ let session = URLSession(configuration: configuration)
   questIds: string[];              // Array of Quest IDs
   createdAt: Date;
   updatedAt: Date;
+}
+```
+
+### CombatState
+
+```typescript
+{
+  id: string;                      // Always "current-combat"
+  currentRound: number;            // Current combat round
+  currentTurnIndex: number;        // Index of current turn in initiative order
+  status: string;                  // 'active' | 'paused' | 'stopped'
+  updatedAt: Date;                 // ISO 8601 timestamp
+}
+```
+
+### PageSettings
+
+```typescript
+{
+  id: string;                      // UUID
+  pageName: string;                // Unique page name (e.g., 'dashboard', 'characters')
+  heroImageUrl?: string;           // Optional hero/banner image URL for the page
+  createdAt: Date;                 // ISO 8601 timestamp
+  updatedAt: Date;                 // ISO 8601 timestamp
 }
 ```
 
@@ -1957,6 +1983,128 @@ Delete a timeline entry.
   "success": true
 }
 ```
+
+---
+
+### Combat State Endpoints
+
+The Combat State API manages the state of combat encounters, including the current round, turn index, and combat status.
+
+#### Get Combat State
+
+**GET** `/api/combat-state`
+
+Get the current combat state (public, no authentication required).
+
+**Success Response (200):**
+```json
+{
+  "id": "current-combat",
+  "currentRound": 1,
+  "currentTurnIndex": 0,
+  "status": "stopped|active|paused",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Note:** This endpoint is public because the player display page needs access. A default state is created automatically if none exists.
+
+#### Update Combat State
+
+**PUT** `/api/combat-state`
+
+Update the combat state.
+
+**Authentication:** Required (dungeonmaster or admin role)
+
+**Request Body:**
+```json
+{
+  "currentRound": 1,
+  "currentTurnIndex": 0,
+  "status": "active|paused|stopped"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "id": "current-combat",
+  "currentRound": 1,
+  "currentTurnIndex": 0,
+  "status": "active",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Invalid currentRound, currentTurnIndex, or status
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Insufficient permissions
+- `500 Internal Server Error` - Failed to update combat state
+
+---
+
+### Page Settings Endpoints
+
+The Page Settings API manages hero/banner images for various pages in the app.
+
+#### Get Page Settings
+
+**GET** `/api/page-settings/[pageName]`
+
+Get settings for a specific page.
+
+**URL Parameters:**
+- `pageName` - Name of the page (e.g., 'dashboard', 'characters', 'diary', 'library', 'locations', 'npcs', 'quests')
+
+**Success Response (200):**
+```json
+{
+  "id": "uuid",
+  "pageName": "dashboard",
+  "heroImageUrl": "string",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Note:** If no settings exist for the page, returns default empty settings with `heroImageUrl: null`.
+
+#### Update Page Settings
+
+**PUT** `/api/page-settings/[pageName]`
+
+Update settings for a specific page (creates if doesn't exist).
+
+**Authentication:** Required (dungeonmaster or admin role)
+
+**URL Parameters:**
+- `pageName` - Name of the page
+
+**Request Body:**
+```json
+{
+  "heroImageUrl": "string (optional)"
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "id": "uuid",
+  "pageName": "dashboard",
+  "heroImageUrl": "string",
+  "createdAt": "2024-01-01T00:00:00.000Z",
+  "updatedAt": "2024-01-01T00:00:00.000Z"
+}
+```
+
+**Error Responses:**
+- `400 Bad Request` - Page name is required
+- `401 Unauthorized` - Not authenticated
+- `403 Forbidden` - Insufficient permissions
+- `500 Internal Server Error` - Failed to update page settings
 
 ---
 

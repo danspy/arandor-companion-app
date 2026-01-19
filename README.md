@@ -403,6 +403,14 @@ The app provides a comprehensive REST API for all campaign data. **For complete 
 - `GET/POST /api/timeline` - Timeline entries
 - `GET/PUT/DELETE /api/timeline/[id]` - Single timeline entry
 
+**Combat State:**
+- `GET /api/combat-state` - Get current combat state (public, no auth required)
+- `PUT /api/combat-state` - Update combat state (DM/admin only)
+
+**Page Settings:**
+- `GET /api/page-settings/[pageName]` - Get page settings
+- `PUT /api/page-settings/[pageName]` - Update page settings (DM/admin only)
+
 **File Upload:**
 - `POST /api/upload` - Upload images/videos (multipart/form-data, max 5MB, accepts image/* and video/* files)
 
