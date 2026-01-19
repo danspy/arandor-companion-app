@@ -334,7 +334,9 @@ All content can be managed directly from the web interface (login required for e
 
 ### API Endpoints
 
-The following REST API endpoints are available:
+The app provides a comprehensive REST API for all campaign data. **For complete API documentation including data models, authentication, request/response formats, and iOS integration guide, see [API_REFERENCE.md](docs/API_REFERENCE.md).**
+
+**Quick Reference - Available API Endpoints:**
 
 **Authentication:**
 - `POST /api/auth/login` - Login
@@ -343,10 +345,14 @@ The following REST API endpoints are available:
 **Users:**
 - `GET /api/users` - List all users (admin-only)
 - `POST /api/users` - Create new user (admin-only)
+- `GET /api/profile` - Get current user profile
 
 **Diary:**
 - `GET/POST /api/diary` - Diary entries
 - `GET/PUT/DELETE /api/diary/[id]` - Single diary entry
+- `POST /api/diary/[id]/summary` - Generate AI summary (DM/admin only)
+- `POST /api/diary/[id]/generate-image` - Generate AI image (DM/admin only)
+- `POST /api/diary/[id]/podcast` - Generate podcast narration (DM/admin only)
 
 **Library:**
 - `GET/POST /api/library` - Library entries
@@ -359,6 +365,8 @@ The following REST API endpoints are available:
 **Characters:**
 - `GET/POST /api/characters` - Characters
 - `GET/PUT/DELETE /api/characters/[id]` - Single character
+- `GET /api/characters/available` - Characters available for linking
+- `POST /api/characters/sync-hp` - Sync HP from D&D Beyond
 
 **NPCs:**
 - `GET/POST /api/npcs` - NPCs
@@ -373,6 +381,7 @@ The following REST API endpoints are available:
 - `GET/PUT/DELETE /api/factions/[id]` - Single faction
 
 **Campaign Progress:**
+- `GET /api/campaign-progress` - List campaign progress
 - `GET/PUT /api/campaign-progress/[id]` - Campaign progress
 
 **Events/Calendar:**
@@ -383,13 +392,31 @@ The following REST API endpoints are available:
 **Initiative Tracker:**
 - `GET/POST /api/initiative` - Initiative entries (GET: all users, POST: DM/admin only)
 - `GET/PUT/DELETE /api/initiative/[id]` - Single initiative entry (GET: all users, PUT/DELETE: DM/admin only)
+- `POST /api/initiative/sync-hp` - Sync initiative HP from D&D Beyond
+- `POST /api/initiative/update-hp` - Update initiative HP
 
 **DM Screen:**
 - `GET /api/dm-screen` - Get current DM Screen state (all logged-in users)
 - `PUT /api/dm-screen` - Update DM Screen state (DM/admin only)
 
+**Timeline:**
+- `GET/POST /api/timeline` - Timeline entries
+- `GET/PUT/DELETE /api/timeline/[id]` - Single timeline entry
+
 **File Upload:**
-- `POST /api/upload` - Upload images (multipart/form-data, max 5MB, accepts image/* files)
+- `POST /api/upload` - Upload images/videos (multipart/form-data, max 5MB, accepts image/* and video/* files)
+
+### Building a Native iOS App
+
+You can build a native iOS app in a separate repository that consumes these API endpoints. See the [API Reference](docs/API_REFERENCE.md) for:
+
+- Complete endpoint documentation with request/response formats
+- Authentication and session management guide
+- Data models and schemas
+- iOS integration best practices
+- Example Swift implementation
+- Error handling patterns
+- Offline support strategies
 
 ## Customization
 
