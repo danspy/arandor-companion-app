@@ -2366,9 +2366,10 @@ Add this middleware to your API routes:
 
 ```typescript
 // src/lib/cors.ts
-export function addCorsHeaders(response: Response): Response {
+export function addCorsHeaders(response: Response, origin?: string): Response {
   const headers = new Headers(response.headers);
-  headers.set('Access-Control-Allow-Origin', '*'); // Or specific origin
+  // When using credentials, you must specify the exact origin, not '*'
+  headers.set('Access-Control-Allow-Origin', origin || 'https://your-frontend-domain.com');
   headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   headers.set('Access-Control-Allow-Headers', 'Content-Type, Cookie');
   headers.set('Access-Control-Allow-Credentials', 'true');
@@ -2384,11 +2385,12 @@ export function addCorsHeaders(response: Response): Response {
 **Handle OPTIONS Requests:**
 
 ```typescript
-export const OPTIONS: APIRoute = async () => {
+export const OPTIONS: APIRoute = async ({ request }) => {
+  const origin = request.headers.get('Origin') || 'https://your-frontend-domain.com';
   return new Response(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Origin': origin,
       'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type, Cookie',
       'Access-Control-Allow-Credentials': 'true'
@@ -2585,3 +2587,4 @@ This API documentation provides everything needed to build a native iOS app that
 The API is production-ready and has been tested with the existing Astro.js web application. All endpoints are documented with request/response formats, authentication requirements, and error handling.
 
 For questions or issues, please refer to the main project repository: https://github.com/danspy/arandor-companion-app
+
