@@ -64,11 +64,14 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       ? overrideHp 
       : calculatedMaxHp;
     
+    // Ensure current HP doesn't exceed max HP (can happen with manual overrides)
+    const validatedCurrentHp = Math.min(currentHp, maxHp);
+    
     const hpData: DnDBeyondHPData = {};
     
     if (maxHp > 0) {
       hpData.maxHp = maxHp;
-      hpData.hp = currentHp;
+      hpData.hp = validatedCurrentHp;
     }
     
     if (tempHp > 0) {

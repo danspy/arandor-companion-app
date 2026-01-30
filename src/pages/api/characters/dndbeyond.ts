@@ -126,9 +126,12 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       ? overrideHp 
       : calculatedMaxHp;
     
+    // Ensure current HP doesn't exceed max HP (can happen with manual overrides)
+    const validatedCurrentHp = Math.min(currentHp, maxHp);
+    
     if (maxHp > 0) {
       characterData.maxHp = maxHp;
-      characterData.hp = currentHp;
+      characterData.hp = validatedCurrentHp;
     }
     
     if (tempHp > 0) {
