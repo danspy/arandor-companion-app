@@ -33,11 +33,90 @@ To make a character sheet public on D&D Beyond:
 
 ### HP Data Extraction
 
-The system fetches HP data from D&D Beyond's character API and calculates:
+The system fetches HP data from D&D Beyond's character API. D&D Beyond uses **two different calculation methods** based on whether `overrideHitPoints` is set:
 
-- **Max HP**: `overrideHitPoints` (if set) OR `baseHitPoints + bonusHitPoints`
-- **Current HP**: `maxHp - removedHitPoints`
+#### With Manual Override (`overrideHitPoints` set)
+
+When a player manually sets their max HP in D&D Beyond:
+
+- **Max HP**: `overrideHitPoints`
+- **Current HP**: `overrideHitPoints - removedHitPoints` (can't go below 0)
 - **Temp HP**: `temporaryHitPoints`
+
+**Formula**:
+```typescript
+if (overrideHitPoints > 0) {
+  Max HP = overrideHitPoints
+  Current HP = max(0, overrideHitPoints - removedHitPoints)
+}
+```
+
+**Example**:
+- Character with override at 56/72 HP: `overrideHitPoints=72, removedHitPoints=16` → currentHP=56, maxHP=72 ✓
+
+**Note**: When `overrideHitPoints` is set, it already includes all bonuses from items and features. The `bonusHitPoints` field is not used in this calculation.
+
+#### Without Override (Normal Calculation)
+
+When no manual override is set:
+
+- **Current HP**: `baseHitPoints` (unless `removedHitPoints >= baseHitPoints`, then 0)
+- **Max HP**: `baseHitPoints + removedHitPoints + bonusHitPoints`
+- **Temp HP**: `temporaryHitPoints`
+
+**Formula**:
+```typescript
+if (removedHitPoints >= baseHitPoints) {
+  Current HP = 0  // Character is unconscious/dead
+} else {
+  Current HP = baseHitPoints
+}
+Max HP = baseHitPoints + removedHitPoints + bonusHitPoints
+```
+
+**Examples**:
+- Character at 57/112 HP: `baseHitPoints=57, removedHitPoints=55` → currentHP=57, maxHP=112 ✓
+- Character at 0 HP: `baseHitPoints=53, removedHitPoints=64` → currentHP=0, maxHP=117 ✓
+
+#### Why Two Different Formulas?
+
+When `overrideHitPoints` is set, D&D Beyond stores the manually-set max HP and tracks damage separately. The `baseHitPoints` field becomes less meaningful in this case, as the current HP is derived from the override minus damage.
+
+## Troubleshooting
+
+### HP Values Don't Match D&D Beyond Website
+
+If the app displays different HP values than what you see on the D&D Beyond website:
+
+**Possible Causes:**
+1. **D&D Beyond API caching** - The API sometimes returns stale data, especially for newly added or recently modified characters
+2. **Character sheet not saved** - Recent changes to the character might not have been saved properly on D&D Beyond
+3. **Character not public** - Private character sheets may return cached or incorrect data
+
+**Solutions:**
+1. **Re-save your character** on D&D Beyond:
+   - Open the character sheet on dndbeyond.com
+   - Click "Save" or make a minor edit and save
+   - Wait 2-3 minutes for the API to update
+   
+2. **Verify character is PUBLIC**:
+   - Go to "Manage Character" > "Privacy"
+   - Ensure visibility is set to "Public"
+   - Save changes
+   
+3. **Re-sync in the app**:
+   - Click "Sync HP" button
+   - Or wait for automatic sync if combat is active
+
+**Note:** The app displays exactly what the D&D Beyond API provides. If there's a discrepancy, it's usually due to API caching on D&D Beyond's side, not a bug in the app.
+
+### Character HP Not Syncing At All
+
+**Check:**
+1. Character has a valid D&D Beyond URL in their profile
+2. Character sheet is set to PUBLIC on D&D Beyond
+3. D&D Beyond character ID in URL is correct
+4. Character sheet exists and is accessible
 
 ### Automatic Syncing During Combat
 

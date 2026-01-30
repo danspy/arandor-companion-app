@@ -42,10 +42,10 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
-    // - baseHitPoints: base max HP
+    // - baseHitPoints: CURRENT HP (not base max HP!)
     // - bonusHitPoints: bonus HP from items/features (added to max)
-    // - overrideHitPoints: manual override for max HP (if set, replaces baseHitPoints + bonusHitPoints)
-    // - removedHitPoints: damage taken (subtracted from current HP)
+    // - overrideHitPoints: manual override for max HP (if set, uses different calculation)
+    // - removedHitPoints: damage taken (HP lost from max)
     // - temporaryHitPoints: temp HP
     const baseHp = data.data?.baseHitPoints || 0;
     const bonusHp = data.data?.bonusHitPoints || 0;
@@ -53,17 +53,32 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
     
-    // Calculate max HP (use override if set, otherwise base + bonus)
-    const maxHp = overrideHp !== null && overrideHp !== undefined ? overrideHp : (baseHp + bonusHp);
+    // Calculate HP based on whether override is set
+    let currentHp: number;
+    let maxHp: number;
     
-    // Calculate current HP (max - damage)
-    const currentHp = Math.max(0, maxHp - removedHp);
+    if (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) {
+      // When overrideHitPoints is set, use it as max HP
+      // and calculate current HP by subtracting damage from it
+      // Note: overrideHitPoints already includes all bonuses, so bonusHitPoints is ignored
+      maxHp = overrideHp;
+      currentHp = Math.max(0, overrideHp - removedHp);
+    } else {
+      // Normal case: no override
+      // baseHitPoints represents current HP after damage
+      // Calculate max HP by adding back the damage
+      currentHp = removedHp >= baseHp ? 0 : baseHp;
+      maxHp = baseHp + removedHp + bonusHp;
+    }
+    
+    // Ensure current HP doesn't exceed max HP
+    const validatedCurrentHp = Math.min(currentHp, maxHp);
     
     const hpData: DnDBeyondHPData = {};
     
     if (maxHp > 0) {
       hpData.maxHp = maxHp;
-      hpData.hp = currentHp;
+      hpData.hp = validatedCurrentHp;
     }
     
     if (tempHp > 0) {
