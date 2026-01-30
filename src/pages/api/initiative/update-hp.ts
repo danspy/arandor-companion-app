@@ -111,15 +111,73 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       const validatedMaxHp = validateHPValue(maxHp, 'Max HP');
       const validatedTempHp = validateHPValue(tempHp, 'Temp HP');
 
+      // Calculate final HP values with temp HP consumption logic
+      const currentHp = entry.hp ?? 0;
+      const currentTempHp = entry.tempHp ?? 0;
+      const currentMaxHp = entry.maxHp ?? 0;
+      
+      let finalHp = currentHp;
+      let finalTempHp = currentTempHp;
+      let finalMaxHp = currentMaxHp;
+      
+      // Update max HP if provided
+      if (validatedMaxHp !== null) {
+        finalMaxHp = validatedMaxHp;
+      }
+      
+      // Handle HP and temp HP updates with D&D 5e rules
+      // When both hp and tempHp are provided, we need to determine if this is:
+      // 1. A direct set (e.g., from D&D Beyond sync) - use values as-is
+      // 2. A manual update where we need to apply temp HP consumption logic
+      
+      // If HP is being reduced (taking damage), consume temp HP first
+      if (validatedHp !== null && validatedHp < currentHp) {
+        const hpLost = currentHp - validatedHp;
+        
+        // If temp HP value is also explicitly set to a different value, honor it (manual override)
+        if (validatedTempHp !== null && validatedTempHp !== currentTempHp) {
+          // User is manually setting both values - use as provided
+          finalHp = validatedHp;
+          finalTempHp = validatedTempHp;
+        } else {
+          // Apply temp HP consumption logic
+          if (currentTempHp > 0) {
+            if (hpLost <= currentTempHp) {
+              // All damage absorbed by temp HP
+              finalTempHp = currentTempHp - hpLost;
+              finalHp = currentHp; // Regular HP unchanged
+            } else {
+              // Temp HP exhausted, remaining damage to regular HP
+              const remainingDamage = hpLost - currentTempHp;
+              finalTempHp = 0;
+              finalHp = Math.max(0, currentHp - remainingDamage);
+            }
+          } else {
+            // No temp HP, damage goes directly to regular HP
+            finalHp = validatedHp;
+          }
+        }
+      } else {
+        // HP is being increased (healing) or set to higher value - healing doesn't affect temp HP
+        if (validatedHp !== null) {
+          finalHp = Math.min(validatedHp, finalMaxHp); // Can't exceed max HP
+        }
+        
+        // Temp HP can be set independently (new temp HP, or manual override)
+        if (validatedTempHp !== null) {
+          finalTempHp = validatedTempHp;
+        }
+      }
+
       // Update HP in initiative tracker
       const now = new Date();
       const updateData: any = {
         updatedAt: now,
       };
 
-      if (validatedHp !== null) updateData.hp = validatedHp;
-      if (validatedMaxHp !== null) updateData.maxHp = validatedMaxHp;
-      if (validatedTempHp !== null) updateData.tempHp = validatedTempHp;
+      updateData.hp = finalHp;
+      updateData.tempHp = finalTempHp;
+      if (finalMaxHp !== currentMaxHp) updateData.maxHp = finalMaxHp;
 
       await db.update(InitiativeTracker)
         .set(updateData)
@@ -128,9 +186,9 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       // Also update the character's HP in the Character table
       await db.update(Character)
         .set({
-          hp: validatedHp !== null ? validatedHp : character.hp,
-          maxHp: validatedMaxHp !== null ? validatedMaxHp : character.maxHp,
-          tempHp: validatedTempHp !== null ? validatedTempHp : character.tempHp,
+          hp: finalHp,
+          maxHp: finalMaxHp,
+          tempHp: finalTempHp,
           updatedAt: now,
         })
         .where(eq(Character.id, character.id));
