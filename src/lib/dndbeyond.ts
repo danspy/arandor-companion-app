@@ -40,31 +40,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
-    // Debug: Log ALL HP-related fields to understand API structure
-    console.log('[D&D Beyond HP Sync] Character ID:', characterId);
-    console.log('[D&D Beyond HP Sync] Raw HP fields from API:');
-    console.log('  baseHitPoints:', data.data?.baseHitPoints);
-    console.log('  bonusHitPoints:', data.data?.bonusHitPoints);
-    console.log('  overrideHitPoints:', data.data?.overrideHitPoints);
-    console.log('  removedHitPoints:', data.data?.removedHitPoints);
-    console.log('  temporaryHitPoints:', data.data?.temporaryHitPoints);
-    
-    // Check for any other HP-related fields
-    const allKeys = Object.keys(data.data || {});
-    const hpRelatedKeys = allKeys.filter(k => 
-      k.toLowerCase().includes('hit') || 
-      k.toLowerCase().includes('hp') ||
-      k.toLowerCase().includes('health')
-    );
-    if (hpRelatedKeys.length > 0) {
-      console.log('  Other HP-related fields found:', hpRelatedKeys);
-      hpRelatedKeys.forEach(key => {
-        if (!['baseHitPoints', 'bonusHitPoints', 'overrideHitPoints', 'removedHitPoints', 'temporaryHitPoints'].includes(key)) {
-          console.log(`    ${key}:`, data.data[key]);
-        }
-      });
-    }
-    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: CURRENT HP (not base max HP!)
@@ -88,14 +63,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const maxHp = (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) 
       ? overrideHp 
       : calculatedMaxHp;
-    
-    console.log('[D&D Beyond HP Sync] Calculated values:');
-    console.log('  currentHp:', currentHp, '(from baseHitPoints)');
-    console.log('  maxHp:', maxHp, `(${overrideHp !== null && overrideHp !== undefined && overrideHp > 0 ? 'override' : 'current + damage + bonus'})`);
-    console.log('  Formula:', overrideHp !== null && overrideHp !== undefined && overrideHp > 0 
-      ? `override(${overrideHp})`
-      : `${baseHp} + ${removedHp} + ${bonusHp} = ${calculatedMaxHp}`);
-    console.log('  tempHp:', tempHp);
     
     const hpData: DnDBeyondHPData = {};
     
