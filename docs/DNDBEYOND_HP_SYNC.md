@@ -82,6 +82,42 @@ Max HP = baseHitPoints + removedHitPoints + bonusHitPoints
 
 When `overrideHitPoints` is set, D&D Beyond stores the manually-set max HP and tracks damage separately. The `baseHitPoints` field becomes less meaningful in this case, as the current HP is derived from the override minus damage.
 
+## Troubleshooting
+
+### HP Values Don't Match D&D Beyond Website
+
+If the app displays different HP values than what you see on the D&D Beyond website:
+
+**Possible Causes:**
+1. **D&D Beyond API caching** - The API sometimes returns stale data, especially for newly added or recently modified characters
+2. **Character sheet not saved** - Recent changes to the character might not have been saved properly on D&D Beyond
+3. **Character not public** - Private character sheets may return cached or incorrect data
+
+**Solutions:**
+1. **Re-save your character** on D&D Beyond:
+   - Open the character sheet on dndbeyond.com
+   - Click "Save" or make a minor edit and save
+   - Wait 2-3 minutes for the API to update
+   
+2. **Verify character is PUBLIC**:
+   - Go to "Manage Character" > "Privacy"
+   - Ensure visibility is set to "Public"
+   - Save changes
+   
+3. **Re-sync in the app**:
+   - Click "Sync HP" button
+   - Or wait for automatic sync if combat is active
+
+**Note:** The app displays exactly what the D&D Beyond API provides. If there's a discrepancy, it's usually due to API caching on D&D Beyond's side, not a bug in the app.
+
+### Character HP Not Syncing At All
+
+**Check:**
+1. Character has a valid D&D Beyond URL in their profile
+2. Character sheet is set to PUBLIC on D&D Beyond
+3. D&D Beyond character ID in URL is correct
+4. Character sheet exists and is accessible
+
 ### Automatic Syncing During Combat
 
 When combat status is set to "Active":

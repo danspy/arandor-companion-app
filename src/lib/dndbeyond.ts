@@ -40,16 +40,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
-    // Debug: Log ALL data to understand the new character issue
-    console.log('=== D&D Beyond HP Sync Debug ===');
-    console.log('Character ID:', characterId);
-    console.log('Raw API values:');
-    console.log('  baseHitPoints:', data.data?.baseHitPoints);
-    console.log('  bonusHitPoints:', data.data?.bonusHitPoints);
-    console.log('  overrideHitPoints:', data.data?.overrideHitPoints);
-    console.log('  removedHitPoints:', data.data?.removedHitPoints);
-    console.log('  temporaryHitPoints:', data.data?.temporaryHitPoints);
-    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: CURRENT HP (not base max HP!)
@@ -73,24 +63,16 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       // Note: overrideHitPoints already includes all bonuses, so bonusHitPoints is ignored
       maxHp = overrideHp;
       currentHp = Math.max(0, overrideHp - removedHp);
-      console.log('Using OVERRIDE calculation:');
-      console.log('  maxHp =', maxHp, '(from override)');
-      console.log('  currentHp =', currentHp, `(${overrideHp} - ${removedHp})`);
     } else {
       // Normal case: no override
       // baseHitPoints represents current HP after damage
       // Calculate max HP by adding back the damage
       currentHp = removedHp >= baseHp ? 0 : baseHp;
       maxHp = baseHp + removedHp + bonusHp;
-      console.log('Using NORMAL calculation:');
-      console.log('  currentHp =', currentHp, removedHp >= baseHp ? '(at 0 HP)' : '(from baseHp)');
-      console.log('  maxHp =', maxHp, `(${baseHp} + ${removedHp} + ${bonusHp})`);
     }
     
     // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
-    console.log('Final: validatedCurrentHp =', validatedCurrentHp, ', maxHp =', maxHp);
-    console.log('===================================\n');
     
     const hpData: DnDBeyondHPData = {};
     
