@@ -115,8 +115,8 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
     
-    // Calculate max HP (use override if set, otherwise base + bonus)
-    const maxHp = overrideHp !== null && overrideHp !== undefined ? overrideHp : (baseHp + bonusHp);
+    // Calculate max HP (use override if set and greater than 0, otherwise base + bonus)
+    const maxHp = (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) ? overrideHp : (baseHp + bonusHp);
     
     // Calculate current HP (max - damage)
     const currentHp = Math.max(0, maxHp - removedHp);
