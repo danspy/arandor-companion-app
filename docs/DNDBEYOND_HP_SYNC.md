@@ -35,15 +35,28 @@ To make a character sheet public on D&D Beyond:
 
 The system fetches HP data from D&D Beyond's character API and calculates:
 
-- **Current HP**: `baseHitPoints` (this is the current HP, not max HP!)
+- **Current HP**: `baseHitPoints` (normally), but **0 if `removedHitPoints > baseHitPoints`** (character unconscious/dead)
 - **Max HP**: `overrideHitPoints` (if set and > 0) OR `baseHitPoints + removedHitPoints + bonusHitPoints`
 - **Temp HP**: `temporaryHitPoints`
 
-**Important**: D&D Beyond's `baseHitPoints` field represents the character's **current HP** (after taking damage), NOT the base maximum HP. The maximum HP is calculated by adding back the damage taken (`removedHitPoints`) plus any bonuses (`bonusHitPoints`).
+**Important**: D&D Beyond's `baseHitPoints` field represents the character's **current HP** in normal situations. However, when a character takes fatal damage (goes to 0 HP or below), `removedHitPoints` exceeds `baseHitPoints`, indicating the character is unconscious or dead.
 
 **Formula**:
-- Current HP = `baseHitPoints`
-- Max HP = `baseHitPoints + removedHitPoints + bonusHitPoints` (or `overrideHitPoints` if manually set)
+```typescript
+// Check if damage exceeded remaining HP (character at 0 HP)
+if (removedHitPoints > baseHitPoints) {
+  Current HP = 0  // Character is unconscious/dead
+} else {
+  Current HP = baseHitPoints  // Normal case
+}
+
+// Max HP is always calculated the same way
+Max HP = baseHitPoints + removedHitPoints + bonusHitPoints
+```
+
+**Examples**:
+- Character with 57/112 HP: `baseHitPoints=57, removedHitPoints=55` → currentHP=57, maxHP=112 ✓
+- Character at 0 HP: `baseHitPoints=53, removedHitPoints=64` → currentHP=0, maxHP=117 ✓
 
 ### Automatic Syncing During Combat
 
