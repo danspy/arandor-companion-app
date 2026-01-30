@@ -35,9 +35,11 @@ To make a character sheet public on D&D Beyond:
 
 The system fetches HP data from D&D Beyond's character API and calculates:
 
-- **Max HP**: `overrideHitPoints` (if set) OR `baseHitPoints + bonusHitPoints`
+- **Max HP**: `overrideHitPoints` (if set and > 0) OR `baseHitPoints + bonusHitPoints`
 - **Current HP**: `maxHp - removedHitPoints`
 - **Temp HP**: `temporaryHitPoints`
+
+Note: `overrideHitPoints` is only used if it's a positive number greater than 0. If it's 0, null, or undefined, the system falls back to calculating max HP as `baseHitPoints + bonusHitPoints`.
 
 ### Automatic Syncing During Combat
 
