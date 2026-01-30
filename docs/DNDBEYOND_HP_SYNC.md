@@ -33,30 +33,52 @@ To make a character sheet public on D&D Beyond:
 
 ### HP Data Extraction
 
-The system fetches HP data from D&D Beyond's character API and calculates:
+The system fetches HP data from D&D Beyond's character API. D&D Beyond uses **two different calculation methods** based on whether `overrideHitPoints` is set:
 
-- **Current HP**: `baseHitPoints` (normally), but **0 if `removedHitPoints >= baseHitPoints`** (character unconscious/dead)
-- **Max HP**: `overrideHitPoints` (if set and > 0) OR `baseHitPoints + removedHitPoints + bonusHitPoints`
+#### With Manual Override (`overrideHitPoints` set)
+
+When a player manually sets their max HP in D&D Beyond:
+
+- **Max HP**: `overrideHitPoints`
+- **Current HP**: `overrideHitPoints - removedHitPoints` (can't go below 0)
 - **Temp HP**: `temporaryHitPoints`
-
-**Important**: D&D Beyond's `baseHitPoints` field represents the character's **current HP** in normal situations. However, when a character takes fatal damage (goes to 0 HP or below), `removedHitPoints` exceeds `baseHitPoints`, indicating the character is unconscious or dead.
 
 **Formula**:
 ```typescript
-// Check if damage met or exceeded remaining HP (character at 0 HP)
+if (overrideHitPoints > 0) {
+  Max HP = overrideHitPoints
+  Current HP = max(0, overrideHitPoints - removedHitPoints)
+}
+```
+
+**Example**:
+- Character with override at 56/72 HP: `overrideHitPoints=72, removedHitPoints=16` → currentHP=56, maxHP=72 ✓
+
+#### Without Override (Normal Calculation)
+
+When no manual override is set:
+
+- **Current HP**: `baseHitPoints` (unless `removedHitPoints >= baseHitPoints`, then 0)
+- **Max HP**: `baseHitPoints + removedHitPoints + bonusHitPoints`
+- **Temp HP**: `temporaryHitPoints`
+
+**Formula**:
+```typescript
 if (removedHitPoints >= baseHitPoints) {
   Current HP = 0  // Character is unconscious/dead
 } else {
-  Current HP = baseHitPoints  // Normal case
+  Current HP = baseHitPoints
 }
-
-// Max HP is always calculated the same way
 Max HP = baseHitPoints + removedHitPoints + bonusHitPoints
 ```
 
 **Examples**:
-- Character with 57/112 HP: `baseHitPoints=57, removedHitPoints=55` → currentHP=57, maxHP=112 ✓
+- Character at 57/112 HP: `baseHitPoints=57, removedHitPoints=55` → currentHP=57, maxHP=112 ✓
 - Character at 0 HP: `baseHitPoints=53, removedHitPoints=64` → currentHP=0, maxHP=117 ✓
+
+#### Why Two Different Formulas?
+
+When `overrideHitPoints` is set, D&D Beyond stores the manually-set max HP and tracks damage separately. The `baseHitPoints` field becomes less meaningful in this case, as the current HP is derived from the override minus damage.
 
 ### Automatic Syncing During Combat
 
