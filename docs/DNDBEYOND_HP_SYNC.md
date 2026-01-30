@@ -54,6 +54,8 @@ if (overrideHitPoints > 0) {
 **Example**:
 - Character with override at 56/72 HP: `overrideHitPoints=72, removedHitPoints=16` → currentHP=56, maxHP=72 ✓
 
+**Note**: When `overrideHitPoints` is set, it already includes all bonuses from items and features. The `bonusHitPoints` field is not used in this calculation.
+
 #### Without Override (Normal Calculation)
 
 When no manual override is set:

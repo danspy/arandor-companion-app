@@ -116,23 +116,22 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const tempHp = data.data?.temporaryHitPoints || 0;
     
     // Calculate HP based on whether override is set
+    // NOTE: This logic is duplicated in src/lib/dndbeyond.ts
+    // Consider extracting to a shared utility function in the future
     let currentHp: number;
     let maxHp: number;
     
     if (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) {
       // When overrideHitPoints is set, use it as max HP
       // and calculate current HP by subtracting damage from it
+      // Note: overrideHitPoints already includes all bonuses, so bonusHitPoints is ignored
       maxHp = overrideHp;
       currentHp = Math.max(0, overrideHp - removedHp);
     } else {
       // Normal case: no override
       // baseHitPoints represents current HP after damage
       // Calculate max HP by adding back the damage
-      if (removedHp >= baseHp) {
-        currentHp = 0; // Character took damage >= remaining HP
-      } else {
-        currentHp = baseHp; // baseHitPoints is current HP
-      }
+      currentHp = removedHp >= baseHp ? 0 : baseHp;
       maxHp = baseHp + removedHp + bonusHp;
     }
     
