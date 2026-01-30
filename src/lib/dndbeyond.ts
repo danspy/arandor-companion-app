@@ -54,11 +54,11 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const tempHp = data.data?.temporaryHitPoints || 0;
     
     // Calculate current HP
-    // When removedHitPoints > baseHitPoints, it means damage exceeded remaining HP,
+    // When removedHitPoints >= baseHitPoints, it means damage met or exceeded remaining HP,
     // so the character is at 0 HP (unconscious/dead)
     let currentHp: number;
-    if (removedHp > baseHp) {
-      currentHp = 0; // Character took more damage than they had HP
+    if (removedHp >= baseHp) {
+      currentHp = 0; // Character took damage >= remaining HP
     } else {
       currentHp = baseHp; // Normal case: baseHitPoints is current HP
     }

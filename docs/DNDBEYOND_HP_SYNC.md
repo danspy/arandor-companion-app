@@ -35,7 +35,7 @@ To make a character sheet public on D&D Beyond:
 
 The system fetches HP data from D&D Beyond's character API and calculates:
 
-- **Current HP**: `baseHitPoints` (normally), but **0 if `removedHitPoints > baseHitPoints`** (character unconscious/dead)
+- **Current HP**: `baseHitPoints` (normally), but **0 if `removedHitPoints >= baseHitPoints`** (character unconscious/dead)
 - **Max HP**: `overrideHitPoints` (if set and > 0) OR `baseHitPoints + removedHitPoints + bonusHitPoints`
 - **Temp HP**: `temporaryHitPoints`
 
@@ -43,8 +43,8 @@ The system fetches HP data from D&D Beyond's character API and calculates:
 
 **Formula**:
 ```typescript
-// Check if damage exceeded remaining HP (character at 0 HP)
-if (removedHitPoints > baseHitPoints) {
+// Check if damage met or exceeded remaining HP (character at 0 HP)
+if (removedHitPoints >= baseHitPoints) {
   Current HP = 0  // Character is unconscious/dead
 } else {
   Current HP = baseHitPoints  // Normal case
