@@ -106,7 +106,7 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: CURRENT HP (not base max HP!)
     // - bonusHitPoints: bonus HP from items/features (added to max)
-    // - overrideHitPoints: manual override for max HP (if set, replaces calculated max)
+    // - overrideHitPoints: manual override for max HP (if set, uses different calculation)
     // - removedHitPoints: damage taken (HP lost from max)
     // - temporaryHitPoints: temp HP
     const baseHp = data.data?.baseHitPoints || 0;
@@ -115,25 +115,28 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
     
-    // Calculate current HP
-    // When removedHitPoints >= baseHitPoints, it means damage met or exceeded remaining HP,
-    // so the character is at 0 HP (unconscious/dead)
+    // Calculate HP based on whether override is set
     let currentHp: number;
-    if (removedHp >= baseHp) {
-      currentHp = 0; // Character took damage >= remaining HP
+    let maxHp: number;
+    
+    if (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) {
+      // When overrideHitPoints is set, use it as max HP
+      // and calculate current HP by subtracting damage from it
+      maxHp = overrideHp;
+      currentHp = Math.max(0, overrideHp - removedHp);
     } else {
-      currentHp = baseHp; // Normal case: baseHitPoints is current HP
+      // Normal case: no override
+      // baseHitPoints represents current HP after damage
+      // Calculate max HP by adding back the damage
+      if (removedHp >= baseHp) {
+        currentHp = 0; // Character took damage >= remaining HP
+      } else {
+        currentHp = baseHp; // baseHitPoints is current HP
+      }
+      maxHp = baseHp + removedHp + bonusHp;
     }
     
-    // Calculate max HP: base HP + damage taken + any bonuses
-    const calculatedMaxHp = baseHp + removedHp + bonusHp;
-    
-    // Use override if set and greater than 0, otherwise use calculated max
-    const maxHp = (overrideHp !== null && overrideHp !== undefined && overrideHp > 0) 
-      ? overrideHp 
-      : calculatedMaxHp;
-    
-    // Ensure current HP doesn't exceed max HP (can happen with manual overrides)
+    // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
     
     if (maxHp > 0) {
