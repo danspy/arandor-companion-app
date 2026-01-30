@@ -62,10 +62,17 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
     
-    // baseHitPoints is the CURRENT HP (after damage)
-    const currentHp = baseHp;
+    // Calculate current HP
+    // When removedHitPoints > baseHitPoints, it means damage exceeded remaining HP,
+    // so the character is at 0 HP (unconscious/dead)
+    let currentHp: number;
+    if (removedHp > baseHp) {
+      currentHp = 0; // Character took more damage than they had HP
+    } else {
+      currentHp = baseHp; // Normal case: baseHitPoints is current HP
+    }
     
-    // Calculate max HP: current HP + damage taken + any bonuses
+    // Calculate max HP: base HP + damage taken + any bonuses
     const calculatedMaxHp = baseHp + removedHp + bonusHp;
     
     // Use override if set and greater than 0, otherwise use calculated max
@@ -77,7 +84,8 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const validatedCurrentHp = Math.min(currentHp, maxHp);
     
     console.log('[D&D Beyond HP Debug] Calculated values:');
-    console.log('  currentHp:', currentHp, '(from baseHitPoints)');
+    console.log('  removedHp > baseHp?', removedHp > baseHp, `(${removedHp} > ${baseHp})`);
+    console.log('  currentHp:', currentHp, removedHp > baseHp ? '(damage exceeded HP - at 0 HP)' : '(from baseHitPoints)');
     console.log('  calculatedMaxHp:', calculatedMaxHp, `(${baseHp} + ${removedHp} + ${bonusHp})`);
     console.log('  maxHp:', maxHp);
     console.log('  validatedCurrentHp:', validatedCurrentHp);
