@@ -54,7 +54,10 @@ export const POST: APIRoute = async ({ cookies }) => {
           .set({
             hp: hpData.hp,
             maxHp: hpData.maxHp,
-            tempHp: hpData.tempHp,
+            tempHp: hpData.tempHp ?? 0,
+            deathSaveSuccesses: hpData.deathSaveSuccesses ?? 0,
+            deathSaveFailures: hpData.deathSaveFailures ?? 0,
+            isStable: hpData.isStable ?? false,
             updatedAt: new Date(),
           })
           .where(eq(Character.id, character.id));
@@ -66,7 +69,10 @@ export const POST: APIRoute = async ({ cookies }) => {
             .set({
               hp: hpData.hp,
               maxHp: hpData.maxHp,
-              tempHp: hpData.tempHp,
+              tempHp: hpData.tempHp ?? 0,
+              deathSaveSuccesses: hpData.deathSaveSuccesses ?? 0,
+              deathSaveFailures: hpData.deathSaveFailures ?? 0,
+              isStable: hpData.isStable ?? false,
               updatedAt: new Date(),
             })
             .where(eq(InitiativeTracker.id, initiativeEntry.id));

@@ -6,6 +6,9 @@ export interface DnDBeyondHPData {
   hp?: number;
   maxHp?: number;
   tempHp?: number;
+  deathSaveSuccesses?: number;
+  deathSaveFailures?: number;
+  isStable?: boolean;
 }
 
 /**
@@ -53,6 +56,12 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
     
+    // Extract death save data (available when character is at 0 HP)
+    const deathSaves = data.data?.deathSaves;
+    const deathSaveSuccesses = deathSaves?.successCount || 0;
+    const deathSaveFailures = deathSaves?.failCount || 0;
+    const isStable = deathSaves?.isStabilized || false;
+    
     // Calculate HP based on whether override is set
     let currentHp: number;
     let maxHp: number;
@@ -81,9 +90,13 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       hpData.hp = validatedCurrentHp;
     }
     
-    if (tempHp > 0) {
-      hpData.tempHp = tempHp;
-    }
+    // Set temp HP only if greater than 0, otherwise explicitly set to 0 to clear it
+    hpData.tempHp = tempHp;
+    
+    // Include death save data
+    hpData.deathSaveSuccesses = deathSaveSuccesses;
+    hpData.deathSaveFailures = deathSaveFailures;
+    hpData.isStable = isStable;
 
     return hpData;
   } catch (error) {

@@ -50,6 +50,10 @@ const Character = defineTable({
     hp: column.number({ optional: true }), // Current HP
     maxHp: column.number({ optional: true }), // Maximum HP
     tempHp: column.number({ optional: true }), // Temporary HP
+    // Death saves (when HP = 0)
+    deathSaveSuccesses: column.number({ default: 0 }), // Number of successful death saves (0-3)
+    deathSaveFailures: column.number({ default: 0 }), // Number of failed death saves (0-3)
+    isStable: column.boolean({ default: false }), // Whether character is stable at 0 HP
     // Additional character details
     gender: column.text({ optional: true }),
     alignment: column.text({ optional: true }),
@@ -172,6 +176,10 @@ const InitiativeTracker = defineTable({
     ac: column.number({ optional: true }), // Armor Class
     notes: column.text({ optional: true }),
     isActive: column.boolean({ default: true }), // Whether this entry is in current combat
+    // Death saves (when HP = 0)
+    deathSaveSuccesses: column.number({ default: 0 }), // Number of successful death saves (0-3)
+    deathSaveFailures: column.number({ default: 0 }), // Number of failed death saves (0-3)
+    isStable: column.boolean({ default: false }), // Whether character is stable at 0 HP
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
