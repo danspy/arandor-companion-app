@@ -165,15 +165,30 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         characterUpdateData.hp = character.hp;
       }
       
-      if (validatedMaxHp !== null) characterUpdateData.maxHp = validatedMaxHp;
-      else characterUpdateData.maxHp = character.maxHp;
+      // Set maxHp
+      if (validatedMaxHp !== null) {
+        characterUpdateData.maxHp = validatedMaxHp;
+      } else {
+        characterUpdateData.maxHp = character.maxHp;
+      }
       
-      if (validatedTempHp !== null) characterUpdateData.tempHp = validatedTempHp;
-      else characterUpdateData.tempHp = character.tempHp;
+      // Set tempHp
+      if (validatedTempHp !== null) {
+        characterUpdateData.tempHp = validatedTempHp;
+      } else {
+        characterUpdateData.tempHp = character.tempHp;
+      }
       
-      if (validatedDeathSaveSuccesses !== null) characterUpdateData.deathSaveSuccesses = validatedDeathSaveSuccesses;
-      if (validatedDeathSaveFailures !== null) characterUpdateData.deathSaveFailures = validatedDeathSaveFailures;
-      if (isStable !== undefined && isStable !== null) characterUpdateData.isStable = Boolean(isStable);
+      // Set death saves
+      if (validatedDeathSaveSuccesses !== null) {
+        characterUpdateData.deathSaveSuccesses = validatedDeathSaveSuccesses;
+      }
+      if (validatedDeathSaveFailures !== null) {
+        characterUpdateData.deathSaveFailures = validatedDeathSaveFailures;
+      }
+      if (isStable !== undefined && isStable !== null) {
+        characterUpdateData.isStable = Boolean(isStable);
+      }
 
       await db.update(Character)
         .set(characterUpdateData)
