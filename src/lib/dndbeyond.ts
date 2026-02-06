@@ -43,7 +43,8 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
-    // Log the raw API response for debugging
+    // Log ALL HP-related fields for debugging
+    console.log('[D&D Beyond API] ALL data.data fields:', Object.keys(data.data || {}));
     console.log('[D&D Beyond API] Raw HP data:', {
       baseHitPoints: data.data?.baseHitPoints,
       bonusHitPoints: data.data?.bonusHitPoints,
@@ -51,6 +52,10 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       removedHitPoints: data.data?.removedHitPoints,
       temporaryHitPoints: data.data?.temporaryHitPoints,
       deathSaves: data.data?.deathSaves,
+      // Check for other potential HP fields
+      hitPointMax: data.data?.hitPointMax,
+      constitutionScore: data.data?.stats?.find((s: any) => s.id === 3)?.value,
+      level: data.data?.classes?.reduce((sum: number, c: any) => sum + (c.level || 0), 0),
     });
     
     // Extract HP data
