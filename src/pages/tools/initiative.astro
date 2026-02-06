@@ -1744,13 +1744,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 } else {
                   // Show health status for players who don't own this character
                   const getHealthStatus = (hp, maxHp, deathSaveFailures = 0) => {
-                    if (!hp || !maxHp || hp <= 0) {
-                      // Dead: 0 HP and 3 death save failures
-                      if (hp === 0 && deathSaveFailures >= 3) return { text: 'Dead', classes: 'bg-black text-white' };
-                      // Unconscious: 0 HP but not yet dead (< 3 failures)
-                      if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
-                      return { text: '-', classes: 'text-gray-400' };
-                    }
+                    if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
+                    // Dead: 0 HP and 3 death save failures
+                    if (hp === 0 && deathSaveFailures >= 3) return { text: 'Dead', classes: 'bg-black text-white' };
+                    // Unconscious: 0 HP but not yet dead (< 3 failures)
+                    if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
                     const percentage = (hp / maxHp) * 100;
                     if (percentage > 75) return { text: 'Healthy', classes: 'bg-green-500 text-white' };
                     if (percentage > 50) return { text: 'Injured', classes: 'bg-yellow-500 text-white' };
