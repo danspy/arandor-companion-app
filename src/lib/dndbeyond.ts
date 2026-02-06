@@ -45,7 +45,7 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
-    // - baseHitPoints: CURRENT HP (not base max HP!)
+    // - baseHitPoints: BASE MAX HP from class levels (not current HP!)
     // - bonusHitPoints: bonus HP from items/features (added to max)
     // - overrideHitPoints: manual override for max HP (if set, uses different calculation)
     // - removedHitPoints: damage taken (HP lost from max)
@@ -74,10 +74,10 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       currentHp = Math.max(0, overrideHp - removedHp);
     } else {
       // Normal case: no override
-      // baseHitPoints represents current HP after damage
-      // Calculate max HP by adding back the damage
-      currentHp = baseHp;
-      maxHp = baseHp + removedHp + bonusHp;
+      // baseHitPoints is the base max HP, bonusHitPoints are added bonuses
+      // Current HP = (base max + bonus) - damage taken
+      maxHp = baseHp + bonusHp;
+      currentHp = Math.max(0, maxHp - removedHp);
     }
     
     // Ensure current HP doesn't exceed max HP
