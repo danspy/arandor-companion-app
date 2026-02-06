@@ -76,7 +76,7 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       // Normal case: no override
       // baseHitPoints represents current HP after damage
       // Calculate max HP by adding back the damage
-      currentHp = removedHp >= baseHp ? 0 : baseHp;
+      currentHp = baseHp;
       maxHp = baseHp + removedHp + bonusHp;
     }
     
