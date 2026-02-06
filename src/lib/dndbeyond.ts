@@ -43,6 +43,16 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
+    // Log the raw API response for debugging
+    console.log('[D&D Beyond API] Raw HP data:', {
+      baseHitPoints: data.data?.baseHitPoints,
+      bonusHitPoints: data.data?.bonusHitPoints,
+      overrideHitPoints: data.data?.overrideHitPoints,
+      removedHitPoints: data.data?.removedHitPoints,
+      temporaryHitPoints: data.data?.temporaryHitPoints,
+      deathSaves: data.data?.deathSaves,
+    });
+    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: BASE MAX HP from class levels (not current HP!)
@@ -82,6 +92,13 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     
     // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
+    
+    console.log('[D&D Beyond API] Calculated HP:', {
+      maxHp,
+      currentHp,
+      validatedCurrentHp,
+      formula: overrideHp ? 'override - removed' : '(base + bonus) - removed'
+    });
     
     const hpData: DnDBeyondHPData = {};
     

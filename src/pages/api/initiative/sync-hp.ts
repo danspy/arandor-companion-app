@@ -50,31 +50,51 @@ export const POST: APIRoute = async ({ cookies }) => {
         }
 
         // Update character in database
+        const updateData: any = {
+          hp: hpData.hp,
+          maxHp: hpData.maxHp,
+          tempHp: hpData.tempHp ?? 0,
+          updatedAt: new Date(),
+        };
+        
+        // Reset death saves if HP is above 0, otherwise sync from D&D Beyond
+        if (hpData.hp && hpData.hp > 0) {
+          updateData.deathSaveSuccesses = 0;
+          updateData.deathSaveFailures = 0;
+          updateData.isStable = false;
+        } else {
+          updateData.deathSaveSuccesses = hpData.deathSaveSuccesses ?? 0;
+          updateData.deathSaveFailures = hpData.deathSaveFailures ?? 0;
+          updateData.isStable = hpData.isStable ?? false;
+        }
+        
         await db.update(Character)
-          .set({
-            hp: hpData.hp,
-            maxHp: hpData.maxHp,
-            tempHp: hpData.tempHp ?? 0,
-            deathSaveSuccesses: hpData.deathSaveSuccesses ?? 0,
-            deathSaveFailures: hpData.deathSaveFailures ?? 0,
-            isStable: hpData.isStable ?? false,
-            updatedAt: new Date(),
-          })
+          .set(updateData)
           .where(eq(Character.id, character.id));
 
         // Update initiative entry if this character is in the tracker
         const initiativeEntry = characterIdToInitiative.get(character.id);
         if (initiativeEntry) {
+          const initiativeUpdateData: any = {
+            hp: hpData.hp,
+            maxHp: hpData.maxHp,
+            tempHp: hpData.tempHp ?? 0,
+            updatedAt: new Date(),
+          };
+          
+          // Reset death saves if HP is above 0, otherwise sync from D&D Beyond
+          if (hpData.hp && hpData.hp > 0) {
+            initiativeUpdateData.deathSaveSuccesses = 0;
+            initiativeUpdateData.deathSaveFailures = 0;
+            initiativeUpdateData.isStable = false;
+          } else {
+            initiativeUpdateData.deathSaveSuccesses = hpData.deathSaveSuccesses ?? 0;
+            initiativeUpdateData.deathSaveFailures = hpData.deathSaveFailures ?? 0;
+            initiativeUpdateData.isStable = hpData.isStable ?? false;
+          }
+          
           await db.update(InitiativeTracker)
-            .set({
-              hp: hpData.hp,
-              maxHp: hpData.maxHp,
-              tempHp: hpData.tempHp ?? 0,
-              deathSaveSuccesses: hpData.deathSaveSuccesses ?? 0,
-              deathSaveFailures: hpData.deathSaveFailures ?? 0,
-              isStable: hpData.isStable ?? false,
-              updatedAt: new Date(),
-            })
+            .set(initiativeUpdateData)
             .where(eq(InitiativeTracker.id, initiativeEntry.id));
         }
 
