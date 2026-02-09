@@ -139,6 +139,14 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     console.log('[HP DEBUG] customDefenseAdjustments:', JSON.stringify(customAdj, null, 2));
     console.log('[HP DEBUG] bonusHitPoints raw:', data.data?.bonusHitPoints, 'type:', typeof data.data?.bonusHitPoints);
     
+    // Check equipped items for HP bonuses (especially custom items)
+    const equippedItems = inventory.filter((item: any) => item.equipped);
+    console.log('[HP DEBUG] Equipped items with modifiers:', JSON.stringify(equippedItems.map((item: any) => ({
+      name: item.definition?.name,
+      grantedModifiers: item.definition?.grantedModifiers,
+      hasModifiers: Array.isArray(item.definition?.grantedModifiers) && item.definition.grantedModifiers.length > 0
+    })), null, 2));
+    
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
     const deathSaveSuccesses = deathSaves?.successCount || 0;
