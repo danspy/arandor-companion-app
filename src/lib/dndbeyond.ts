@@ -130,6 +130,15 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const conScore = conStat?.value || 10;
     const conModifier = Math.floor((conScore - 10) / 2);
     
+    // DEBUG: Log complete stats array to find if HP is stored there
+    console.log('[D&D Beyond API] Complete stats array:', 
+      stats.map((s: any) => ({
+        id: s.id,
+        value: s.value,
+        allKeys: Object.keys(s)
+      }))
+    );
+    
     // Extract character level
     const classes = data.data?.classes || [];
     const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
