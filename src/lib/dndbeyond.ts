@@ -99,6 +99,20 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
     let modifierHpBonus = 0;
     
+    // DEBUG: Log modifiers structure to understand what fields exist
+    console.log('[D&D Beyond API] Modifiers array:', {
+      isArray: Array.isArray(modifiers),
+      length: modifiers.length,
+      sample: modifiers.slice(0, 5).map((m: any) => ({
+        type: m.type,
+        subType: m.subType,
+        friendlyTypeName: m.friendlyTypeName,
+        friendlySubtypeName: m.friendlySubtypeName,
+        value: m.value,
+        allKeys: Object.keys(m)
+      }))
+    });
+    
     modifiers.forEach((modifier: any) => {
       if (modifier.type === "bonus") {
         // Hit points per level (Tough feat, Hill Dwarf, Draconic Sorcerer, etc.)
