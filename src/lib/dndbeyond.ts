@@ -124,6 +124,21 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       }
     });
     
+    // DEBUG: Log inventory and customDefenseAdjustments for missing HP investigation
+    const inventory = data.data?.inventory || [];
+    const customAdj = data.data?.customDefenseAdjustments || [];
+    
+    console.log('[HP DEBUG] Character ID:', characterId);
+    console.log('[HP DEBUG] Inventory items (first 10):', JSON.stringify(inventory.slice(0, 10).map((item: any) => ({
+      name: item.definition?.name,
+      equipped: item.equipped,
+      notes: item.notes,
+      type: item.definition?.type,
+    })), null, 2));
+    
+    console.log('[HP DEBUG] customDefenseAdjustments:', JSON.stringify(customAdj, null, 2));
+    console.log('[HP DEBUG] bonusHitPoints raw:', data.data?.bonusHitPoints, 'type:', typeof data.data?.bonusHitPoints);
+    
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
     const deathSaveSuccesses = deathSaves?.successCount || 0;
@@ -148,6 +163,19 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus + featHpBonus;
       currentHp = Math.max(0, maxHp - removedHp);
     }
+    
+    console.log('[HP DEBUG] Final calc:', {
+      baseHp,
+      conMod: conModifier,
+      level: totalLevel,
+      conContrib: conModifier * totalLevel,
+      bonusHp,
+      modifierHpBonus,
+      featHpBonus,
+      maxHp,
+      currentHp,
+      formula: `${baseHp} + (${conModifier}×${totalLevel}) + ${bonusHp} + ${modifierHpBonus} + ${featHpBonus} = ${maxHp}`
+    });
     
     // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
