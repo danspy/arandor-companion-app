@@ -126,6 +126,25 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const classes = data.data?.classes || [];
     const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
     
+    // Calculate HP bonuses from modifiers (Tough feat, Hill Dwarf, etc.)
+    // bonusHitPoints is often null even when character has HP bonuses
+    // The actual bonuses are in the modifiers array
+    const modifiers = data.data?.modifiers || [];
+    let modifierHpBonus = 0;
+    
+    modifiers.forEach((modifier: any) => {
+      if (modifier.type === "bonus") {
+        // Hit points per level (Tough feat, Hill Dwarf, Draconic Sorcerer, etc.)
+        if (modifier.subType === "hit-points-per-level") {
+          modifierHpBonus += (modifier.value || 0) * totalLevel;
+        }
+        // One-time HP bonuses (magic items, temporary effects)
+        else if (modifier.subType === "hit-points" || modifier.subType === "hit-points-max") {
+          modifierHpBonus += modifier.value || 0;
+        }
+      }
+    });
+    
     // Calculate HP based on whether override is set
     // NOTE: This logic is duplicated in src/lib/dndbeyond.ts
     // Consider extracting to a shared utility function in the future
@@ -140,10 +159,10 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       currentHp = Math.max(0, overrideHp - removedHp);
     } else {
       // Normal case: no override
-      // baseHitPoints is hit die rolls WITHOUT Constitution modifier
-      // Max HP = base + (CON modifier × level) + bonus
+      // baseHitPoints is hit die rolls WITHOUT Constitution modifier or feat/racial bonuses
+      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses
       // Current HP = Max HP - damage taken
-      maxHp = baseHp + (conModifier * totalLevel) + bonusHp;
+      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus;
       currentHp = Math.max(0, maxHp - removedHp);
     }
     
