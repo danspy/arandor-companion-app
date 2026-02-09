@@ -60,16 +60,27 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
-    // - baseHitPoints: BASE MAX HP from class levels (not current HP!)
+    // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
     // - bonusHitPoints: bonus HP from items/features (added to max)
     // - overrideHitPoints: manual override for max HP (if set, uses different calculation)
     // - removedHitPoints: damage taken (HP lost from max)
     // - temporaryHitPoints: temp HP
+    // NOTE: Constitution modifier must be added separately!
     const baseHp = data.data?.baseHitPoints || 0;
     const bonusHp = data.data?.bonusHitPoints || 0;
     const overrideHp = data.data?.overrideHitPoints;
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
+    
+    // Extract Constitution modifier for HP calculation
+    const stats = data.data?.stats || [];
+    const conStat = stats.find((s: any) => s.id === 3); // Constitution is stat id 3
+    const conScore = conStat?.value || 10;
+    const conModifier = Math.floor((conScore - 10) / 2);
+    
+    // Extract character level
+    const classes = data.data?.classes || [];
+    const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
     
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
@@ -89,9 +100,10 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       currentHp = Math.max(0, overrideHp - removedHp);
     } else {
       // Normal case: no override
-      // baseHitPoints is the base max HP, bonusHitPoints are added bonuses
-      // Current HP = (base max + bonus) - damage taken
-      maxHp = baseHp + bonusHp;
+      // baseHitPoints is hit die rolls WITHOUT Constitution modifier
+      // Max HP = base + (CON modifier × level) + bonus
+      // Current HP = Max HP - damage taken
+      maxHp = baseHp + (conModifier * totalLevel) + bonusHp;
       currentHp = Math.max(0, maxHp - removedHp);
     }
     
@@ -102,7 +114,7 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       maxHp,
       currentHp,
       validatedCurrentHp,
-      formula: overrideHp ? 'override - removed' : '(base + bonus) - removed'
+      formula: overrideHp ? 'override - removed' : `(base ${baseHp} + CON ${conModifier} × level ${totalLevel} + bonus ${bonusHp}) - removed ${removedHp}`
     });
     
     const hpData: DnDBeyondHPData = {};
