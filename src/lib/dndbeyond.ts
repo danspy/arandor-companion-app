@@ -147,6 +147,39 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       hasModifiers: Array.isArray(item.definition?.grantedModifiers) && item.definition.grantedModifiers.length > 0
     })), null, 2));
     
+    // Check racial traits for HP bonuses
+    const race = data.data?.race;
+    const racialTraits = race?.racialTraits || [];
+    console.log('[HP DEBUG] Racial traits count:', racialTraits.length);
+    if (racialTraits.length > 0) {
+      console.log('[HP DEBUG] Racial traits (first 5):', JSON.stringify(racialTraits.slice(0, 5).map((trait: any) => ({
+        name: trait.definition?.name,
+        description: trait.definition?.description?.substring(0, 100),
+        modifiers: trait.definition?.modifiers
+      })), null, 2));
+    }
+    
+    // Check class features for HP bonuses
+    console.log('[HP DEBUG] Classes count:', classes.length);
+    classes.forEach((cls: any, index: number) => {
+      console.log(`[HP DEBUG] Class ${index}: ${cls.definition?.name} level ${cls.level}`);
+      const classFeatures = cls.classFeatures || [];
+      console.log(`[HP DEBUG] Class features count:`, classFeatures.length);
+      if (classFeatures.length > 0) {
+        console.log(`[HP DEBUG] Class features (first 3):`, JSON.stringify(classFeatures.slice(0, 3).map((feature: any) => ({
+          name: feature.definition?.name,
+          description: feature.definition?.description?.substring(0, 100),
+         modifiers: feature.definition?.modifiers
+        })), null, 2));
+      }
+    });
+    
+    // Check choices and options for HP bonuses
+    const choices = data.data?.choices || [];
+    const options = data.data?.options || [];
+    console.log('[HP DEBUG] Choices count:', choices.length);
+    console.log('[HP DEBUG] Options count:', options.length);
+    
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
     const deathSaveSuccesses = deathSaves?.successCount || 0;
