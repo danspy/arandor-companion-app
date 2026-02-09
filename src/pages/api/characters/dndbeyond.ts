@@ -159,8 +159,7 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       characterData.tempHp = tempHp;
     }
 
-    // Extract ability scores
-    const stats = data.data?.stats;
+    // Extract ability scores (stats already extracted above for HP calculation on line 120)
     if (stats && Array.isArray(stats)) {
       characterData.stats = {
         strength: stats.find((s: any) => s.id === 1)?.value,
