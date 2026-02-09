@@ -95,7 +95,8 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     // Calculate HP bonuses from modifiers (Tough feat, Hill Dwarf, etc.)
     // bonusHitPoints is often null even when character has HP bonuses
     // The actual bonuses are in the modifiers array
-    const modifiers = data.data?.modifiers || [];
+    const modifiersData = data.data?.modifiers;
+    const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
     let modifierHpBonus = 0;
     
     modifiers.forEach((modifier: any) => {
