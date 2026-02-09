@@ -68,6 +68,20 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       bonusValue: data.data?.bonusHitPoints,
     });
     
+    // Check characterValues for pre-calculated max HP
+    const characterValues = data.data?.characterValues || [];
+    console.log('[D&D Beyond API] characterValues:', {
+      isArray: Array.isArray(characterValues),
+      length: characterValues.length,
+      values: characterValues.map((cv: any) => ({
+        typeId: cv.typeId,
+        value: cv.value,
+        valueId: cv.valueId,
+        valueTypeId: cv.valueTypeId,
+        notes: cv.notes
+      }))
+    });
+    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
