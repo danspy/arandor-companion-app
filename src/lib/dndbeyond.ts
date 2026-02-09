@@ -82,6 +82,34 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       }))
     });
     
+    // DEBUG: Log race, feats, features, and classes for HP bonus investigation
+    console.log('[D&D Beyond API] Race info:', {
+      raceName: data.data?.race?.fullName || data.data?.race?.baseName,
+      raceId: data.data?.raceDefinitionId,
+      raceFeatures: data.data?.race?.racialTraits?.map((t: any) => t.definition?.name) || []
+    });
+    
+    console.log('[D&D Beyond API] Feats:', {
+      count: data.data?.feats?.length || 0,
+      featNames: data.data?.feats?.map((f: any) => f.definition?.name || f.name) || []
+    });
+    
+    console.log('[D&D Beyond API] Features (first 10):', {
+      count: data.data?.features?.length || 0,
+      featureNames: data.data?.features?.slice(0, 10).map((f: any) => ({
+        name: f.definition?.name || f.name,
+        requiredLevel: f.requiredLevel
+      })) || []
+    });
+    
+    console.log('[D&D Beyond API] Classes:', {
+      classList: data.data?.classes?.map((c: any) => ({
+        name: c.definition?.name,
+        level: c.level,
+        hitDiceUsed: c.hitDiceUsed
+      })) || []
+    });
+    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
