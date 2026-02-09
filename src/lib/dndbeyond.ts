@@ -139,6 +139,18 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       }))
     );
     
+    // Check bonusStats for HP bonuses
+    const bonusStats = data.data?.bonusStats || [];
+    console.log('[D&D Beyond API] bonusStats array:', {
+      isArray: Array.isArray(bonusStats),
+      length: bonusStats.length,
+      values: bonusStats.map((bs: any) => ({
+        id: bs.id,
+        value: bs.value,
+        allKeys: Object.keys(bs || {})
+      }))
+    });
+    
     // Extract character level
     const classes = data.data?.classes || [];
     const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
