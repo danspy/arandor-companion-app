@@ -43,73 +43,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
-    // Log ALL HP-related fields for debugging
-    console.log('[D&D Beyond API] Character ID:', characterId);
-    console.log('[D&D Beyond API] ALL data.data fields:', Object.keys(data.data || {}));
-    console.log('[D&D Beyond API] Raw HP data:', {
-      baseHitPoints: data.data?.baseHitPoints,
-      bonusHitPoints: data.data?.bonusHitPoints,
-      overrideHitPoints: data.data?.overrideHitPoints,
-      removedHitPoints: data.data?.removedHitPoints,
-      temporaryHitPoints: data.data?.temporaryHitPoints,
-      deathSaves: data.data?.deathSaves,
-      // Check for other potential HP fields
-      hitPointMax: data.data?.hitPointMax,
-      constitutionScore: data.data?.stats?.find((s: any) => s.id === 3)?.value,
-      level: data.data?.classes?.reduce((sum: number, c: any) => sum + (c.level || 0), 0),
-    });
-    
-    // IMPORTANT: Log types to debug null vs undefined vs 0
-    console.log('[D&D Beyond API] HP field types:', {
-      baseHitPoints: typeof data.data?.baseHitPoints,
-      bonusHitPoints: typeof data.data?.bonusHitPoints,
-      bonusIsNull: data.data?.bonusHitPoints === null,
-      bonusIsUndefined: data.data?.bonusHitPoints === undefined,
-      bonusValue: data.data?.bonusHitPoints,
-    });
-    
-    // Check characterValues for pre-calculated max HP
-    const characterValues = data.data?.characterValues || [];
-    console.log('[D&D Beyond API] characterValues:', {
-      isArray: Array.isArray(characterValues),
-      length: characterValues.length,
-      values: characterValues.map((cv: any) => ({
-        typeId: cv.typeId,
-        value: cv.value,
-        valueId: cv.valueId,
-        valueTypeId: cv.valueTypeId,
-        notes: cv.notes
-      }))
-    });
-    
-    // DEBUG: Log race, feats, features, and classes for HP bonus investigation
-    console.log('[D&D Beyond API] Race info:', {
-      raceName: data.data?.race?.fullName || data.data?.race?.baseName,
-      raceId: data.data?.raceDefinitionId,
-      raceFeatures: data.data?.race?.racialTraits?.map((t: any) => t.definition?.name) || []
-    });
-    
-    console.log('[D&D Beyond API] Feats:', {
-      count: data.data?.feats?.length || 0,
-      featNames: data.data?.feats?.map((f: any) => f.definition?.name || f.name) || []
-    });
-    
-    console.log('[D&D Beyond API] Features (first 10):', {
-      count: data.data?.features?.length || 0,
-      featureNames: data.data?.features?.slice(0, 10).map((f: any) => ({
-        name: f.definition?.name || f.name,
-        requiredLevel: f.requiredLevel
-      })) || []
-    });
-    
-    console.log('[D&D Beyond API] Classes:', {
-      classList: data.data?.classes?.map((c: any) => ({
-        name: c.definition?.name,
-        level: c.level,
-        hitDiceUsed: c.hitDiceUsed
-      })) || []
-    });
-    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
@@ -130,51 +63,16 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const conScore = conStat?.value || 10;
     const conModifier = Math.floor((conScore - 10) / 2);
     
-    // DEBUG: Log complete stats array to find if HP is stored there
-    console.log('[D&D Beyond API] Complete stats array:', 
-      stats.map((s: any) => ({
-        id: s.id,
-        value: s.value,
-        allKeys: Object.keys(s)
-      }))
-    );
-    
-    // Check bonusStats for HP bonuses
-    const bonusStats = data.data?.bonusStats || [];
-    console.log('[D&D Beyond API] bonusStats array:', {
-      isArray: Array.isArray(bonusStats),
-      length: bonusStats.length,
-      values: bonusStats.map((bs: any) => ({
-        id: bs.id,
-        value: bs.value,
-        allKeys: Object.keys(bs || {})
-      }))
-    });
-    
     // Extract character level
     const classes = data.data?.classes || [];
     const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
     
     // Calculate HP bonuses from modifiers (Tough feat, Hill Dwarf, etc.)
-    // bonusHitPoints is often null even when character has HP bonuses
-    // The actual bonuses are in the modifiers array
+    // Note: bonusHitPoints is often null even when character has HP bonuses
+    // The actual bonuses might be in the modifiers array
     const modifiersData = data.data?.modifiers;
     const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
     let modifierHpBonus = 0;
-    
-    // DEBUG: Log modifiers structure to understand what fields exist
-    console.log('[D&D Beyond API] Modifiers array:', {
-      isArray: Array.isArray(modifiers),
-      length: modifiers.length,
-      sample: modifiers.slice(0, 5).map((m: any) => ({
-        type: m.type,
-        subType: m.subType,
-        friendlyTypeName: m.friendlyTypeName,
-        friendlySubtypeName: m.friendlySubtypeName,
-        value: m.value,
-        allKeys: Object.keys(m)
-      }))
-    });
     
     modifiers.forEach((modifier: any) => {
       if (modifier.type === "bonus") {
@@ -189,16 +87,8 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       }
     });
     
-    console.log('[D&D Beyond API] Modifier HP bonuses:', {
-      totalModifierBonus: modifierHpBonus,
-      modifiersChecked: modifiers.filter((m: any) => 
-        m.type === "bonus" && 
-        (m.subType === "hit-points-per-level" || m.subType === "hit-points" || m.subType === "hit-points-max")
-      ).length
-    });
-    
     // Parse feats for HP bonuses (Tough feat, etc.)
-    // Modifiers array is often empty, so we need to check feats directly
+    // Note: Modifiers array is often empty, so we also check feats directly
     const feats = data.data?.feats || [];
     let featHpBonus = 0;
     
@@ -208,11 +98,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       if (featName === 'Tough') {
         featHpBonus += 2 * totalLevel;
       }
-    });
-    
-    console.log('[D&D Beyond API] Feat HP bonuses:', {
-      totalFeatBonus: featHpBonus,
-      toughFeatFound: feats.some((f: any) => (f.definition?.name || f.name) === 'Tough')
     });
     
     // Extract death save data (available when character is at 0 HP)
@@ -242,13 +127,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     
     // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
-    
-    console.log('[D&D Beyond API] Calculated HP:', {
-      maxHp,
-      currentHp,
-      validatedCurrentHp,
-      formula: overrideHp ? 'override - removed' : `(base ${baseHp} + CON ${conModifier} × level ${totalLevel} + bonus ${bonusHp} + modifiers ${modifierHpBonus} + feats ${featHpBonus}) - removed ${removedHp}`
-    });
     
     const hpData: DnDBeyondHPData = {};
     
