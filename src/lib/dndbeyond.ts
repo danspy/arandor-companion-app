@@ -43,6 +43,30 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
+    // COMPREHENSIVE RAW DATA LOGGING for investigation
+    console.log('=== D&D BEYOND RAW API DATA for character', characterId, '===');
+    console.log('baseHitPoints:', JSON.stringify(data.data?.baseHitPoints));
+    console.log('bonusHitPoints:', JSON.stringify(data.data?.bonusHitPoints));
+    console.log('overrideHitPoints:', JSON.stringify(data.data?.overrideHitPoints));
+    console.log('removedHitPoints:', JSON.stringify(data.data?.removedHitPoints));
+    console.log('temporaryHitPoints:', JSON.stringify(data.data?.temporaryHitPoints));
+    
+    console.log('\nRAW stats:', JSON.stringify(data.data?.stats, null, 2));
+    console.log('\nRAW bonusStats:', JSON.stringify(data.data?.bonusStats, null, 2));
+    console.log('\nRAW overrideStats:', JSON.stringify(data.data?.overrideStats, null, 2));
+    
+    console.log('\nRAW classes:', JSON.stringify(data.data?.classes, null, 2));
+    console.log('\nRAW feats:', JSON.stringify(data.data?.feats, null, 2));
+    console.log('\nRAW modifiers:', JSON.stringify(data.data?.modifiers, null, 2));
+    
+    console.log('\nRAW race:', JSON.stringify(data.data?.race, null, 2));
+    console.log('\nRAW characterValues:', JSON.stringify(data.data?.characterValues, null, 2));
+    
+    console.log('\nRAW inventory (first 10):', JSON.stringify(data.data?.inventory?.slice(0, 10), null, 2));
+    console.log('\nRAW customDefenseAdjustments:', JSON.stringify(data.data?.customDefenseAdjustments, null, 2));
+    
+    console.log('=== END RAW DATA ===\n');
+    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
