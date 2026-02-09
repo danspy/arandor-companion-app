@@ -176,6 +176,24 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       ).length
     });
     
+    // Parse feats for HP bonuses (Tough feat, etc.)
+    // Modifiers array is often empty, so we need to check feats directly
+    const feats = data.data?.feats || [];
+    let featHpBonus = 0;
+    
+    feats.forEach((feat: any) => {
+      const featName = feat.definition?.name || feat.name || '';
+      // Tough feat: +2 HP per character level
+      if (featName === 'Tough') {
+        featHpBonus += 2 * totalLevel;
+      }
+    });
+    
+    console.log('[D&D Beyond API] Feat HP bonuses:', {
+      totalFeatBonus: featHpBonus,
+      toughFeatFound: feats.some((f: any) => (f.definition?.name || f.name) === 'Tough')
+    });
+    
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
     const deathSaveSuccesses = deathSaves?.successCount || 0;
@@ -195,9 +213,9 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     } else {
       // Normal case: no override
       // baseHitPoints is hit die rolls WITHOUT Constitution modifier or feat/racial bonuses
-      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses
+      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses + feat bonuses
       // Current HP = Max HP - damage taken
-      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus;
+      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus + featHpBonus;
       currentHp = Math.max(0, maxHp - removedHp);
     }
     
@@ -208,7 +226,7 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       maxHp,
       currentHp,
       validatedCurrentHp,
-      formula: overrideHp ? 'override - removed' : `(base ${baseHp} + CON ${conModifier} × level ${totalLevel} + bonus ${bonusHp} + modifiers ${modifierHpBonus}) - removed ${removedHp}`
+      formula: overrideHp ? 'override - removed' : `(base ${baseHp} + CON ${conModifier} × level ${totalLevel} + bonus ${bonusHp} + modifiers ${modifierHpBonus} + feats ${featHpBonus}) - removed ${removedHp}`
     });
     
     const hpData: DnDBeyondHPData = {};

@@ -146,6 +146,19 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       }
     });
     
+    // Parse feats for HP bonuses (Tough feat, etc.)
+    // Modifiers array is often empty, so we need to check feats directly
+    const feats = data.data?.feats || [];
+    let featHpBonus = 0;
+    
+    feats.forEach((feat: any) => {
+      const featName = feat.definition?.name || feat.name || '';
+      // Tough feat: +2 HP per character level
+      if (featName === 'Tough') {
+        featHpBonus += 2 * totalLevel;
+      }
+    });
+    
     // Calculate HP based on whether override is set
     // NOTE: This logic is duplicated in src/lib/dndbeyond.ts
     // Consider extracting to a shared utility function in the future
@@ -161,9 +174,9 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     } else {
       // Normal case: no override
       // baseHitPoints is hit die rolls WITHOUT Constitution modifier or feat/racial bonuses
-      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses
+      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses + feat bonuses
       // Current HP = Max HP - damage taken
-      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus;
+      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus + featHpBonus;
       currentHp = Math.max(0, maxHp - removedHp);
     }
     
