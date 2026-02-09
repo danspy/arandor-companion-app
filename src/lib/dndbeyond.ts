@@ -44,6 +44,7 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
     const data = await response.json();
     
     // Log ALL HP-related fields for debugging
+    console.log('[D&D Beyond API] Character ID:', characterId);
     console.log('[D&D Beyond API] ALL data.data fields:', Object.keys(data.data || {}));
     console.log('[D&D Beyond API] Raw HP data:', {
       baseHitPoints: data.data?.baseHitPoints,
@@ -56,6 +57,15 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       hitPointMax: data.data?.hitPointMax,
       constitutionScore: data.data?.stats?.find((s: any) => s.id === 3)?.value,
       level: data.data?.classes?.reduce((sum: number, c: any) => sum + (c.level || 0), 0),
+    });
+    
+    // IMPORTANT: Log types to debug null vs undefined vs 0
+    console.log('[D&D Beyond API] HP field types:', {
+      baseHitPoints: typeof data.data?.baseHitPoints,
+      bonusHitPoints: typeof data.data?.bonusHitPoints,
+      bonusIsNull: data.data?.bonusHitPoints === null,
+      bonusIsUndefined: data.data?.bonusHitPoints === undefined,
+      bonusValue: data.data?.bonusHitPoints,
     });
     
     // Extract HP data
