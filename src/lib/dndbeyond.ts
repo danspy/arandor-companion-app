@@ -43,40 +43,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
-    // Check all top-level response fields to find pre-calculated max HP
-    console.log('[HP DEBUG] All top-level response fields:', Object.keys(data));
-    console.log('[HP DEBUG] Looking for pre-calculated HP values in response...');
-    
-    // Check various possible locations for max HP
-    if (data.maxHitPoints !== undefined) console.log('[HP DEBUG] Found data.maxHitPoints:', data.maxHitPoints);
-    if (data.hitPoints !== undefined) console.log('[HP DEBUG] Found data.hitPoints:', data.hitPoints);
-    if (data.totalHitPoints !== undefined) console.log('[HP DEBUG] Found data.totalHitPoints:', data.totalHitPoints);
-    if (data.calculatedMaxHitPoints !== undefined) console.log('[HP DEBUG] Found data.calculatedMaxHitPoints:', data.calculatedMaxHitPoints);
-    
-    // COMPREHENSIVE RAW DATA LOGGING for investigation
-    console.log('=== D&D BEYOND RAW API DATA for character', characterId, '===');
-    console.log('baseHitPoints:', JSON.stringify(data.data?.baseHitPoints));
-    console.log('bonusHitPoints:', JSON.stringify(data.data?.bonusHitPoints));
-    console.log('overrideHitPoints:', JSON.stringify(data.data?.overrideHitPoints));
-    console.log('removedHitPoints:', JSON.stringify(data.data?.removedHitPoints));
-    console.log('temporaryHitPoints:', JSON.stringify(data.data?.temporaryHitPoints));
-    
-    console.log('\nRAW stats:', JSON.stringify(data.data?.stats, null, 2));
-    console.log('\nRAW bonusStats:', JSON.stringify(data.data?.bonusStats, null, 2));
-    console.log('\nRAW overrideStats:', JSON.stringify(data.data?.overrideStats, null, 2));
-    
-    console.log('\nRAW classes:', JSON.stringify(data.data?.classes, null, 2));
-    console.log('\nRAW feats:', JSON.stringify(data.data?.feats, null, 2));
-    console.log('\nRAW modifiers:', JSON.stringify(data.data?.modifiers, null, 2));
-    
-    console.log('\nRAW race:', JSON.stringify(data.data?.race, null, 2));
-    console.log('\nRAW characterValues:', JSON.stringify(data.data?.characterValues, null, 2));
-    
-    console.log('\nRAW inventory (first 10):', JSON.stringify(data.data?.inventory?.slice(0, 10), null, 2));
-    console.log('\nRAW customDefenseAdjustments:', JSON.stringify(data.data?.customDefenseAdjustments, null, 2));
-    
-    console.log('=== END RAW DATA ===\n');
-    
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
     // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
@@ -134,62 +100,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       }
     });
     
-    // DEBUG: Log inventory and customDefenseAdjustments for missing HP investigation
-    const inventory = data.data?.inventory || [];
-    const customAdj = data.data?.customDefenseAdjustments || [];
-    
-    console.log('[HP DEBUG] Character ID:', characterId);
-    console.log('[HP DEBUG] Inventory items (first 10):', JSON.stringify(inventory.slice(0, 10).map((item: any) => ({
-      name: item.definition?.name,
-      equipped: item.equipped,
-      notes: item.notes,
-      type: item.definition?.type,
-    })), null, 2));
-    
-    console.log('[HP DEBUG] customDefenseAdjustments:', JSON.stringify(customAdj, null, 2));
-    console.log('[HP DEBUG] bonusHitPoints raw:', data.data?.bonusHitPoints, 'type:', typeof data.data?.bonusHitPoints);
-    
-    // Check equipped items for HP bonuses (especially custom items)
-    const equippedItems = inventory.filter((item: any) => item.equipped);
-    console.log('[HP DEBUG] Equipped items with modifiers:', JSON.stringify(equippedItems.map((item: any) => ({
-      name: item.definition?.name,
-      grantedModifiers: item.definition?.grantedModifiers,
-      hasModifiers: Array.isArray(item.definition?.grantedModifiers) && item.definition.grantedModifiers.length > 0
-    })), null, 2));
-    
-    // Check racial traits for HP bonuses
-    const race = data.data?.race;
-    const racialTraits = race?.racialTraits || [];
-    console.log('[HP DEBUG] Racial traits count:', racialTraits.length);
-    if (racialTraits.length > 0) {
-      console.log('[HP DEBUG] Racial traits (first 5):', JSON.stringify(racialTraits.slice(0, 5).map((trait: any) => ({
-        name: trait.definition?.name,
-        description: trait.definition?.description?.substring(0, 100),
-        modifiers: trait.definition?.modifiers
-      })), null, 2));
-    }
-    
-    // Check class features for HP bonuses
-    console.log('[HP DEBUG] Classes count:', classes.length);
-    classes.forEach((cls: any, index: number) => {
-      console.log(`[HP DEBUG] Class ${index}: ${cls.definition?.name} level ${cls.level}`);
-      const classFeatures = cls.classFeatures || [];
-      console.log(`[HP DEBUG] Class features count:`, classFeatures.length);
-      if (classFeatures.length > 0) {
-        console.log(`[HP DEBUG] Class features (first 3):`, JSON.stringify(classFeatures.slice(0, 3).map((feature: any) => ({
-          name: feature.definition?.name,
-          description: feature.definition?.description?.substring(0, 100),
-         modifiers: feature.definition?.modifiers
-        })), null, 2));
-      }
-    });
-    
-    // Check choices and options for HP bonuses
-    const choices = data.data?.choices || [];
-    const options = data.data?.options || [];
-    console.log('[HP DEBUG] Choices count:', choices.length);
-    console.log('[HP DEBUG] Options count:', options.length);
-    
     // Extract death save data (available when character is at 0 HP)
     const deathSaves = data.data?.deathSaves;
     const deathSaveSuccesses = deathSaves?.successCount || 0;
@@ -214,19 +124,6 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
       maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus + featHpBonus;
       currentHp = Math.max(0, maxHp - removedHp);
     }
-    
-    console.log('[HP DEBUG] Final calc:', {
-      baseHp,
-      conMod: conModifier,
-      level: totalLevel,
-      conContrib: conModifier * totalLevel,
-      bonusHp,
-      modifierHpBonus,
-      featHpBonus,
-      maxHp,
-      currentHp,
-      formula: `${baseHp} + (${conModifier}×${totalLevel}) + ${bonusHp} + ${modifierHpBonus} + ${featHpBonus} = ${maxHp}`
-    });
     
     // Ensure current HP doesn't exceed max HP
     const validatedCurrentHp = Math.min(currentHp, maxHp);
