@@ -43,6 +43,16 @@ export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
 
     const data = await response.json();
     
+    // Check all top-level response fields to find pre-calculated max HP
+    console.log('[HP DEBUG] All top-level response fields:', Object.keys(data));
+    console.log('[HP DEBUG] Looking for pre-calculated HP values in response...');
+    
+    // Check various possible locations for max HP
+    if (data.maxHitPoints !== undefined) console.log('[HP DEBUG] Found data.maxHitPoints:', data.maxHitPoints);
+    if (data.hitPoints !== undefined) console.log('[HP DEBUG] Found data.hitPoints:', data.hitPoints);
+    if (data.totalHitPoints !== undefined) console.log('[HP DEBUG] Found data.totalHitPoints:', data.totalHitPoints);
+    if (data.calculatedMaxHitPoints !== undefined) console.log('[HP DEBUG] Found data.calculatedMaxHitPoints:', data.calculatedMaxHitPoints);
+    
     // COMPREHENSIVE RAW DATA LOGGING for investigation
     console.log('=== D&D BEYOND RAW API DATA for character', characterId, '===');
     console.log('baseHitPoints:', JSON.stringify(data.data?.baseHitPoints));
