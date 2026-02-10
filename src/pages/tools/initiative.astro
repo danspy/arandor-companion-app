@@ -148,7 +148,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     if (type === 'character') {
       return { text: 'Unconscious', classes: 'bg-red-900 text-white dark:bg-red-950' };
     } else {
-      return { text: 'Dead', classes: 'bg-red-900 text-white dark:bg-red-950' };
+      return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-900' };
     }
   }
   const percent = hp / maxHp;
@@ -1739,7 +1739,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                       if (type === 'character') {
                         return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
                       } else {
-                        return { text: 'Dead', classes: 'bg-red-900 text-white' };
+                        return { text: 'Dead', classes: 'bg-black text-white' };
                       }
                     }
                     const percentage = (hp / maxHp) * 100;
