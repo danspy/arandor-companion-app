@@ -1745,12 +1745,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               
               // Update death saves display (show when HP = 0, hide when HP > 0)
               const deathSavesSection = card.querySelector('[data-death-saves-section]');
+              console.log('[Death Saves]', entry.name, '- HP:', entry.hp, '/', entry.maxHp, 'Section exists:', !!deathSavesSection);
+              
               if (entry.hp === 0 && entry.maxHp !== null) {
                 // Character is at 0 HP - ensure death saves section is visible
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it
                   console.log('[Death Saves] Creating death saves section for', entry.name);
                   const cardContent = card.querySelector('.p-2, .p-3');
+                  console.log('[Death Saves] Card content found:', !!cardContent);
                   if (cardContent) {
                     const deathSavesHtml = `
                       <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
