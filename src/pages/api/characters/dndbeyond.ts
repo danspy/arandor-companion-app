@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
+import { calculateAbilityScore } from '../../../lib/dndbeyond';
 
 interface DnDBeyondCharacterData {
   name?: string;
@@ -117,9 +118,8 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const tempHp = data.data?.temporaryHitPoints || 0;
     
     // Extract Constitution modifier for HP calculation
-    const stats = data.data?.stats || [];
-    const conStat = stats.find((s: any) => s.id === 3); // Constitution is stat id 3
-    const conScore = conStat?.value || 10;
+    // Use the calculated ability score (base + bonuses + overrides)
+    const conScore = calculateAbilityScore(3, data); // Constitution is stat id 3
     const conModifier = Math.floor((conScore - 10) / 2);
     
     // Extract character level
@@ -192,17 +192,15 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       characterData.tempHp = tempHp;
     }
 
-    // Extract ability scores (stats already extracted above for HP calculation on line 120)
-    if (stats && Array.isArray(stats)) {
-      characterData.stats = {
-        strength: stats.find((s: any) => s.id === 1)?.value,
-        dexterity: stats.find((s: any) => s.id === 2)?.value,
-        constitution: stats.find((s: any) => s.id === 3)?.value,
-        intelligence: stats.find((s: any) => s.id === 4)?.value,
-        wisdom: stats.find((s: any) => s.id === 5)?.value,
-        charisma: stats.find((s: any) => s.id === 6)?.value,
-      };
-    }
+    // Extract ability scores (base stats only - users should manually update if needed)
+    characterData.stats = {
+      strength: calculateAbilityScore(1, data),
+      dexterity: calculateAbilityScore(2, data),
+      constitution: calculateAbilityScore(3, data),
+      intelligence: calculateAbilityScore(4, data),
+      wisdom: calculateAbilityScore(5, data),
+      charisma: calculateAbilityScore(6, data),
+    };
 
     return characterData;
   } catch (error) {

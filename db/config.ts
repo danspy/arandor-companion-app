@@ -46,6 +46,7 @@ const Character = defineTable({
     avatarUrl: column.text({ optional: true }),
     dndbeyondUrl: column.text({ optional: true }),
     stats: column.json({ optional: true }),
+    statsManuallyEdited: column.boolean({ default: false }), // If true, sync won't override stats
     // HP tracking fields
     hp: column.number({ optional: true }), // Current HP
     maxHp: column.number({ optional: true }), // Maximum HP
@@ -64,6 +65,7 @@ const Character = defineTable({
     eyes: column.text({ optional: true }),
     skin: column.text({ optional: true }),
     hair: column.text({ optional: true }),
+    lastSyncedAt: column.date({ optional: true }), // Last time character was synced from D&D Beyond
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }

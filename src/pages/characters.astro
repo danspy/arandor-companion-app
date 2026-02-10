@@ -175,6 +175,8 @@ const getOwnershipText = (character: typeof characters[0]) => {
         data-is-active={character.isActive ? "true" : "false"}
         data-user-id={character.userId || "unowned"}
         data-can-edit={canEditCharacter(character) ? "true" : "false"}
+        data-character-id={character.id}
+        data-dndbeyond-url={character.dndbeyondUrl || ""}
       >
         <a href={`/characters/${character.id}`} class="block">
           <div class="relative h-56 overflow-hidden">
@@ -1160,5 +1162,42 @@ const getOwnershipText = (character: typeof characters[0]) => {
   document.addEventListener('astro:page-load', () => {
     initializeCharacterModal();
     initializeFilters();
+    initializeAutoSync();
   });
+  
+  // Auto-sync characters on page load
+  async function initializeAutoSync() {
+    // Get all character cards with D&D Beyond URLs
+    const characterCards = document.querySelectorAll('[data-character-id]');
+    
+    for (const card of characterCards) {
+      const characterId = card.getAttribute('data-character-id');
+      const dndbeyondUrl = card.getAttribute('data-dndbeyond-url');
+      
+      // Only auto-sync if character has D&D Beyond URL
+      if (!characterId || !dndbeyondUrl) continue;
+      
+      try {
+        // Fire and forget - don't block page load
+        fetch('/api/characters/auto-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId }),
+        }).then(response => response.json()).then(result => {
+          // If character was updated, reload the page to show new data
+          if (result.success && result.updated) {
+            console.log(`Character ${characterId} was auto-synced with changes`);
+            // Refresh page to show updated data
+            window.location.reload();
+          }
+        }).catch(err => {
+          // Silently fail - auto-sync is a nice-to-have
+          console.debug('Auto-sync skipped for character', characterId, err);
+        });
+      } catch (error) {
+        // Silently fail
+        console.debug('Auto-sync error for character', characterId, error);
+      }
+    }
+  }
 </script>

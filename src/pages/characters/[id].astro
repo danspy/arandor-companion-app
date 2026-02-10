@@ -70,6 +70,12 @@ const canEditCharacter = () => {
 };
 
 const canEdit = canEditCharacter();
+
+// Check if character should be auto-synced (hasn't been synced in 24 hours)
+const shouldAutoSync = character.dndbeyondUrl && 
+  canEdit && 
+  (!character.lastSyncedAt || 
+   (new Date().getTime() - new Date(character.lastSyncedAt).getTime()) > 24 * 60 * 60 * 1000);
 ---
 
 <Layout title={character.name}>
@@ -299,19 +305,43 @@ const canEdit = canEditCharacter();
       </div>
     )}
 
-    {/* D&D Beyond Link */}
+    {/* D&D Beyond Link and Sync */}
         {character.dndbeyondUrl && (
           <div class="mb-6">
-            <a 
-              href={character.dndbeyondUrl}
-              target="_blank"
-              class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
-            >
-              <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              View on D&D Beyond
-            </a>
+            <div class="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+              <a 
+                href={character.dndbeyondUrl}
+                target="_blank"
+                class="inline-flex items-center gap-2 bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition"
+              >
+                <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+                View on D&D Beyond
+              </a>
+              {canEdit && (
+                <button 
+                  id="syncCharacter"
+                  data-id={character.id}
+                  class="inline-flex items-center gap-2 bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                  title="Sync character from D&D Beyond"
+                >
+                  <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  </svg>
+                  <span id="syncButtonText">Sync from D&D Beyond</span>
+                </button>
+              )}
+            </div>
+            {character.lastSyncedAt && (
+              <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
+                Last synced: {new Date(character.lastSyncedAt).toLocaleString('en-US', { 
+                  dateStyle: 'medium', 
+                  timeStyle: 'short' 
+                })}
+              </p>
+            )}
+            <div id="syncStatus" class="hidden mt-3"></div>
           </div>
         )}
 
@@ -320,8 +350,11 @@ const canEdit = canEditCharacter();
       <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded dark:border dark:border-blue-800">
         <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2">💡 D&D Beyond Integration</h3>
         <p class="text-sm text-blue-800 dark:text-blue-200 mb-2">
-          You can automatically import character data from D&D Beyond. When editing this character, 
-          add their D&D Beyond URL and the system can fetch their stats automatically.
+          {character.dndbeyondUrl ? (
+            <>This character is linked to D&D Beyond! Use the "Sync from D&D Beyond" button above to update stats, HP, level, and other character details automatically.</>
+          ) : (
+            <>You can automatically import character data from D&D Beyond. When editing this character, add their D&D Beyond URL and the system can fetch their stats automatically.</>
+          )}
         </p>
         <p class="text-xs text-blue-700 dark:text-blue-300">
           Note: Make sure the character sheet is set to public in D&D Beyond for the integration to work.
@@ -370,8 +403,143 @@ const canEdit = canEditCharacter();
       }
     });
   }
+  
+  // Handle sync button click
+  const syncBtn = document.getElementById('syncCharacter');
+  if (syncBtn) {
+    syncBtn.addEventListener('click', async () => {
+      const id = syncBtn.getAttribute('data-id');
+      if (!id) return;
+      
+      const syncStatus = document.getElementById('syncStatus');
+      const syncButtonText = document.getElementById('syncButtonText');
+      
+      // Disable button and show loading state
+      syncBtn.disabled = true;
+      if (syncButtonText) syncButtonText.textContent = 'Syncing...';
+      
+      // Show loading status
+      if (syncStatus) {
+        syncStatus.textContent = 'Syncing character data from D&D Beyond...';
+        syncStatus.className = 'mt-3 p-3 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200';
+        syncStatus.classList.remove('hidden');
+      }
+      
+      try {
+        const response = await fetch('/api/characters/sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ characterId: id }),
+        });
+        
+        if (response.ok) {
+          // Show success status
+          if (syncStatus) {
+            syncStatus.textContent = '✓ Character synced successfully! Reloading...';
+            syncStatus.className = 'mt-3 p-3 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-200';
+          }
+          
+          // Reload page after a short delay to show success message
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        } else {
+          const error = await response.json().catch(() => ({ error: 'Unknown error' }));
+          
+          // Show error status
+          if (syncStatus) {
+            syncStatus.textContent = `✗ Failed to sync: ${error.error || response.statusText}`;
+            syncStatus.className = 'mt-3 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+          }
+          
+          // Re-enable button
+          syncBtn.disabled = false;
+          if (syncButtonText) syncButtonText.textContent = 'Sync from D&D Beyond';
+        }
+      } catch (error) {
+        console.error('Sync error:', error);
+        
+        // Show error status
+        if (syncStatus) {
+          syncStatus.textContent = '✗ An error occurred while syncing. Please check your connection and try again.';
+          syncStatus.className = 'mt-3 p-3 rounded-lg bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-200';
+        }
+        
+        // Re-enable button
+        syncBtn.disabled = false;
+        if (syncButtonText) syncButtonText.textContent = 'Sync from D&D Beyond';
+      }
+    });
+  }
   }
 
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
+</script>
+
+<script define:vars={{ shouldAutoSync, characterId: character.id }}>
+  // Auto-sync character from D&D Beyond if it hasn't been synced in 24 hours
+  async function autoSyncCharacter() {
+    if (!shouldAutoSync) return;
+    
+    console.log('Auto-syncing character from D&D Beyond (last sync > 24h ago)...');
+    
+    // Show a subtle notification that auto-sync is happening
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+    notification.innerHTML = `
+      <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <span>Auto-syncing from D&D Beyond...</span>
+    `;
+    document.body.appendChild(notification);
+    
+    try {
+      const response = await fetch('/api/characters/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId }),
+      });
+      
+      if (response.ok) {
+        console.log('Character auto-synced successfully');
+        notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        notification.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Character synced! Reloading...</span>
+        `;
+        
+        // Reload the page after a short delay to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        console.warn('Auto-sync failed:', await response.text());
+        notification.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        notification.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Auto-sync failed</span>
+        `;
+        setTimeout(() => notification.remove(), 3000);
+      }
+    } catch (error) {
+      console.warn('Auto-sync error:', error);
+      notification.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+      notification.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Auto-sync error</span>
+      `;
+      setTimeout(() => notification.remove(), 3000);
+    }
+  }
+  
+  // Run auto-sync on page load
+  document.addEventListener('astro:page-load', autoSyncCharacter);
 </script>

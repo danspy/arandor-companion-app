@@ -66,33 +66,48 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
     
+    // Check if stats are being updated - if so, mark them as manually edited
+    const statsChanged = body.stats && JSON.stringify(body.stats) !== JSON.stringify(character.stats);
+    
+    console.log('[Character Update] Stats changed:', statsChanged);
+    console.log('[Character Update] Old stats:', JSON.stringify(character.stats));
+    console.log('[Character Update] New stats:', JSON.stringify(body.stats));
+    
+    const updateData: any = {
+      name: body.name,
+      class: body.class,
+      level: body.level,
+      race: body.race,
+      player: body.player,
+      isActive: body.isActive !== undefined ? body.isActive : true,
+      avatarUrl: body.avatarUrl,
+      dndbeyondUrl: body.dndbeyondUrl,
+      stats: body.stats,
+      // HP fields (optional, can be updated manually or via sync)
+      hp: body.hp,
+      maxHp: body.maxHp,
+      tempHp: body.tempHp,
+      // Additional character details
+      gender: body.gender,
+      alignment: body.alignment,
+      background: body.background,
+      age: body.age,
+      height: body.height,
+      weight: body.weight,
+      eyes: body.eyes,
+      skin: body.skin,
+      hair: body.hair,
+      updatedAt: now,
+    };
+    
+    // Mark stats as manually edited if they changed
+    if (statsChanged) {
+      console.log('[Character Update] MARKING stats as manually edited');
+      updateData.statsManuallyEdited = true;
+    }
+    
     await db.update(Character)
-      .set({
-        name: body.name,
-        class: body.class,
-        level: body.level,
-        race: body.race,
-        player: body.player,
-        isActive: body.isActive !== undefined ? body.isActive : true,
-        avatarUrl: body.avatarUrl,
-        dndbeyondUrl: body.dndbeyondUrl,
-        stats: body.stats,
-        // HP fields (optional, can be updated manually or via sync)
-        hp: body.hp,
-        maxHp: body.maxHp,
-        tempHp: body.tempHp,
-        // Additional character details
-        gender: body.gender,
-        alignment: body.alignment,
-        background: body.background,
-        age: body.age,
-        height: body.height,
-        weight: body.weight,
-        eyes: body.eyes,
-        skin: body.skin,
-        hair: body.hair,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(Character.id, params.id!));
 
     const updatedCharacter = await db.select().from(Character).where(eq(Character.id, params.id!));

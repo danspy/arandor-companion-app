@@ -25,7 +25,13 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
   - Character stats (STR, DEX, CON, INT, WIS, CHA)
   - Levels, classes, races, and backgrounds
   - Physical attributes (age, height, weight, eyes, skin, hair)
-  - D&D Beyond URL integration
+  - **D&D Beyond Integration**:
+    - Auto-fill character on creation from D&D Beyond URL
+    - Manual sync button to update character data anytime
+    - Automatic daily sync when character page is viewed (if last sync >24 hours)
+    - Syncs stats, HP, level, appearance, and all character details
+    - Proper HP calculations including Constitution modifiers and feat bonuses
+    - Last sync timestamp tracking
   - Avatar images
 - **NPCs** - Manage non-player characters with:
   - Relationships (ally/neutral/enemy)
@@ -359,6 +365,9 @@ The following REST API endpoints are available:
 **Characters:**
 - `GET/POST /api/characters` - Characters
 - `GET/PUT/DELETE /api/characters/[id]` - Single character
+- `POST /api/characters/dndbeyond` - Fetch character data from D&D Beyond URL
+- `POST /api/characters/sync` - Sync full character data from D&D Beyond
+- `POST /api/characters/sync-hp` - Sync only HP data from D&D Beyond
 
 **NPCs:**
 - `GET/POST /api/npcs` - NPCs
@@ -436,7 +445,11 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] DM Screen prototype (control panel and player display)
 - [x] D&D Beyond API integration for HP sync (real-time combat tracking)
 - [ ] Custom asset upload for DM Screen
-- [ ] Full D&D Beyond character import/export
+- [x] Full D&D Beyond character sync (stats, HP, level, appearance)
+  - [x] Auto-fill on character creation
+  - [x] Manual sync button on character detail page
+  - [x] Automatic daily sync when viewing character
+  - [x] Proper HP calculations with modifiers and feat bonuses
 - [ ] Image uploads for characters/NPCs
 - [ ] Session scheduling and reminders
 - [x] Calendar subscription (iCal/ICS feed for Google Calendar, Apple Calendar, Outlook)
