@@ -11,7 +11,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const body = await request.json();
-    const { username, password, role } = body;
+    const { username, password, role, firstName } = body;
 
     // Validate input
     if (!username || !password) {
@@ -61,6 +61,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       username,
       passwordHash,
       role: userRole,
+      firstName: firstName?.trim() || null,
       createdAt: new Date(),
     });
 
@@ -70,6 +71,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         id,
         username,
         role: userRole,
+        firstName: firstName?.trim() || null,
         createdAt: new Date().toISOString()
       }
     }), {
@@ -96,6 +98,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       id: User.id,
       username: User.username,
       role: User.role,
+      firstName: User.firstName,
       characterIds: User.characterIds,
       createdAt: User.createdAt,
     }).from(User);

@@ -20,6 +20,7 @@ export const GET: APIRoute = async ({ params, cookies }) => {
       id: User.id,
       username: User.username,
       role: User.role,
+      firstName: User.firstName,
       createdAt: User.createdAt,
     }).from(User).where(eq(User.id, params.id));
     
@@ -57,7 +58,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     }
 
     const body = await request.json();
-    const { currentPassword, newPassword, role } = body;
+    const { currentPassword, newPassword, role, firstName, adminPasswordReset } = body;
 
     // Check if user exists before updating
     const existingUser = await db.select({
@@ -73,10 +74,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
-    const updates: { passwordHash?: string; role?: string } = {};
+    const updates: { passwordHash?: string; role?: string; firstName?: string } = {};
 
-    // Handle password update if both current and new password provided
-    if (currentPassword && newPassword) {
+    // Handle password update
+    if (newPassword) {
       if (newPassword.length < 6) {
         return new Response(JSON.stringify({ error: 'New password must be at least 6 characters long' }), {
           status: 400,
@@ -84,18 +85,29 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         });
       }
 
-      // Verify current password
-      const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
-      
-      if (!isValid) {
-        return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
+      // Admin can reset password without current password
+      if (adminPasswordReset) {
+        // Admin is resetting password, no verification needed
+        updates.passwordHash = await hashPassword(newPassword);
+      } else if (currentPassword) {
+        // Regular password change, verify current password
+        const isValid = await verifyPassword(currentPassword, existingUser[0].passwordHash);
+        
+        if (!isValid) {
+          return new Response(JSON.stringify({ error: 'Current password is incorrect' }), {
+            status: 400,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+
+        updates.passwordHash = await hashPassword(newPassword);
+      } else {
+        // newPassword provided but no currentPassword and not adminPasswordReset
+        return new Response(JSON.stringify({ error: 'Current password is required to change password' }), {
           status: 400,
           headers: { 'Content-Type': 'application/json' }
         });
       }
-
-      // Hash new password
-      updates.passwordHash = await hashPassword(newPassword);
     }
 
     // Handle role update if provided
@@ -110,6 +122,11 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       updates.role = role;
     }
 
+    // Handle firstName update if provided
+    if (firstName !== undefined) {
+      updates.firstName = firstName.trim() || null;
+    }
+
     // Update user if there are changes
     if (Object.keys(updates).length > 0) {
       await db.update(User)
@@ -121,6 +138,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       id: User.id,
       username: User.username,
       role: User.role,
+      firstName: User.firstName,
       createdAt: User.createdAt,
     }).from(User).where(eq(User.id, params.id));
     

@@ -16,6 +16,7 @@ const users = await db.select({
   id: User.id,
   username: User.username,
   role: User.role,
+  firstName: User.firstName,
   createdAt: User.createdAt,
 }).from(User);
 ---
@@ -59,6 +60,13 @@ const users = await db.select({
                 </span>
               </div>
               
+              <!-- First Name -->
+              {user.firstName && (
+                <div class="text-sm text-gray-700 dark:text-gray-300">
+                  <span class="font-medium">Name:</span> {user.firstName}
+                </div>
+              )}
+              
               <!-- Created At -->
               <div class="text-sm text-gray-500 dark:text-gray-400">
                 <span class="font-medium">Created:</span> {new Date(user.createdAt).toLocaleString()}
@@ -72,6 +80,7 @@ const users = await db.select({
                 data-user-id={user.id}
                 data-username={user.username}
                 data-user-role={user.role || 'player'}
+                data-first-name={user.firstName || ''}
                 title="Edit user"
                 aria-label="Edit user"
               >
@@ -126,6 +135,20 @@ const users = await db.select({
             placeholder="Enter username (min 3 characters)"
           >
           <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimum 3 characters</p>
+        </div>
+
+        <div>
+          <label for="newFirstName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            First Name (optional)
+          </label>
+          <input 
+            type="text" 
+            id="newFirstName" 
+            name="firstName" 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            placeholder="Enter first name"
+          >
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Display name for the user</p>
         </div>
 
         <div>
@@ -206,6 +229,20 @@ const users = await db.select({
         </div>
 
         <div>
+          <label for="editFirstName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            First Name (optional)
+          </label>
+          <input 
+            type="text" 
+            id="editFirstName" 
+            name="firstName" 
+            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            placeholder="Enter first name"
+          >
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Display name for the user</p>
+        </div>
+
+        <div>
           <label for="editRole" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
             Role
           </label>
@@ -223,22 +260,8 @@ const users = await db.select({
         </div>
 
         <div>
-          <label for="editCurrentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Current Password (optional)
-          </label>
-          <input 
-            type="password" 
-            id="editCurrentPassword" 
-            name="currentPassword" 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            placeholder="Enter current password"
-          >
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Required only when changing password</p>
-        </div>
-
-        <div>
           <label for="editNewPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            New Password (optional)
+            Reset Password (optional)
           </label>
           <input 
             type="password" 
@@ -248,7 +271,7 @@ const users = await db.select({
             class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
             placeholder="Enter new password (min 6 characters)"
           >
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Leave blank to keep current password</p>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">As admin, you can reset the password without knowing the current one. Leave blank to keep current password.</p>
         </div>
 
         <div id="editModalErrorMessage" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
@@ -381,17 +404,19 @@ const users = await db.select({
     });
 
     // Show Edit User modal
-    const showEditModal = (userId: string, username: string, userRole: string) => {
+    const showEditModal = (userId: string, username: string, userRole: string, firstName: string = '') => {
       if (editUserId && editUsername && editRole) {
         editUserId.value = userId;
         editUsername.textContent = username;
         editRole.value = userRole || 'player';
       }
+      const editFirstNameField = document.getElementById('editFirstName') as HTMLInputElement;
+      if (editFirstNameField) {
+        editFirstNameField.value = firstName || '';
+      }
       editUserModal?.classList.remove('hidden');
-      // Clear password fields but keep role
-      const currentPasswordField = document.getElementById('editCurrentPassword') as HTMLInputElement;
+      // Clear password field
       const newPasswordField = document.getElementById('editNewPassword') as HTMLInputElement;
-      if (currentPasswordField) currentPasswordField.value = '';
       if (newPasswordField) newPasswordField.value = '';
       editModalErrorMessage?.classList.add('hidden');
     };
@@ -465,6 +490,7 @@ const users = await db.select({
         username: formData.get('username'),
         password: formData.get('password'),
         role: formData.get('role'),
+        firstName: formData.get('firstName'),
       };
 
       try {
@@ -488,9 +514,15 @@ const users = await db.select({
             const escapedId = escapeHtml(result.user.id);
             const escapedUsername = escapeHtml(result.user.username);
             const escapedRole = escapeHtml(result.user.role || 'player');
+            const escapedFirstName = result.user.firstName ? escapeHtml(result.user.firstName) : '';
             const roleBadgeClass = escapedRole === 'admin' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
                                    escapedRole === 'dungeonmaster' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
                                    'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400';
+            const firstNameDisplay = escapedFirstName ? `
+              <div class="text-sm text-gray-700 dark:text-gray-300">
+                <span class="font-medium">Name:</span> ${escapedFirstName}
+              </div>
+            ` : '';
             const deleteButton = result.user.username !== 'admin' ? `
               <button 
                 class="delete-user-btn p-1.5 md:p-2.5 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer"
@@ -515,6 +547,7 @@ const users = await db.select({
                       ${escapedRole}
                     </span>
                   </div>
+                  ${firstNameDisplay}
                   <div class="text-sm text-gray-500 dark:text-gray-400">
                     <span class="font-medium">Created:</span> ${escapeHtml(new Date(result.user.createdAt).toLocaleString())}
                   </div>
@@ -525,6 +558,7 @@ const users = await db.select({
                     data-user-id="${escapedId}"
                     data-username="${escapedUsername}"
                     data-user-role="${escapedRole}"
+                    data-first-name="${escapedFirstName}"
                     title="Edit user"
                     aria-label="Edit user"
                   >
@@ -560,16 +594,19 @@ const users = await db.select({
       const formData = new FormData(editUserForm);
       const userId = editUserId?.value;
       const username = editUsername?.textContent;
-      const data: { currentPassword?: string; newPassword?: string; role: string } = {
+      const data: { newPassword?: string; role: string; firstName?: string; adminPasswordReset?: boolean } = {
         role: formData.get('role') as string,
       };
 
-      // Only include password fields if both are provided
-      const currentPassword = formData.get('currentPassword') as string;
+      // Include firstName
+      const firstName = formData.get('firstName') as string;
+      data.firstName = firstName || '';
+
+      // Handle password reset (admin can reset without current password)
       const newPassword = formData.get('newPassword') as string;
-      if (currentPassword && newPassword) {
-        data.currentPassword = currentPassword;
+      if (newPassword) {
         data.newPassword = newPassword;
+        data.adminPasswordReset = true; // Admin is resetting password
       }
 
       try {
@@ -584,7 +621,7 @@ const users = await db.select({
         if (response.ok) {
           closeEditModal();
           showMessage(`User '${username}' updated successfully!`, 'success');
-          // Reload page to show updated role
+          // Reload page to show updated role and name
           setTimeout(() => window.location.reload(), 1000);
         } else {
           if (editModalErrorMessage) {
@@ -646,8 +683,9 @@ const users = await db.select({
           const userId = target.getAttribute('data-user-id');
           const username = target.getAttribute('data-username');
           const userRole = target.getAttribute('data-user-role');
+          const firstName = target.getAttribute('data-first-name');
           if (userId && username) {
-            showEditModal(userId, username, userRole || 'player');
+            showEditModal(userId, username, userRole || 'player', firstName || '');
           }
         });
       });
