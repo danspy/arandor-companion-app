@@ -1822,15 +1822,15 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 deathSavesSection.remove();
               }
               
-              // Update AC display (DM/Admin only)
+              // Update AC display (if element exists - DM/Admin only)
               const acElement = card.querySelector('[data-ac-display]');
-              if (acElement && canEdit) {
+              if (acElement) {
                 acElement.textContent = entry.ac !== null ? entry.ac : '-';
               }
               
-              // Update notes display (DM/Admin only)
+              // Update notes display (if element exists - DM/Admin only)
               const notesElement = card.querySelector('[data-notes-display]');
-              if (notesElement && canEdit) {
+              if (notesElement) {
                 if (entry.notes) {
                   notesElement.textContent = entry.notes;
                   notesElement.parentElement?.classList.remove('hidden');
