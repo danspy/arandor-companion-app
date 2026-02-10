@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       username,
       passwordHash,
       role: userRole,
-      firstName: firstName?.trim() || null,
+      firstName: (typeof firstName === 'string' && firstName.trim()) ? firstName.trim() : null,
       createdAt: new Date(),
     });
 
@@ -71,7 +71,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         id,
         username,
         role: userRole,
-        firstName: firstName?.trim() || null,
+        firstName: (typeof firstName === 'string' && firstName.trim()) ? firstName.trim() : null,
         createdAt: new Date().toISOString()
       }
     }), {

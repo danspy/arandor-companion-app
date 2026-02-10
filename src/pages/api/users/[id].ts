@@ -124,7 +124,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
     // Handle firstName update if provided
     if (firstName !== undefined) {
-      updates.firstName = firstName.trim() || null;
+      updates.firstName = (typeof firstName === 'string' && firstName.trim()) ? firstName.trim() : null;
     }
 
     // Update user if there are changes
