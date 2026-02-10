@@ -85,7 +85,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         });
       }
 
-      // Admin can reset password without current password
+      // Admin can reset password without current password (already verified by requireAdmin middleware)
       if (adminPasswordReset) {
         // Admin is resetting password, no verification needed
         updates.passwordHash = await hashPassword(newPassword);
