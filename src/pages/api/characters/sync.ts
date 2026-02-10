@@ -267,8 +267,16 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     };
     
     // Only update stats if they were not manually edited by the user
+    console.log('[Stats Protection] Character:', character.name);
+    console.log('[Stats Protection] statsManuallyEdited flag:', character.statsManuallyEdited);
+    console.log('[Stats Protection] Current stats:', JSON.stringify(character.stats));
+    console.log('[Stats Protection] D&D Beyond stats:', JSON.stringify(dndbeyondData.stats));
+    
     if (!character.statsManuallyEdited) {
+      console.log('[Stats Protection] UPDATING stats from D&D Beyond');
       updateData.stats = dndbeyondData.stats || character.stats;
+    } else {
+      console.log('[Stats Protection] PRESERVING manually edited stats');
     }
     
     await db.update(Character)

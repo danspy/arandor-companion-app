@@ -69,6 +69,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     // Check if stats are being updated - if so, mark them as manually edited
     const statsChanged = body.stats && JSON.stringify(body.stats) !== JSON.stringify(character.stats);
     
+    console.log('[Character Update] Stats changed:', statsChanged);
+    console.log('[Character Update] Old stats:', JSON.stringify(character.stats));
+    console.log('[Character Update] New stats:', JSON.stringify(body.stats));
+    
     const updateData: any = {
       name: body.name,
       class: body.class,
@@ -98,6 +102,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     
     // Mark stats as manually edited if they changed
     if (statsChanged) {
+      console.log('[Character Update] MARKING stats as manually edited');
       updateData.statsManuallyEdited = true;
     }
     
