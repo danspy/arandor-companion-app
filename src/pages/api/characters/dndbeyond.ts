@@ -48,6 +48,52 @@ function getAlignmentName(alignmentId: number): string {
 }
 
 /**
+ * Calculate final ability score including bonuses and overrides
+ * D&D Beyond API structure:
+ * - stats[].value: base ability score
+ * - bonusStats[].value: bonuses from race, ASIs, items, etc.
+ * - overrideStats[].value: complete override (if present, ignores base + bonus)
+ * - modifiers[]: additional bonuses from feats, class features, etc.
+ */
+function calculateAbilityScore(statId: number, data: any): number {
+  const stats = data.data?.stats || [];
+  const bonusStats = data.data?.bonusStats || [];
+  const overrideStats = data.data?.overrideStats || [];
+  const modifiersData = data.data?.modifiers;
+  const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
+  
+  // Check for override first (complete replacement)
+  const override = overrideStats.find((s: any) => s.id === statId);
+  if (override && override.value !== null && override.value !== undefined) {
+    return override.value;
+  }
+  
+  // Otherwise, calculate base + bonuses
+  const baseStat = stats.find((s: any) => s.id === statId);
+  const baseValue = baseStat?.value || 10;
+  
+  const bonusStat = bonusStats.find((s: any) => s.id === statId);
+  const bonusValue = bonusStat?.value || 0;
+  
+  // Check modifiers for additional stat bonuses from feats, class features, etc.
+  // Stat subtypes: "strength-score", "dexterity-score", "constitution-score", 
+  //                "intelligence-score", "wisdom-score", "charisma-score"
+  const statNames = ['', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  const statName = statNames[statId];
+  let modifierBonus = 0;
+  
+  if (statName) {
+    modifiers.forEach((modifier: any) => {
+      if (modifier.type === 'bonus' && modifier.subType === `${statName}-score`) {
+        modifierBonus += modifier.value || 0;
+      }
+    });
+  }
+  
+  return baseValue + bonusValue + modifierBonus;
+}
+
+/**
  * Parse D&D Beyond character data from the public character sheet.
  * This is a simplified implementation that extracts basic information.
  * Note: D&D Beyond doesn't have an official public API, so we're using
@@ -117,9 +163,8 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     const tempHp = data.data?.temporaryHitPoints || 0;
     
     // Extract Constitution modifier for HP calculation
-    const stats = data.data?.stats || [];
-    const conStat = stats.find((s: any) => s.id === 3); // Constitution is stat id 3
-    const conScore = conStat?.value || 10;
+    // Use the calculated ability score (base + bonuses + overrides)
+    const conScore = calculateAbilityScore(3, data); // Constitution is stat id 3
     const conModifier = Math.floor((conScore - 10) / 2);
     
     // Extract character level
@@ -192,17 +237,15 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       characterData.tempHp = tempHp;
     }
 
-    // Extract ability scores (stats already extracted above for HP calculation on line 120)
-    if (stats && Array.isArray(stats)) {
-      characterData.stats = {
-        strength: stats.find((s: any) => s.id === 1)?.value,
-        dexterity: stats.find((s: any) => s.id === 2)?.value,
-        constitution: stats.find((s: any) => s.id === 3)?.value,
-        intelligence: stats.find((s: any) => s.id === 4)?.value,
-        wisdom: stats.find((s: any) => s.id === 5)?.value,
-        charisma: stats.find((s: any) => s.id === 6)?.value,
-      };
-    }
+    // Extract ability scores with proper calculation (base + bonuses + overrides)
+    characterData.stats = {
+      strength: calculateAbilityScore(1, data),
+      dexterity: calculateAbilityScore(2, data),
+      constitution: calculateAbilityScore(3, data),
+      intelligence: calculateAbilityScore(4, data),
+      wisdom: calculateAbilityScore(5, data),
+      charisma: calculateAbilityScore(6, data),
+    };
 
     return characterData;
   } catch (error) {
