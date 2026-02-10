@@ -1752,7 +1752,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it
                   console.log('[Death Saves] Creating death saves section for', entry.name);
-                  const cardContent = card.querySelector('.p-2, .p-3');
+                  const cardContent = card.querySelector('.p-2');
                   console.log('[Death Saves] Card content found:', !!cardContent);
                   if (cardContent) {
                     const deathSavesHtml = `
