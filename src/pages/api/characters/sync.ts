@@ -200,9 +200,17 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
         (c.label && c.label.includes('Ability Score'))
       ) : [];
       console.log('[D&D Beyond Sync] ASI Choices:', asiChoices.length > 0 ? JSON.stringify(asiChoices, null, 2) : 'none found');
-      if (asiChoices.length === 0 && Array.isArray(data.data.choices)) {
-        console.log('[D&D Beyond Sync] All choices (first 3):', JSON.stringify(data.data.choices.slice(0, 3), null, 2));
+      
+      // Show ALL choices to see the actual structure
+      if (Array.isArray(data.data.choices)) {
+        console.log('[D&D Beyond Sync] Total choices:', data.data.choices.length);
+        console.log('[D&D Beyond Sync] First 5 choices (full structure):', JSON.stringify(data.data.choices.slice(0, 5), null, 2));
       }
+    }
+    
+    // Check CHARACTER VALUES (might have final calculated ability scores!)
+    if (data.data?.characterValues) {
+      console.log('[D&D Beyond Sync] Character values found:', JSON.stringify(data.data.characterValues, null, 2));
     }
     
     // Check FEATS (for feats that give ability score bonuses)
