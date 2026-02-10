@@ -453,6 +453,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     {canEdit && sortedInitiatives.length > 0 && (
       <div class="mt-4 sm:mt-6 flex gap-2 sm:gap-4">
         <Button
+            variant="warning"
+            size="sm"
+            id="resetCombatBtn"
+            title="Reset combat: Keep all player characters (initiative set to 10), remove NPCs/monsters/others, and reset round to 1"
+          >
+            Reset Combat
+          </Button>
+        <Button
             variant="danger"
             size="sm"
             id="clearAllBtn"
@@ -845,6 +853,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     const HP_SYNC_INTERVAL = 10000; // Sync HP every 10 seconds for quick updates
     let deleteHandlers = new Map(); // Store delete button handlers
     let clearAllHandler = null; // Store clear all button handler
+    let resetCombatHandler = null; // Store reset combat button handler
     let combatControlHandlers = new Map(); // Store combat control button handlers
     let isInitialized = false; // Track if already initialized to prevent duplicate handlers
     let typeChangeHandler = null; // Store type change handler
@@ -874,6 +883,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       const closeModalBtn = document.getElementById('closeModalBtn');
       const cancelBtn = document.getElementById('cancelBtn');
       const clearAllBtn = document.getElementById('clearAllBtn');
+      const resetCombatBtn = document.getElementById('resetCombatBtn');
 
       // Form fields
       const entryIdInput = document.getElementById('entryId');
@@ -1082,6 +1092,35 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         };
         
         clearAllBtn.addEventListener('click', clearAllHandler);
+      }
+
+      // Reset combat button - remove old handler first
+      if (resetCombatBtn) {
+        if (resetCombatHandler) {
+          resetCombatBtn.removeEventListener('click', resetCombatHandler);
+        }
+        
+        resetCombatHandler = async () => {
+          if (!confirm('Reset combat?\n\nThis will:\n- Keep all player characters (initiative reset to 10)\n- Remove all NPCs, monsters, and others\n- Reset round counter to 1\n\nThis cannot be undone.')) return;
+
+          try {
+            const response = await fetch('/api/initiative/reset-combat', {
+              method: 'POST'
+            });
+            
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(error.error || 'Failed to reset combat');
+            }
+            
+            window.location.reload();
+          } catch (error) {
+            console.error('Error resetting combat:', error);
+            alert(error instanceof Error ? error.message : 'Failed to reset combat');
+          }
+        };
+        
+        resetCombatBtn.addEventListener('click', resetCombatHandler);
       }
 
       // Form submission handler - remove old handler first if it exists
@@ -1955,6 +1994,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       if (clearAllHandler && clearAllBtn) {
         clearAllBtn.removeEventListener('click', clearAllHandler);
         clearAllHandler = null;
+      }
+      
+      // Remove reset combat button handler
+      const resetCombatBtn = document.getElementById('resetCombatBtn');
+      if (resetCombatHandler && resetCombatBtn) {
+        resetCombatBtn.removeEventListener('click', resetCombatHandler);
+        resetCombatHandler = null;
       }
       
       // Remove combat control handlers
