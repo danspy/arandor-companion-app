@@ -335,7 +335,10 @@ const shouldAutoSync = character.dndbeyondUrl &&
             </div>
             {character.lastSyncedAt && (
               <p class="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                Last synced: {new Date(character.lastSyncedAt).toLocaleString()}
+                Last synced: {new Date(character.lastSyncedAt).toLocaleString('en-US', { 
+                  dateStyle: 'medium', 
+                  timeStyle: 'short' 
+                })}
               </p>
             )}
             <div id="syncStatus" class="hidden mt-3"></div>
