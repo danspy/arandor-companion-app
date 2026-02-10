@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, Character, eq } from 'astro:db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { getCurrentUser, getUserRole } from '../../../lib/auth';
+import { calculateAbilityScore } from '../../../lib/dndbeyond';
 
 interface DnDBeyondCharacterData {
   name?: string;
@@ -47,52 +48,6 @@ function getAlignmentName(alignmentId: number): string {
     9: 'Chaotic Evil',
   };
   return alignments[alignmentId] || 'Unknown';
-}
-
-/**
- * Calculate final ability score including bonuses and overrides
- * D&D Beyond API structure:
- * - stats[].value: base ability score
- * - bonusStats[].value: bonuses from race, ASIs, items, etc.
- * - overrideStats[].value: complete override (if present, ignores base + bonus)
- * - modifiers[]: additional bonuses from feats, class features, etc.
- */
-function calculateAbilityScore(statId: number, data: any): number {
-  const stats = data.data?.stats || [];
-  const bonusStats = data.data?.bonusStats || [];
-  const overrideStats = data.data?.overrideStats || [];
-  const modifiersData = data.data?.modifiers;
-  const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
-  
-  // Check for override first (complete replacement)
-  const override = overrideStats.find((s: any) => s.id === statId);
-  if (override && override.value !== null && override.value !== undefined) {
-    return override.value;
-  }
-  
-  // Otherwise, calculate base + bonuses
-  const baseStat = stats.find((s: any) => s.id === statId);
-  const baseValue = baseStat?.value || 10;
-  
-  const bonusStat = bonusStats.find((s: any) => s.id === statId);
-  const bonusValue = bonusStat?.value || 0;
-  
-  // Check modifiers for additional stat bonuses from feats, class features, etc.
-  // Stat subtypes: "strength-score", "dexterity-score", "constitution-score", 
-  //                "intelligence-score", "wisdom-score", "charisma-score"
-  const statNames = ['', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-  const statName = statNames[statId];
-  let modifierBonus = 0;
-  
-  if (statName) {
-    modifiers.forEach((modifier: any) => {
-      if (modifier.type === 'bonus' && modifier.subType === `${statName}-score`) {
-        modifierBonus += modifier.value || 0;
-      }
-    });
-  }
-  
-  return baseValue + bonusValue + modifierBonus;
 }
 
 /**

@@ -18,8 +18,12 @@ export interface DnDBeyondHPData {
  * - bonusStats[].value: bonuses from race, ASIs, items, etc.
  * - overrideStats[].value: complete override (if present, ignores base + bonus)
  * - modifiers[]: additional bonuses from feats, class features, etc.
+ * 
+ * @param statId - Stat ID (1=STR, 2=DEX, 3=CON, 4=INT, 5=WIS, 6=CHA)
+ * @param data - D&D Beyond character data object
+ * @returns Final calculated ability score
  */
-function calculateAbilityScore(statId: number, data: any): number {
+export function calculateAbilityScore(statId: number, data: any): number {
   const stats = data.data?.stats || [];
   const bonusStats = data.data?.bonusStats || [];
   const overrideStats = data.data?.overrideStats || [];
