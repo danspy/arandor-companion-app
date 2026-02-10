@@ -173,6 +173,12 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       wisdom: calculateAbilityScore(5, data),
       charisma: calculateAbilityScore(6, data),
     };
+    
+    // Debug logging to help troubleshoot ability score issues
+    console.log('[D&D Beyond Sync] Character:', data.data?.name);
+    console.log('[D&D Beyond Sync] Base stats:', data.data?.stats?.map((s: any) => `${s.id}:${s.value}`).join(', '));
+    console.log('[D&D Beyond Sync] Bonus stats:', data.data?.bonusStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
+    console.log('[D&D Beyond Sync] Calculated stats:', JSON.stringify(characterData.stats));
 
     return characterData;
   } catch (error) {

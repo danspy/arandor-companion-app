@@ -33,6 +33,7 @@ export function calculateAbilityScore(statId: number, data: any): number {
   // Check for override first (complete replacement)
   const override = overrideStats.find((s: any) => s.id === statId);
   if (override && override.value !== null && override.value !== undefined) {
+    console.log(`[Ability Score ${statId}] Using override: ${override.value}`);
     return override.value;
   }
   
@@ -58,7 +59,10 @@ export function calculateAbilityScore(statId: number, data: any): number {
     });
   }
   
-  return baseValue + bonusValue + modifierBonus;
+  const result = baseValue + bonusValue + modifierBonus;
+  console.log(`[Ability Score ${statId}] base=${baseValue} + bonus=${bonusValue} + modifier=${modifierBonus} = ${result}`);
+  
+  return result;
 }
 
 /**
