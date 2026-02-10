@@ -70,6 +70,12 @@ const canEditCharacter = () => {
 };
 
 const canEdit = canEditCharacter();
+
+// Check if character should be auto-synced (hasn't been synced in 24 hours)
+const shouldAutoSync = character.dndbeyondUrl && 
+  canEdit && 
+  (!character.lastSyncedAt || 
+   (new Date().getTime() - new Date(character.lastSyncedAt).getTime()) > 24 * 60 * 60 * 1000);
 ---
 
 <Layout title={character.name}>
@@ -466,4 +472,71 @@ const canEdit = canEditCharacter();
 
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
+</script>
+
+<script define:vars={{ shouldAutoSync, characterId: character.id }}>
+  // Auto-sync character from D&D Beyond if it hasn't been synced in 24 hours
+  async function autoSyncCharacter() {
+    if (!shouldAutoSync) return;
+    
+    console.log('Auto-syncing character from D&D Beyond (last sync > 24h ago)...');
+    
+    // Show a subtle notification that auto-sync is happening
+    const notification = document.createElement('div');
+    notification.className = 'fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+    notification.innerHTML = `
+      <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+      </svg>
+      <span>Auto-syncing from D&D Beyond...</span>
+    `;
+    document.body.appendChild(notification);
+    
+    try {
+      const response = await fetch('/api/characters/sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId }),
+      });
+      
+      if (response.ok) {
+        console.log('Character auto-synced successfully');
+        notification.className = 'fixed bottom-4 right-4 bg-green-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        notification.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <span>Character synced! Reloading...</span>
+        `;
+        
+        // Reload the page after a short delay to show updated data
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
+      } else {
+        console.warn('Auto-sync failed:', await response.text());
+        notification.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+        notification.innerHTML = `
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+          <span>Auto-sync failed</span>
+        `;
+        setTimeout(() => notification.remove(), 3000);
+      }
+    } catch (error) {
+      console.warn('Auto-sync error:', error);
+      notification.className = 'fixed bottom-4 right-4 bg-red-600 text-white px-4 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2';
+      notification.innerHTML = `
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+        <span>Auto-sync error</span>
+      `;
+      setTimeout(() => notification.remove(), 3000);
+    }
+  }
+  
+  // Run auto-sync on page load
+  document.addEventListener('astro:page-load', autoSyncCharacter);
 </script>
