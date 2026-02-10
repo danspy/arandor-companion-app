@@ -181,14 +181,26 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     console.log('[D&D Beyond Sync] Override stats:', data.data?.overrideStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
     
     // Debug: Check modifiers for stat bonuses
-    const statModifiers = (data.data?.modifiers || []).filter((m: any) => 
+    const modifiersArray = data.data?.modifiers;
+    const statModifiers = Array.isArray(modifiersArray) ? modifiersArray.filter((m: any) => 
       m.subType && (m.subType.includes('-score') || m.subType.includes('ability'))
-    );
+    ) : [];
     console.log('[D&D Beyond Sync] Stat-related modifiers:', statModifiers.length > 0 ? JSON.stringify(statModifiers.slice(0, 5), null, 2) : 'none');
     
-    // Debug: Check race bonuses
+    // Debug: Check race structure and bonuses
     console.log('[D&D Beyond Sync] Race:', data.data?.race?.fullName || data.data?.race?.baseName);
-    console.log('[D&D Beyond Sync] Racial stat bonuses:', JSON.stringify(data.data?.race?.racialTraits?.filter((t: any) => t.definition?.name?.includes('Ability Score')), null, 2) || 'none');
+    console.log('[D&D Beyond Sync] Race object keys:', data.data?.race ? Object.keys(data.data.race).join(', ') : 'no race data');
+    
+    // Check if racialTraits is an array before filtering
+    const racialTraits = data.data?.race?.racialTraits;
+    if (Array.isArray(racialTraits)) {
+      const abilityScoreTraits = racialTraits.filter((t: any) => 
+        t.definition?.name?.includes('Ability Score') || t.name?.includes('Ability Score')
+      );
+      console.log('[D&D Beyond Sync] Racial ability score traits:', JSON.stringify(abilityScoreTraits, null, 2));
+    } else {
+      console.log('[D&D Beyond Sync] Racial traits type:', typeof racialTraits, '- not an array');
+    }
     
     console.log('[D&D Beyond Sync] Calculated stats:', JSON.stringify(characterData.stats));
 

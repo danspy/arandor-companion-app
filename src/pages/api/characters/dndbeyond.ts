@@ -209,13 +209,15 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     console.log('[D&D Beyond Import] Override stats:', data.data?.overrideStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
     
     // Debug: Check modifiers for stat bonuses
-    const statModifiers = (data.data?.modifiers || []).filter((m: any) => 
+    const modifiersArray = data.data?.modifiers;
+    const statModifiers = Array.isArray(modifiersArray) ? modifiersArray.filter((m: any) => 
       m.subType && (m.subType.includes('-score') || m.subType.includes('ability'))
-    );
+    ) : [];
     console.log('[D&D Beyond Import] Stat-related modifiers:', statModifiers.length > 0 ? JSON.stringify(statModifiers.slice(0, 5), null, 2) : 'none');
     
-    // Debug: Check race bonuses
+    // Debug: Check race structure
     console.log('[D&D Beyond Import] Race:', data.data?.race?.fullName || data.data?.race?.baseName);
+    console.log('[D&D Beyond Import] Race object keys:', data.data?.race ? Object.keys(data.data.race).join(', ') : 'no race data');
     
     console.log('[D&D Beyond Import] Calculated stats:', JSON.stringify(characterData.stats));
 
