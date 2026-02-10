@@ -2,6 +2,8 @@
  * Shared utilities for D&D Beyond API integration
  */
 
+import { calculateAbilityScores } from './abilityScoreCalculator';
+
 export interface DnDBeyondHPData {
   hp?: number;
   maxHp?: number;
@@ -13,69 +15,37 @@ export interface DnDBeyondHPData {
 
 /**
  * Calculate final ability score including bonuses and overrides
- * D&D Beyond API structure:
- * - stats[].value: base ability score
- * - bonusStats[].value: bonuses from race, ASIs, items, etc.
- * - overrideStats[].value: complete override (if present, ignores base + bonus)
- * - modifiers[]: additional bonuses from feats, class features, etc.
+ * Now uses the comprehensive ability score calculator
  * 
  * @param statId - Stat ID (1=STR, 2=DEX, 3=CON, 4=INT, 5=WIS, 6=CHA)
  * @param data - D&D Beyond character data object
  * @returns Final calculated ability score
  */
 export function calculateAbilityScore(statId: number, data: any): number {
-  const stats = data.data?.stats || [];
-  const bonusStats = data.data?.bonusStats || [];
-  const overrideStats = data.data?.overrideStats || [];
-  const modifiersData = data.data?.modifiers;
-  const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
+  const { scores, log } = calculateAbilityScores(data);
   
-  // Debug: Log full structure for first stat to understand API
+  // Log calculation details for debugging
   if (statId === 1) {
-    console.log('[DEBUG] Full stat object structure:', JSON.stringify(stats.find((s: any) => s.id === 1), null, 2));
-    console.log('[DEBUG] Full bonusStat object structure:', JSON.stringify(bonusStats.find((s: any) => s.id === 1), null, 2));
-    console.log('[DEBUG] Sample modifiers (first 3):', JSON.stringify(modifiers.slice(0, 3), null, 2));
-  }
-  
-  // Check for override first (complete replacement)
-  const override = overrideStats.find((s: any) => s.id === statId);
-  if (override && override.value !== null && override.value !== undefined) {
-    console.log(`[Ability Score ${statId}] Using override: ${override.value}`);
-    return override.value;
-  }
-  
-  // Otherwise, calculate base + bonuses
-  const baseStat = stats.find((s: any) => s.id === statId);
-  const baseValue = baseStat?.value || 10;
-  
-  const bonusStat = bonusStats.find((s: any) => s.id === statId);
-  const bonusValue = bonusStat?.value || 0;
-  
-  // Check modifiers for additional stat bonuses from feats, class features, etc.
-  // Stat subtypes: "strength-score", "dexterity-score", "constitution-score", 
-  //                "intelligence-score", "wisdom-score", "charisma-score"
-  const statNames = ['', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
-  const statName = statNames[statId];
-  let modifierBonus = 0;
-  
-  if (statName) {
-    modifiers.forEach((modifier: any) => {
-      if (modifier.type === 'bonus' && modifier.subType === `${statName}-score`) {
-        modifierBonus += modifier.value || 0;
-      }
+    console.log('[Ability Score Calculator] Calculation log:');
+    log.forEach(entry => {
+      console.log(`  ${entry.source}: ${entry.reason}`);
     });
   }
   
-  const result = baseValue + bonusValue + modifierBonus;
-  console.log(`[Ability Score ${statId}] base=${baseValue} + bonus=${bonusValue} + modifier=${modifierBonus} = ${result}`);
+  const statNames = ['', 'strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma'];
+  const statName = statNames[statId] as keyof typeof scores;
+  const score = scores[statName] || 10;
   
-  return result;
+  console.log(`[Ability Score ${statId}] ${statName.toUpperCase()}: ${score}`);
+  return score;
 }
 
 /**
  * Fetch HP data from D&D Beyond character sheet
  * @param url - D&D Beyond character URL (e.g., https://www.dndbeyond.com/characters/123456)
  * @returns HP data object with current HP, max HP, and temp HP
+ */
+export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
  */
 export async function fetchDnDBeyondHP(url: string): Promise<DnDBeyondHPData> {
   try {
