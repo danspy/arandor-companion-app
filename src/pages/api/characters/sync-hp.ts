@@ -70,6 +70,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
         hp: hpData.hp,
         maxHp: hpData.maxHp,
         tempHp: hpData.tempHp,
+        lastSyncedAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(Character.id, characterId));

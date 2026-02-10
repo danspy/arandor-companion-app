@@ -64,6 +64,7 @@ const Character = defineTable({
     eyes: column.text({ optional: true }),
     skin: column.text({ optional: true }),
     hair: column.text({ optional: true }),
+    lastSyncedAt: column.date({ optional: true }), // Last time character was synced from D&D Beyond
     createdAt: column.date({ default: new Date() }),
     updatedAt: column.date({ default: new Date() }),
   }
