@@ -164,7 +164,7 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       characterData.tempHp = tempHp;
     }
 
-    // Extract ability scores with proper calculation (base + bonuses + overrides + feat modifiers)
+    // Extract ability scores (base stats only - users should manually update if needed)
     characterData.stats = {
       strength: calculateAbilityScore(1, data),
       dexterity: calculateAbilityScore(2, data),
@@ -173,115 +173,6 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       wisdom: calculateAbilityScore(5, data),
       charisma: calculateAbilityScore(6, data),
     };
-    
-    // Debug logging to help troubleshoot ability score issues
-    console.log('[D&D Beyond Sync] Character:', data.data?.name);
-    console.log('[D&D Beyond Sync] Base stats:', data.data?.stats?.map((s: any) => `${s.id}:${s.value}`).join(', '));
-    console.log('[D&D Beyond Sync] Bonus stats:', data.data?.bonusStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
-    console.log('[D&D Beyond Sync] Override stats:', data.data?.overrideStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
-    
-    // Debug: Check modifiers for stat bonuses
-    const modifiersArray = data.data?.modifiers;
-    const statModifiers = Array.isArray(modifiersArray) ? modifiersArray.filter((m: any) => 
-      m.subType && (m.subType.includes('-score') || m.subType.includes('ability'))
-    ) : [];
-    console.log('[D&D Beyond Sync] Stat-related modifiers:', statModifiers.length > 0 ? JSON.stringify(statModifiers.slice(0, 5), null, 2) : 'none');
-    
-    // Debug: ALL top-level keys to see what's available
-    console.log('[D&D Beyond Sync] ==== ALL AVAILABLE DATA SOURCES ====');
-    console.log('[D&D Beyond Sync] Top-level data keys:', data.data ? Object.keys(data.data).join(', ') : 'no data');
-    
-    // Check CHOICES (where ASI selections might be)
-    if (data.data?.choices) {
-      const asiChoices = Array.isArray(data.data.choices) ? data.data.choices.filter((c: any) => 
-        c.componentTypeId === 12 || // Ability Score type
-        c.type === 'ability-score' ||
-        c.componentId === 12 ||
-        (c.label && c.label.includes('Ability Score'))
-      ) : [];
-      console.log('[D&D Beyond Sync] ASI Choices:', asiChoices.length > 0 ? JSON.stringify(asiChoices, null, 2) : 'none found');
-      
-      // Show ALL choices to see the actual structure
-      if (Array.isArray(data.data.choices)) {
-        console.log('[D&D Beyond Sync] Total choices:', data.data.choices.length);
-        console.log('[D&D Beyond Sync] First 5 choices (full structure):', JSON.stringify(data.data.choices.slice(0, 5), null, 2));
-      }
-    }
-    
-    // Check CHARACTER VALUES (might have final calculated ability scores!)
-    if (data.data?.characterValues) {
-      console.log('[D&D Beyond Sync] Character values found:', JSON.stringify(data.data.characterValues, null, 2));
-    }
-    
-    // Check FEATS (for feats that give ability score bonuses)
-    if (data.data?.feats) {
-      console.log('[D&D Beyond Sync] Feats:', Array.isArray(data.data.feats) ? 
-        data.data.feats.map((f: any) => f.definition?.name || f.name).join(', ') : 
-        'not an array');
-      
-      // Feats that give ability bonuses: Actor, Athlete, Keen Mind, Observant, Resilient, etc.
-      if (Array.isArray(data.data.feats)) {
-        const bonusFeats = data.data.feats.filter((f: any) => {
-          const name = f.definition?.name || f.name || '';
-          return ['Actor', 'Athlete', 'Keen Mind', 'Observant', 'Resilient', 'Heavily Armored', 
-                  'Lightly Armored', 'Moderately Armored', 'Weapon Master', 'Tavern Brawler',
-                  'Skill Expert', 'Piercer', 'Crusher', 'Slasher', 'Fey Touched', 'Shadow Touched',
-                  'Telepathic', 'Telekinetic', 'Chef', 'Eldritch Adept'].some(feat => name.includes(feat));
-        });
-        if (bonusFeats.length > 0) {
-          console.log('[D&D Beyond Sync] Feats with stat bonuses:', JSON.stringify(bonusFeats, null, 2));
-        }
-      }
-    }
-    
-    // Check CLASSES (for ASI choices from leveling)
-    if (data.data?.classes) {
-      console.log('[D&D Beyond Sync] Classes:', Array.isArray(data.data.classes) ?
-        data.data.classes.map((c: any) => `${c.definition?.name || c.name} ${c.level}`).join(', ') :
-        'not an array');
-    }
-    
-    // Check OPTIONAL ORIGINS (Tasha's racial ASI customization)
-    if (data.data?.optionalOrigins) {
-      console.log('[D&D Beyond Sync] Optional origins:', JSON.stringify(data.data.optionalOrigins, null, 2));
-    }
-    
-    // Check PREFERENCES (might have ASI selections)
-    if (data.data?.preferences) {
-      console.log('[D&D Beyond Sync] Preferences:', JSON.stringify(data.data.preferences, null, 2));
-    }
-    
-    // Check MODIFIER VALUES
-    if (data.data?.modifierValues) {
-      console.log('[D&D Beyond Sync] Modifier values:', JSON.stringify(data.data.modifierValues, null, 2));
-    }
-    
-    // Check INVENTORY (for magic items with stat bonuses)
-    if (data.data?.inventory) {
-      const equippedItems = Array.isArray(data.data.inventory) ?
-        data.data.inventory.filter((item: any) => item.equipped) : [];
-      if (equippedItems.length > 0) {
-        console.log('[D&D Beyond Sync] Equipped items:', equippedItems.map((i: any) => 
-          i.definition?.name || i.name).join(', '));
-      }
-    }
-    
-    // Check RACE for racial bonuses
-    console.log('[D&D Beyond Sync] Race:', data.data?.race?.fullName || data.data?.race?.baseName);
-    
-    // Check racial traits
-    const racialTraits = data.data?.race?.racialTraits;
-    if (Array.isArray(racialTraits)) {
-      const abilityScoreTraits = racialTraits.filter((t: any) => 
-        t.definition?.name?.includes('Ability Score') || t.name?.includes('Ability Score')
-      );
-      if (abilityScoreTraits.length > 0) {
-        console.log('[D&D Beyond Sync] Racial ability score traits:', JSON.stringify(abilityScoreTraits, null, 2));
-      }
-    }
-    
-    console.log('[D&D Beyond Sync] ==== END DEBUGGING ====');
-    console.log('[D&D Beyond Sync] Calculated stats:', JSON.stringify(characterData.stats));
 
     return characterData;
   } catch (error) {
