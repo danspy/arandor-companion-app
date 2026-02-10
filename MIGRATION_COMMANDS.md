@@ -22,12 +22,7 @@ sqlite3 .astro/content.db "ALTER TABLE \"Character\" ADD COLUMN \"statsManuallyE
 sqlite3 .astro/content.db "ALTER TABLE \"Character\" ADD COLUMN \"lastSyncedAt\" text; ALTER TABLE \"Character\" ADD COLUMN \"statsManuallyEdited\" integer NOT NULL DEFAULT 0;"
 ```
 
-**Method C: Using SQL file**
-```bash
-sqlite3 .astro/content.db < scripts/add-sync-fields.sql
-```
-
-**Method D: Interactive**
+**Method C: Interactive**
 ```bash
 sqlite3 .astro/content.db
 ```

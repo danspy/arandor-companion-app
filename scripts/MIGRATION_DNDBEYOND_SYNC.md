@@ -59,16 +59,6 @@ PRAGMA table_info("Character");
 .quit
 ```
 
-### Alternative: Using SQL File
-
-If you prefer to use the SQL file:
-
-```bash
-# Copy the SQL file to your server (if not already there via deployment)
-# Then run:
-sqlite3 .astro/content.db < scripts/add-sync-fields.sql
-```
-
 ### Verification
 
 Check that the columns were added successfully:
