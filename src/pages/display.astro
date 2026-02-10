@@ -802,7 +802,7 @@ const COMBAT_STATE_ID = 'current-combat';
             
             const getHealthStatus = (hp, maxHp) => {
               if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
-              if (hp === 0) return { text: 'Dead', classes: 'bg-black text-white' };
+              if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
               const percent = hp / maxHp;
               if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-600 text-white' };
               if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-600 text-white' };
