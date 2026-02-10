@@ -30,6 +30,13 @@ export function calculateAbilityScore(statId: number, data: any): number {
   const modifiersData = data.data?.modifiers;
   const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
   
+  // Debug: Log full structure for first stat to understand API
+  if (statId === 1) {
+    console.log('[DEBUG] Full stat object structure:', JSON.stringify(stats.find((s: any) => s.id === 1), null, 2));
+    console.log('[DEBUG] Full bonusStat object structure:', JSON.stringify(bonusStats.find((s: any) => s.id === 1), null, 2));
+    console.log('[DEBUG] Sample modifiers (first 3):', JSON.stringify(modifiers.slice(0, 3), null, 2));
+  }
+  
   // Check for override first (complete replacement)
   const override = overrideStats.find((s: any) => s.id === statId);
   if (override && override.value !== null && override.value !== undefined) {

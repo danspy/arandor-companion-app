@@ -178,6 +178,18 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
     console.log('[D&D Beyond Sync] Character:', data.data?.name);
     console.log('[D&D Beyond Sync] Base stats:', data.data?.stats?.map((s: any) => `${s.id}:${s.value}`).join(', '));
     console.log('[D&D Beyond Sync] Bonus stats:', data.data?.bonusStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
+    console.log('[D&D Beyond Sync] Override stats:', data.data?.overrideStats?.map((s: any) => `${s.id}:${s.value}`).join(', ') || 'none');
+    
+    // Debug: Check modifiers for stat bonuses
+    const statModifiers = (data.data?.modifiers || []).filter((m: any) => 
+      m.subType && (m.subType.includes('-score') || m.subType.includes('ability'))
+    );
+    console.log('[D&D Beyond Sync] Stat-related modifiers:', statModifiers.length > 0 ? JSON.stringify(statModifiers.slice(0, 5), null, 2) : 'none');
+    
+    // Debug: Check race bonuses
+    console.log('[D&D Beyond Sync] Race:', data.data?.race?.fullName || data.data?.race?.baseName);
+    console.log('[D&D Beyond Sync] Racial stat bonuses:', JSON.stringify(data.data?.race?.racialTraits?.filter((t: any) => t.definition?.name?.includes('Ability Score')), null, 2) || 'none');
+    
     console.log('[D&D Beyond Sync] Calculated stats:', JSON.stringify(characterData.stats));
 
     return characterData;
