@@ -104,16 +104,60 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
 
     // Extract HP data
     // D&D Beyond stores HP in the following fields:
-    // - baseHitPoints: CURRENT HP (not base max HP!)
+    // - baseHitPoints: Hit die rolls WITHOUT Constitution modifier
     // - bonusHitPoints: bonus HP from items/features (added to max)
     // - overrideHitPoints: manual override for max HP (if set, uses different calculation)
     // - removedHitPoints: damage taken (HP lost from max)
     // - temporaryHitPoints: temp HP
+    // NOTE: Constitution modifier must be added separately!
     const baseHp = data.data?.baseHitPoints || 0;
     const bonusHp = data.data?.bonusHitPoints || 0;
     const overrideHp = data.data?.overrideHitPoints;
     const removedHp = data.data?.removedHitPoints || 0;
     const tempHp = data.data?.temporaryHitPoints || 0;
+    
+    // Extract Constitution modifier for HP calculation
+    const stats = data.data?.stats || [];
+    const conStat = stats.find((s: any) => s.id === 3); // Constitution is stat id 3
+    const conScore = conStat?.value || 10;
+    const conModifier = Math.floor((conScore - 10) / 2);
+    
+    // Extract character level
+    const classes = data.data?.classes || [];
+    const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
+    
+    // Calculate HP bonuses from modifiers (Tough feat, Hill Dwarf, etc.)
+    // bonusHitPoints is often null even when character has HP bonuses
+    // The actual bonuses are in the modifiers array
+    const modifiersData = data.data?.modifiers;
+    const modifiers = Array.isArray(modifiersData) ? modifiersData : [];
+    let modifierHpBonus = 0;
+    
+    modifiers.forEach((modifier: any) => {
+      if (modifier.type === "bonus") {
+        // Hit points per level (Tough feat, Hill Dwarf, Draconic Sorcerer, etc.)
+        if (modifier.subType === "hit-points-per-level") {
+          modifierHpBonus += (modifier.value || 0) * totalLevel;
+        }
+        // One-time HP bonuses (magic items, temporary effects)
+        else if (modifier.subType === "hit-points" || modifier.subType === "hit-points-max") {
+          modifierHpBonus += modifier.value || 0;
+        }
+      }
+    });
+    
+    // Parse feats for HP bonuses (Tough feat, etc.)
+    // Modifiers array is often empty, so we need to check feats directly
+    const feats = data.data?.feats || [];
+    let featHpBonus = 0;
+    
+    feats.forEach((feat: any) => {
+      const featName = feat.definition?.name || feat.name || '';
+      // Tough feat: +2 HP per character level
+      if (featName === 'Tough') {
+        featHpBonus += 2 * totalLevel;
+      }
+    });
     
     // Calculate HP based on whether override is set
     // NOTE: This logic is duplicated in src/lib/dndbeyond.ts
@@ -129,10 +173,11 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       currentHp = Math.max(0, overrideHp - removedHp);
     } else {
       // Normal case: no override
-      // baseHitPoints represents current HP after damage
-      // Calculate max HP by adding back the damage
-      currentHp = removedHp >= baseHp ? 0 : baseHp;
-      maxHp = baseHp + removedHp + bonusHp;
+      // baseHitPoints is hit die rolls WITHOUT Constitution modifier or feat/racial bonuses
+      // Max HP = base + (CON modifier × level) + bonusHitPoints + modifier bonuses + feat bonuses
+      // Current HP = Max HP - damage taken
+      maxHp = baseHp + (conModifier * totalLevel) + bonusHp + modifierHpBonus + featHpBonus;
+      currentHp = Math.max(0, maxHp - removedHp);
     }
     
     // Ensure current HP doesn't exceed max HP
@@ -147,8 +192,7 @@ async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterD
       characterData.tempHp = tempHp;
     }
 
-    // Extract ability scores
-    const stats = data.data?.stats;
+    // Extract ability scores (stats already extracted above for HP calculation on line 120)
     if (stats && Array.isArray(stats)) {
       characterData.stats = {
         strength: stats.find((s: any) => s.id === 1)?.value,

@@ -78,20 +78,36 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
     const now = new Date();
     
+    // When HP is restored above 0, reset death saves
+    const updateData: any = {
+      name: body.name.trim(),
+      initiative: body.initiative,
+      type: body.type,
+      characterId: body.characterId || null,
+      hp: body.hp || null,
+      maxHp: body.maxHp || null,
+      tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
+      ac: body.ac || null,
+      notes: body.notes?.trim() || null,
+      isActive: body.isActive !== undefined ? body.isActive : true,
+      updatedAt: now,
+    };
+    
+    // Handle death saves
+    if (body.hp !== undefined && body.hp !== null && body.hp > 0) {
+      // Reset death saves when HP > 0
+      updateData.deathSaveSuccesses = 0;
+      updateData.deathSaveFailures = 0;
+      updateData.isStable = false;
+    } else {
+      // Preserve or update death saves
+      updateData.deathSaveSuccesses = body.deathSaveSuccesses !== undefined ? body.deathSaveSuccesses : 0;
+      updateData.deathSaveFailures = body.deathSaveFailures !== undefined ? body.deathSaveFailures : 0;
+      updateData.isStable = body.isStable !== undefined ? body.isStable : false;
+    }
+    
     await db.update(InitiativeTracker)
-      .set({
-        name: body.name.trim(),
-        initiative: body.initiative,
-        type: body.type,
-        characterId: body.characterId || null,
-        hp: body.hp || null,
-        maxHp: body.maxHp || null,
-        tempHp: body.tempHp || null,
-        ac: body.ac || null,
-        notes: body.notes?.trim() || null,
-        isActive: body.isActive !== undefined ? body.isActive : true,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(InitiativeTracker.id, id));
 
     const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id));

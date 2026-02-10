@@ -23,7 +23,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
 
     const body = await request.json();
-    const { initiativeId, hp, maxHp, tempHp } = body;
+    const { initiativeId, hp, maxHp, tempHp, deathSaveSuccesses, deathSaveFailures, isStable } = body;
 
     if (!initiativeId) {
       return new Response(JSON.stringify({ error: 'Initiative ID is required' }), {
@@ -105,11 +105,23 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
       }
       return num;
     };
+    
+    // Validate death save values (0-3)
+    const validateDeathSaveValue = (value: any, fieldName: string) => {
+      if (value === undefined || value === null) return null;
+      const num = Number(value);
+      if (isNaN(num) || !Number.isInteger(num) || num < 0 || num > 3) {
+        throw new Error(`${fieldName} must be an integer between 0 and 3`);
+      }
+      return num;
+    };
 
     try {
       const validatedHp = validateHPValue(hp, 'HP');
       const validatedMaxHp = validateHPValue(maxHp, 'Max HP');
       const validatedTempHp = validateHPValue(tempHp, 'Temp HP');
+      const validatedDeathSaveSuccesses = validateDeathSaveValue(deathSaveSuccesses, 'Death Save Successes');
+      const validatedDeathSaveFailures = validateDeathSaveValue(deathSaveFailures, 'Death Save Failures');
 
       // Update HP in initiative tracker
       const now = new Date();
@@ -117,22 +129,69 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         updatedAt: now,
       };
 
-      if (validatedHp !== null) updateData.hp = validatedHp;
+      if (validatedHp !== null) {
+        updateData.hp = validatedHp;
+        // Reset death saves when HP is restored above 0
+        if (validatedHp > 0) {
+          updateData.deathSaveSuccesses = 0;
+          updateData.deathSaveFailures = 0;
+          updateData.isStable = false;
+        }
+      }
       if (validatedMaxHp !== null) updateData.maxHp = validatedMaxHp;
       if (validatedTempHp !== null) updateData.tempHp = validatedTempHp;
+      if (validatedDeathSaveSuccesses !== null) updateData.deathSaveSuccesses = validatedDeathSaveSuccesses;
+      if (validatedDeathSaveFailures !== null) updateData.deathSaveFailures = validatedDeathSaveFailures;
+      if (isStable !== undefined && isStable !== null) updateData.isStable = Boolean(isStable);
 
       await db.update(InitiativeTracker)
         .set(updateData)
         .where(eq(InitiativeTracker.id, initiativeId));
 
       // Also update the character's HP in the Character table
+      const characterUpdateData: any = {
+        updatedAt: now,
+      };
+      
+      if (validatedHp !== null) {
+        characterUpdateData.hp = validatedHp;
+        // Reset death saves when HP is restored above 0
+        if (validatedHp > 0) {
+          characterUpdateData.deathSaveSuccesses = 0;
+          characterUpdateData.deathSaveFailures = 0;
+          characterUpdateData.isStable = false;
+        }
+      } else {
+        characterUpdateData.hp = character.hp;
+      }
+      
+      // Set maxHp
+      if (validatedMaxHp !== null) {
+        characterUpdateData.maxHp = validatedMaxHp;
+      } else {
+        characterUpdateData.maxHp = character.maxHp;
+      }
+      
+      // Set tempHp
+      if (validatedTempHp !== null) {
+        characterUpdateData.tempHp = validatedTempHp;
+      } else {
+        characterUpdateData.tempHp = character.tempHp;
+      }
+      
+      // Set death saves
+      if (validatedDeathSaveSuccesses !== null) {
+        characterUpdateData.deathSaveSuccesses = validatedDeathSaveSuccesses;
+      }
+      if (validatedDeathSaveFailures !== null) {
+        characterUpdateData.deathSaveFailures = validatedDeathSaveFailures;
+      }
+      if (isStable !== undefined && isStable !== null) {
+        characterUpdateData.isStable = Boolean(isStable);
+      }
+
       await db.update(Character)
-        .set({
-          hp: validatedHp !== null ? validatedHp : character.hp,
-          maxHp: validatedMaxHp !== null ? validatedMaxHp : character.maxHp,
-          tempHp: validatedTempHp !== null ? validatedTempHp : character.tempHp,
-          updatedAt: now,
-        })
+        .set(characterUpdateData)
         .where(eq(Character.id, character.id));
 
       const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, initiativeId)).get();

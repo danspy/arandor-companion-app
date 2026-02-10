@@ -141,9 +141,10 @@ const getTypeBadgeColor = (type: string) => {
 };
 
 // Health status for players
-const getHealthStatus = (hp: number | null, maxHp: number | null) => {
+const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailures: number = 0) => {
   if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
-  if (hp === 0) return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-800' };
+  // At 0 HP: Always Unconscious (never Dead - death is determined by 3 failed saves but still shown as Unconscious)
+  if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white dark:bg-red-950' };
   const percent = hp / maxHp;
   if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
   if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
@@ -331,7 +332,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                       </div>
                     ) : (
                       (() => {
-                        const status = getHealthStatus(entry.hp, entry.maxHp);
+                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0);
                         return status.text === '-' ? (
                           <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
                         ) : (
@@ -404,6 +405,36 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-0.5 sm:mb-1">Notes</div>
                     <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
+                  </div>
+                )}
+                
+                <!-- Death Saves (always shown when HP = 0) -->
+                {entry.hp === 0 && entry.maxHp !== null && (
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
+                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
+                    <div class="flex items-center gap-4">
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-medium text-green-600 dark:text-green-400">Successes:</span>
+                        <div class="flex gap-1">
+                          {[1, 2, 3].map(i => (
+                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveSuccesses || 0) >= i ? 'bg-green-500 border-green-500' : 'border-gray-400 dark:border-gray-600'}`} data-death-save-success={i}></span>
+                          ))}
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1.5">
+                        <span class="text-xs font-medium text-red-600 dark:text-red-400">Failures:</span>
+                        <div class="flex gap-1">
+                          {[1, 2, 3].map(i => (
+                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveFailures || 0) >= i ? 'bg-red-500 border-red-500' : 'border-gray-400 dark:border-gray-600'}`} data-death-save-failure={i}></span>
+                          ))}
+                        </div>
+                      </div>
+                      {entry.isStable && (
+                        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold" data-stable-indicator>
+                          Stable
+                        </span>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -702,6 +733,54 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                 class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
                 placeholder="Temp"
               />
+            </div>
+          </div>
+          
+          <!-- Death Saves (shown when HP = 0) -->
+          <div id="deathSavesContainer" class="hidden">
+            <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
+              <h3 class="text-sm font-semibold text-red-900 dark:text-red-100 mb-3">Death Saves</h3>
+              
+              <div class="space-y-3">
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Successes (0-3)
+                  </label>
+                  <input 
+                    type="number" 
+                    id="hpDeathSaveSuccesses"
+                    min="0"
+                    max="3"
+                    value="0"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                
+                <div>
+                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Failures (0-3)
+                  </label>
+                  <input 
+                    type="number" 
+                    id="hpDeathSaveFailures"
+                    min="0"
+                    max="3"
+                    value="0"
+                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  />
+                </div>
+                
+                <div class="flex items-center">
+                  <input 
+                    type="checkbox" 
+                    id="hpIsStable"
+                    class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+                  />
+                  <label for="hpIsStable" class="ml-2 text-xs text-gray-700 dark:text-gray-300">
+                    Character is stabilized
+                  </label>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -1459,6 +1538,22 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       const hpCurrentInput = document.getElementById('hpCurrent');
       const hpMaxInput = document.getElementById('hpMax');
       const hpTempInput = document.getElementById('hpTemp');
+      const deathSavesContainer = document.getElementById('deathSavesContainer');
+      const hpDeathSaveSuccesses = document.getElementById('hpDeathSaveSuccesses');
+      const hpDeathSaveFailures = document.getElementById('hpDeathSaveFailures');
+      const hpIsStable = document.getElementById('hpIsStable');
+      
+      // Show/hide death saves based on HP value
+      const updateDeathSavesVisibility = () => {
+        const currentHp = parseInt(hpCurrentInput?.value || '0');
+        if (currentHp === 0) {
+          deathSavesContainer?.classList.remove('hidden');
+        } else {
+          deathSavesContainer?.classList.add('hidden');
+        }
+      };
+      
+      hpCurrentInput?.addEventListener('input', updateDeathSavesVisibility);
       
       // Close modal function
       const closeHpModal = () => {
@@ -1474,7 +1569,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       document.querySelectorAll('.edit-hp-btn').forEach(btn => {
         const id = btn.getAttribute('data-id');
         
-        const handler = () => {
+        const handler = async () => {
           const name = btn.getAttribute('data-name');
           const hp = btn.getAttribute('data-hp');
           const maxHp = btn.getAttribute('data-max-hp');
@@ -1486,6 +1581,23 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           hpMaxInput.value = maxHp || '';
           hpTempInput.value = tempHp || '';
           
+          // Fetch full entry data to get death saves
+          try {
+            const response = await fetch(`/api/initiative/${id}`);
+            if (response.ok) {
+              const entry = await response.json();
+              hpDeathSaveSuccesses.value = entry.deathSaveSuccesses || 0;
+              hpDeathSaveFailures.value = entry.deathSaveFailures || 0;
+              hpIsStable.checked = entry.isStable || false;
+            }
+          } catch (error) {
+            console.error('Error fetching death saves:', error);
+            hpDeathSaveSuccesses.value = 0;
+            hpDeathSaveFailures.value = 0;
+            hpIsStable.checked = false;
+          }
+          
+          updateDeathSavesVisibility();
           hpModal?.classList.remove('hidden');
           hpModal?.classList.add('flex');
         };
@@ -1508,15 +1620,25 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
         
         try {
+          const requestData: any = {
+            initiativeId: hpEntryIdInput.value,
+            hp: hpCurrentInput.value ? parseInt(hpCurrentInput.value) : null,
+            maxHp: hpMaxInput.value ? parseInt(hpMaxInput.value) : null,
+            tempHp: hpTempInput.value ? parseInt(hpTempInput.value) : 0,
+          };
+          
+          // Include death saves if HP is 0
+          const currentHp = parseInt(hpCurrentInput.value || '0');
+          if (currentHp === 0) {
+            requestData.deathSaveSuccesses = parseInt(hpDeathSaveSuccesses.value || '0');
+            requestData.deathSaveFailures = parseInt(hpDeathSaveFailures.value || '0');
+            requestData.isStable = hpIsStable.checked;
+          }
+          
           const response = await fetch('/api/initiative/update-hp', {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              initiativeId: hpEntryIdInput.value,
-              hp: hpCurrentInput.value ? parseInt(hpCurrentInput.value) : null,
-              maxHp: hpMaxInput.value ? parseInt(hpMaxInput.value) : null,
-              tempHp: hpTempInput.value ? parseInt(hpTempInput.value) : null,
-            }),
+            body: JSON.stringify(requestData),
           });
           
           if (!response.ok) {
@@ -1526,27 +1648,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           
           const updatedEntry = await response.json();
           
-          // Update the HP display immediately in the UI
-          const card = document.querySelector(`[data-entry-id="${hpEntryIdInput.value}"]`);
-          if (card) {
-            const hpElement = card.querySelector('[data-hp-display]');
-            if (hpElement && updatedEntry.hp !== null && updatedEntry.maxHp !== null) {
-              let hpText = `${updatedEntry.hp}/${updatedEntry.maxHp}`;
-              if (updatedEntry.tempHp && updatedEntry.tempHp > 0) {
-                hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${updatedEntry.tempHp})</span>`;
-              }
-              hpElement.innerHTML = hpText;
-            }
-          }
-          
-          // Close modal and reset form
-          closeHpModal();
-          
-          // Reset button state
-          if (saveBtn) saveBtn.disabled = false;
-          if (saveBtnText) {
-            saveBtnText.textContent = originalText;
-          }
+          // Reload page to show updated HP and death saves
+          window.location.reload();
         } catch (error) {
           console.error('Error updating HP:', error);
           alert(error instanceof Error ? error.message : 'Failed to update HP');
@@ -1561,17 +1664,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
       hpForm?.addEventListener('submit', hpFormSubmitHandler);
     }
     
-    // Setup polling for non-edit users (players)
+    // Setup polling for all users to update HP and death saves in real-time
     let pollingInitialized = false;
     let pollInterval = null;
     
     function setupPollingForPlayers() {
       if (pollingInitialized) return;
-      
-      const container = document.querySelector('[data-can-edit]');
-      const canEdit = container?.getAttribute('data-can-edit') === 'true';
-      
-      if (canEdit) return; // Only run for non-edit users (players)
       
       pollingInitialized = true;
       
@@ -1585,16 +1683,6 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
           
           if (stateResponse.ok && initiativeResponse.ok) {
             const state = await stateResponse.json();
-            
-            // Stop polling if combat is not active
-            if (state.status !== 'active') {
-              if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                pollingInitialized = false;
-              }
-              return;
-            }
             
             const initiatives = await initiativeResponse.json();
             
@@ -1638,32 +1726,106 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
                   }
                 } else {
                   // Show health status for players who don't own this character
-                  const getHealthStatus = (hp, maxHp) => {
-                    if (!hp || !maxHp || hp <= 0) {
-                      if (hp === 0) return { text: 'Dead', classes: 'bg-gray-800 text-white' };
-                      return { text: '-', classes: 'text-gray-400' };
-                    }
+                  const getHealthStatus = (hp, maxHp, deathSaveFailures = 0) => {
+                    if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
+                    // At 0 HP: Always Unconscious (never Dead)
+                    if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
                     const percentage = (hp / maxHp) * 100;
                     if (percentage > 75) return { text: 'Healthy', classes: 'bg-green-500 text-white' };
                     if (percentage > 50) return { text: 'Injured', classes: 'bg-yellow-500 text-white' };
                     if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
                     return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
                   };
-                  const status = getHealthStatus(entry.hp, entry.maxHp);
+                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0);
                   hpElement.textContent = status.text;
                   hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
                 }
               }
               
-              // Update AC display (DM/Admin only)
+              // Update death saves display (show when HP = 0, hide when HP > 0)
+              const deathSavesSection = card.querySelector('[data-death-saves-section]');
+              
+              if (entry.hp === 0 && entry.maxHp !== null) {
+                // Character is at 0 HP - ensure death saves section is visible
+                if (!deathSavesSection) {
+                  // Death saves section doesn't exist, need to create it
+                  const cardContent = card.querySelector('.p-2');
+                  if (cardContent) {
+                    const deathSavesHtml = `
+                      <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
+                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
+                        <div class="flex items-center gap-4">
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-medium text-green-600 dark:text-green-400">Successes:</span>
+                            <div class="flex gap-1">
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="1"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="2"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="3"></span>
+                            </div>
+                          </div>
+                          <div class="flex items-center gap-1.5">
+                            <span class="text-xs font-medium text-red-600 dark:text-red-400">Failures:</span>
+                            <div class="flex gap-1">
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="1"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="2"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="3"></span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                    cardContent.insertAdjacentHTML('beforeend', deathSavesHtml);
+                  }
+                }
+                
+                // Update death save dots
+                const successDots = card.querySelectorAll('[data-death-save-success]');
+                const failureDots = card.querySelectorAll('[data-death-save-failure]');
+                const stableIndicator = card.querySelector('[data-stable-indicator]');
+                
+                const successes = entry.deathSaveSuccesses || 0;
+                const failures = entry.deathSaveFailures || 0;
+                
+                successDots.forEach((dot, idx) => {
+                  if (successes > idx) {
+                    dot.className = 'w-4 h-4 rounded-full border-2 bg-green-500 border-green-500';
+                  } else {
+                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600';
+                  }
+                });
+                
+                failureDots.forEach((dot, idx) => {
+                  if (failures > idx) {
+                    dot.className = 'w-4 h-4 rounded-full border-2 bg-red-500 border-red-500';
+                  } else {
+                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600';
+                  }
+                });
+                
+                // Update stable indicator
+                if (entry.isStable && !stableIndicator) {
+                  const deathSavesContainer = card.querySelector('[data-death-saves-section] .flex.items-center.gap-4');
+                  if (deathSavesContainer) {
+                    const stableHtml = `<span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold" data-stable-indicator>Stable</span>`;
+                    deathSavesContainer.insertAdjacentHTML('beforeend', stableHtml);
+                  }
+                } else if (!entry.isStable && stableIndicator) {
+                  stableIndicator.remove();
+                }
+              } else if (deathSavesSection) {
+                // Character is not at 0 HP - hide death saves section
+                deathSavesSection.remove();
+              }
+              
+              // Update AC display (if element exists - DM/Admin only)
               const acElement = card.querySelector('[data-ac-display]');
-              if (acElement && canEdit) {
+              if (acElement) {
                 acElement.textContent = entry.ac !== null ? entry.ac : '-';
               }
               
-              // Update notes display (DM/Admin only)
+              // Update notes display (if element exists - DM/Admin only)
               const notesElement = card.querySelector('[data-notes-display]');
-              if (notesElement && canEdit) {
+              if (notesElement) {
                 if (entry.notes) {
                   notesElement.textContent = entry.notes;
                   notesElement.parentElement?.classList.remove('hidden');
@@ -1709,7 +1871,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null) => {
         }
       };
       
-      // Poll every 2 seconds
+      // Run immediately on setup, then poll every 2 seconds
+      pollCombatData();
       pollInterval = setInterval(pollCombatData, 2000);
     }
 
