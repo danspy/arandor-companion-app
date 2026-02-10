@@ -242,30 +242,37 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const dndbeyondData = await fetchDnDBeyondCharacter(character.dndbeyondUrl);
 
     // Update character in database with all synced data
+    // Important: Do NOT override stats if user has manually edited them
     const now = new Date();
+    const updateData: any = {
+      name: dndbeyondData.name || character.name,
+      race: dndbeyondData.race || character.race,
+      class: dndbeyondData.class || character.class,
+      level: dndbeyondData.level || character.level,
+      avatarUrl: dndbeyondData.avatarUrl || character.avatarUrl,
+      hp: dndbeyondData.hp !== undefined ? dndbeyondData.hp : character.hp,
+      maxHp: dndbeyondData.maxHp !== undefined ? dndbeyondData.maxHp : character.maxHp,
+      tempHp: dndbeyondData.tempHp !== undefined ? dndbeyondData.tempHp : character.tempHp,
+      gender: dndbeyondData.gender || character.gender,
+      alignment: dndbeyondData.alignment || character.alignment,
+      background: dndbeyondData.background || character.background,
+      age: dndbeyondData.age || character.age,
+      height: dndbeyondData.height || character.height,
+      weight: dndbeyondData.weight || character.weight,
+      eyes: dndbeyondData.eyes || character.eyes,
+      skin: dndbeyondData.skin || character.skin,
+      hair: dndbeyondData.hair || character.hair,
+      lastSyncedAt: now,
+      updatedAt: now,
+    };
+    
+    // Only update stats if they were not manually edited by the user
+    if (!character.statsManuallyEdited) {
+      updateData.stats = dndbeyondData.stats || character.stats;
+    }
+    
     await db.update(Character)
-      .set({
-        name: dndbeyondData.name || character.name,
-        race: dndbeyondData.race || character.race,
-        class: dndbeyondData.class || character.class,
-        level: dndbeyondData.level || character.level,
-        avatarUrl: dndbeyondData.avatarUrl || character.avatarUrl,
-        stats: dndbeyondData.stats || character.stats,
-        hp: dndbeyondData.hp !== undefined ? dndbeyondData.hp : character.hp,
-        maxHp: dndbeyondData.maxHp !== undefined ? dndbeyondData.maxHp : character.maxHp,
-        tempHp: dndbeyondData.tempHp !== undefined ? dndbeyondData.tempHp : character.tempHp,
-        gender: dndbeyondData.gender || character.gender,
-        alignment: dndbeyondData.alignment || character.alignment,
-        background: dndbeyondData.background || character.background,
-        age: dndbeyondData.age || character.age,
-        height: dndbeyondData.height || character.height,
-        weight: dndbeyondData.weight || character.weight,
-        eyes: dndbeyondData.eyes || character.eyes,
-        skin: dndbeyondData.skin || character.skin,
-        hair: dndbeyondData.hair || character.hair,
-        lastSyncedAt: now,
-        updatedAt: now,
-      })
+      .set(updateData)
       .where(eq(Character.id, characterId));
 
     // Return updated character
