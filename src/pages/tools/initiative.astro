@@ -414,8 +414,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   </div>
                 )}
                 
-                <!-- Death Saves (always shown when HP = 0) -->
-                {entry.hp === 0 && entry.maxHp !== null && (
+                <!-- Death Saves (only for characters at HP = 0) -->
+                {entry.hp === 0 && entry.maxHp !== null && entry.type === 'character' && (
                   <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
                     <div class="flex items-center gap-4">
@@ -1754,10 +1754,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 }
               }
               
-              // Update death saves display (show when HP = 0, hide when HP > 0)
+              // Update death saves display (only show for characters at HP = 0)
               const deathSavesSection = card.querySelector('[data-death-saves-section]');
               
-              if (entry.hp === 0 && entry.maxHp !== null) {
+              if (entry.hp === 0 && entry.maxHp !== null && entry.type === 'character') {
                 // Character is at 0 HP - ensure death saves section is visible
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it
