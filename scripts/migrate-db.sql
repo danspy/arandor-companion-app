@@ -45,13 +45,18 @@ CREATE TABLE IF NOT EXISTS "Character" (
   "level" integer NOT NULL,
   "race" text NOT NULL,
   "player" text NOT NULL,
+  "userId" text,
   "isActive" integer NOT NULL DEFAULT 1,
   "avatarUrl" text,
   "dndbeyondUrl" text,
   "stats" text,
+  "statsManuallyEdited" integer NOT NULL DEFAULT 0,
   "hp" integer,
   "maxHp" integer,
   "tempHp" integer,
+  "deathSaveSuccesses" integer NOT NULL DEFAULT 0,
+  "deathSaveFailures" integer NOT NULL DEFAULT 0,
+  "isStable" integer NOT NULL DEFAULT 0,
   "gender" text,
   "alignment" text,
   "background" text,
@@ -61,9 +66,18 @@ CREATE TABLE IF NOT EXISTS "Character" (
   "eyes" text,
   "skin" text,
   "hair" text,
+  "lastSyncedAt" text,
   "createdAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z'),
   "updatedAt" text NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now') || 'Z')
 );
+
+-- Add fields to existing Character table if they don't exist
+ALTER TABLE "Character" ADD COLUMN "userId" text;
+ALTER TABLE "Character" ADD COLUMN "statsManuallyEdited" integer NOT NULL DEFAULT 0;
+ALTER TABLE "Character" ADD COLUMN "deathSaveSuccesses" integer NOT NULL DEFAULT 0;
+ALTER TABLE "Character" ADD COLUMN "deathSaveFailures" integer NOT NULL DEFAULT 0;
+ALTER TABLE "Character" ADD COLUMN "isStable" integer NOT NULL DEFAULT 0;
+ALTER TABLE "Character" ADD COLUMN "lastSyncedAt" text;
 
 -- Create NPC table
 CREATE TABLE IF NOT EXISTS "NPC" (
