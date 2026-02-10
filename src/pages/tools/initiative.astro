@@ -141,7 +141,7 @@ const getTypeBadgeColor = (type: string) => {
 };
 
 // Health status for players
-const getHealthStatus = (hp: number | null, maxHp: number | null, type: string = 'character', deathSaveFailures: number = 0) => {
+const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailures: number = 0, type: string = 'character') => {
   if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
   // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
   if (hp === 0) {
@@ -338,7 +338,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, type: string =
                       </div>
                     ) : (
                       (() => {
-                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.type, entry.deathSaveFailures || 0);
+                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                         return status.text === '-' ? (
                           <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
                         ) : (
@@ -1732,7 +1732,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, type: string =
                   }
                 } else {
                   // Show health status for players who don't own this character
-                  const getHealthStatus = (hp, maxHp, type = 'character', deathSaveFailures = 0) => {
+                  const getHealthStatus = (hp, maxHp, deathSaveFailures = 0, type = 'character') => {
                     if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
                     // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
                     if (hp === 0) {
@@ -1748,7 +1748,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, type: string =
                     if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
                     return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
                   };
-                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.type, entry.deathSaveFailures || 0);
+                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                   hpElement.textContent = status.text;
                   hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
                 }
