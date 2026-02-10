@@ -141,10 +141,16 @@ const getTypeBadgeColor = (type: string) => {
 };
 
 // Health status for players
-const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailures: number = 0) => {
+const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailures: number = 0, type: string = 'character') => {
   if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
-  // At 0 HP: Always Unconscious (never Dead - death is determined by 3 failed saves but still shown as Unconscious)
-  if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white dark:bg-red-950' };
+  // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
+  if (hp === 0) {
+    if (type === 'character') {
+      return { text: 'Unconscious', classes: 'bg-red-900 text-white dark:bg-red-950' };
+    } else {
+      return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-900' };
+    }
+  }
   const percent = hp / maxHp;
   if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
   if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
@@ -332,7 +338,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                       </div>
                     ) : (
                       (() => {
-                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0);
+                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                         return status.text === '-' ? (
                           <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
                         ) : (
@@ -408,8 +414,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   </div>
                 )}
                 
-                <!-- Death Saves (always shown when HP = 0) -->
-                {entry.hp === 0 && entry.maxHp !== null && (
+                <!-- Death Saves (only for characters at HP = 0) -->
+                {entry.hp === 0 && entry.maxHp !== null && entry.type === 'character' && (
                   <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
                     <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
                     <div class="flex items-center gap-4">
@@ -1726,26 +1732,32 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   }
                 } else {
                   // Show health status for players who don't own this character
-                  const getHealthStatus = (hp, maxHp, deathSaveFailures = 0) => {
+                  const getHealthStatus = (hp, maxHp, deathSaveFailures = 0, type = 'character') => {
                     if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
-                    // At 0 HP: Always Unconscious (never Dead)
-                    if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
+                    // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
+                    if (hp === 0) {
+                      if (type === 'character') {
+                        return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
+                      } else {
+                        return { text: 'Dead', classes: 'bg-black text-white' };
+                      }
+                    }
                     const percentage = (hp / maxHp) * 100;
                     if (percentage > 75) return { text: 'Healthy', classes: 'bg-green-500 text-white' };
                     if (percentage > 50) return { text: 'Injured', classes: 'bg-yellow-500 text-white' };
                     if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
                     return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
                   };
-                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0);
+                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                   hpElement.textContent = status.text;
                   hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
                 }
               }
               
-              // Update death saves display (show when HP = 0, hide when HP > 0)
+              // Update death saves display (only show for characters at HP = 0)
               const deathSavesSection = card.querySelector('[data-death-saves-section]');
               
-              if (entry.hp === 0 && entry.maxHp !== null) {
+              if (entry.hp === 0 && entry.maxHp !== null && entry.type === 'character') {
                 // Character is at 0 HP - ensure death saves section is visible
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it

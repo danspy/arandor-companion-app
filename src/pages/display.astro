@@ -800,9 +800,16 @@ const COMBAT_STATE_ID = 'current-combat';
               console.log(`Current turn: ${entry.name} (index ${index})`);
             }
             
-            const getHealthStatus = (hp, maxHp) => {
+            const getHealthStatus = (hp, maxHp, type = 'character') => {
               if (hp === null || maxHp === null) return { text: '-', classes: 'text-gray-400' };
-              if (hp === 0) return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
+              // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
+              if (hp === 0) {
+                if (type === 'character') {
+                  return { text: 'Unconscious', classes: 'bg-red-900 text-white' };
+                } else {
+                  return { text: 'Dead', classes: 'bg-black text-white' };
+                }
+              }
               const percent = hp / maxHp;
               if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-600 text-white' };
               if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-600 text-white' };
@@ -820,7 +827,7 @@ const COMBAT_STATE_ID = 'current-combat';
               return colors[type] || colors.other;
             };
 
-            const health = getHealthStatus(entry.hp, entry.maxHp);
+            const health = getHealthStatus(entry.hp, entry.maxHp, entry.type);
             
             const entryEl = document.createElement('div');
             entryEl.className = `p-3 md:p-4 rounded-lg transition ${getTypeBadge(entry.type)} ${
