@@ -1672,6 +1672,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       if (pollingInitialized) return;
       
       pollingInitialized = true;
+      console.log('[Death Saves] Polling initialized - updates every 2 seconds');
       
       const pollCombatData = async () => {
         try {
@@ -1748,6 +1749,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 // Character is at 0 HP - ensure death saves section is visible
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it
+                  console.log('[Death Saves] Creating death saves section for', entry.name);
                   const cardContent = card.querySelector('.p-2, .p-3');
                   if (cardContent) {
                     const deathSavesHtml = `
@@ -1813,6 +1815,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 }
               } else if (deathSavesSection) {
                 // Character is not at 0 HP - hide death saves section
+                console.log('[Death Saves] Removing death saves section for', entry.name);
                 deathSavesSection.remove();
               }
               
@@ -1870,7 +1873,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         }
       };
       
-      // Poll every 2 seconds
+      // Run immediately on setup, then poll every 2 seconds
+      pollCombatData();
       pollInterval = setInterval(pollCombatData, 2000);
     }
 
