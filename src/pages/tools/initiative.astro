@@ -1664,17 +1664,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       hpForm?.addEventListener('submit', hpFormSubmitHandler);
     }
     
-    // Setup polling for non-edit users (players)
+    // Setup polling for all users to update HP and death saves in real-time
     let pollingInitialized = false;
     let pollInterval = null;
     
     function setupPollingForPlayers() {
       if (pollingInitialized) return;
-      
-      const container = document.querySelector('[data-can-edit]');
-      const canEdit = container?.getAttribute('data-can-edit') === 'true';
-      
-      if (canEdit) return; // Only run for non-edit users (players)
       
       pollingInitialized = true;
       
@@ -1688,16 +1683,6 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           
           if (stateResponse.ok && initiativeResponse.ok) {
             const state = await stateResponse.json();
-            
-            // Stop polling if combat is not active
-            if (state.status !== 'active') {
-              if (pollInterval) {
-                clearInterval(pollInterval);
-                pollInterval = null;
-                pollingInitialized = false;
-              }
-              return;
-            }
             
             const initiatives = await initiativeResponse.json();
             
