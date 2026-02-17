@@ -100,8 +100,8 @@ export const POST: APIRoute = async ({ request }) => {
     const name = data.data?.name;
     const race = data.data?.race?.fullName || data.data?.race?.baseName;
     const classes = data.data?.classes || [];
-    const primaryClass = classes.length > 0 
-      ? classes[0].definition?.name || classes[0].name
+    const classString = classes.length > 0 
+      ? classes.map((cls: any) => cls.definition?.name || cls.name).join(' / ')
       : null;
     const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
     
@@ -109,7 +109,7 @@ export const POST: APIRoute = async ({ request }) => {
     const hasChanges = 
       (name && name !== character.name) ||
       (race && race !== character.race) ||
-      (primaryClass && primaryClass !== character.class) ||
+      (classString && classString !== character.class) ||
       (totalLevel && totalLevel !== character.level);
     
     if (!hasChanges) {
@@ -134,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
       .set({
         name: name || character.name,
         race: race || character.race,
-        class: primaryClass || character.class,
+        class: classString || character.class,
         level: totalLevel || character.level,
         lastSyncedAt: now,
         updatedAt: now,
@@ -149,7 +149,7 @@ export const POST: APIRoute = async ({ request }) => {
         changes: {
           name: name !== character.name,
           race: race !== character.race,
-          class: primaryClass !== character.class,
+          class: classString !== character.class,
           level: totalLevel !== character.level,
         },
         lastSyncedAt: now
