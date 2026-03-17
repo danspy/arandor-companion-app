@@ -318,7 +318,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         const { default: DiceBox } = await import('@3d-dice/dice-box');
         diceBox = new DiceBox('#dice-canvas', {
           assetPath: '/assets/dice-box/',
-          theme: 'smooth',
+          theme: 'default',
           throwForce: 6,
           startingHeight: 8,
           spinForce: 4,
