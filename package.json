@@ -21,6 +21,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
     "@astrojs/db": "^0.18.1",
     "@astrojs/node": "^9.5.0",
     "astro": "^5.15.1",
