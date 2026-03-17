@@ -178,7 +178,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       </div>
 
       <!-- 3D Canvas Tray -->
-      <div id="dice-canvas-wrap" class="relative w-full bg-gray-900 dark:bg-gray-950" style="height:320px">
+      <div id="dice-canvas-wrap" class="relative w-full bg-gray-900 dark:bg-gray-950" style="height:480px">
         <div id="dice-canvas" class="absolute inset-0"></div>
         <div id="dice-loading" class="absolute inset-0 flex items-center justify-center bg-gray-900/80">
           <span class="text-gray-400 text-sm animate-pulse">Loading dice...</span>
@@ -260,8 +260,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     border-width: 1px;
   }
 
+  /* Make DiceBox's generated canvas fill its container */
+  #dice-canvas canvas,
+  #dice-canvas .dice-box-canvas {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
   @media (max-width: 640px) {
-    #dice-canvas-wrap { height: 220px; }
+    #dice-canvas-wrap { height: 300px; }
   }
 </style>
 
@@ -324,9 +332,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           spinForce: 4,
           lightIntensity: 0.9,
           gravity: 3,
-          scale: 6,
+          scale: 8,
         });
         await diceBox.init();
+        // Re-measure after CSS has sized the canvas to fill the container
+        diceBox.resizeWorld();
         diceBoxReady = true;
         document.getElementById('dice-loading')?.classList.add('hidden');
       } catch (e) {
@@ -499,6 +509,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
     if (box) {
       if (loadingEl) loadingEl.classList.add('hidden');
+      box.resizeWorld();
       await box.clear();
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), 10000)
