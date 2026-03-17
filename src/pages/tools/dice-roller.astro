@@ -488,6 +488,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     resultPanel.classList.remove('hidden');
   }
 
+  // ── Die colour map (matches button colours from tailwind.config.mjs) ────
+  const DICE_COLORS: Record<string, string> = {
+    d4:   '#8b4545', // primary-600  (burgundy)
+    d6:   '#8b4545',
+    d8:   '#8b4545',
+    d10:  '#8b4545',
+    d12:  '#8b4545',
+    d20:  '#d97706', // secondary-600 (amber)
+    d100: '#475569', // accent-600    (slate)
+  };
+
   // ── Roll button handler ──────────────────────────────────────────────────
   rollButton.addEventListener('click', async () => {
     const parts: string[] = [];
@@ -513,10 +524,20 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       if (loadingEl) loadingEl.classList.add('hidden');
       box.resizeWorld();
       await box.clear();
+
+      // Build array-of-objects notation so each die group gets its own colour
+      const notation = Object.entries(diceSelection)
+        .filter(([, count]) => count > 0)
+        .map(([die, count]) => ({
+          qty: count,
+          sides: die === 'd100' ? 'd100' : parseInt(die.slice(1)),
+          themeColor: DICE_COLORS[die],
+        }));
+
       const timeout = new Promise<never>((_, reject) =>
         setTimeout(() => reject(new Error('timeout')), 10000)
       );
-      results = await Promise.race([box.roll(parts.join('+')), timeout]).catch(() => {
+      results = await Promise.race([box.roll(notation), timeout]).catch(() => {
         console.warn('DiceBox roll timed out, using fallback');
         return generateFallback();
       });
