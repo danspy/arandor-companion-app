@@ -512,6 +512,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     resultPanel.classList.add('hidden');
     critBadge.classList.add('hidden');
     rollButton.disabled = true;
+    rollResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
     // Show loading spinner while dice-box initialises
     const loadingEl = document.getElementById('dice-loading');
@@ -558,7 +559,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     showResults(results, modifier, total);
     updateHistoryDisplay();
     rollButton.disabled = false;
-    rollResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // (scroll already happened on click — no need to scroll again here)
   });
 
   // ── Update history display ───────────────────────────────────────────────
