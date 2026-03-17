@@ -260,9 +260,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     border-width: 1px;
   }
 
-  /* Make DiceBox's generated canvas fill its container */
-  #dice-canvas canvas,
-  #dice-canvas .dice-box-canvas {
+  /* Make DiceBox's generated canvas fill its container.
+     Must use :global() — DiceBox creates this element at runtime
+     so Astro's scoped attribute is never added to it. */
+  :global(#dice-canvas canvas),
+  :global(#dice-canvas .dice-box-canvas) {
     width: 100% !important;
     height: 100% !important;
     display: block;
