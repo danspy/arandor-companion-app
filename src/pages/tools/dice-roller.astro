@@ -21,8 +21,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Dice Roller">
-  <PageHero 
-    title="Dice Roller" 
+  <PageHero
+    title="Dice Roller"
     heroImageUrl={heroImageUrl}
     pageName="dice-roller"
     canEditHero={canEdit}
@@ -37,9 +37,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     <!-- Dice Selection -->
     <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 mb-6">
       <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Dice</h2>
-      
+
       <!-- Dice Grid -->
-      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-6">
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-2">
         <!-- D4 -->
         <button
           type="button"
@@ -125,6 +125,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </button>
       </div>
 
+      <p class="text-xs text-gray-500 mt-2 mb-6 text-center">Left click to add · Right click to remove</p>
+
       <!-- Modifier Input -->
       <div class="flex items-center gap-4 mb-6">
         <label for="modifier" class="text-sm font-medium text-gray-700 dark:text-gray-300">Modifier:</label>
@@ -170,17 +172,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
 
     <!-- Roll Result -->
-    <div id="rollResult" class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-8 mb-6 hidden">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Result</h2>
-      
-      <!-- Animated Dice Container -->
-      <div id="animatedDice" class="flex flex-wrap justify-center gap-4 mb-6 min-h-[100px]"></div>
-      
-      <!-- Result Display -->
-      <div class="text-center">
-        <div id="resultBreakdown" class="text-gray-600 dark:text-gray-400 mb-2"></div>
-        <div class="text-5xl font-bold text-primary-600 dark:text-primary-400 mb-2" id="totalResult">0</div>
-        <p class="text-sm text-gray-500 dark:text-gray-500">Total</p>
+    <div id="rollResult" class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 overflow-hidden mb-6 hidden">
+      <div class="px-6 pt-6">
+        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Result</h2>
+      </div>
+
+      <!-- 3D Canvas Tray -->
+      <div id="dice-canvas-wrap" class="relative w-full bg-gray-900 dark:bg-gray-950" style="height:480px">
+        <div id="dice-canvas" class="absolute inset-0"></div>
+        <div id="dice-loading" class="absolute inset-0 flex items-center justify-center bg-gray-900/80">
+          <span class="text-gray-400 text-sm animate-pulse">Loading dice...</span>
+        </div>
+      </div>
+
+      <!-- Result panel (hidden until roll settles) -->
+      <div id="result-panel" class="p-8 hidden">
+        <div class="text-center">
+          <div id="resultBreakdown" class="text-gray-600 dark:text-gray-400 mb-2"></div>
+          <div id="totalResult" class="text-6xl font-bold text-primary-600 dark:text-primary-400 mb-1">—</div>
+          <p class="text-sm text-gray-500 dark:text-gray-500">Total</p>
+          <div id="critBadge" class="hidden mt-2"></div>
+        </div>
+        <!-- Individual die chips -->
+        <div id="diceChips" class="flex flex-wrap justify-center gap-2 mt-6"></div>
       </div>
     </div>
 
@@ -204,47 +218,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 </Layout>
 
 <style>
-  /* 3D Dice Animation */
-  @keyframes diceRoll {
-    0% {
-      transform: rotateX(0deg) rotateY(0deg) scale(1);
-    }
-    25% {
-      transform: rotateX(180deg) rotateY(180deg) scale(1.2);
-    }
-    50% {
-      transform: rotateX(360deg) rotateY(360deg) scale(1);
-    }
-    75% {
-      transform: rotateX(540deg) rotateY(540deg) scale(1.2);
-    }
-    100% {
-      transform: rotateX(720deg) rotateY(720deg) scale(1);
-    }
-  }
-
-  @keyframes diceAppear {
-    0% {
-      opacity: 0;
-      transform: scale(0) translateY(-50px);
-    }
-    50% {
-      transform: scale(1.2) translateY(0);
-    }
-    100% {
-      opacity: 1;
-      transform: scale(1) translateY(0);
-    }
-  }
-
-  .dice-rolling {
-    animation: diceRoll 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  }
-
-  .dice-appear {
-    animation: diceAppear 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  }
-
   /* Critical Success/Failure */
   @keyframes criticalSuccess {
     0%, 100% {
@@ -268,13 +241,37 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     color: #ef4444 !important;
   }
 
-  /* Slot machine ticking animation */
-  .slot-machine {
-    color: #9ca3af !important;
+  #result-panel {
+    animation: resultFadeIn 0.4s ease forwards;
   }
 
-  .slot-machine-total {
-    color: #9ca3af !important;
+  @keyframes resultFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .dice-chip {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    padding: .375rem .75rem;
+    border-radius: .5rem;
+    font-size: .875rem;
+    border-width: 1px;
+  }
+
+  /* Make DiceBox's generated canvas fill its container.
+     Must use :global() — DiceBox creates this element at runtime
+     so Astro's scoped attribute is never added to it. */
+  :global(#dice-canvas canvas),
+  :global(#dice-canvas .dice-box-canvas) {
+    width: 100% !important;
+    height: 100% !important;
+    display: block;
+  }
+
+  @media (max-width: 640px) {
+    #dice-canvas-wrap { height: 300px; }
   }
 </style>
 
@@ -306,14 +303,64 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   const currentSelection = document.getElementById('currentSelection') as HTMLDivElement;
   const selectionText = document.getElementById('selectionText') as HTMLParagraphElement;
   const rollResult = document.getElementById('rollResult') as HTMLDivElement;
-  const animatedDice = document.getElementById('animatedDice') as HTMLDivElement;
   const totalResult = document.getElementById('totalResult') as HTMLDivElement;
   const resultBreakdown = document.getElementById('resultBreakdown') as HTMLDivElement;
+  const resultPanel = document.getElementById('result-panel') as HTMLDivElement;
+  const critBadge = document.getElementById('critBadge') as HTMLDivElement;
+  const diceChips = document.getElementById('diceChips') as HTMLDivElement;
   const rollHistoryEl = document.getElementById('rollHistory') as HTMLDivElement;
   const clearHistoryButton = document.getElementById('clearHistoryButton') as HTMLButtonElement;
   const modifierInput = document.getElementById('modifier') as HTMLInputElement;
 
-  // Update dice count display
+  // ── Lazy dice-box singleton ──────────────────────────────────────────────
+  let diceBox: any = null;
+  let diceBoxReady = false;
+  let diceBoxFailed = false;
+  let initPromise: Promise<void> | null = null;
+
+  async function getDiceBox(): Promise<any> {
+    if (diceBoxReady) return diceBox;
+    if (diceBoxFailed) return null;
+    if (initPromise) { await initPromise; return diceBoxReady ? diceBox : null; }
+
+    initPromise = (async () => {
+      try {
+        const { default: DiceBox } = await import('@3d-dice/dice-box');
+        diceBox = new DiceBox('#dice-canvas', {
+          assetPath: '/assets/dice-box/',
+          theme: 'default',
+          throwForce: 6,
+          startingHeight: 8,
+          spinForce: 4,
+          lightIntensity: 0.9,
+          gravity: 3,
+          scale: 8,
+        });
+        await diceBox.init();
+        // Re-measure after CSS has sized the canvas to fill the container
+        diceBox.resizeWorld();
+        diceBoxReady = true;
+        document.getElementById('dice-loading')?.classList.add('hidden');
+      } catch (e) {
+        console.warn('DiceBox init failed, falling back to Math.random()', e);
+        diceBoxFailed = true;
+        document.getElementById('dice-loading')?.classList.add('hidden');
+      }
+    })();
+
+    await initPromise;
+    return diceBoxReady ? diceBox : null;
+  }
+
+  // Reset on Astro view transitions (canvas replaced in DOM)
+  document.addEventListener('astro:after-swap', () => {
+    diceBox = null;
+    diceBoxReady = false;
+    diceBoxFailed = false;
+    initPromise = null;
+  });
+
+  // ── Update dice count display ────────────────────────────────────────────
   function updateDiceCount(dice: string, count: number) {
     const selector = document.querySelector(`[data-dice="${dice}"]`);
     if (selector) {
@@ -327,7 +374,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     }
   }
 
-  // Update selection display
+  // ── Update selection display ─────────────────────────────────────────────
   function updateSelectionDisplay() {
     const parts: string[] = [];
     let totalDice = 0;
@@ -354,7 +401,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     }
   }
 
-  // Handle dice selection
+  // ── Handle dice selection ────────────────────────────────────────────────
   diceSelectors.forEach((selector) => {
     selector.addEventListener('click', () => {
       const dice = selector.getAttribute('data-dice') as string;
@@ -363,7 +410,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       updateSelectionDisplay();
     });
 
-    // Right-click to remove
     selector.addEventListener('contextmenu', (e) => {
       e.preventDefault();
       const dice = selector.getAttribute('data-dice') as string;
@@ -375,7 +421,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     });
   });
 
-  // Clear selection
+  // ── Clear selection ──────────────────────────────────────────────────────
   clearButton.addEventListener('click', () => {
     Object.keys(diceSelection).forEach((dice) => {
       diceSelection[dice] = 0;
@@ -384,129 +430,143 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     updateSelectionDisplay();
   });
 
-  // Roll dice
-  rollButton.addEventListener('click', async () => {
-    const rolls: number[] = [];
-    const diceTypes: string[] = [];
-
-    // Collect all dice rolls
-    Object.entries(diceSelection).forEach(([dice, count]) => {
-      if (count > 0) {
-        const sides = parseInt(dice.substring(1));
-        for (let i = 0; i < count; i++) {
-          const roll = Math.floor(Math.random() * sides) + 1;
-          rolls.push(roll);
-          diceTypes.push(dice);
-        }
+  // ── Fallback roll generator ──────────────────────────────────────────────
+  function generateFallback(): Array<{ sides: number; value: number }> {
+    const results: Array<{ sides: number; value: number }> = [];
+    Object.entries(diceSelection).forEach(([die, count]) => {
+      const sides = parseInt(die.slice(1));
+      for (let i = 0; i < count; i++) {
+        results.push({ sides, value: Math.floor(Math.random() * sides) + 1 });
       }
     });
+    return results;
+  }
 
-    const modifier = parseInt(modifierInput.value || '0');
-    const total = rolls.reduce((sum, roll) => sum + roll, 0) + modifier;
+  // ── showResults helper ───────────────────────────────────────────────────
+  function showResults(results: Array<{ sides: number; value: number }>, modifier: number, total: number) {
+    resultBreakdown.textContent =
+      results.map((r) => `d${r.sides}: ${r.value}`).join(', ') +
+      (modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : '');
 
-    // Build formula
-    const parts: string[] = [];
-    Object.entries(diceSelection).forEach(([dice, count]) => {
-      if (count > 0) {
-        parts.push(`${count}${dice}`);
+    totalResult.textContent = total.toString();
+    totalResult.className = 'text-6xl font-bold text-primary-600 dark:text-primary-400 mb-1';
+
+    // Critical (single d20 only)
+    critBadge.classList.add('hidden');
+    if (results.length === 1 && results[0].sides === 20) {
+      if (results[0].value === 20) {
+        totalResult.classList.add('critical-success');
+        critBadge.textContent = 'Natural 20!';
+        critBadge.className =
+          'inline-block px-4 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
+        critBadge.classList.remove('hidden');
+      } else if (results[0].value === 1) {
+        totalResult.classList.add('critical-fail');
+        critBadge.textContent = 'Critical Fail';
+        critBadge.className =
+          'inline-block px-4 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+        critBadge.classList.remove('hidden');
       }
-    });
-    if (modifier !== 0) {
-      parts.push(modifier > 0 ? `+${modifier}` : `${modifier}`);
     }
-    const formula = parts.join(' ');
 
-    // Add to history
-    rollHistory.unshift({
-      formula,
-      rolls,
-      modifier,
-      total,
-      timestamp: new Date(),
+    // Die chips
+    diceChips.innerHTML = results
+      .map((r) => {
+        const cls =
+          r.sides === 20
+            ? 'border-secondary-300 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-300'
+            : r.sides === 100
+            ? 'border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
+            : 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300';
+        return `<div class="dice-chip ${cls}">
+          <span class="text-xs opacity-60">d${r.sides}</span>
+          <span class="text-xl font-bold">${r.value}</span>
+        </div>`;
+      })
+      .join('');
+
+    resultPanel.classList.remove('hidden');
+  }
+
+  // ── Die colour map (matches button colours from tailwind.config.mjs) ────
+  const DICE_COLORS: Record<string, string> = {
+    d4:   '#8b4545', // primary-600  (burgundy)
+    d6:   '#8b4545',
+    d8:   '#8b4545',
+    d10:  '#8b4545',
+    d12:  '#8b4545',
+    d20:  '#d97706', // secondary-600 (amber)
+    d100: '#475569', // accent-600    (slate)
+  };
+
+  // ── Roll button handler ──────────────────────────────────────────────────
+  rollButton.addEventListener('click', async () => {
+    const parts: string[] = [];
+    Object.entries(diceSelection).forEach(([die, count]) => {
+      if (count > 0) parts.push(`${count}${die}`);
     });
+    const modifier = parseInt(modifierInput.value || '0');
+    if (!parts.length) return;
 
-    // Display result with animation
     rollResult.classList.remove('hidden');
-    animatedDice.innerHTML = '';
+    resultPanel.classList.add('hidden');
+    critBadge.classList.add('hidden');
+    rollButton.disabled = true;
+    rollResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
 
-    // Create animated dice with slot machine effect
-    rolls.forEach((finalRoll, index) => {
-      const diceEl = document.createElement('div');
-      diceEl.className = 'dice-appear bg-primary-100 dark:bg-primary-900 border-2 border-primary-300 dark:border-primary-700 rounded-lg p-4 min-w-[80px]';
-      diceEl.innerHTML = `
-        <div class="text-center">
-          <div class="text-xs text-gray-600 dark:text-gray-400 mb-1">${diceTypes[index]}</div>
-          <div class="text-3xl font-bold text-primary-600 dark:text-primary-400 dice-rolling slot-machine">0</div>
-        </div>
-      `;
-      animatedDice.appendChild(diceEl);
-      
-      // Slot machine animation
-      const numberEl = diceEl.querySelector('.slot-machine') as HTMLElement;
-      const sides = parseInt(diceTypes[index].substring(1));
-      let currentNum = 0;
-      let tickCount = 0;
-      const maxTicks = 20 + index * 3; // Stagger the stopping
-      
-      const interval = setInterval(() => {
-        tickCount++;
-        currentNum = (currentNum % sides) + 1;
-        numberEl.textContent = currentNum.toString();
-        
-        if (tickCount >= maxTicks) {
-          clearInterval(interval);
-          numberEl.textContent = finalRoll.toString();
-          numberEl.classList.remove('slot-machine');
-        }
-      }, 50);
-    });
+    // Show loading spinner while dice-box initialises
+    const loadingEl = document.getElementById('dice-loading');
+    if (loadingEl) loadingEl.classList.remove('hidden');
 
-    // Display breakdown after animation
-    setTimeout(() => {
-      const rollsText = rolls.map((r, i) => `${diceTypes[i]}: ${r}`).join(', ');
-      resultBreakdown.textContent = `${rollsText}${modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : ''}`;
-    }, 1200);
+    const box = await getDiceBox();
+    let results: Array<{ sides: number; value: number }>;
 
-    // Display total with slot machine effect
-    totalResult.textContent = '0';
-    totalResult.className = 'text-5xl font-bold text-primary-600 dark:text-primary-400 mb-2 slot-machine-total';
-    
-    let currentTotal = 0;
-    let totalTickCount = 0;
-    const totalMaxTicks = 25;
-    
-    const totalInterval = setInterval(() => {
-      totalTickCount++;
-      currentTotal = Math.floor(Math.random() * (total + 20));
-      totalResult.textContent = currentTotal.toString();
-      
-      if (totalTickCount >= totalMaxTicks) {
-        clearInterval(totalInterval);
-        totalResult.textContent = total.toString();
-        totalResult.classList.remove('slot-machine-total');
-        
-        // Check for natural 20 or 1 (only if rolling a single d20)
-        if (diceTypes.length === 1 && diceTypes[0] === 'd20') {
-          if (rolls[0] === 20) {
-            totalResult.classList.add('critical-success');
-          } else if (rolls[0] === 1) {
-            totalResult.classList.add('critical-fail');
-          }
-        }
-      }
-    }, 50);
+    if (box) {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      box.resizeWorld();
+      await box.clear();
 
-    // Update history display
+      // Build array-of-objects notation so each die group gets its own colour
+      const notation = Object.entries(diceSelection)
+        .filter(([, count]) => count > 0)
+        .map(([die, count]) => ({
+          qty: count,
+          sides: die === 'd100' ? 'd100' : parseInt(die.slice(1)),
+          themeColor: DICE_COLORS[die],
+        }));
+
+      const timeout = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('timeout')), 10000)
+      );
+      results = await Promise.race([box.roll(notation), timeout]).catch(() => {
+        console.warn('DiceBox roll timed out, using fallback');
+        return generateFallback();
+      });
+    } else {
+      if (loadingEl) loadingEl.classList.add('hidden');
+      results = generateFallback();
+    }
+
+    const total = results.reduce((s: number, r: { sides: number; value: number }) => s + r.value, 0) + modifier;
+    const formula = [
+      ...parts,
+      ...(modifier !== 0 ? [modifier > 0 ? `+${modifier}` : `${modifier}`] : []),
+    ].join(' ');
+
+    rollHistory.unshift({ formula, rolls: results.map((r: { sides: number; value: number }) => r.value), modifier, total, timestamp: new Date() });
+    if (rollHistory.length > 10) rollHistory.pop();
+
+    showResults(results, modifier, total);
     updateHistoryDisplay();
-
-    // Scroll to result
-    rollResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    rollButton.disabled = false;
+    // (scroll already happened on click — no need to scroll again here)
   });
 
-  // Update history display
+  // ── Update history display ───────────────────────────────────────────────
   function updateHistoryDisplay() {
     if (rollHistory.length === 0) {
-      rollHistoryEl.innerHTML = '<p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>';
+      rollHistoryEl.innerHTML =
+        '<p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>';
       return;
     }
 
@@ -529,7 +589,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       .join('');
   }
 
-  // Clear history
+  // ── Clear history ────────────────────────────────────────────────────────
   clearHistoryButton.addEventListener('click', () => {
     if (confirm('Are you sure you want to clear the roll history?')) {
       rollHistory = [];
@@ -537,6 +597,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     }
   });
 
-  // Update display when modifier changes
+  // ── Update display when modifier changes ─────────────────────────────────
   modifierInput.addEventListener('input', updateSelectionDisplay);
 </script>
