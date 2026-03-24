@@ -1,32 +1,68 @@
+/* Epic D&D Typography — Cormorant Garamond (display) + Outfit (body) */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600;1,700&family=Outfit:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design Tokens ──────────────────────────────────────────────── */
 :root {
   --safe-top: env(safe-area-inset-top, 0px);
   --pwa-main-padding-top: max(env(safe-area-inset-top), 1rem);
   --pwa-main-padding-bottom: max(env(safe-area-inset-bottom), 1rem);
-  /* Floating menu clearance: button height (56px) + button spacing (16px) + safe spacing (24px) = 96px */
   --pwa-floating-menu-clearance: 56px;
-  
-  /* Modal safe zone variables */
+
   --modal-safe-top: max(env(safe-area-inset-top), 1rem);
   --modal-safe-bottom: max(env(safe-area-inset-bottom), 1rem);
   --modal-safe-left: max(env(safe-area-inset-left), 1rem);
   --modal-safe-right: max(env(safe-area-inset-right), 1rem);
-  
-  /* Modal UI clearance for PWA elements */
-  --pwa-ui-bottom-clearance: 72px; /* Floating menu: button height (56px) + spacing (16px) = 72px */
-  --modal-extra-spacing: 2rem; /* Additional safe spacing */
-  
-  /* Modal content max height calculation */
+  --pwa-ui-bottom-clearance: 72px;
+  --modal-extra-spacing: 2rem;
   --modal-content-max-height: calc(100vh - var(--modal-safe-top) - var(--modal-safe-bottom) - var(--pwa-ui-bottom-clearance) - var(--modal-extra-spacing));
+
+  /* Light mode surfaces */
+  --bg-page:    #f7f3ec;
+  --bg-surface: #f0ead9;
+  --bg-raised:  #faf6ee;
+  --text-strong: #1e1408;
+  --text-body:   #3d2e1a;
+  --text-muted:  #8a7355;
+  --text-faint:  #b8a080;
+  --border:      rgba(110, 69, 20, 0.14);
+  --border-gold: rgba(201, 144, 50, 0.28);
+  --accent-rgb:  234, 88, 12;
+  --accent:      #ea580c;
+  --accent-dim:  rgba(234, 88, 12, 0.10);
+  --accent-glow: rgba(234, 88, 12, 0.22);
+  --gold:        #c99032;
+  --gold-dim:    rgba(201, 144, 50, 0.12);
+  --nav-bg:      rgba(30, 20, 8, 0.93);
+  --nav-border:  rgba(234, 88, 12, 0.20);
 }
+
+.dark {
+  /* Dark mode — the primary experience */
+  --bg-page:    #0c0906;
+  --bg-surface: #13100a;
+  --bg-raised:  #1a1410;
+  --text-strong: #f2e8d5;
+  --text-body:   #c4b49a;
+  --text-muted:  #7a6a54;
+  --text-faint:  #4a3e30;
+  --border:      rgba(201, 144, 50, 0.10);
+  --border-gold: rgba(201, 144, 50, 0.22);
+  --accent-dim:  rgba(234, 88, 12, 0.12);
+  --accent-glow: rgba(234, 88, 12, 0.28);
+  --gold-dim:    rgba(201, 144, 50, 0.10);
+  --nav-bg:      rgba(8, 6, 3, 0.94);
+  --nav-border:  rgba(234, 88, 12, 0.18);
+}
+
+/* ── Base ───────────────────────────────────────────────────────── */
 
 html, body {
   overflow-x: clip;
-  /* Use dvh for dynamic viewport height that accounts for mobile browser UI */
-  min-height: 100vh; /* Fallback for older browsers */
+  min-height: 100vh;
   min-height: 100dvh;
   min-height: -webkit-fill-available;
 }
@@ -39,48 +75,98 @@ body {
   padding-top: var(--safe-top);
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-page);
+  color: var(--text-body);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Main content should grow to fill available space */
+/* Atmospheric depth gradient */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse 140% 50% at 50% -5%,
+    rgba(234, 88, 12, 0.04) 0%,
+    transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.dark body::before {
+  background: radial-gradient(ellipse 140% 50% at 50% -5%,
+    rgba(234, 88, 12, 0.06) 0%,
+    transparent 70%);
+}
+
+/* Grain texture overlay */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.028;
+  pointer-events: none;
+  z-index: 1;
+  mix-blend-mode: overlay;
+}
+
 main {
   flex: 1 0 auto;
+  position: relative;
+  z-index: 2;
 }
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Navigation ─────────────────────────────────────────────────── */
 
 .app-nav {
-  background: rgba(114, 54, 54, 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: var(--nav-bg);
+  border-bottom: 1px solid var(--nav-border);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  backdrop-filter: blur(16px) saturate(1.6);
+  position: relative;
+  z-index: 50;
 }
 
-.dark .app-nav {
-  background: rgba(33, 40, 51, 0.6);
-  box-shadow: 0 4px 12px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
+/* Ember glow strip at the very bottom of nav */
+.app-nav::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(234, 88, 12, 0.35) 30%,
+    rgba(234, 88, 12, 0.55) 50%,
+    rgba(234, 88, 12, 0.35) 70%,
+    transparent);
+  filter: blur(0.5px);
 }
 
-/* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
+/* ── PWA mode ───────────────────────────────────────────────────── */
+
 @media (display-mode: standalone) and (max-width: 1024px) {
-  .pwa-hide-nav {
-    display: none !important;
-  }
-  
-  .pwa-hide-footer {
-    display: none !important;
-  }
-  
-  /* Ensure body fills full viewport height in PWA mode */
-  body {
-    min-height: 100vh;
-    height: -webkit-fill-available;
-  }
-  
-  /* Adjust main content padding when nav is hidden */
+  .pwa-hide-nav { display: none !important; }
+  .pwa-hide-footer { display: none !important; }
+  body { min-height: 100vh; height: -webkit-fill-available; }
   main {
-    /* Add bottom padding to accommodate floating menu and prevent content overlap */
     padding-bottom: calc(var(--pwa-main-padding-bottom) + var(--pwa-floating-menu-clearance)) !important;
   }
 }
 
-/* PWA Status Bar Gradient Overlay */
+/* ── PWA status bar ─────────────────────────────────────────────── */
+
 .pwa-status-bar-gradient {
   position: fixed;
   top: 0;
@@ -89,22 +175,89 @@ main {
   height: var(--safe-top);
   pointer-events: none;
   z-index: 9998;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7) 50%, transparent);
+  background: linear-gradient(to bottom, rgba(8, 6, 3, 0.96), rgba(8, 6, 3, 0.7) 50%, transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-/* Show gradient only when running as PWA */
 @media (display-mode: standalone) {
-  .pwa-status-bar-gradient {
-    opacity: 1;
-  }
+  .pwa-status-bar-gradient { opacity: 1; }
 }
 
-/* Dark mode gradient */
 .dark .pwa-status-bar-gradient {
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.7) 50%, transparent);
+  background: linear-gradient(to bottom, rgba(5, 3, 1, 0.98), rgba(5, 3, 1, 0.7) 50%, transparent);
 }
+
+/* ── Typography helpers ─────────────────────────────────────────── */
+
+.text-page-strong { color: var(--text-strong); }
+.text-page-body   { color: var(--text-body); }
+.text-page-muted  { color: var(--text-muted); }
+
+/* Cormorant italic display — used for page titles and headings */
+.heading-display {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  line-height: 1.15;
+  color: var(--text-strong);
+  letter-spacing: 0.01em;
+}
+
+/* Non-italic display variant */
+.heading-display-upright {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: normal;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-strong);
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+/* ── Nav link states ────────────────────────────────────────────── */
+
+.nav-link-inactive {
+  color: rgba(242, 232, 213, 0.45);
+}
+.nav-link-inactive:hover {
+  color: rgba(242, 232, 213, 0.85);
+  background: rgba(201, 144, 50, 0.06);
+}
+.nav-link-active {
+  color: var(--accent);
+  background: var(--accent-dim);
+  font-weight: 500;
+}
+.nav-link-active:hover {
+  color: var(--accent);
+}
+
+/* ── Cards & surfaces ───────────────────────────────────────────── */
+
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card:hover {
+  border-color: var(--border-gold);
+  box-shadow: 0 4px 24px rgba(0,0,0,0.15), 0 0 0 1px rgba(201, 144, 50, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark .card:hover {
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 12px rgba(234, 88, 12, 0.08);
+}
+
+/* Orange left-border accent for featured items */
+.card-featured {
+  border-left: 2px solid var(--accent);
+}
+
+/* ── Utilities ──────────────────────────────────────────────────── */
 
 .line-clamp-2 {
   overflow: hidden;
@@ -113,198 +266,80 @@ main {
   -webkit-box-orient: vertical;
 }
 
-/* Loading screen styles */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Section divider with ember glow */
+.divider-ember {
+  border: none;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--border-gold) 40%, var(--border-gold) 60%, transparent);
+  position: relative;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+/* ── Animations ─────────────────────────────────────────────────── */
+
+@keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+@keyframes fadeOut { to { opacity: 0; } }
+@keyframes spin    { to { transform: rotate(360deg); } }
+
+@keyframes emberPulse {
+  0%, 100% { opacity: 0.6; }
+  50%       { opacity: 1; }
 }
 
 .page-fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* View Transitions - smooth page navigation */
+/* ── View Transitions ───────────────────────────────────────────── */
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.4s;
+  animation-duration: 0.35s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Default fade transition */
-::view-transition-old(root) {
-  animation-name: fadeOut;
-}
+::view-transition-old(root) { animation-name: fadeOut; }
+::view-transition-new(root) { animation-name: fadeIn; }
 
-::view-transition-new(root) {
-  animation-name: fadeIn;
-}
+html[data-transition="zoom"] ::view-transition-old(root) { animation-name: zoomOut; }
+html[data-transition="zoom"] ::view-transition-new(root) { animation-name: zoomIn; }
+html[data-transition="zoom-back"] ::view-transition-old(root) { animation-name: zoomOutBack; }
+html[data-transition="zoom-back"] ::view-transition-new(root) { animation-name: zoomInBack; }
 
-/* Zoom transition for detail pages - going to detail */
-html[data-transition="zoom"] ::view-transition-old(root) {
-  animation-name: zoomOut;
-}
+@keyframes zoomOut     { from { opacity:1; transform:scale(1);    } to { opacity:0; transform:scale(0.96); } }
+@keyframes zoomIn      { from { opacity:0; transform:scale(1.04); } to { opacity:1; transform:scale(1); } }
+@keyframes zoomOutBack { from { opacity:1; transform:scale(1);    } to { opacity:0; transform:scale(1.04); } }
+@keyframes zoomInBack  { from { opacity:0; transform:scale(0.96); } to { opacity:1; transform:scale(1); } }
 
-html[data-transition="zoom"] ::view-transition-new(root) {
-  animation-name: zoomIn;
-}
+html[data-transition="slide-left"]  ::view-transition-old(root) { animation-name: slideOutLeft; }
+html[data-transition="slide-left"]  ::view-transition-new(root) { animation-name: slideInRight; }
+html[data-transition="slide-right"] ::view-transition-old(root) { animation-name: slideOutRight; }
+html[data-transition="slide-right"] ::view-transition-new(root) { animation-name: slideInLeft; }
 
-/* Zoom back transition - returning from detail */
-html[data-transition="zoom-back"] ::view-transition-old(root) {
-  animation-name: zoomOutBack;
-}
+@keyframes slideOutLeft  { from { transform:translateX(0);     opacity:1; } to { transform:translateX(-28px); opacity:0; } }
+@keyframes slideInRight  { from { transform:translateX(28px);  opacity:0; } to { transform:translateX(0);     opacity:1; } }
+@keyframes slideOutRight { from { transform:translateX(0);     opacity:1; } to { transform:translateX(28px);  opacity:0; } }
+@keyframes slideInLeft   { from { transform:translateX(-28px); opacity:0; } to { transform:translateX(0);     opacity:1; } }
 
-html[data-transition="zoom-back"] ::view-transition-new(root) {
-  animation-name: zoomInBack;
-}
+/* ── Loading spinner ────────────────────────────────────────────── */
 
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-  }
-}
-
-@keyframes zoomOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-}
-
-@keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes zoomOutBack {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes zoomInBack {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Slide transition for lateral navigation */
-html[data-transition="slide-left"] ::view-transition-old(root) {
-  animation-name: slideOutLeft;
-}
-
-html[data-transition="slide-left"] ::view-transition-new(root) {
-  animation-name: slideInRight;
-}
-
-html[data-transition="slide-right"] ::view-transition-old(root) {
-  animation-name: slideOutRight;
-}
-
-html[data-transition="slide-right"] ::view-transition-new(root) {
-  animation-name: slideInLeft;
-}
-
-@keyframes slideOutLeft {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-30px);
-    opacity: 0;
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    transform: translateX(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-@keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(30px);
-    opacity: 0;
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    transform: translateX(-30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
-}
-
-/* Loading indicator */
 .loading-spinner {
-  border: 3px solid rgba(139, 69, 69, 0.1);
-  border-top-color: #8b4545;
+  border: 2px solid rgba(234, 88, 12, 0.15);
+  border-top-color: #ea580c;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 0.8s linear infinite;
+  width: 36px;
+  height: 36px;
+  animation: spin 0.75s linear infinite;
 }
 
-.dark .loading-spinner {
-  border-color: rgba(139, 69, 69, 0.2);
-  border-top-color: #d9b4b4;
-}
+/* ── Modal safe zones ───────────────────────────────────────────── */
 
-/* Modal Safe Zones for PWA */
-/* Apply safe zones to modal content containers in PWA standalone mode */
 @media (display-mode: standalone) and (max-width: 1024px) {
-  /* Modal overlay should respect safe areas for padding */
   .modal-overlay-safe {
     padding-top: var(--modal-safe-top) !important;
     padding-bottom: var(--modal-safe-bottom) !important;
     padding-left: var(--modal-safe-left) !important;
     padding-right: var(--modal-safe-right) !important;
   }
-  
-  /* Modal content should have additional bottom clearance for floating menu and quick access */
   .modal-content-safe {
     max-height: var(--modal-content-max-height) !important;
   }
