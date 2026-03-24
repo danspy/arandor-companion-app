@@ -22,8 +22,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Locations">
-  <PageHero 
-    title="Locations" 
+  <PageHero
+    title="Locations"
     heroImageUrl={heroImageUrl}
     pageName="locations"
     canEditHero={canEditHero}
@@ -31,7 +31,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {isLoggedIn && (
     <div class="flex justify-end mb-4">
-      <Button 
+      <Button
         variant="primary"
         size="md"
         icon="add"
@@ -45,52 +45,52 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Stats -->
   <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{locations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Locations</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{locations.length}</div>
+      <div class="t-label-sm mt-1">Total Locations</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{visitedLocations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Visited</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{visitedLocations.length}</div>
+      <div class="t-label-sm mt-1">Visited</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-gray-600 dark:text-gray-400">{unvisitedLocations.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">To Explore</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{unvisitedLocations.length}</div>
+      <div class="t-label-sm mt-1">To Explore</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-4 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
+        <input
+          type="text"
+          id="searchInput"
           placeholder="Search locations by name, type, region, or description..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
         >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <!-- Type Filter Below -->
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" 
+        <span class="text-sm t-muted font-medium">Filter:</span>
+        <button
+          class="filter-btn t-pill active transition-all duration-200 active:scale-95"
           data-filter="all"
         >
           All ({locations.length})
         </button>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+        <button
+          class="filter-btn t-pill transition-all duration-200 active:scale-95"
           data-filter="visited"
         >
           Visited ({visitedLocations.length})
         </button>
-        <button 
-          class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+        <button
+          class="filter-btn t-pill transition-all duration-200 active:scale-95"
           data-filter="unvisited"
         >
           Unvisited ({unvisitedLocations.length})
@@ -98,8 +98,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         {allTypes.map(type => {
           const count = locations.filter(l => l.type === type).length;
           return (
-            <button 
-              class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" 
+            <button
+              class="filter-btn t-pill transition-all duration-200 active:scale-95"
               data-filter={type}
             >
               {type} ({count})
@@ -112,14 +112,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <div id="locationGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {locations.map(location => (
-      <div class="location-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
+      <div class="location-card t-panel overflow-hidden hover:shadow-lg transition" data-type={location.type} data-visited={location.visited ? 'true' : 'false'} data-search={`${location.name} ${location.type} ${location.region || ''} ${location.description}`.toLowerCase()}>
         <a href={`/locations/${location.id}`} class="block">
           <div class={`relative overflow-hidden ${location.imageUrl ? 'h-56' : 'h-12'}`}>
             <!-- Background -->
             {location.imageUrl ? (
               <>
-                <img 
-                  src={location.imageUrl} 
+                <img
+                  src={location.imageUrl}
                   alt={location.name}
                   class="absolute inset-0 w-full h-full object-cover"
                 />
@@ -131,27 +131,27 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 location.type === 'dungeon' ? 'bg-gradient-to-br from-purple-600 to-purple-500' :
                 location.type === 'wilderness' ? 'bg-gradient-to-br from-green-600 to-green-500' :
                 location.type === 'building' ? 'bg-gradient-to-br from-amber-600 to-amber-500' :
-                'bg-gradient-to-br from-gray-600 to-gray-500'
+                'bg-gradient-to-br from-stone-800 to-stone-700'
               }`}></div>
             )}
-            
+
             <!-- Type badge -->
             <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
               location.type === 'city' ? 'bg-blue-600/90' :
               location.type === 'dungeon' ? 'bg-purple-600/90' :
               location.type === 'wilderness' ? 'bg-green-600/90' :
               location.type === 'building' ? 'bg-amber-600/90' :
-              'bg-gray-600/90'
+              'bg-stone-700/90'
             }`}>
               {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
             </div>
           </div>
         </a>
-        
+
         <div class="p-6">
           <div class="flex items-start justify-between gap-2 mb-2">
-            <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{location.name}</h2>
+            <a href={`/locations/${location.id}`} class="block t-gold hover:opacity-80 transition">
+              <h2 class="text-2xl font-bold">{location.name}</h2>
             </a>
             {isLoggedIn && (
               <div class="flex gap-2 items-center flex-shrink-0">
@@ -170,7 +170,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   size="sm"
                   icon="delete"
                   iconPosition="only"
-                  class="delete-location hover:text-red-600 dark:hover:text-red-400"
+                  class="delete-location hover:text-red-400"
                   data-id={location.id}
                   title="Delete location"
                   ariaLabel="Delete location"
@@ -178,24 +178,24 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               </div>
             )}
           </div>
-          <a href={`/locations/${location.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-            <p class="text-gray-600 dark:text-gray-400 mb-4">
+          <a href={`/locations/${location.id}`} class="block t-muted hover:opacity-80 transition">
+            <p class="mb-4">
               {location.region && `${location.region}`}
               {location.visited && (
-                <span class="ml-2 text-green-600 dark:text-green-400">✓ Visited</span>
+                <span class="ml-2 t-badge-green">✓ Visited</span>
               )}
             </p>
           </a>
 
           {location.notes && (
-            <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-3 mb-4 dark:border dark:border-blue-800">
-              <p class="text-sm text-blue-900 dark:text-blue-200"><strong>Notes:</strong> {location.notes}</p>
+            <div class="t-inset border-l-4 p-3 mb-4" style="border-left-color:var(--accent);">
+              <p class="text-sm t-body-text"><strong>Notes:</strong> {location.notes}</p>
             </div>
           )}
 
-          <a 
+          <a
             href={`/locations/${location.id}`}
-            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="t-link block mt-4 text-center px-4 py-2 rounded-lg transition font-medium text-sm"
           >
             View Details →
           </a>
@@ -205,37 +205,37 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {locations.length === 0 && (
-    <div class="text-center py-16 bg-white rounded-lg shadow-md">
-      <p class="text-gray-500 text-lg">No locations yet. Start mapping your world!</p>
+    <div class="text-center py-16 t-panel">
+      <p class="t-faint text-lg">No locations yet. Start mapping your world!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Location -->
-  <div id="locationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Location</h2>
+  <div id="locationModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 t-section-h">New Location</h2>
       <form id="locationForm" class="space-y-4">
         <input type="hidden" id="locationId" name="id">
-        
+
         <div>
-          <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-          <input 
-            type="text" 
-            id="name" 
-            name="name" 
-            required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          <label for="name" class="t-label block mb-1">Name</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            required
+            class="t-input px-3 py-2"
           >
         </div>
-        
+
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Type</label>
-            <select 
-              id="type" 
-              name="type" 
+            <label for="type" class="t-label block mb-1">Type</label>
+            <select
+              id="type"
+              name="type"
               required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
               <option value="city">City</option>
               <option value="dungeon">Dungeon</option>
@@ -244,139 +244,139 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <option value="other">Other</option>
             </select>
           </div>
-          
+
           <div>
-            <label for="region" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Region (optional)</label>
-            <input 
-              type="text" 
-              id="region" 
-              name="region" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            <label for="region" class="t-label block mb-1">Region (optional)</label>
+            <input
+              type="text"
+              id="region"
+              name="region"
+              class="t-input px-3 py-2"
             >
           </div>
         </div>
-        
+
         <div>
-          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-          <textarea 
-            id="description" 
-            name="description" 
-            required 
+          <label for="description" class="t-label block mb-1">Description</label>
+          <textarea
+            id="description"
+            name="description"
+            required
             rows="3"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-3 py-2"
           ></textarea>
         </div>
-        
+
         <div>
-          <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
-          <textarea 
-            id="notes" 
-            name="notes" 
+          <label for="notes" class="t-label block mb-1">Notes (optional)</label>
+          <textarea
+            id="notes"
+            name="notes"
             rows="2"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-3 py-2"
           ></textarea>
         </div>
-        
+
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Header Image (optional)</label>
+          <label class="t-label block">Header Image (optional)</label>
           <div class="space-y-2">
             <div>
-              <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
-              <input 
-                type="file" 
-                id="imageFile" 
-                name="imageFile" 
+              <label for="imageFile" class="t-label block mb-1">Upload Image (max 5MB)</label>
+              <input
+                type="file"
+                id="imageFile"
+                name="imageFile"
                 accept="image/*"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div class="flex items-center gap-2">
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
+              <span class="text-xs t-faint">OR</span>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
             </div>
             <div>
-              <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
-              <input 
-                type="text" 
-                id="imageUrl" 
-                name="imageUrl" 
+              <label for="imageUrl" class="t-label block mb-1">Image URL</label>
+              <input
+                type="text"
+                id="imageUrl"
+                name="imageUrl"
                 placeholder="https://example.com/image.jpg or /uploads/image.jpg"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400">An image to display in the location header. If not set, a gradient based on location type will be shown.</p>
+          <p class="text-xs t-faint">An image to display in the location header. If not set, a gradient based on location type will be shown.</p>
           <div id="imagePreview" class="hidden mt-2">
             <img id="imagePreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
           </div>
         </div>
-        
+
         <div>
           <label class="flex items-center">
-            <input 
-              type="checkbox" 
-              id="visited" 
+            <input
+              type="checkbox"
+              id="visited"
               name="visited"
-              class="w-4 h-4 text-primary-600 dark:text-primary-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500"
+              class="w-4 h-4 rounded"
             >
-            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Mark as visited</span>
+            <span class="ml-2 text-sm t-body-text">Mark as visited</span>
           </label>
         </div>
-        
+
         <div>
           <label class="flex items-center">
-            <input 
-              type="checkbox" 
-              id="visibleOnMap" 
+            <input
+              type="checkbox"
+              id="visibleOnMap"
               name="visibleOnMap"
-              class="w-4 h-4 text-primary-600 dark:text-primary-500 bg-gray-100 dark:bg-gray-700 border-gray-300 dark:border-gray-600 rounded focus:ring-primary-500"
+              class="w-4 h-4 rounded"
             >
-            <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Show pin on map</span>
+            <span class="ml-2 text-sm t-body-text">Show pin on map</span>
           </label>
-          <p class="text-xs text-gray-500 dark:text-gray-400 ml-6 mt-1">Uncheck to hide this location pin on the map (can be enabled later in edit mode)</p>
+          <p class="text-xs t-faint ml-6 mt-1">Uncheck to hide this location pin on the map (can be enabled later in edit mode)</p>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="mapX" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Map X Coordinate (optional)</label>
-            <input 
-              type="number" 
-              id="mapX" 
-              name="mapX" 
+            <label for="mapX" class="t-label block mb-1">Map X Coordinate (optional)</label>
+            <input
+              type="number"
+              id="mapX"
+              name="mapX"
               min="0"
               max="100"
               step="0.1"
               placeholder="0-100"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="t-input px-3 py-2"
             >
           </div>
           <div>
-            <label for="mapY" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Map Y Coordinate (optional)</label>
-            <input 
-              type="number" 
-              id="mapY" 
-              name="mapY" 
+            <label for="mapY" class="t-label block mb-1">Map Y Coordinate (optional)</label>
+            <input
+              type="number"
+              id="mapY"
+              name="mapY"
               min="0"
               max="100"
               step="0.1"
               placeholder="0-100"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-200 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              class="t-input px-3 py-2"
             >
           </div>
         </div>
-        
+
         <div class="flex gap-4 pt-4">
-          <button 
-            type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+          <button
+            type="submit"
+            class="t-btn-primary flex-1 px-4 py-2"
           >
             Save Location
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            class="t-inset flex-1 px-4 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors"
           >
             Cancel
           </button>
@@ -395,7 +395,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const imagePreview = document.getElementById('imagePreview');
     const imagePreviewImg = document.getElementById('imagePreviewImg') as HTMLImageElement;
     const imageFileInput = document.getElementById('imageFile') as HTMLInputElement;
-    
+
     if (imageUrl && imagePreview && imagePreviewImg) {
       imagePreviewImg.src = imageUrl;
       imagePreview.classList.remove('hidden');
@@ -472,15 +472,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Handle form submission
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
     const mapX = formData.get('mapX');
     const mapY = formData.get('mapY');
-    
+
     // Handle image upload
     let imageUrl = formData.get('imageUrl') as string || undefined;
     const imageFile = formData.get('imageFile') as File;
-    
+
     if (imageFile && imageFile.size > 0) {
       // Validate file size (5MB max)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
@@ -488,16 +488,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('Image file is too large. Maximum size is 5MB.');
         return;
       }
-      
+
       try {
         const uploadFormData = new FormData();
         uploadFormData.append('file', imageFile);
-        
+
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: uploadFormData,
         });
-        
+
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           imageUrl = uploadData.url;
@@ -512,7 +512,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         return;
       }
     }
-    
+
     const data = {
       name: formData.get('name'),
       type: formData.get('type'),
@@ -529,7 +529,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     try {
       const url = editingId ? `/api/locations/${editingId}` : '/api/locations';
       const method = editingId ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -549,7 +549,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Check for edit parameter on page load and open modal if present
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
-    
+
     if (editId && modal && form && modalTitle) {
       (async () => {
         try {
@@ -557,9 +557,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           if (!response.ok) {
             throw new Error('Location not found');
           }
-          
+
           const location = await response.json();
-          
+
           editingId = editId;
           (document.getElementById('name') as HTMLInputElement).value = location.name;
           (document.getElementById('type') as HTMLSelectElement).value = location.type;
@@ -571,13 +571,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
           (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
           (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
-          
+
           // Show image preview if location has an image
           showImagePreview(location.imageUrl || '', true);
-          
+
           modalTitle.textContent = 'Edit Location';
           modal.classList.remove('hidden');
-          
+
           // Clear the URL parameter so refreshing doesn't re-open the modal
           window.history.replaceState({}, '', '/locations');
         } catch (error) {
@@ -591,22 +591,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Edit/Delete locations with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    
+
     if (target.classList.contains('edit-location')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       // Get DOM elements fresh
       const modal = document.getElementById('locationModal');
       const modalTitle = document.getElementById('modalTitle');
-      
+
       try {
         const response = await fetch(`/api/locations/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch location');
         }
         const location = await response.json();
-        
+
         editingId = id;
         (document.getElementById('name') as HTMLInputElement).value = location.name;
         (document.getElementById('type') as HTMLSelectElement).value = location.type;
@@ -618,10 +618,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         (document.getElementById('visibleOnMap') as HTMLInputElement).checked = location.visibleOnMap !== false;
         (document.getElementById('mapX') as HTMLInputElement).value = location.mapX?.toString() || '';
         (document.getElementById('mapY') as HTMLInputElement).value = location.mapY?.toString() || '';
-        
+
         // Show image preview if location has an image
         showImagePreview(location.imageUrl || '', true);
-        
+
         if (modalTitle) modalTitle.textContent = 'Edit Location';
         modal?.classList.remove('hidden');
       } catch (error) {
@@ -629,18 +629,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('Failed to load location. Please try again.');
       }
     }
-    
+
     // Delete location
     if (target.classList.contains('delete-location')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       if (confirm('Are you sure you want to delete this location?')) {
         try {
           const response = await fetch(`/api/locations/${id}`, {
             method: 'DELETE',
           });
-          
+
           if (response.ok) {
             window.location.reload();
           } else {
@@ -659,7 +659,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     const filterBtns = document.querySelectorAll('.filter-btn');
     const locationCards = document.querySelectorAll('.location-card');
-    
+
     let currentFilter = 'all';
     let currentSearch = '';
 
@@ -669,7 +669,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         const cardType = card.getAttribute('data-type') || '';
         const cardVisited = card.getAttribute('data-visited') || '';
         const searchText = card.getAttribute('data-search') || '';
-        
+
         let matchesFilter = false;
         if (currentFilter === 'all') {
           matchesFilter = true;
@@ -680,10 +680,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         } else {
           matchesFilter = cardType === currentFilter;
         }
-        
+
         // Match if ANY search term is found in the text (more flexible search)
         const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-        
+
         (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
     };
@@ -698,18 +698,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         currentFilter = btn.getAttribute('data-filter') || 'all';
-        
+
         // Update button styles
         filterBtns.forEach(b => {
           if (b.getAttribute('data-filter') === currentFilter) {
-            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-            b.classList.add('bg-primary-600', 'text-white');
+            b.classList.add('active');
           } else {
-            b.classList.remove('bg-primary-600', 'text-white');
-            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.remove('active');
           }
         });
-        
+
         applyFilters();
       });
     });

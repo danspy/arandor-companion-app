@@ -346,142 +346,256 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   GLOBAL DESIGN SYSTEM REMAPPING
-   These rules come after @tailwind utilities so they win by cascade.
-   They replace every hardcoded gray/white/black Tailwind token with
-   our dark-tome design variables across every page automatically.
+   TOME COMPONENT SYSTEM  (t-*)
+   Direct CSS-variable-based classes used in page HTML.
+   No cascade tricks — just semantic classes with CSS vars.
    ═══════════════════════════════════════════════════════════════════ */
 
-/* ── Card / surface backgrounds ─────────────────────────────────── */
-.bg-white                        { background-color: var(--bg-surface); }
-.dark .dark\:bg-black            { background-color: var(--bg-surface); }
-.dark .dark\:bg-gray-800         { background-color: var(--bg-raised); }
-.dark .dark\:bg-gray-700         { background-color: var(--bg-surface); }
-.dark .dark\:bg-gray-900         { background-color: var(--bg-page); }
+/* ── Surfaces ────────────────────────────────────────────────────── */
 
-/* ── Inner panel / nested section backgrounds ───────────────────── */
-.bg-gray-50                      { background-color: var(--bg-raised); }
-.dark .dark\:bg-gray-900\/50     { background-color: rgba(26, 20, 16, 0.65); }
-.dark .dark\:bg-gray-800\/50     { background-color: rgba(26, 20, 16, 0.4); }
-
-/* ── Hover backgrounds ───────────────────────────────────────────── */
-.hover\:bg-gray-100:hover        { background-color: rgba(201, 144, 50, 0.07); }
-.hover\:bg-gray-50:hover         { background-color: rgba(201, 144, 50, 0.05); }
-.dark .dark\:hover\:bg-gray-900:hover { background-color: rgba(234, 88, 12, 0.08); }
-.dark .dark\:hover\:bg-gray-800:hover { background-color: rgba(234, 88, 12, 0.06); }
-.dark .dark\:hover\:bg-gray-700:hover { background-color: rgba(234, 88, 12, 0.10); }
-
-/* ── Borders ─────────────────────────────────────────────────────── */
-.border-gray-200                 { border-color: var(--border); }
-.border-gray-300                 { border-color: var(--border); }
-.dark .dark\:border-gray-900     { border-color: var(--border-gold); }
-.dark .dark\:border-gray-800     { border-color: var(--border); }
-.dark .dark\:border-gray-700     { border-color: var(--border); }
-.dark .dark\:border-gray-600     { border-color: var(--border); }
-
-/* ── Text ────────────────────────────────────────────────────────── */
-.text-gray-900                   { color: var(--text-strong); }
-.text-gray-800                   { color: var(--text-strong); }
-.text-gray-700                   { color: var(--text-body); }
-.text-gray-600                   { color: var(--text-muted); }
-.text-gray-500                   { color: var(--text-faint); }
-.text-gray-400                   { color: var(--text-faint); }
-.dark .dark\:text-gray-100       { color: var(--text-strong); }
-.dark .dark\:text-gray-200       { color: var(--text-strong); }
-.dark .dark\:text-gray-300       { color: var(--text-body); }
-.dark .dark\:text-gray-400       { color: var(--text-muted); }
-.dark .dark\:text-gray-500       { color: var(--text-faint); }
-.dark .dark\:hover\:text-gray-200:hover { color: var(--text-strong); }
-
-/* Placeholder text */
-::placeholder                    { color: var(--text-faint); opacity: 1; }
-
-/* ── Box shadows — themed ────────────────────────────────────────── */
-.shadow-md {
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px var(--border);
-}
-.dark .shadow-md {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px var(--border-gold);
-}
-.shadow-lg {
-  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px var(--border);
-}
-.dark .shadow-lg {
-  box-shadow: 0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px var(--border-gold);
-}
-.hover\:shadow-lg:hover {
-  box-shadow: 0 6px 28px rgba(0,0,0,0.14), 0 0 0 1px var(--border-gold);
-  transform: translateY(-1px);
-  transition: box-shadow 0.2s, transform 0.2s;
-}
-.dark .hover\:shadow-lg:hover {
-  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 16px rgba(234,88,12,0.10), 0 0 0 1px var(--border-gold);
-}
-.shadow-xl {
-  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 0 0 1px var(--border-gold);
-}
-.dark .shadow-xl {
-  box-shadow: 0 16px 60px rgba(0,0,0,0.6), 0 0 0 1px var(--border-gold);
+/* Main card / panel — used everywhere instead of bg-white dark:bg-black */
+.t-panel {
+  position: relative;
+  background-color: var(--bg-surface);
+  /* Gold L-corner flourishes via stacked background gradients */
+  background-image:
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55));
+  background-size:    12px 2px, 2px 12px,  12px 2px, 2px 12px,  12px 2px, 2px 12px,  12px 2px, 2px 12px;
+  background-position: 0 0, 0 0,  100% 0, 100% 0,  0 100%, 0 100%,  100% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  border: 1px solid var(--border-gold);
+  border-radius: 10px;
 }
 
-/* ── Rounded corners — slightly more refined ────────────────────── */
-.rounded-lg  { border-radius: 10px; }
-.rounded-xl  { border-radius: 14px; }
-
-/* ── Form inputs ─────────────────────────────────────────────────── */
-.dark .dark\:bg-gray-700   { background-color: var(--bg-surface); }
-
-/* Focus rings — orange accent */
-.focus\:ring-primary-500:focus {
-  --tw-ring-color: rgba(234, 88, 12, 0.40);
-}
-.focus\:border-transparent:focus {
-  border-color: rgba(234, 88, 12, 0.50) !important;
+/* Nested inner section — slightly raised */
+.t-inset {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
 }
 
-/* ── Filter / tag pills ──────────────────────────────────────────── */
-.bg-gray-200                     { background-color: var(--bg-raised); }
-.hover\:bg-gray-300:hover        { background-color: rgba(234, 88, 12, 0.10); }
-.dark .dark\:hover\:bg-gray-600:hover { background-color: rgba(234, 88, 12, 0.12); }
+/* ── Typography ──────────────────────────────────────────────────── */
 
-/* Primary action buttons → orange */
-.bg-primary-600                  { background-color: var(--accent); }
-.hover\:bg-primary-700:hover     { background-color: #c2410c; }
-.dark .dark\:bg-primary-700      { background-color: var(--accent); }
-.dark .dark\:hover\:bg-primary-600:hover { background-color: #fb923c; }
+/* Section heading — Cormorant italic, gold */
+.t-section-h {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.2;
+}
 
-/* Quest / entry border-left accent */
-.border-primary-500              { border-color: var(--accent); }
-.dark .dark\:border-primary-400  { border-color: var(--accent); }
+/* Stat number — large Cormorant gold */
+.t-num {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+}
 
-/* Progress bars — gold to orange */
-.from-primary-500                { --tw-gradient-from: var(--gold) !important; }
-.to-secondary-500                { --tw-gradient-to: var(--accent) !important; }
+/* Small all-caps label */
+.t-label-sm {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
 
-/* Section headings that use primary text color */
-.text-primary-600                { color: var(--gold); }
-.dark .dark\:text-primary-400    { color: var(--gold); }
-.hover\:text-primary-800:hover   { color: var(--accent); }
-.dark .dark\:hover\:text-primary-300:hover { color: var(--accent); }
-.text-primary-700                { color: var(--gold); }
-.dark .dark\:text-primary-500    { color: var(--gold); }
+/* Text colour helpers */
+.t-gold        { color: var(--gold); }
+.t-accent      { color: var(--accent); }
+.t-body-text   { color: var(--text-body); }
+.t-muted       { color: var(--text-muted); }
+.t-faint       { color: var(--text-faint); }
+.t-strong-text { color: var(--text-strong); }
 
-/* ── Dividers ────────────────────────────────────────────────────── */
-.dark .dark\:divide-gray-700 > * + * { border-color: var(--border); }
+/* "View all X →" links */
+.t-link {
+  color: var(--gold);
+  font-size: 0.825rem;
+  font-weight: 500;
+  transition: color 0.15s ease;
+}
+.t-link:hover { color: var(--accent); }
 
-/* ── Modals ──────────────────────────────────────────────────────── */
-.dark .dark\:bg-gray-800.rounded-lg {
-  background-color: var(--bg-raised);
+/* ── Inputs ──────────────────────────────────────────────────────── */
+
+/* Search / form inputs */
+.t-search,
+.t-input {
+  width: 100%;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-body);
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.t-search:focus,
+.t-input:focus {
+  border-color: rgba(234, 88, 12, 0.45);
+  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.08);
+}
+.t-search::placeholder,
+.t-input::placeholder { color: var(--text-faint); }
+
+/* Field label */
+.t-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+/* ── Filter pills ────────────────────────────────────────────────── */
+
+.t-pill {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 0.25rem 0.875rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+.t-pill:hover {
   border-color: var(--border-gold);
+  color: var(--text-body);
+}
+.t-pill.active {
+  background: rgba(234, 88, 12, 0.12);
+  border-color: var(--accent);
+  color: var(--accent);
+  font-weight: 500;
 }
 
-/* ── Progress track background ───────────────────────────────────── */
-.bg-gray-200.rounded-full        { background-color: var(--bg-raised); }
-.dark .dark\:bg-black.rounded-full { background-color: var(--bg-page); }
+/* ── Content list rows ───────────────────────────────────────────── */
 
-/* ── Page-level h1 — always use display font ─────────────────────── */
-/* Pages that use <PageHero> already have font-display italic via component classes.
-   This rule covers direct h1 usage (e.g. dashboard without PageHero). */
+.t-row {
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.t-row:hover {
+  border-color: var(--border-gold);
+  box-shadow: 0 2px 12px rgba(0,0,0,0.15);
+  transform: translateX(2px);
+}
+a.t-row:hover { text-decoration: none; }
+
+/* ── Badges ──────────────────────────────────────────────────────── */
+
+.t-badge {
+  display: inline-block;
+  background: var(--bg-raised);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+.t-badge-accent {
+  background: rgba(234, 88, 12, 0.10);
+  border-color: rgba(234, 88, 12, 0.25);
+  color: var(--accent);
+}
+.t-badge-gold {
+  background: rgba(201, 144, 50, 0.10);
+  border-color: rgba(201, 144, 50, 0.25);
+  color: var(--gold);
+}
+.t-badge-red {
+  background: rgba(220, 38, 38, 0.10);
+  border-color: rgba(220, 38, 38, 0.25);
+  color: #f87171;
+}
+.t-badge-green {
+  background: rgba(22, 163, 74, 0.10);
+  border-color: rgba(22, 163, 74, 0.25);
+  color: #4ade80;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────── */
+
+.t-progress-track {
+  background: var(--bg-page);
+  border-radius: 999px;
+  overflow: hidden;
+}
+.t-progress-fill {
+  background: linear-gradient(to right, var(--gold), var(--accent));
+  border-radius: 999px;
+  height: 100%;
+  transition: width 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ── Primary button ──────────────────────────────────────────────── */
+
+.t-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.5rem 1.125rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 0 16px rgba(234, 88, 12, 0.20);
+}
+.t-btn-primary:hover {
+  background: #c2410c;
+  box-shadow: 0 0 24px rgba(234, 88, 12, 0.35);
+}
+
+/* ── Modal ───────────────────────────────────────────────────────── */
+
+.t-modal-panel {
+  background-color: var(--bg-raised);
+  background-image:
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55)),
+    linear-gradient(rgba(201,144,50,0.55), rgba(201,144,50,0.55));
+  background-size:    12px 2px, 2px 12px,  12px 2px, 2px 12px,  12px 2px, 2px 12px,  12px 2px, 2px 12px;
+  background-position: 0 0, 0 0,  100% 0, 100% 0,  0 100%, 0 100%,  100% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  border: 1px solid var(--border-gold);
+  border-radius: 14px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+/* ── Global h1 — always Cormorant italic ─────────────────────────── */
+
 main h1 {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-style: italic;
@@ -489,3 +603,6 @@ main h1 {
   color: var(--text-strong);
   line-height: 1.15;
 }
+
+/* ── Global placeholder ──────────────────────────────────────────── */
+::placeholder { color: var(--text-faint); opacity: 1; }

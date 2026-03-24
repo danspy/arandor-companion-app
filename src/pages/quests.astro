@@ -28,7 +28,7 @@ const sortedQuests = [...quests].sort((a, b) => {
   const statusA = statusOrder[a.status] ?? 3;
   const statusB = statusOrder[b.status] ?? 3;
   if (statusA !== statusB) return statusA - statusB;
-  
+
   // Then by priority (high first)
   const priorityOrder: Record<string, number> = { 'high': 0, 'medium': 1, 'low': 2 };
   const priorityA = priorityOrder[a.priority] ?? 3;
@@ -42,8 +42,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Quests">
-  <PageHero 
-    title="Quests" 
+  <PageHero
+    title="Quests"
     heroImageUrl={heroImageUrl}
     pageName="quests"
     canEditHero={canEdit}
@@ -51,7 +51,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {canEdit && (
     <div class="flex justify-end mb-4">
-      <Button 
+      <Button
         variant="primary"
         size="md"
         icon="add"
@@ -65,52 +65,52 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Stats -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{quests.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Quests</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{quests.length}</div>
+      <div class="t-label-sm mt-1">Total Quests</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-400">{activeQuests.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Active</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{activeQuests.length}</div>
+      <div class="t-label-sm mt-1">Active</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{completedQuests.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Completed</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{completedQuests.length}</div>
+      <div class="t-label-sm mt-1">Completed</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{failedQuests.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Failed</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{failedQuests.length}</div>
+      <div class="t-label-sm mt-1">Failed</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-4 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
+        <input
+          type="text"
+          id="searchInput"
           placeholder="Search quests by title or description..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
         >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <!-- Status and Priority Filters Below -->
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Status:</span>
-        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" data-filter="all">
+        <span class="text-sm t-muted font-medium">Status:</span>
+        <button class="filter-btn t-pill active transition-all duration-200 active:scale-95" data-filter="all">
           All ({quests.length})
         </button>
-        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="active">
+        <button class="filter-btn t-pill transition-all duration-200 active:scale-95" data-filter="active">
           Active ({activeQuests.length})
         </button>
-        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="completed">
+        <button class="filter-btn t-pill transition-all duration-200 active:scale-95" data-filter="completed">
           Completed ({completedQuests.length})
         </button>
-        <button class="filter-btn px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="failed">
+        <button class="filter-btn t-pill transition-all duration-200 active:scale-95" data-filter="failed">
           Failed ({failedQuests.length})
         </button>
       </div>
@@ -120,27 +120,27 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   <!-- All Quests Grid -->
   <div id="questsGrid" class="space-y-4">
     {sortedQuests.map(quest => (
-      <div class="quest-card bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-status={quest.status} data-priority={quest.priority} data-search={`${quest.title} ${quest.description}`.toLowerCase()}>
+      <div class="quest-card t-panel p-6 hover:shadow-lg transition" data-status={quest.status} data-priority={quest.priority} data-search={`${quest.title} ${quest.description}`.toLowerCase()}>
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div class="flex-1">
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-              <h3 class="text-lg sm:text-xl font-bold text-gray-900 dark:text-gray-100">{quest.title}</h3>
-              <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                quest.status === 'completed' ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' :
-                quest.status === 'failed' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-                'bg-accent-100 text-accent-700 dark:bg-accent-900/20 dark:text-accent-400'
+              <h3 class="text-lg sm:text-xl font-bold t-strong-text">{quest.title}</h3>
+              <span class={`t-badge ${
+                quest.status === 'completed' ? 't-badge-green' :
+                quest.status === 'failed' ? 't-badge-red' :
+                't-badge-accent'
               }`}>
                 {quest.status}
               </span>
-              <span class={`px-3 py-1 rounded-full text-xs font-medium whitespace-nowrap ${
-                quest.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-                quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400' :
-                'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
+              <span class={`t-badge ${
+                quest.priority === 'high' ? 't-badge-red' :
+                quest.priority === 'medium' ? 't-badge-gold' :
+                't-badge-green'
               }`}>
                 {quest.priority} priority
               </span>
             </div>
-            <p class="text-gray-700 dark:text-gray-300 text-sm sm:text-base">{quest.description}</p>
+            <p class="t-body-text text-sm sm:text-base">{quest.description}</p>
           </div>
           {canEdit && (
             <div class="flex flex-col sm:flex-row gap-2 sm:ml-4 w-full sm:w-auto items-center items-end">
@@ -189,84 +189,51 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {quests.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">No quests yet. Start adding adventures!</p>
+    <div class="text-center py-16 t-panel">
+      <p class="t-faint text-lg">No quests yet. Start adding adventures!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Quest -->
-  <div id="questModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Quest</h2>
+  <div id="questModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="modalTitle" class="t-section-h text-xl sm:text-2xl mb-4 sm:mb-6">New Quest</h2>
       <form id="questForm" class="space-y-4">
         <input type="hidden" id="questId" name="id">
-        
+
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-          <input 
-            type="text" 
-            id="title" 
-            name="title" 
-            required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          >
+          <label for="title" class="t-label block mb-1">Title</label>
+          <input type="text" id="title" name="title" required class="t-input px-4 py-2">
         </div>
-        
+
         <div>
-          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-          <textarea 
-            id="description" 
-            name="description" 
-            required 
-            rows="4"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          ></textarea>
+          <label for="description" class="t-label block mb-1">Description</label>
+          <textarea id="description" name="description" required rows="4" class="t-input px-4 py-2"></textarea>
         </div>
-        
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label for="priority" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Priority</label>
-            <select 
-              id="priority" 
-              name="priority" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="priority" class="t-label block mb-1">Priority</label>
+            <select id="priority" name="priority" required class="t-input px-4 py-2">
               <option value="low">Low</option>
               <option value="medium" selected>Medium</option>
               <option value="high">High</option>
             </select>
           </div>
-          
+
           <div>
-            <label for="status" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-            <select 
-              id="status" 
-              name="status" 
-              required
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="status" class="t-label block mb-1">Status</label>
+            <select id="status" name="status" required class="t-input px-4 py-2">
               <option value="active" selected>Active</option>
               <option value="completed">Completed</option>
               <option value="failed">Failed</option>
             </select>
           </div>
         </div>
-        
+
         <div class="flex gap-4 pt-4">
-          <button 
-            type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
-          >
-            Save Quest
-          </button>
-          <button 
-            type="button" 
-            id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
-          >
-            Cancel
-          </button>
+          <button type="submit" class="t-btn-primary flex-1 px-6 py-2">Save Quest</button>
+          <button type="button" id="cancelModal" class="t-inset flex-1 px-6 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors">Cancel</button>
         </div>
       </form>
     </div>
@@ -308,7 +275,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Handle form submission
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      
+
       const formData = new FormData(form);
       const data = {
         title: formData.get('title'),
@@ -320,7 +287,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       try {
         const url = editingId ? `/api/quests/${editingId}` : '/api/quests';
         const method = editingId ? 'PUT' : 'POST';
-        
+
         const response = await fetch(url, {
           method,
           headers: { 'Content-Type': 'application/json' },
@@ -343,44 +310,44 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const target = e.target as HTMLElement;
     const modal = document.getElementById('questModal');
     const modalTitle = document.getElementById('modalTitle');
-    
+
     // Edit quest
     if (target.classList.contains('edit-quest')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       try {
         const response = await fetch(`/api/quests/${id}`);
         const quest = await response.json();
-        
+
         editingId = id;
         (document.getElementById('title') as HTMLInputElement).value = quest.title;
         (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
         (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
         (document.getElementById('status') as HTMLSelectElement).value = quest.status;
-        
+
         if (modalTitle) modalTitle.textContent = 'Edit Quest';
         modal?.classList.remove('hidden');
       } catch (error) {
         alert('Failed to load quest. Please try again.');
       }
     }
-    
+
     // Complete quest
     if (target.classList.contains('complete-quest')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       try {
         const response = await fetch(`/api/quests/${id}`);
         const quest = await response.json();
-        
+
         const updateResponse = await fetch(`/api/quests/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...quest, status: 'completed' }),
         });
-        
+
         if (updateResponse.ok) {
           window.location.reload();
         } else {
@@ -390,22 +357,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('An error occurred. Please try again.');
       }
     }
-    
+
     // Fail quest
     if (target.classList.contains('fail-quest')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       try {
         const response = await fetch(`/api/quests/${id}`);
         const quest = await response.json();
-        
+
         const updateResponse = await fetch(`/api/quests/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...quest, status: 'failed' }),
         });
-        
+
         if (updateResponse.ok) {
           window.location.reload();
         } else {
@@ -415,22 +382,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('An error occurred. Please try again.');
       }
     }
-    
+
     // Reactivate quest (set status back to active)
     if (target.classList.contains('reactivate-quest')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       try {
         const response = await fetch(`/api/quests/${id}`);
         const quest = await response.json();
-        
+
         const updateResponse = await fetch(`/api/quests/${id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...quest, status: 'active' }),
         });
-        
+
         if (updateResponse.ok) {
           window.location.reload();
         } else {
@@ -440,18 +407,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('An error occurred. Please try again.');
       }
     }
-    
+
     // Delete quest
     if (target.classList.contains('delete-quest')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       if (confirm('Are you sure you want to delete this quest?')) {
         try {
           const response = await fetch(`/api/quests/${id}`, {
             method: 'DELETE',
           });
-          
+
           if (response.ok) {
             window.location.reload();
           } else {
@@ -470,7 +437,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     const filterBtns = document.querySelectorAll('.filter-btn');
     const questCards = document.querySelectorAll('.quest-card');
-    
+
     let currentFilter = 'all';
     let currentSearch = '';
 
@@ -479,11 +446,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       questCards.forEach(card => {
         const cardStatus = card.getAttribute('data-status') || '';
         const searchText = card.getAttribute('data-search') || '';
-        
+
         const matchesFilter = currentFilter === 'all' || cardStatus === currentFilter;
         // Match if ANY search term is found in the text (more flexible search)
         const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-        
+
         (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
     };
@@ -498,18 +465,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         currentFilter = btn.getAttribute('data-filter') || 'all';
-        
+
         // Update button styles
         filterBtns.forEach(b => {
           if (b.getAttribute('data-filter') === currentFilter) {
-            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-            b.classList.add('bg-primary-600', 'text-white');
+            b.classList.add('active');
           } else {
-            b.classList.remove('bg-primary-600', 'text-white');
-            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.remove('active');
           }
         });
-        
+
         applyFilters();
       });
     });

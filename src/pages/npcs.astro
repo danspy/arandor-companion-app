@@ -21,8 +21,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="NPCs">
-  <PageHero 
-    title="Non-Player Characters" 
+  <PageHero
+    title="Non-Player Characters"
     heroImageUrl={heroImageUrl}
     pageName="npcs"
     canEditHero={canEditHero}
@@ -30,7 +30,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {isLoggedIn && (
     <div class="flex justify-end mb-4">
-      <Button 
+      <Button
         variant="primary"
         size="md"
         icon="add"
@@ -44,52 +44,52 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Stats -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{npcs.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total NPCs</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{npcs.length}</div>
+      <div class="t-label-sm mt-1">Total NPCs</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{alliedNPCs.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Allies</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{alliedNPCs.length}</div>
+      <div class="t-label-sm mt-1">Allies</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-gray-600 dark:text-gray-400">{neutralNPCs.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Neutral</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{neutralNPCs.length}</div>
+      <div class="t-label-sm mt-1">Neutral</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-red-600 dark:text-red-400">{enemyNPCs.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Enemies</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{enemyNPCs.length}</div>
+      <div class="t-label-sm mt-1">Enemies</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-4 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
+        <input
+          type="text"
+          id="searchInput"
           placeholder="Search NPCs by name, race, occupation, or location..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
         >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <!-- Relationship Filter Below -->
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-        <button class="filter-tab px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95" data-filter="all">
+        <span class="text-sm t-muted font-medium">Filter:</span>
+        <button class="filter-tab t-pill active transition-all duration-200 active:scale-95" data-filter="all">
           All ({npcs.length})
         </button>
-        <button class="filter-tab px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="ally">
+        <button class="filter-tab t-pill transition-all duration-200 active:scale-95" data-filter="ally">
           Allies ({alliedNPCs.length})
         </button>
-        <button class="filter-tab px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="neutral">
+        <button class="filter-tab t-pill transition-all duration-200 active:scale-95" data-filter="neutral">
           Neutral ({neutralNPCs.length})
         </button>
-        <button class="filter-tab px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95" data-filter="enemy">
+        <button class="filter-tab t-pill transition-all duration-200 active:scale-95" data-filter="enemy">
           Enemies ({enemyNPCs.length})
         </button>
       </div>
@@ -98,14 +98,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <div id="npcGrid" class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {npcs.map(npc => (
-      <div class="npc-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" data-relationship={npc.relationship} data-search={`${npc.name} ${npc.race} ${npc.occupation || ''} ${npc.location || ''} ${npc.description}`.toLowerCase()}>
+      <div class="npc-card t-panel overflow-hidden hover:shadow-lg transition" data-relationship={npc.relationship} data-search={`${npc.name} ${npc.race} ${npc.occupation || ''} ${npc.location || ''} ${npc.description}`.toLowerCase()}>
         <a href={`/npcs/${npc.id}`} class="block">
           <div class="relative h-56 overflow-hidden">
             <!-- Blurred background -->
             {npc.avatarUrl ? (
               <>
-                <img 
-                  src={npc.avatarUrl} 
+                <img
+                  src={npc.avatarUrl}
                   alt={npc.name}
                   class="absolute inset-0 w-full h-full object-cover blur-md scale-110"
                 />
@@ -113,27 +113,28 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               </>
             ) : (
               <div class={`absolute inset-0 ${
-                npc.relationship === 'ally' ? 'bg-gradient-to-br from-green-600 to-green-500' :
-                npc.relationship === 'enemy' ? 'bg-gradient-to-br from-red-600 to-red-500' :
-                'bg-gradient-to-br from-gray-600 to-gray-500'
+                npc.relationship === 'ally' ? 'bg-gradient-to-br from-green-700 to-green-600' :
+                npc.relationship === 'enemy' ? 'bg-gradient-to-br from-red-800 to-red-700' :
+                'bg-gradient-to-br from-stone-800 to-stone-700'
               }`}></div>
             )}
-            
+
             <!-- Circular avatar on top -->
             <div class="relative h-full flex items-center justify-center">
               {npc.avatarUrl ? (
-                <img 
-                  src={npc.avatarUrl} 
+                <img
+                  src={npc.avatarUrl}
                   alt={npc.name}
-                  class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                  class="w-32 h-32 rounded-full object-cover shadow-xl"
+                  style="border:3px solid var(--border-gold);"
                 />
               ) : (
-                <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-5xl font-bold text-primary-700 dark:text-primary-400 shadow-xl border-4 border-white dark:border-gray-700">
+                <div class="w-32 h-32 rounded-full flex items-center justify-center text-5xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
                   {npc.name.charAt(0)}
                 </div>
               )}
             </div>
-            
+
             <!-- Relationship badge -->
             <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
               npc.relationship === 'ally' ? 'bg-green-600/90' :
@@ -147,8 +148,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
         <div class="p-6">
           <div class="flex items-start justify-between gap-2 mb-2">
-            <a href={`/npcs/${npc.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{npc.name}</h2>
+            <a href={`/npcs/${npc.id}`} class="block t-gold hover:opacity-80 transition">
+              <h2 class="text-2xl font-bold">{npc.name}</h2>
             </a>
             {isLoggedIn && (
               <div class="flex gap-2 items-center flex-shrink-0">
@@ -162,8 +163,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   title="Edit NPC"
                   ariaLabel="Edit NPC"
                 />
-                <button 
-                  class="delete-npc p-1.5 text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition cursor-pointer" 
+                <button
+                  class="delete-npc p-1.5 t-muted hover:text-red-400 rounded-lg transition cursor-pointer"
                   data-id={npc.id}
                   title="Delete NPC"
                   aria-label="Delete NPC"
@@ -175,20 +176,20 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               </div>
             )}
           </div>
-          <a href={`/npcs/${npc.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-            <p class="text-gray-600 dark:text-gray-400 mb-4">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
+          <a href={`/npcs/${npc.id}`} class="block t-muted hover:opacity-80 transition">
+            <p class="mb-4">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
           </a>
 
           {npc.location && (
             <div class="mb-3">
-              <span class="text-sm text-gray-500 dark:text-gray-400">📍 Location: </span>
-              <span class="text-sm font-medium dark:text-gray-200">{npc.location}</span>
+              <span class="text-sm t-faint">📍 Location: </span>
+              <span class="text-sm font-medium t-strong-text">{npc.location}</span>
             </div>
           )}
 
-          <a 
+          <a
             href={`/npcs/${npc.id}`}
-            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="t-link block mt-4 text-center px-4 py-2 rounded-lg transition font-medium text-sm"
           >
             View Details →
           </a>
@@ -198,60 +199,37 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {npcs.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">No NPCs yet. Start adding characters you've encountered!</p>
+    <div class="text-center py-16 t-panel">
+      <p class="t-faint text-lg">No NPCs yet. Start adding characters you've encountered!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit NPC -->
-  <div id="npcModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New NPC</h2>
+  <div id="npcModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="modalTitle" class="t-section-h text-xl sm:text-2xl mb-4 sm:mb-6">New NPC</h2>
       <form id="npcForm" class="space-y-4">
         <input type="hidden" id="npcId" name="id">
-        
+
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
-            <input 
-              type="text" 
-              id="name" 
-              name="name" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="name" class="t-label block mb-1">Name</label>
+            <input type="text" id="name" name="name" required class="t-input px-4 py-2">
           </div>
-          
           <div>
-            <label for="race" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Race</label>
-            <input 
-              type="text" 
-              id="race" 
-              name="race" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="race" class="t-label block mb-1">Race</label>
+            <input type="text" id="race" name="race" required class="t-input px-4 py-2">
           </div>
         </div>
-        
+
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="occupation" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Occupation (optional)</label>
-            <input 
-              type="text" 
-              id="occupation" 
-              name="occupation" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="occupation" class="t-label block mb-1">Occupation (optional)</label>
+            <input type="text" id="occupation" name="occupation" class="t-input px-4 py-2">
           </div>
-          
           <div>
-            <label for="locationId" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location (optional)</label>
-            <select 
-              id="locationId" 
-              name="locationId" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-            >
+            <label for="locationId" class="t-label block mb-1">Location (optional)</label>
+            <select id="locationId" name="locationId" class="t-input px-4 py-2">
               <option value="">-- No Location --</option>
               {locations.map(location => (
                 <option value={location.id}>{location.name}</option>
@@ -261,88 +239,49 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </div>
 
         <div class="space-y-2">
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Avatar (optional)</label>
+          <label class="t-label block">Avatar (optional)</label>
           <div class="space-y-2">
             <div>
-              <label for="avatarFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
-              <input 
-                type="file" 
-                id="avatarFile" 
-                name="avatarFile" 
-                accept="image/*"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
-              >
+              <label for="avatarFile" class="t-faint text-xs block mb-1">Upload Image (max 5MB)</label>
+              <input type="file" id="avatarFile" name="avatarFile" accept="image/*" class="t-input px-4 py-2 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-orange-900/30 file:text-orange-300">
             </div>
             <div class="flex items-center gap-2">
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
+              <span class="t-faint text-xs">OR</span>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
             </div>
             <div>
-              <label for="avatarUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Avatar URL</label>
-              <input 
-                type="text" 
-                id="avatarUrl" 
-                name="avatarUrl" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-                placeholder="https://example.com/image.jpg or /uploads/image.jpg"
-              >
+              <label for="avatarUrl" class="t-faint text-xs block mb-1">Avatar URL</label>
+              <input type="text" id="avatarUrl" name="avatarUrl" class="t-input px-4 py-2" placeholder="https://example.com/image.jpg">
             </div>
           </div>
           <div id="avatarPreview" class="hidden mt-2">
             <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
           </div>
         </div>
-        
+
         <div>
-          <label for="relationship" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Relationship</label>
-          <select 
-            id="relationship" 
-            name="relationship" 
-            required
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          >
+          <label for="relationship" class="t-label block mb-1">Relationship</label>
+          <select id="relationship" name="relationship" required class="t-input px-4 py-2">
             <option value="ally">Ally</option>
             <option value="neutral" selected>Neutral</option>
             <option value="enemy">Enemy</option>
           </select>
         </div>
-        
+
         <div>
-          <label for="description" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Description</label>
-          <textarea 
-            id="description" 
-            name="description" 
-            required 
-            rows="3"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          ></textarea>
+          <label for="description" class="t-label block mb-1">Description</label>
+          <textarea id="description" name="description" required rows="3" class="t-input px-4 py-2"></textarea>
         </div>
-        
+
         <div>
-          <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Notes (optional)</label>
-          <textarea 
-            id="notes" 
-            name="notes" 
-            rows="2"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
-          ></textarea>
+          <label for="notes" class="t-label block mb-1">Notes (optional)</label>
+          <textarea id="notes" name="notes" rows="2" class="t-input px-4 py-2"></textarea>
         </div>
-        
+
         <div class="flex gap-4 pt-4">
-          <button 
-            type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
-          >
-            Save NPC
-          </button>
-          <button 
-            type="button" 
-            id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
-          >
-            Cancel
-          </button>
+          <button type="submit" class="t-btn-primary flex-1 px-6 py-2">Save NPC</button>
+          <button type="button" id="cancelModal" class="t-inset flex-1 px-6 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors">Cancel</button>
         </div>
       </form>
     </div>
@@ -383,29 +322,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Handle form submission
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
-    
+
     // Helper to convert empty strings to undefined for optional fields
     const getOptionalValue = (key: string) => {
       const value = formData.get(key) as string;
       return value?.trim() || undefined;
     };
-    
+
     // Handle avatar upload
     let avatarUrl = getOptionalValue('avatarUrl');
     const avatarFile = formData.get('avatarFile') as File;
-    
+
     if (avatarFile && avatarFile.size > 0) {
       try {
         const uploadFormData = new FormData();
         uploadFormData.append('file', avatarFile);
-        
+
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: uploadFormData,
         });
-        
+
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           avatarUrl = uploadData.url;
@@ -420,7 +359,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         return;
       }
     }
-    
+
     const data = {
       name: formData.get('name'),
       race: formData.get('race'),
@@ -435,7 +374,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     try {
       const url = editingId ? `/api/npcs/${editingId}` : '/api/npcs';
       const method = editingId ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -487,7 +426,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Check for edit parameter on page load and open modal if present
     const urlParams = new URLSearchParams(window.location.search);
     const editId = urlParams.get('edit');
-    
+
     if (editId && modal && form && modalTitle) {
       (async () => {
         try {
@@ -495,9 +434,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           if (!response.ok) {
             throw new Error('NPC not found');
           }
-          
+
           const npc = await response.json();
-          
+
           editingId = editId;
           (document.getElementById('name') as HTMLInputElement).value = npc.name;
           (document.getElementById('race') as HTMLInputElement).value = npc.race;
@@ -507,10 +446,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
           (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
           (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
-          
+
           modalTitle.textContent = 'Edit NPC';
           modal.classList.remove('hidden');
-          
+
           // Clear the URL parameter so refreshing doesn't re-open the modal
           window.history.replaceState({}, '', '/npcs');
         } catch (error) {
@@ -524,22 +463,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Edit/Delete NPCs with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    
+
     if (target.classList.contains('edit-npc')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       // Get DOM elements fresh
       const modal = document.getElementById('npcModal');
       const modalTitle = document.getElementById('modalTitle');
-      
+
       try {
         const response = await fetch(`/api/npcs/${id}`);
         if (!response.ok) {
           throw new Error('Failed to fetch NPC');
         }
         const npc = await response.json();
-        
+
         editingId = id;
         (document.getElementById('name') as HTMLInputElement).value = npc.name;
         (document.getElementById('race') as HTMLInputElement).value = npc.race;
@@ -549,7 +488,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         (document.getElementById('description') as HTMLTextAreaElement).value = npc.description;
         (document.getElementById('notes') as HTMLTextAreaElement).value = npc.notes || '';
         (document.getElementById('avatarUrl') as HTMLInputElement).value = npc.avatarUrl || '';
-        
+
         if (modalTitle) modalTitle.textContent = 'Edit NPC';
         modal?.classList.remove('hidden');
       } catch (error) {
@@ -557,18 +496,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('Failed to load NPC. Please try again.');
       }
     }
-    
+
     // Delete NPC
     if (target.classList.contains('delete-npc')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       if (confirm('Are you sure you want to delete this NPC?')) {
         try {
           const response = await fetch(`/api/npcs/${id}`, {
             method: 'DELETE',
           });
-          
+
           if (response.ok) {
             window.location.reload();
           } else {
@@ -587,7 +526,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     const filterTabs = document.querySelectorAll('.filter-tab');
     const npcCards = document.querySelectorAll('.npc-card');
-    
+
     let currentFilter = 'all';
     let currentSearch = '';
 
@@ -596,11 +535,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       npcCards.forEach(card => {
         const relationship = card.getAttribute('data-relationship') || '';
         const searchText = card.getAttribute('data-search') || '';
-        
+
         const matchesFilter = currentFilter === 'all' || relationship === currentFilter;
         // Match if ANY search term is found in the text (more flexible search)
         const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-        
+
         (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
     };
@@ -615,18 +554,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     filterTabs.forEach(tab => {
       tab.addEventListener('click', () => {
         currentFilter = tab.getAttribute('data-filter') || 'all';
-        
+
         // Update button styles
         filterTabs.forEach(t => {
           if (t.getAttribute('data-filter') === currentFilter) {
-            t.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-            t.classList.add('bg-primary-600', 'text-white');
+            t.classList.add('active');
           } else {
-            t.classList.remove('bg-primary-600', 'text-white');
-            t.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            t.classList.remove('active');
           }
         });
-        
+
         applyFilters();
       });
     });
