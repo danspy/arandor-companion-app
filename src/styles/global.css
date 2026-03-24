@@ -344,3 +344,148 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
     max-height: var(--modal-content-max-height) !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   GLOBAL DESIGN SYSTEM REMAPPING
+   These rules come after @tailwind utilities so they win by cascade.
+   They replace every hardcoded gray/white/black Tailwind token with
+   our dark-tome design variables across every page automatically.
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* ── Card / surface backgrounds ─────────────────────────────────── */
+.bg-white                        { background-color: var(--bg-surface); }
+.dark .dark\:bg-black            { background-color: var(--bg-surface); }
+.dark .dark\:bg-gray-800         { background-color: var(--bg-raised); }
+.dark .dark\:bg-gray-700         { background-color: var(--bg-surface); }
+.dark .dark\:bg-gray-900         { background-color: var(--bg-page); }
+
+/* ── Inner panel / nested section backgrounds ───────────────────── */
+.bg-gray-50                      { background-color: var(--bg-raised); }
+.dark .dark\:bg-gray-900\/50     { background-color: rgba(26, 20, 16, 0.65); }
+.dark .dark\:bg-gray-800\/50     { background-color: rgba(26, 20, 16, 0.4); }
+
+/* ── Hover backgrounds ───────────────────────────────────────────── */
+.hover\:bg-gray-100:hover        { background-color: rgba(201, 144, 50, 0.07); }
+.hover\:bg-gray-50:hover         { background-color: rgba(201, 144, 50, 0.05); }
+.dark .dark\:hover\:bg-gray-900:hover { background-color: rgba(234, 88, 12, 0.08); }
+.dark .dark\:hover\:bg-gray-800:hover { background-color: rgba(234, 88, 12, 0.06); }
+.dark .dark\:hover\:bg-gray-700:hover { background-color: rgba(234, 88, 12, 0.10); }
+
+/* ── Borders ─────────────────────────────────────────────────────── */
+.border-gray-200                 { border-color: var(--border); }
+.border-gray-300                 { border-color: var(--border); }
+.dark .dark\:border-gray-900     { border-color: var(--border-gold); }
+.dark .dark\:border-gray-800     { border-color: var(--border); }
+.dark .dark\:border-gray-700     { border-color: var(--border); }
+.dark .dark\:border-gray-600     { border-color: var(--border); }
+
+/* ── Text ────────────────────────────────────────────────────────── */
+.text-gray-900                   { color: var(--text-strong); }
+.text-gray-800                   { color: var(--text-strong); }
+.text-gray-700                   { color: var(--text-body); }
+.text-gray-600                   { color: var(--text-muted); }
+.text-gray-500                   { color: var(--text-faint); }
+.text-gray-400                   { color: var(--text-faint); }
+.dark .dark\:text-gray-100       { color: var(--text-strong); }
+.dark .dark\:text-gray-200       { color: var(--text-strong); }
+.dark .dark\:text-gray-300       { color: var(--text-body); }
+.dark .dark\:text-gray-400       { color: var(--text-muted); }
+.dark .dark\:text-gray-500       { color: var(--text-faint); }
+.dark .dark\:hover\:text-gray-200:hover { color: var(--text-strong); }
+
+/* Placeholder text */
+::placeholder                    { color: var(--text-faint); opacity: 1; }
+
+/* ── Box shadows — themed ────────────────────────────────────────── */
+.shadow-md {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px var(--border);
+}
+.dark .shadow-md {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.45), 0 0 0 1px var(--border-gold);
+}
+.shadow-lg {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.12), 0 0 0 1px var(--border);
+}
+.dark .shadow-lg {
+  box-shadow: 0 8px 40px rgba(0,0,0,0.55), 0 0 0 1px var(--border-gold);
+}
+.hover\:shadow-lg:hover {
+  box-shadow: 0 6px 28px rgba(0,0,0,0.14), 0 0 0 1px var(--border-gold);
+  transform: translateY(-1px);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.dark .hover\:shadow-lg:hover {
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5), 0 0 16px rgba(234,88,12,0.10), 0 0 0 1px var(--border-gold);
+}
+.shadow-xl {
+  box-shadow: 0 8px 40px rgba(0,0,0,0.18), 0 0 0 1px var(--border-gold);
+}
+.dark .shadow-xl {
+  box-shadow: 0 16px 60px rgba(0,0,0,0.6), 0 0 0 1px var(--border-gold);
+}
+
+/* ── Rounded corners — slightly more refined ────────────────────── */
+.rounded-lg  { border-radius: 10px; }
+.rounded-xl  { border-radius: 14px; }
+
+/* ── Form inputs ─────────────────────────────────────────────────── */
+.dark .dark\:bg-gray-700   { background-color: var(--bg-surface); }
+
+/* Focus rings — orange accent */
+.focus\:ring-primary-500:focus {
+  --tw-ring-color: rgba(234, 88, 12, 0.40);
+}
+.focus\:border-transparent:focus {
+  border-color: rgba(234, 88, 12, 0.50) !important;
+}
+
+/* ── Filter / tag pills ──────────────────────────────────────────── */
+.bg-gray-200                     { background-color: var(--bg-raised); }
+.hover\:bg-gray-300:hover        { background-color: rgba(234, 88, 12, 0.10); }
+.dark .dark\:hover\:bg-gray-600:hover { background-color: rgba(234, 88, 12, 0.12); }
+
+/* Primary action buttons → orange */
+.bg-primary-600                  { background-color: var(--accent); }
+.hover\:bg-primary-700:hover     { background-color: #c2410c; }
+.dark .dark\:bg-primary-700      { background-color: var(--accent); }
+.dark .dark\:hover\:bg-primary-600:hover { background-color: #fb923c; }
+
+/* Quest / entry border-left accent */
+.border-primary-500              { border-color: var(--accent); }
+.dark .dark\:border-primary-400  { border-color: var(--accent); }
+
+/* Progress bars — gold to orange */
+.from-primary-500                { --tw-gradient-from: var(--gold) !important; }
+.to-secondary-500                { --tw-gradient-to: var(--accent) !important; }
+
+/* Section headings that use primary text color */
+.text-primary-600                { color: var(--gold); }
+.dark .dark\:text-primary-400    { color: var(--gold); }
+.hover\:text-primary-800:hover   { color: var(--accent); }
+.dark .dark\:hover\:text-primary-300:hover { color: var(--accent); }
+.text-primary-700                { color: var(--gold); }
+.dark .dark\:text-primary-500    { color: var(--gold); }
+
+/* ── Dividers ────────────────────────────────────────────────────── */
+.dark .dark\:divide-gray-700 > * + * { border-color: var(--border); }
+
+/* ── Modals ──────────────────────────────────────────────────────── */
+.dark .dark\:bg-gray-800.rounded-lg {
+  background-color: var(--bg-raised);
+  border-color: var(--border-gold);
+}
+
+/* ── Progress track background ───────────────────────────────────── */
+.bg-gray-200.rounded-full        { background-color: var(--bg-raised); }
+.dark .dark\:bg-black.rounded-full { background-color: var(--bg-page); }
+
+/* ── Page-level h1 — always use display font ─────────────────────── */
+/* Pages that use <PageHero> already have font-display italic via component classes.
+   This rule covers direct h1 usage (e.g. dashboard without PageHero). */
+main h1 {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-style: italic;
+  font-weight: 600;
+  color: var(--text-strong);
+  line-height: 1.15;
+}

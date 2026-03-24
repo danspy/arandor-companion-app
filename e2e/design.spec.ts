@@ -13,22 +13,26 @@ test.describe('Navigation', () => {
     await expect(brand).toHaveText('Arandor');
   });
 
-  test('desktop nav contains all expected links', async ({ page }) => {
+  test('desktop nav contains all expected links', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop-only: mobile nav tested in Mobile navigation suite');
     const nav = page.getByTestId('desktop-nav');
     for (const label of ['Diary', 'Library', 'Characters', 'NPCs', 'Locations', 'Map', 'Quests']) {
       await expect(nav.getByRole('link', { name: label })).toBeVisible();
     }
   });
 
-  test('theme toggle button is present', async ({ page }) => {
+  test('theme toggle button is present', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop-only: theme toggle in desktop nav');
     await expect(page.getByTestId('theme-toggle')).toBeVisible();
   });
 
-  test('user menu button is present', async ({ page }) => {
+  test('user menu button is present', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop-only: user menu in desktop nav');
     await expect(page.getByTestId('user-menu-btn')).toBeVisible();
   });
 
-  test('user dropdown opens and closes', async ({ page }) => {
+  test('user dropdown opens and closes', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Desktop-only: user dropdown in desktop nav');
     const btn = page.getByTestId('user-menu-btn');
     const dropdown = page.locator('#userDropdown');
     await expect(dropdown).toBeHidden();
@@ -85,20 +89,23 @@ test.describe('Theme toggle', () => {
     await page.goto('/login');
   });
 
-  test('dark mode class applied when toggled', async ({ page }) => {
+  test('dark mode class applied when toggled', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
     const html = page.locator('html');
     await expect(html).not.toHaveClass(/dark/);
     await page.getByTestId('theme-toggle').click();
     await expect(html).toHaveClass(/dark/);
   });
 
-  test('theme preference persisted in localStorage', async ({ page }) => {
+  test('theme preference persisted in localStorage', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
     await page.getByTestId('theme-toggle').click();
     const stored = await page.evaluate(() => localStorage.getItem('theme'));
     expect(stored).toBe('dark');
   });
 
-  test('toggling twice returns to light mode', async ({ page }) => {
+  test('toggling twice returns to light mode', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
     const toggle = page.getByTestId('theme-toggle');
     const html = page.locator('html');
     await toggle.click();
