@@ -1,3 +1,6 @@
+/* D&D Typography — Cinzel for display, DM Sans for body */
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700;900&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,19 +11,37 @@
   --pwa-main-padding-bottom: max(env(safe-area-inset-bottom), 1rem);
   /* Floating menu clearance: button height (56px) + button spacing (16px) + safe spacing (24px) = 96px */
   --pwa-floating-menu-clearance: 56px;
-  
+
   /* Modal safe zone variables */
   --modal-safe-top: max(env(safe-area-inset-top), 1rem);
   --modal-safe-bottom: max(env(safe-area-inset-bottom), 1rem);
   --modal-safe-left: max(env(safe-area-inset-left), 1rem);
   --modal-safe-right: max(env(safe-area-inset-right), 1rem);
-  
+
   /* Modal UI clearance for PWA elements */
   --pwa-ui-bottom-clearance: 72px; /* Floating menu: button height (56px) + spacing (16px) = 72px */
   --modal-extra-spacing: 2rem; /* Additional safe spacing */
-  
+
   /* Modal content max height calculation */
   --modal-content-max-height: calc(100vh - var(--modal-safe-top) - var(--modal-safe-bottom) - var(--pwa-ui-bottom-clearance) - var(--modal-extra-spacing));
+
+  /* Page surface colors */
+  --bg-page: #f5f2ee;
+  --bg-card: #faf8f5;
+  --bg-card-hover: #f0ece6;
+  --text-page: #1c1511;
+  --border-subtle: rgba(90, 77, 68, 0.12);
+  --orange-accent: #ea580c;
+  --orange-glow: rgba(234, 88, 12, 0.15);
+}
+
+.dark {
+  --bg-page: #0e0b08;
+  --bg-card: #1a1511;
+  --bg-card-hover: #221a14;
+  --text-page: #f5f0ea;
+  --border-subtle: rgba(253, 186, 116, 0.08);
+  --orange-glow: rgba(234, 88, 12, 0.12);
 }
 
 html, body {
@@ -39,6 +60,11 @@ body {
   padding-top: var(--safe-top);
   display: flex;
   flex-direction: column;
+  background-color: var(--bg-page);
+  color: var(--text-page);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Main content should grow to fill available space */
@@ -46,33 +72,39 @@ main {
   flex: 1 0 auto;
 }
 
+/* ── Navigation ────────────────────────────────────────────────── */
+
 .app-nav {
-  background: rgba(114, 54, 54, 0.8);
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  background: rgba(28, 21, 17, 0.94);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.18);
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
 }
 
 .dark .app-nav {
-  background: rgba(33, 40, 51, 0.6);
-  box-shadow: 0 4px 12px rgba(0,0,0,.3), 0 2px 4px rgba(0,0,0,.2);
+  background: rgba(14, 11, 8, 0.96);
+  border-bottom: 1px solid rgba(234, 88, 12, 0.14);
+  box-shadow: 0 4px 24px rgba(0,0,0,.5), 0 1px 0 rgba(234, 88, 12, 0.08);
 }
+
+/* ── PWA Mode ───────────────────────────────────────────────────── */
 
 /* PWA Mode - Hide header and footer when in PWA standalone mode on mobile devices */
 @media (display-mode: standalone) and (max-width: 1024px) {
   .pwa-hide-nav {
     display: none !important;
   }
-  
+
   .pwa-hide-footer {
     display: none !important;
   }
-  
+
   /* Ensure body fills full viewport height in PWA mode */
   body {
     min-height: 100vh;
     height: -webkit-fill-available;
   }
-  
+
   /* Adjust main content padding when nav is hidden */
   main {
     /* Add bottom padding to accommodate floating menu and prevent content overlap */
@@ -80,7 +112,8 @@ main {
   }
 }
 
-/* PWA Status Bar Gradient Overlay */
+/* ── PWA Status Bar Gradient ────────────────────────────────────── */
+
 .pwa-status-bar-gradient {
   position: fixed;
   top: 0;
@@ -89,22 +122,22 @@ main {
   height: var(--safe-top);
   pointer-events: none;
   z-index: 9998;
-  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.7) 50%, transparent);
+  background: linear-gradient(to bottom, rgba(28, 21, 17, 0.95), rgba(28, 21, 17, 0.6) 50%, transparent);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
 
-/* Show gradient only when running as PWA */
 @media (display-mode: standalone) {
   .pwa-status-bar-gradient {
     opacity: 1;
   }
 }
 
-/* Dark mode gradient */
 .dark .pwa-status-bar-gradient {
-  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.7) 50%, transparent);
+  background: linear-gradient(to bottom, rgba(14, 11, 8, 0.98), rgba(14, 11, 8, 0.7) 50%, transparent);
 }
+
+/* ── Utilities ──────────────────────────────────────────────────── */
 
 .line-clamp-2 {
   overflow: hidden;
@@ -113,34 +146,33 @@ main {
   -webkit-box-orient: vertical;
 }
 
-/* Loading screen styles */
+/* ── Animations ─────────────────────────────────────────────────── */
+
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
 }
 
 @keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
 .page-fade-in {
-  animation: fadeIn 0.3s ease-in;
+  animation: fadeIn 0.25s ease-in;
 }
 
-/* View Transitions - smooth page navigation */
+/* ── View Transitions ────────────────────────────────────────────── */
+
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 0.4s;
+  animation-duration: 0.35s;
   animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Default fade transition */
 ::view-transition-old(root) {
   animation-name: fadeOut;
 }
@@ -149,7 +181,6 @@ main {
   animation-name: fadeIn;
 }
 
-/* Zoom transition for detail pages - going to detail */
 html[data-transition="zoom"] ::view-transition-old(root) {
   animation-name: zoomOut;
 }
@@ -158,7 +189,6 @@ html[data-transition="zoom"] ::view-transition-new(root) {
   animation-name: zoomIn;
 }
 
-/* Zoom back transition - returning from detail */
 html[data-transition="zoom-back"] ::view-transition-old(root) {
   animation-name: zoomOutBack;
 }
@@ -167,57 +197,26 @@ html[data-transition="zoom-back"] ::view-transition-new(root) {
   animation-name: zoomInBack;
 }
 
-@keyframes fadeOut {
-  to {
-    opacity: 0;
-  }
-}
-
 @keyframes zoomOut {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(0.95);
-  }
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.96); }
 }
 
 @keyframes zoomIn {
-  from {
-    opacity: 0;
-    transform: scale(1.05);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
 @keyframes zoomOutBack {
-  from {
-    opacity: 1;
-    transform: scale(1);
-  }
-  to {
-    opacity: 0;
-    transform: scale(1.05);
-  }
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(1.04); }
 }
 
 @keyframes zoomInBack {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
 }
 
-/* Slide transition for lateral navigation */
 html[data-transition="slide-left"] ::view-transition-old(root) {
   animation-name: slideOutLeft;
 }
@@ -235,76 +234,51 @@ html[data-transition="slide-right"] ::view-transition-new(root) {
 }
 
 @keyframes slideOutLeft {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(-30px);
-    opacity: 0;
-  }
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(-24px); opacity: 0; }
 }
 
 @keyframes slideInRight {
-  from {
-    transform: translateX(30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(24px);  opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
 @keyframes slideOutRight {
-  from {
-    transform: translateX(0);
-    opacity: 1;
-  }
-  to {
-    transform: translateX(30px);
-    opacity: 0;
-  }
+  from { transform: translateX(0);    opacity: 1; }
+  to   { transform: translateX(24px); opacity: 0; }
 }
 
 @keyframes slideInLeft {
-  from {
-    transform: translateX(-30px);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(-24px); opacity: 0; }
+  to   { transform: translateX(0);     opacity: 1; }
 }
 
-/* Loading indicator */
+/* ── Loading spinner ────────────────────────────────────────────── */
+
 .loading-spinner {
-  border: 3px solid rgba(139, 69, 69, 0.1);
-  border-top-color: #8b4545;
+  border: 2px solid rgba(234, 88, 12, 0.15);
+  border-top-color: #ea580c;
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 0.8s linear infinite;
+  width: 36px;
+  height: 36px;
+  animation: spin 0.7s linear infinite;
 }
 
 .dark .loading-spinner {
-  border-color: rgba(139, 69, 69, 0.2);
-  border-top-color: #d9b4b4;
+  border-color: rgba(234, 88, 12, 0.12);
+  border-top-color: #fb923c;
 }
 
-/* Modal Safe Zones for PWA */
-/* Apply safe zones to modal content containers in PWA standalone mode */
+/* ── Modal Safe Zones for PWA ───────────────────────────────────── */
+
 @media (display-mode: standalone) and (max-width: 1024px) {
-  /* Modal overlay should respect safe areas for padding */
   .modal-overlay-safe {
     padding-top: var(--modal-safe-top) !important;
     padding-bottom: var(--modal-safe-bottom) !important;
     padding-left: var(--modal-safe-left) !important;
     padding-right: var(--modal-safe-right) !important;
   }
-  
-  /* Modal content should have additional bottom clearance for floating menu and quick access */
+
   .modal-content-safe {
     max-height: var(--modal-content-max-height) !important;
   }

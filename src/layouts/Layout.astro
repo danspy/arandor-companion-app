@@ -45,8 +45,8 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <link rel="manifest" href="/manifest.webmanifest" />
     
     <!-- Theme Colors (with dark mode support) -->
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#1c1511" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0e0b08" media="(prefers-color-scheme: dark)" />
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -112,7 +112,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       }
     </script>
   </head>
-  <body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
+  <body class="text-stone-900 dark:text-stone-100 transition-colors duration-200">
     <!-- PWA Status Bar Gradient Overlay -->
     <div class="pwa-status-bar-gradient" aria-hidden="true"></div>
     
@@ -121,86 +121,115 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       <div class="loading-spinner"></div>
     </div>
     
-    <nav class="app-nav text-white shadow-lg dark:border-b dark:border-gray-900 z-50 sticky top-0 pwa-hide-nav" transition:persist>
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
-          
+    <nav class="app-nav text-white z-50 sticky top-0 pwa-hide-nav" transition:persist>
+      <div class="container mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-14 sm:h-16">
+
+          <!-- Brand -->
+          <a href="/" class="font-display text-base sm:text-lg tracking-[0.18em] uppercase text-white/90 hover:text-secondary-400 transition-colors duration-200 shrink-0">
+            Arandor
+          </a>
+
           <!-- Mobile menu button -->
-          <button 
-            id="mobileMenuBtn" 
-            class="lg:hidden text-white hover:text-secondary-200 transition p-2"
+          <button
+            id="mobileMenuBtn"
+            class="lg:hidden text-white/70 hover:text-white transition p-2 -mr-1"
             aria-label="Toggle menu"
           >
-            <svg id="menuIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <svg id="menuIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"></path>
             </svg>
-            <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg id="closeIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
-          
+
           <!-- Desktop menu -->
-          <div class="hidden lg:flex gap-6 items-center">
-            <a href="/diary" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/diary') }]}>Diary</a>
-            <a href="/library" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/library') }]}>Library</a>
-            <a href="/characters" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/characters') }]}>Characters</a>
-            <a href="/npcs" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/npcs') }]}>NPCs</a>
-            <a href="/locations" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
-            <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
+          <div class="hidden lg:flex items-center gap-1">
+            {[
+              { href: '/diary',      label: 'Diary'      },
+              { href: '/library',    label: 'Library'    },
+              { href: '/characters', label: 'Characters' },
+              { href: '/npcs',       label: 'NPCs'       },
+              { href: '/locations',  label: 'Locations'  },
+              { href: '/map',        label: 'Map', reload: true },
+              { href: '/quests',     label: 'Quests'     },
+            ].map(({ href, label, reload }) => (
+              <a
+                href={href}
+                {...(reload ? { 'data-astro-reload': true } : {})}
+                class:list={[
+                  "px-3 py-1.5 text-sm rounded transition-colors duration-150",
+                  isActiveLink(href)
+                    ? "text-secondary-400 font-medium"
+                    : "text-white/60 hover:text-white/90"
+                ]}
+              >{label}</a>
+            ))}
             {isLoggedIn && (
-              <a href="/tools" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/tools') }]}>Tools</a>
+              <a
+                href="/tools"
+                class:list={[
+                  "px-3 py-1.5 text-sm rounded transition-colors duration-150",
+                  isActiveLink('/tools')
+                    ? "text-secondary-400 font-medium"
+                    : "text-white/60 hover:text-white/90"
+                ]}
+              >Tools</a>
             )}
-            
+
+            <!-- Divider -->
+            <span class="w-px h-4 bg-white/10 mx-1"></span>
+
             <!-- Dark mode toggle -->
-            <button 
+            <button
               id="themeToggle"
-              class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+              class="p-2 rounded-md text-white/50 hover:text-white/90 hover:bg-white/5 transition"
               aria-label="Toggle dark mode"
             >
-              <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
               </svg>
-              <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
               </svg>
             </button>
-            
+
             <!-- User/Auth Dropdown -->
             <div class="relative">
-              <button 
+              <button
                 id="userMenuBtn"
-                class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+                class="p-2 rounded-md text-white/50 hover:text-white/90 hover:bg-white/5 transition"
                 aria-label="User menu"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                 </svg>
               </button>
-              
-              <!-- Dropdown menu -->
-              <div 
+
+              <!-- Dropdown -->
+              <div
                 id="userDropdown"
-                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+                class="hidden absolute right-0 mt-2 w-44 bg-primary-950/95 backdrop-blur-md rounded-lg shadow-2xl border border-white/8 py-1 z-50"
               >
                 {!isLoggedIn ? (
-                  <a href="/login" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                  <a href="/login" class="block px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition">
                     Login
                   </a>
                 ) : (
                   <>
-                    <a href="/profile" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                    <a href="/profile" class="block px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition">
                       Profile
                     </a>
                     {canAccessUsers && (
-                      <a href="/users" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
+                      <a href="/users" class="block px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition">
                         Users
                       </a>
                     )}
-                    <button 
+                    <div class="my-1 border-t border-white/8"></div>
+                    <button
                       id="logoutBtn"
-                      class="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+                      class="w-full text-left px-4 py-2.5 text-sm text-white/70 hover:text-white hover:bg-white/5 transition"
                     >
                       Logout
                     </button>
@@ -210,94 +239,105 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             </div>
           </div>
         </div>
-        
+
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
-          <div class="flex flex-col gap-3">
-            <a href="/diary" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/diary') }]}>Diary</a>
-            <a href="/library" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/library') }]}>Library</a>
-            <a href="/characters" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/characters') }]}>Characters</a>
-            <a href="/npcs" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/npcs') }]}>NPCs</a>
-            <a href="/locations" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
-            <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
+        <div id="mobileMenu" class="hidden lg:hidden border-t border-white/8 py-3">
+          <div class="flex flex-col gap-0.5">
+            {[
+              { href: '/diary',      label: 'Diary'      },
+              { href: '/library',    label: 'Library'    },
+              { href: '/characters', label: 'Characters' },
+              { href: '/npcs',       label: 'NPCs'       },
+              { href: '/locations',  label: 'Locations'  },
+              { href: '/map',        label: 'Map', reload: true },
+              { href: '/quests',     label: 'Quests'     },
+            ].map(({ href, label, reload }) => (
+              <a
+                href={href}
+                {...(reload ? { 'data-astro-reload': true } : {})}
+                class:list={[
+                  "py-2.5 px-3 rounded-md text-sm transition-colors duration-150",
+                  isActiveLink(href)
+                    ? "text-secondary-400 font-medium bg-white/5"
+                    : "text-white/60 hover:text-white/90 hover:bg-white/4"
+                ]}
+              >{label}</a>
+            ))}
             {isLoggedIn && (
-              <a href="/tools" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/tools') }]}>Tools</a>
+              <a
+                href="/tools"
+                class:list={[
+                  "py-2.5 px-3 rounded-md text-sm transition-colors duration-150",
+                  isActiveLink('/tools')
+                    ? "text-secondary-400 font-medium bg-white/5"
+                    : "text-white/60 hover:text-white/90 hover:bg-white/4"
+                ]}
+              >Tools</a>
             )}
-            
-            <!-- Dark mode toggle for mobile -->
-            <button 
+
+            <div class="border-t border-white/8 my-2"></div>
+
+            <!-- Dark mode toggle mobile -->
+            <button
               id="themeToggleMobile"
-              class="flex items-center gap-2 py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
+              class="flex items-center gap-3 py-2.5 px-3 rounded-md text-white/60 hover:text-white/90 hover:bg-white/4 transition text-sm text-left"
               aria-label="Toggle dark mode"
             >
-              <svg id="sunIconMobile" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              <svg id="sunIconMobile" class="w-4 h-4 hidden dark:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
               </svg>
-              <svg id="moonIconMobile" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              <svg id="moonIconMobile" class="w-4 h-4 block dark:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
               </svg>
               <span id="themeTextMobile" class="dark:hidden">Dark Mode</span>
               <span id="themeTextMobile2" class="hidden dark:block">Light Mode</span>
             </button>
-            
-            <!-- User/Auth Accordion for mobile -->
-            <div class="border-t border-primary-700 dark:border-gray-700 pt-3 mt-3">
-              <button 
-                id="userMenuBtnMobile"
-                class="flex items-center justify-between w-full py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
-                aria-label="User menu"
-              >
-                <span class="flex items-center gap-2">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                  </svg>
-                  <span>Account</span>
-                </span>
-                <svg id="accordionIconMobile" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+
+            <!-- User/Auth Accordion mobile -->
+            <button
+              id="userMenuBtnMobile"
+              class="flex items-center justify-between w-full py-2.5 px-3 rounded-md text-white/60 hover:text-white/90 hover:bg-white/4 transition text-sm text-left"
+              aria-label="User menu"
+            >
+              <span class="flex items-center gap-3">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
                 </svg>
-              </button>
-              
-              <!-- Accordion content -->
-              <div id="userAccordionMobile" class="hidden pl-4 mt-2 space-y-2">
-                {!isLoggedIn ? (
-                  <a href="/login" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                    Login
-                  </a>
-                ) : (
-                  <>
-                    <a href="/profile" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                      Profile
-                    </a>
-                    {canAccessUsers && (
-                      <a href="/users" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                        Users
-                      </a>
-                    )}
-                    <button 
-                      id="logoutBtnMobile"
-                      class="w-full text-left py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition"
-                    >
-                      Logout
-                    </button>
-                  </>
-                )}
-              </div>
+                Account
+              </span>
+              <svg id="accordionIconMobile" class="w-3.5 h-3.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+
+            <div id="userAccordionMobile" class="hidden pl-3 space-y-0.5">
+              {!isLoggedIn ? (
+                <a href="/login" class="block py-2.5 px-3 rounded-md text-sm text-white/60 hover:text-white/90 hover:bg-white/4 transition">Login</a>
+              ) : (
+                <>
+                  <a href="/profile" class="block py-2.5 px-3 rounded-md text-sm text-white/60 hover:text-white/90 hover:bg-white/4 transition">Profile</a>
+                  {canAccessUsers && (
+                    <a href="/users" class="block py-2.5 px-3 rounded-md text-sm text-white/60 hover:text-white/90 hover:bg-white/4 transition">Users</a>
+                  )}
+                  <button
+                    id="logoutBtnMobile"
+                    class="w-full text-left py-2.5 px-3 rounded-md text-sm text-white/60 hover:text-white/90 hover:bg-white/4 transition"
+                  >Logout</button>
+                </>
+              )}
             </div>
-          </div>
           </div>
         </div>
       </div>
     </nav>
     
-    <main class="container mx-auto px-4 py-8 page-fade-in">
+    <main class="container mx-auto px-4 sm:px-6 py-8 page-fade-in">
       <slot />
     </main>
-    
-    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900 pwa-hide-footer" transition:persist>
+
+    <footer class="mt-16 py-8 border-t pwa-hide-footer" style="border-color: var(--border-subtle);" transition:persist>
       <div class="container mx-auto px-4 text-center">
-        <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
+        <p class="text-sm" style="color: var(--text-page); opacity: 0.4;">&copy; 2025 Arandor Companion. Track your D&D adventures.</p>
       </div>
     </footer>
     
@@ -373,27 +413,29 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       const updateNavigation = () => {
         const currentPath = window.location.pathname;
         const navLinks = document.querySelectorAll('nav a[href^="/"]');
-        
+
         navLinks.forEach(link => {
           const href = link.getAttribute('href');
           if (!href) return;
-          
-          // Check if link is active
-          const isActive = href === '/' 
-            ? currentPath === '/' 
+
+          const isActive = href === '/'
+            ? currentPath === '/'
             : currentPath === href || currentPath.startsWith(href + '/');
-          
-          // Update classes
+
           if (isActive) {
-            link.classList.add('text-secondary-300', 'font-semibold');
-            if (link.classList.contains('py-2')) { // Mobile menu item
-              link.classList.add('bg-primary-700');
-              if (document.documentElement.classList.contains('dark')) {
-                link.classList.add('dark:bg-gray-700');
-              }
+            link.classList.add('text-secondary-400', 'font-medium');
+            link.classList.remove('text-white/60', 'text-white/90');
+            // Mobile item highlight
+            if (link.closest('#mobileMenu')) {
+              link.classList.add('bg-white/5');
             }
           } else {
-            link.classList.remove('text-secondary-300', 'font-semibold', 'bg-primary-700', 'dark:bg-gray-700');
+            link.classList.remove('text-secondary-400', 'font-medium', 'bg-white/5');
+            if (!link.closest('#mobileMenu')) {
+              link.classList.add('text-white/60');
+            } else {
+              link.classList.add('text-white/60');
+            }
           }
         });
       };
