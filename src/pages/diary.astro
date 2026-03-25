@@ -16,12 +16,12 @@ const userRole = await getUserRole(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 const editId = Astro.url.searchParams.get('edit');
 
-const sortedEntries = diaryEntries.slice().sort((a, b) => 
+const sortedEntries = diaryEntries.slice().sort((a, b) =>
   b.session - a.session
 );
 
 // Get all unique tags from diary entries
-const allTags = [...new Set(diaryEntries.flatMap(entry => 
+const allTags = [...new Set(diaryEntries.flatMap(entry =>
   Array.isArray(entry.tags) ? entry.tags : []
 ))].sort();
 
@@ -34,8 +34,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Adventure Diary">
-  <PageHero 
-    title="Adventure Diary" 
+  <PageHero
+    title="Adventure Diary"
     heroImageUrl={heroImageUrl}
     pageName="diary"
     canEditHero={canEditHero}
@@ -43,7 +43,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   {isLoggedIn && (
     <div class="flex justify-end mb-4">
-      <Button 
+      <Button
         variant="primary"
         size="md"
         icon="add"
@@ -57,37 +57,37 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Stats -->
   <div class="grid grid-cols-2 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-secondary-600 dark:text-secondary-500">{maxSession}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Sessions</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{maxSession}</div>
+      <div class="t-label-sm mt-1">Sessions</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-500">{allTags.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Unique Tags</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="t-num text-2xl md:text-3xl">{allTags.length}</div>
+      <div class="t-label-sm mt-1">Unique Tags</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-4 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
+        <input
+          type="text"
+          id="searchInput"
           placeholder="Search diary entries by title, content, or tags..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
         >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <!-- Tag Filter Below -->
       {allTags.length > 0 && (
         <div class="flex flex-wrap gap-2 items-center">
-          <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-          <button 
-            class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+          <span class="text-sm t-muted font-medium">Filter:</span>
+          <button
+            class="tag-filter t-pill active transition-all duration-200 active:scale-95"
             data-tag="all"
           >
             All ({diaryEntries.length})
@@ -95,8 +95,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           {allTags.map(tag => {
             const count = sortedEntries.filter(e => Array.isArray(e.tags) && e.tags.includes(tag)).length;
             return (
-              <button 
-                class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+              <button
+                class="tag-filter t-pill transition-all duration-200 active:scale-95"
                 data-tag={tag}
               >
                 #{tag} ({count})
@@ -112,16 +112,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     {sortedEntries.map(entry => {
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       return (
-      <article class="diary-entry bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
+      <article class="diary-entry t-panel p-6 hover:shadow-lg transition" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
         {entry.coverVideoUrl ? (
-          <div class="mb-4 rounded-lg overflow-hidden">
-            <video 
+          <div class="-mx-6 -mt-6 mb-5 overflow-hidden" style="border-bottom:1px solid var(--border-gold);">
+            <video
               autoplay
               muted
               playsinline
               preload="auto"
               disablePictureInPicture
-              class="w-full h-48 object-cover"
+              class="w-full h-52 object-cover block"
               aria-label={`Video for ${entry.title}`}
             >
               <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
@@ -129,17 +129,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </video>
           </div>
         ) : entry.coverImageUrl && (
-          <div class="mb-4 rounded-lg overflow-hidden">
-            <img 
-              src={entry.coverImageUrl} 
+          <div class="-mx-6 -mt-6 mb-5 overflow-hidden" style="border-bottom:1px solid var(--border-gold);">
+            <img
+              src={entry.coverImageUrl}
               alt={entry.title}
-              class="w-full h-48 object-cover"
+              class="w-full h-52 object-cover block"
             />
           </div>
         )}
         <div class="mb-4">
           <div class="flex items-start justify-between gap-2 mb-1">
-            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold t-gold hover:opacity-80 transition">
               {entry.title}
             </a>
             {isLoggedIn && (
@@ -159,7 +159,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   size="sm"
                   icon="delete"
                   iconPosition="only"
-                  class="delete-entry hover:text-red-600 dark:hover:text-red-400"
+                  class="delete-entry hover:text-red-400"
                   data-id={entry.id}
                   title="Delete entry"
                   ariaLabel="Delete entry"
@@ -167,10 +167,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               </div>
             )}
           </div>
-          <div class="flex gap-4 text-sm text-gray-500 mt-1">
+          <div class="flex gap-4 text-sm t-faint mt-1">
             <span>Session {entry.session}</span>
             {entry.podcastAudioUrl && (
-              <span class="inline-flex items-center gap-1 px-2 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium">
+              <span class="t-badge inline-flex items-center gap-1">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
                 </svg>
@@ -179,22 +179,20 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             )}
           </div>
         </div>
-        
+
         <div class="prose max-w-none mb-4">
-          <p class="text-gray-700 dark:text-gray-300 line-clamp-3">{entry.content}</p>
+          <p class="t-body-text line-clamp-3">{entry.content}</p>
         </div>
-        
+
         <div class="flex gap-2 flex-wrap mb-4">
           {Array.isArray(entry.tags) && entry.tags.map((tag: string) => (
-            <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm">
-              #{tag}
-            </span>
+            <span class="t-badge t-badge-gold">#{tag}</span>
           ))}
         </div>
 
-        <a 
+        <a
           href={`/diary/${entry.id}`}
-          class="block text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+          class="t-btn-secondary block text-center text-sm mt-4"
         >
           View Details →
         </a>
@@ -204,234 +202,234 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {sortedEntries.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">No diary entries yet. Start documenting your adventures!</p>
+    <div class="text-center py-16 t-panel">
+      <p class="t-faint text-lg">No diary entries yet. Start documenting your adventures!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Entry -->
-  <div id="diaryEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="diaryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Diary Entry</h2>
+  <div id="diaryEntryModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="diaryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 t-section-h">New Diary Entry</h2>
       <form id="diaryEntryForm" class="space-y-4">
         <input type="hidden" id="diaryEntryId" name="id">
-        
+
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
-          <input 
-            type="text" 
-            id="title" 
-            name="title" 
-            required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+          <label for="title" class="t-label block mb-1">Title</label>
+          <input
+            type="text"
+            id="title"
+            name="title"
+            required
+            class="t-input px-3 py-2"
           >
         </div>
-        
+
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="date" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Date</label>
-            <input 
-              type="date" 
-              id="date" 
-              name="date" 
-              required 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            <label for="date" class="t-label block mb-1">Date</label>
+            <input
+              type="date"
+              id="date"
+              name="date"
+              required
+              class="t-input px-3 py-2"
             >
           </div>
-          
+
           <div>
-            <label for="session" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Session Number</label>
-            <input 
-              type="number" 
-              id="session" 
-              name="session" 
-              required 
+            <label for="session" class="t-label block mb-1">Session Number</label>
+            <input
+              type="number"
+              id="session"
+              name="session"
+              required
               min="1"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
         </div>
-        
+
         <div>
-          <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="content" class="t-label block mb-1">
             Content (Markdown supported)
-            <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="text-xs text-primary-600 dark:text-primary-400 hover:underline ml-2">
+            <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="t-link ml-2">
               Markdown Guide ↗
             </a>
           </label>
-          <textarea 
-            id="content" 
-            name="content" 
-            required 
+          <textarea
+            id="content"
+            name="content"
+            required
             rows="10"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-3 py-2"
           ></textarea>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Use **bold**, *italic*, # headings, - lists, and more</p>
+          <p class="text-xs t-faint mt-1">Use **bold**, *italic*, # headings, - lists, and more</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Image</label>
+          <label class="t-label block mb-1">Cover Image</label>
           <div class="space-y-3">
             <div>
-              <label for="coverImageFile" class="block text-xs text-gray-600 mb-1">Upload Image (max 5MB)</label>
-              <input 
-                type="file" 
-                id="coverImageFile" 
-                name="coverImageFile" 
+              <label for="coverImageFile" class="t-label block mb-1">Upload Image (max 5MB)</label>
+              <input
+                type="file"
+                id="coverImageFile"
+                name="coverImageFile"
                 accept="image/*"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
-            <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+            <div class="text-center text-sm t-faint">— OR —</div>
             <div>
-              <label for="coverImageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
-              <input 
-                type="text" 
-                id="coverImageUrl" 
-                name="coverImageUrl" 
+              <label for="coverImageUrl" class="t-label block mb-1">Image URL</label>
+              <input
+                type="text"
+                id="coverImageUrl"
+                name="coverImageUrl"
                 placeholder="https://example.com/image.jpg"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
+              <p class="text-xs t-faint mt-1">External URL or uploaded image path</p>
             </div>
           </div>
           <div id="imagePreview" class="mt-3 hidden">
-            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
+            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-sm shadow-md">
           </div>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cover Video</label>
+          <label class="t-label block mb-1">Cover Video</label>
           <div class="space-y-3">
             <div>
-              <label for="coverVideoFile" class="block text-xs text-gray-600 mb-1">Upload Video (max 5MB)</label>
-              <input 
-                type="file" 
-                id="coverVideoFile" 
-                name="coverVideoFile" 
+              <label for="coverVideoFile" class="t-label block mb-1">Upload Video (max 5MB)</label>
+              <input
+                type="file"
+                id="coverVideoFile"
+                name="coverVideoFile"
                 accept="video/*"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
-            <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+            <div class="text-center text-sm t-faint">— OR —</div>
             <div>
-              <label for="coverVideoUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Video URL</label>
-              <input 
-                type="text" 
-                id="coverVideoUrl" 
-                name="coverVideoUrl" 
+              <label for="coverVideoUrl" class="t-label block mb-1">Video URL</label>
+              <input
+                type="text"
+                id="coverVideoUrl"
+                name="coverVideoUrl"
                 placeholder="https://example.com/video.mp4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded video path</p>
+              <p class="text-xs t-faint mt-1">External URL or uploaded video path</p>
             </div>
           </div>
           <div id="videoPreview" class="mt-3 hidden">
-            <video 
-              id="previewVideo" 
-              src="" 
+            <video
+              id="previewVideo"
+              src=""
               autoplay
               muted
               playsinline
               loop
               preload="auto"
               disablePictureInPicture
-              class="max-w-xs rounded-lg shadow-md" 
+              class="max-w-xs rounded-sm shadow-md"
               aria-label="Video preview"
             ></video>
           </div>
         </div>
-        
+
         <div>
-          <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
-          <input 
-            type="text" 
-            id="tags" 
-            name="tags" 
+          <label for="tags" class="t-label block mb-1">Tags (comma-separated)</label>
+          <input
+            type="text"
+            id="tags"
+            name="tags"
             placeholder="combat, discovery, ruins"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-3 py-2"
           >
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="npcs" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPCs Met</label>
-            <select 
-              id="npcs" 
-              name="npcs" 
-              multiple 
+            <label for="npcs" class="t-label block mb-1">NPCs Met</label>
+            <select
+              id="npcs"
+              name="npcs"
+              multiple
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
               {npcs.map(npc => (
                 <option value={npc.id}>{npc.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs t-faint mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
 
           <div>
-            <label for="locations" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Locations Visited</label>
-            <select 
-              id="locations" 
-              name="locations" 
-              multiple 
+            <label for="locations" class="t-label block mb-1">Locations Visited</label>
+            <select
+              id="locations"
+              name="locations"
+              multiple
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
               {locations.map(location => (
                 <option value={location.id}>{location.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs t-faint mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
         </div>
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label for="characters" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Party Members</label>
-            <select 
-              id="characters" 
-              name="characters" 
-              multiple 
+            <label for="characters" class="t-label block mb-1">Party Members</label>
+            <select
+              id="characters"
+              name="characters"
+              multiple
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
               {characters.map(character => (
                 <option value={character.id}>{character.name}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs t-faint mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
 
           <div>
-            <label for="quests" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Related Quests</label>
-            <select 
-              id="quests" 
-              name="quests" 
-              multiple 
+            <label for="quests" class="t-label block mb-1">Related Quests</label>
+            <select
+              id="quests"
+              name="quests"
+              multiple
               size="4"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
               {quests.map(quest => (
                 <option value={quest.id}>{quest.title}</option>
               ))}
             </select>
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+            <p class="text-xs t-faint mt-1">Hold Ctrl/Cmd to select multiple</p>
           </div>
         </div>
-        
+
         <div class="flex gap-4 pt-4">
-          <button 
-            type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+          <button
+            type="submit"
+            class="t-btn-primary flex-1 px-4 py-2"
           >
             Save Entry
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             id="cancelDiaryModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            class="t-btn-secondary flex-1"
           >
             Cancel
           </button>
@@ -553,11 +551,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     if (modalTitle) modalTitle.textContent = 'New Diary Entry';
     imagePreview?.classList.add('hidden');
     videoPreview?.classList.add('hidden');
-    
+
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
     (document.getElementById('date') as HTMLInputElement).value = today;
-    
+
     modal?.classList.remove('hidden');
   });
 
@@ -576,35 +574,35 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Handle form submission
   form?.addEventListener('submit', async (e) => {
     e.preventDefault();
-    
+
     const formData = new FormData(form);
     const tags = (formData.get('tags') as string).split(',').map(t => t.trim()).filter(t => t);
-    
+
     // Get selected values from multi-select fields
     const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
     const locationsSelect = document.getElementById('locations') as HTMLSelectElement;
     const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
     const questsSelect = document.getElementById('quests') as HTMLSelectElement;
-    
+
     const npcIds = Array.from(npcsSelect.selectedOptions).map(option => option.value);
     const locationIds = Array.from(locationsSelect.selectedOptions).map(option => option.value);
     const characterIds = Array.from(charactersSelect.selectedOptions).map(option => option.value);
     const questIds = Array.from(questsSelect.selectedOptions).map(option => option.value);
-    
+
     // Handle image upload if file is selected
     let coverImageUrl = formData.get('coverImageUrl') as string || null;
     const imageFile = formData.get('coverImageFile') as File;
-    
+
     if (imageFile && imageFile.size > 0) {
       try {
         const uploadFormData = new FormData();
         uploadFormData.append('file', imageFile);
-        
+
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: uploadFormData,
         });
-        
+
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           coverImageUrl = uploadData.url;
@@ -623,17 +621,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Handle video upload if file is selected
     let coverVideoUrl = formData.get('coverVideoUrl') as string || null;
     const videoFile = formData.get('coverVideoFile') as File;
-    
+
     if (videoFile && videoFile.size > 0) {
       try {
         const uploadFormData = new FormData();
         uploadFormData.append('file', videoFile);
-        
+
         const uploadResponse = await fetch('/api/upload', {
           method: 'POST',
           body: uploadFormData,
         });
-        
+
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
           coverVideoUrl = uploadData.url;
@@ -648,7 +646,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         return;
       }
     }
-    
+
     const data = {
       title: formData.get('title'),
       date: formData.get('date'),
@@ -666,7 +664,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     try {
       const url = editingId ? `/api/diary/${editingId}` : '/api/diary';
       const method = editingId ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
@@ -686,7 +684,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     // Check if we should auto-open modal for editing
     const urlParams = new URLSearchParams(window.location.search);
     const editIdFromUrl = urlParams.get('edit');
-    
+
     if (editIdFromUrl) {
       // Find and click the edit button for this entry
       const editButton = document.querySelector(`button.edit-entry[data-id="${editIdFromUrl}"]`);
@@ -701,14 +699,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   // Edit/Delete entries with event delegation
   document.addEventListener('click', async (e) => {
     const target = e.target as HTMLElement;
-    
+
     if (target.classList.contains('edit-entry')) {
       const id = target.getAttribute('data-id');
       if (!id) {
         console.error('No data-id found on edit button');
         return;
       }
-      
+
       // Get DOM elements fresh
       const modal = document.getElementById('diaryEntryModal');
       const modalTitle = document.getElementById('diaryModalTitle');
@@ -718,7 +716,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       const videoPreview = document.getElementById('videoPreview');
       const previewVideo = document.getElementById('previewVideo') as HTMLVideoElement;
       const videoFileInput = document.getElementById('coverVideoFile') as HTMLInputElement;
-      
+
       try {
         console.log('Fetching diary entry with ID:', id);
         const response = await fetch(`/api/diary/${id}`);
@@ -730,9 +728,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         }
         const entry = await response.json();
         console.log('Successfully loaded diary entry:', entry);
-        
+
         editingId = id;
-        
+
         // Populate form fields with null checks
         const titleEl = document.getElementById('title') as HTMLInputElement;
         const dateEl = document.getElementById('date') as HTMLInputElement;
@@ -741,12 +739,12 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         const tagsEl = document.getElementById('tags') as HTMLInputElement;
         const coverImageUrlEl = document.getElementById('coverImageUrl') as HTMLInputElement;
         const coverVideoUrlEl = document.getElementById('coverVideoUrl') as HTMLInputElement;
-        
+
         if (!titleEl || !dateEl || !sessionEl || !contentEl || !tagsEl || !coverImageUrlEl || !coverVideoUrlEl) {
           console.error('One or more form elements not found');
           throw new Error('Form elements not found');
         }
-        
+
         titleEl.value = entry.title || '';
         dateEl.value = entry.date || '';
         sessionEl.value = entry.session || '';
@@ -754,7 +752,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
         coverImageUrlEl.value = entry.coverImageUrl || '';
         coverVideoUrlEl.value = entry.coverVideoUrl || '';
-        
+
         // Show image preview if there's a cover image
         if (entry.coverImageUrl && imagePreview && previewImg) {
           previewImg.src = entry.coverImageUrl;
@@ -770,30 +768,30 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         } else {
           videoPreview?.classList.add('hidden');
         }
-        
+
         // Clear file inputs
         if (fileInput) fileInput.value = '';
         if (videoFileInput) videoFileInput.value = '';
-        
+
         // Set selected values for multi-select fields
         const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
         const locationsSelect = document.getElementById('locations') as HTMLSelectElement;
         const charactersSelect = document.getElementById('characters') as HTMLSelectElement;
         const questsSelect = document.getElementById('quests') as HTMLSelectElement;
-        
+
         if (npcsSelect && locationsSelect && charactersSelect && questsSelect) {
           // Clear previous selections
           Array.from(npcsSelect.options).forEach(option => option.selected = false);
           Array.from(locationsSelect.options).forEach(option => option.selected = false);
           Array.from(charactersSelect.options).forEach(option => option.selected = false);
           Array.from(questsSelect.options).forEach(option => option.selected = false);
-          
+
           // Set new selections
           const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
           const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
           const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
           const questIds = Array.isArray(entry.questIds) ? entry.questIds : [];
-          
+
           Array.from(npcsSelect.options).forEach(option => {
             if (npcIds.includes(option.value)) option.selected = true;
           });
@@ -809,7 +807,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         } else {
           console.warn('One or more multi-select elements not found');
         }
-        
+
         if (modalTitle) modalTitle.textContent = 'Edit Diary Entry';
         modal?.classList.remove('hidden');
       } catch (error) {
@@ -817,18 +815,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('Failed to load entry. Please try again.');
       }
     }
-    
+
     // Delete entry
     if (target.classList.contains('delete-entry')) {
       const id = target.getAttribute('data-id');
       if (!id) return;
-      
+
       if (confirm('Are you sure you want to delete this entry?')) {
         try {
           const response = await fetch(`/api/diary/${id}`, {
             method: 'DELETE',
           });
-          
+
           if (response.ok) {
             window.location.reload();
           } else {
@@ -847,7 +845,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const searchInput = document.getElementById('searchInput') as HTMLInputElement;
     const filterBtns = document.querySelectorAll('.tag-filter');
     const diaryCards = document.querySelectorAll('.diary-entry');
-    
+
     let currentFilter = 'all';
     let currentSearch = '';
 
@@ -856,11 +854,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       diaryCards.forEach(card => {
         const entryTags = JSON.parse(card.getAttribute('data-tags') || '[]');
         const searchText = card.getAttribute('data-search') || '';
-        
+
         const matchesFilter = currentFilter === 'all' || entryTags.includes(currentFilter);
         // Match if ANY search term is found in the text (more flexible search)
         const matchesSearch = searchTerms.length === 0 || searchTerms.some(term => searchText.includes(term));
-        
+
         (card as HTMLElement).style.display = matchesFilter && matchesSearch ? 'block' : 'none';
       });
     };
@@ -875,18 +873,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     filterBtns.forEach(btn => {
       btn.addEventListener('click', () => {
         currentFilter = btn.getAttribute('data-tag') || 'all';
-        
+
         // Update button styles
         filterBtns.forEach(b => {
           if (b.getAttribute('data-tag') === currentFilter) {
-            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
-            b.classList.add('bg-primary-600', 'text-white');
+            b.classList.add('active');
           } else {
-            b.classList.remove('bg-primary-600', 'text-white');
-            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.remove('active');
           }
         });
-        
+
         applyFilters();
       });
     });
@@ -897,11 +893,4 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     initializeDiaryModal();
     initializeFilters();
   });
-</script>
-
-<script>
-  import { initializeVideoAutoplay } from '../utils/video';
-  
-  // Ensure videos play after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeVideoAutoplay);
 </script>

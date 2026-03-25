@@ -28,15 +28,15 @@ const {
 // Base classes
 const baseClasses = 'transition cursor-pointer whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center';
 
-// Variant classes
+// Variant classes — using CSS vars for theme consistency
 const variantClasses = {
-  primary: 'text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300 font-medium',
-  secondary: 'text-gray-600 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300 font-medium',
-  success: 'text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 font-medium',
-  danger: 'text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium',
-  warning: 'text-yellow-600 hover:text-yellow-700 dark:text-yellow-400 dark:hover:text-yellow-300 font-medium',
-  ghost: 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg',
-  icon: 'text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg',
+  primary: 't-btn-primary',
+  secondary: 't-btn-secondary',
+  success: 't-btn-primary',
+  danger: 't-btn-danger',
+  warning: 't-btn-gold',
+  ghost: 't-btn-ghost',
+  icon: 't-icon-btn',
 };
 
 // Size classes

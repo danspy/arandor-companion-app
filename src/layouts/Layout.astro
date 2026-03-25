@@ -44,9 +44,9 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <!-- PWA Manifest -->
     <link rel="manifest" href="/manifest.webmanifest" />
     
-    <!-- Theme Colors (with dark mode support) -->
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+    <!-- Theme Colors -->
+    <meta name="theme-color" content="#1e1408" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#080603" media="(prefers-color-scheme: dark)" />
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -112,7 +112,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       }
     </script>
   </head>
-  <body class="bg-gray-50 dark:bg-black text-gray-900 dark:text-gray-100 transition-colors">
+  <body>
     <!-- PWA Status Bar Gradient Overlay -->
     <div class="pwa-status-bar-gradient" aria-hidden="true"></div>
     
@@ -121,183 +121,215 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       <div class="loading-spinner"></div>
     </div>
     
-    <nav class="app-nav text-white shadow-lg dark:border-b dark:border-gray-900 z-50 sticky top-0 pwa-hide-nav" transition:persist>
-      <div class="container mx-auto px-4 py-4">
-        <div class="flex items-center justify-between">
-          <a href="/" class="text-xl sm:text-2xl font-bold hover:text-secondary-200 transition">Arandor Companion</a>
-          
-          <!-- Mobile menu button -->
-          <button 
-            id="mobileMenuBtn" 
-            class="lg:hidden text-white hover:text-secondary-200 transition p-2"
+    <!-- ── Navigation ─────────────────────────────────────────── -->
+    <nav class="app-nav sticky top-0 pwa-hide-nav" transition:persist>
+      <div class="container mx-auto px-4 sm:px-6">
+        <div class="flex items-center justify-between h-[60px]">
+
+          <!-- Brand — Cormorant italic -->
+          <a
+            href="/"
+            class="font-display italic font-semibold text-xl sm:text-2xl tracking-wide leading-none"
+            style="color: var(--gold); text-shadow: 0 0 20px rgba(201,144,50,0.30);"
+            data-testid="nav-brand"
+          >Arandor</a>
+
+          <!-- Mobile toggle -->
+          <button
+            id="mobileMenuBtn"
+            class="lg:hidden p-2 -mr-1 rounded transition-colors"
+            style="color: rgba(242,232,213,0.5);"
             aria-label="Toggle menu"
+            data-testid="mobile-menu-btn"
           >
-            <svg id="menuIcon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <svg id="menuIcon" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
-            <svg id="closeIcon" class="w-6 h-6 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            <svg id="closeIcon" class="w-5 h-5 hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
-          
-          <!-- Desktop menu -->
-          <div class="hidden lg:flex gap-6 items-center">
-            <a href="/diary" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/diary') }]}>Diary</a>
-            <a href="/library" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/library') }]}>Library</a>
-            <a href="/characters" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/characters') }]}>Characters</a>
-            <a href="/npcs" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/npcs') }]}>NPCs</a>
-            <a href="/locations" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/map') }]}>Map</a>
-            <a href="/quests" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/quests') }]}>Quests</a>
+
+          <!-- Desktop nav links -->
+          <div class="hidden lg:flex items-center gap-0.5" data-testid="desktop-nav">
+            {[
+              { href: '/diary',      label: 'Diary'      },
+              { href: '/library',    label: 'Library'    },
+              { href: '/characters', label: 'Characters' },
+              { href: '/npcs',       label: 'NPCs'       },
+              { href: '/locations',  label: 'Locations'  },
+              { href: '/map',        label: 'Map', reload: true },
+              { href: '/quests',     label: 'Quests'     },
+            ].map(({ href, label, reload }) => (
+              <a
+                href={href}
+                {...(reload ? { 'data-astro-reload': true } : {})}
+                class:list={[
+                  "nav-link px-3 py-1.5 text-sm rounded-md transition-all duration-200",
+                  isActiveLink(href) ? "nav-link-active" : "nav-link-inactive"
+                ]}
+              >{label}</a>
+            ))}
             {isLoggedIn && (
-              <a href="/tools" class:list={["hover:text-secondary-200 transition", { "text-secondary-300 font-semibold": isActiveLink('/tools') }]}>Tools</a>
+              <a
+                href="/tools"
+                class:list={[
+                  "nav-link px-3 py-1.5 text-sm rounded-md transition-all duration-200",
+                  isActiveLink('/tools') ? "nav-link-active" : "nav-link-inactive"
+                ]}
+              >Tools</a>
             )}
-            
-            <!-- Dark mode toggle -->
-            <button 
+
+            <span class="w-px h-4 mx-2 shrink-0" style="background: rgba(201,144,50,0.18);"></span>
+
+            <!-- Theme toggle -->
+            <button
               id="themeToggle"
-              class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+              class="p-2 rounded-md transition-colors"
+              style="color: rgba(242,232,213,0.4);"
               aria-label="Toggle dark mode"
+              data-testid="theme-toggle"
             >
-              <svg id="sunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
               </svg>
-              <svg id="moonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
               </svg>
             </button>
-            
-            <!-- User/Auth Dropdown -->
+
+            <!-- User dropdown -->
             <div class="relative">
-              <button 
+              <button
                 id="userMenuBtn"
-                class="p-2 rounded-lg hover:bg-primary-700 dark:hover:bg-gray-700 transition"
+                class="p-2 rounded-md transition-colors"
+                style="color: rgba(242,232,213,0.4);"
                 aria-label="User menu"
+                data-testid="user-menu-btn"
               >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                 </svg>
               </button>
-              
-              <!-- Dropdown menu -->
-              <div 
+              <div
                 id="userDropdown"
-                class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 z-50"
+                class="hidden absolute right-0 mt-2 w-44 rounded-xl shadow-2xl border py-1.5 z-50"
+                style="background: var(--bg-raised); border-color: var(--border-gold);"
               >
                 {!isLoggedIn ? (
-                  <a href="/login" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                    Login
-                  </a>
+                  <a href="/login" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Login</a>
                 ) : (
                   <>
-                    <a href="/profile" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                      Profile
-                    </a>
+                    <a href="/profile" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Profile</a>
                     {canAccessUsers && (
-                      <a href="/users" class="block px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition">
-                        Users
-                      </a>
+                      <a href="/users" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Users</a>
                     )}
-                    <button 
+                    <div class="my-1" style="border-top: 1px solid var(--border);"></div>
+                    <button
                       id="logoutBtn"
-                      class="w-full text-left px-4 py-2 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                    >
-                      Logout
-                    </button>
+                      class="w-full text-left px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]"
+                      style="color: var(--text-muted);"
+                    >Logout</button>
                   </>
                 )}
               </div>
             </div>
           </div>
         </div>
-        
+
         <!-- Mobile menu -->
-        <div id="mobileMenu" class="hidden lg:hidden mt-4 pb-4">
-          <div class="flex flex-col gap-3">
-            <a href="/diary" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/diary') }]}>Diary</a>
-            <a href="/library" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/library') }]}>Library</a>
-            <a href="/characters" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/characters') }]}>Characters</a>
-            <a href="/npcs" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/npcs') }]}>NPCs</a>
-            <a href="/locations" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/locations') }]}>Locations</a>
-            <a href="/map" data-astro-reload class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/map') }]}>Map</a>
-            <a href="/quests" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/quests') }]}>Quests</a>
+        <div id="mobileMenu" class="hidden lg:hidden py-3" style="border-top: 1px solid rgba(201,144,50,0.12);">
+          <div class="flex flex-col gap-0.5">
+            {[
+              { href: '/diary',      label: 'Diary'      },
+              { href: '/library',    label: 'Library'    },
+              { href: '/characters', label: 'Characters' },
+              { href: '/npcs',       label: 'NPCs'       },
+              { href: '/locations',  label: 'Locations'  },
+              { href: '/map',        label: 'Map', reload: true },
+              { href: '/quests',     label: 'Quests'     },
+            ].map(({ href, label, reload }) => (
+              <a
+                href={href}
+                {...(reload ? { 'data-astro-reload': true } : {})}
+                class:list={[
+                  "nav-link px-3 py-2.5 text-sm rounded-md transition-all duration-200",
+                  isActiveLink(href) ? "nav-link-active" : "nav-link-inactive"
+                ]}
+              >{label}</a>
+            ))}
             {isLoggedIn && (
-              <a href="/tools" class:list={["hover:text-secondary-200 transition py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700", { "text-secondary-300 font-semibold bg-primary-700 dark:bg-gray-700": isActiveLink('/tools') }]}>Tools</a>
+              <a
+                href="/tools"
+                class:list={[
+                  "nav-link px-3 py-2.5 text-sm rounded-md transition-all duration-200",
+                  isActiveLink('/tools') ? "nav-link-active" : "nav-link-inactive"
+                ]}
+              >Tools</a>
             )}
-            
-            <!-- Dark mode toggle for mobile -->
-            <button 
+
+            <div class="my-2" style="border-top: 1px solid rgba(201,144,50,0.10);"></div>
+
+            <button
               id="themeToggleMobile"
-              class="flex items-center gap-2 py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
+              class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors text-left"
+              style="color: rgba(242,232,213,0.45);"
               aria-label="Toggle dark mode"
             >
-              <svg id="sunIconMobile" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              <svg id="sunIconMobile" class="w-4 h-4 hidden dark:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
               </svg>
-              <svg id="moonIconMobile" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              <svg id="moonIconMobile" class="w-4 h-4 block dark:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
               </svg>
               <span id="themeTextMobile" class="dark:hidden">Dark Mode</span>
               <span id="themeTextMobile2" class="hidden dark:block">Light Mode</span>
             </button>
-            
-            <!-- User/Auth Accordion for mobile -->
-            <div class="border-t border-primary-700 dark:border-gray-700 pt-3 mt-3">
-              <button 
-                id="userMenuBtnMobile"
-                class="flex items-center justify-between w-full py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition text-left"
-                aria-label="User menu"
-              >
-                <span class="flex items-center gap-2">
-                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-                  </svg>
-                  <span>Account</span>
-                </span>
-                <svg id="accordionIconMobile" class="w-4 h-4 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+
+            <button
+              id="userMenuBtnMobile"
+              class="flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors text-left"
+              style="color: rgba(242,232,213,0.45);"
+              aria-label="User menu"
+            >
+              <span class="flex items-center gap-3">
+                <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                 </svg>
-              </button>
-              
-              <!-- Accordion content -->
-              <div id="userAccordionMobile" class="hidden pl-4 mt-2 space-y-2">
-                {!isLoggedIn ? (
-                  <a href="/login" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                    Login
-                  </a>
-                ) : (
-                  <>
-                    <a href="/profile" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                      Profile
-                    </a>
-                    {canAccessUsers && (
-                      <a href="/users" class="block py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition">
-                        Users
-                      </a>
-                    )}
-                    <button 
-                      id="logoutBtnMobile"
-                      class="w-full text-left py-2 px-4 rounded hover:bg-primary-700 dark:hover:bg-gray-700 transition"
-                    >
-                      Logout
-                    </button>
-                  </>
-                )}
-              </div>
+                Account
+              </span>
+              <svg id="accordionIconMobile" class="w-3.5 h-3.5 transition-transform shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 9l-7 7-7-7"/>
+              </svg>
+            </button>
+
+            <div id="userAccordionMobile" class="hidden pl-3 space-y-0.5">
+              {!isLoggedIn ? (
+                <a href="/login" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Login</a>
+              ) : (
+                <>
+                  <a href="/profile" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Profile</a>
+                  {canAccessUsers && (
+                    <a href="/users" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Users</a>
+                  )}
+                  <button id="logoutBtnMobile" class="w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Logout</button>
+                </>
+              )}
             </div>
-          </div>
           </div>
         </div>
       </div>
     </nav>
-    
-    <main class="container mx-auto px-4 py-8 page-fade-in">
+
+    <main class="container mx-auto px-4 sm:px-6 py-8 page-fade-in">
       <slot />
     </main>
-    
-    <footer class="bg-gray-200 text-gray-600 mt-16 py-8 dark:bg-black dark:border-t dark:border-gray-900 pwa-hide-footer" transition:persist>
-      <div class="container mx-auto px-4 text-center">
-        <p>&copy; 2025 Arandor Companion App. Track your D&D adventures.</p>
+
+    <footer class="mt-20 py-8 pwa-hide-footer" style="border-top: 1px solid var(--border);" transition:persist>
+      <div class="container mx-auto px-4 sm:px-6 text-center">
+        <p class="font-display italic text-sm" style="color: var(--text-faint); letter-spacing: 0.04em;">
+          Arandor Companion &mdash; Chronicle your adventures
+        </p>
       </div>
     </footer>
     
@@ -372,28 +404,22 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       // Function to update navigation active states
       const updateNavigation = () => {
         const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('nav a[href^="/"]');
-        
+        const navLinks = document.querySelectorAll('nav a.nav-link[href^="/"]');
+
         navLinks.forEach(link => {
           const href = link.getAttribute('href');
           if (!href) return;
-          
-          // Check if link is active
-          const isActive = href === '/' 
-            ? currentPath === '/' 
+
+          const isActive = href === '/'
+            ? currentPath === '/'
             : currentPath === href || currentPath.startsWith(href + '/');
-          
-          // Update classes
+
           if (isActive) {
-            link.classList.add('text-secondary-300', 'font-semibold');
-            if (link.classList.contains('py-2')) { // Mobile menu item
-              link.classList.add('bg-primary-700');
-              if (document.documentElement.classList.contains('dark')) {
-                link.classList.add('dark:bg-gray-700');
-              }
-            }
+            link.classList.remove('nav-link-inactive');
+            link.classList.add('nav-link-active');
           } else {
-            link.classList.remove('text-secondary-300', 'font-semibold', 'bg-primary-700', 'dark:bg-gray-700');
+            link.classList.remove('nav-link-active');
+            link.classList.add('nav-link-inactive');
           }
         });
       };

@@ -1,309 +1,194 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import Button from '../../components/Button.astro';
 import { db, NPC, Location, DiaryEntry, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
 
 const { id } = Astro.params;
-
-if (!id) {
-  return Astro.redirect('/npcs');
-}
+if (!id) return Astro.redirect('/npcs');
 
 const npcs = await db.select().from(NPC).where(eq(NPC.id, id));
 const npc = npcs[0];
+if (!npc) return Astro.redirect('/npcs');
 
-if (!npc) {
-  return Astro.redirect('/npcs');
-}
-
-// Fetch location if locationId exists
 let location = null;
 if (npc.locationId) {
   const locations = await db.select().from(Location).where(eq(Location.id, npc.locationId));
   location = locations[0];
 }
 
-// Fetch all diary entries that mention this NPC
 const allDiaryEntries = await db.select().from(DiaryEntry);
 const relatedDiaryEntries = allDiaryEntries.filter(entry => {
   const npcIds = Array.isArray(entry.npcIds) ? entry.npcIds : [];
   return npcIds.includes(id);
-}).sort((a, b) => b.session - a.session); // Sort by session number, newest first
+}).sort((a, b) => b.session - a.session);
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
-
-// Render markdown content for description
 const renderedDescription = renderMarkdown(npc.description);
+
+const relBadge = npc.relationship === 'ally' ? 't-badge-green' : npc.relationship === 'enemy' ? 't-badge-red' : '';
+const heroBg = npc.relationship === 'ally'
+  ? 'from-emerald-950 to-stone-900'
+  : npc.relationship === 'enemy'
+  ? 'from-red-950 to-stone-900'
+  : 'from-stone-900 to-stone-800';
 ---
 
 <Layout title={npc.name}>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header with Back Button -->
+  <div class="max-w-4xl mx-auto px-1 sm:px-0">
+
+    <!-- Nav row -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/npcs" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
-        <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      <a href="/npcs" class="t-back-link">
+        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
         </svg>
-        Back to NPCs
+        NPCs
       </a>
       {isLoggedIn && (
         <div class="flex gap-2">
-          <button 
-            id="editNPC"
-            data-id={npc.id}
-            class="p-2.5 text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-            title="Edit NPC"
-            aria-label="Edit NPC"
-          >
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          <button id="editNPC" data-id={npc.id} class="t-icon-btn" title="Edit NPC" aria-label="Edit NPC">
+            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
           </button>
-          <button 
-            id="deleteNPC"
-            data-id={npc.id}
-            class="p-2.5 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-            title="Delete NPC"
-            aria-label="Delete NPC"
-          >
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          <button id="deleteNPC" data-id={npc.id} class="t-icon-btn t-icon-btn-danger" title="Delete NPC" aria-label="Delete NPC">
+            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
           </button>
         </div>
       )}
     </div>
 
-    <!-- NPC Header -->
-    <article class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-900">
-      <!-- NPC Hero Image -->
-      <div class="relative overflow-hidden">
-        <!-- Blurred background -->
-        {npc.avatarUrl ? (
+    <!-- NPC Card -->
+    <div class="t-panel overflow-hidden mb-6">
+      <!-- Hero banner -->
+      <div class={`t-hero-banner bg-gradient-to-br ${heroBg}`} style="min-height:240px;">
+        {npc.avatarUrl && (
           <>
-            <img 
-              src={npc.avatarUrl} 
-              alt={npc.name}
-              class="absolute inset-0 w-full h-full object-cover blur-lg scale-110"
-            />
-            <div class="absolute inset-0 bg-black/40"></div>
+            <img src={npc.avatarUrl} alt={npc.name}
+              class="absolute inset-0 w-full h-full object-cover"
+              style="filter:blur(16px) brightness(0.45) saturate(0.65); transform:scale(1.08);"/>
+            <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,6,3,0.2),rgba(8,6,3,0.7));"></div>
           </>
-        ) : (
-          <div class={`absolute inset-0 ${
-            npc.relationship === 'ally' ? 'bg-gradient-to-br from-green-600 to-green-500' :
-            npc.relationship === 'enemy' ? 'bg-gradient-to-br from-red-600 to-red-500' :
-            'bg-gradient-to-br from-gray-600 to-gray-500'
-          }`}></div>
         )}
-        
-        <!-- Content container -->
-        <div class="relative h-full flex flex-col justify-between p-8">
-          <!-- Circular avatar centered -->
-          <div class="flex-1 flex items-center justify-center">
-            {npc.avatarUrl ? (
-              <img 
-                src={npc.avatarUrl} 
-                alt={npc.name}
-                class="w-40 h-40 md:w-48 md:h-48 rounded-full object-cover border-4 border-white dark:border-gray-200 shadow-2xl"
-              />
-            ) : (
-              <div class="w-40 h-40 md:w-48 md:h-48 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-7xl md:text-8xl font-bold text-primary-700 dark:text-primary-400 shadow-2xl border-4 border-white dark:border-gray-700">
-                {npc.name.charAt(0)}
-              </div>
-            )}
-          </div>
-          
-          <!-- NPC name and info at bottom -->
-          <div class="text-center pt-4">
-            <h1 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg mb-2">{npc.name}</h1>
-            <p class="text-xl md:text-2xl text-white/90 drop-shadow-md">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- NPC Info -->
-      <div class="px-8 py-8">
-
-        <!-- Quick Info -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class={`p-4 rounded-lg ${
-            npc.relationship === 'ally' ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' :
-            npc.relationship === 'enemy' ? 'bg-red-50 dark:bg-red-900/20 dark:border dark:border-red-800' :
-            'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
-          }`}>
-            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Relationship</div>
-            <div class={`text-2xl font-semibold ${
-              npc.relationship === 'ally' ? 'text-green-700 dark:text-green-400' :
-              npc.relationship === 'enemy' ? 'text-red-700 dark:text-red-400' :
-              'text-gray-700 dark:text-gray-300'
-            }`}>
-              {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
-            </div>
-          </div>
-          {location && (
-            <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">
-              <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Location</div>
-              <a href={`/locations/${location.id}`} class="text-2xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:underline">
-                {location.name}
-              </a>
+        <div class="t-hero-banner-content flex flex-col sm:flex-row items-center sm:items-end gap-5">
+          {npc.avatarUrl ? (
+            <img src={npc.avatarUrl} alt={npc.name}
+              class="w-24 h-24 sm:w-28 sm:h-28 rounded-full object-cover shrink-0 shadow-2xl"
+              style="border:3px solid var(--border-gold);"/>
+          ) : (
+            <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-full shrink-0 flex items-center justify-center shadow-2xl"
+              style="background:var(--bg-surface);border:3px solid var(--border-gold);font-family:'Cormorant Garamond',serif;font-size:3rem;font-weight:700;color:var(--gold);">
+              {npc.name.charAt(0)}
             </div>
           )}
+          <div class="text-center sm:text-left">
+            <div class="flex flex-wrap items-center gap-2 mb-1 justify-center sm:justify-start">
+              <h1 class="font-display italic font-semibold text-3xl sm:text-4xl leading-tight"
+                style="color:#fff;text-shadow:0 2px 16px rgba(0,0,0,0.8);">{npc.name}</h1>
+              <span class={`t-badge ${relBadge}`} style="backdrop-filter:blur(8px);">
+                {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
+              </span>
+            </div>
+            {(npc.race || npc.occupation) && (
+              <p class="text-base sm:text-lg" style="color:rgba(242,232,213,0.8);">
+                {[npc.race, npc.occupation].filter(Boolean).join(' · ')}
+              </p>
+            )}
+          </div>
         </div>
       </div>
-    </article>
 
-    <!-- Description Section -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Description</h2>
-      <div 
-        class="prose dark:prose-invert max-w-none"
-        set:html={renderedDescription}
-      />
+      <!-- Quick facts strip -->
+      {location && (
+        <div class="px-6 py-4" style="border-top:1px solid var(--border-gold);">
+          <div class="t-field-label">Last Known Location</div>
+          <a href={`/locations/${location.id}`} class="t-link text-base font-semibold">
+            {location.name}
+          </a>
+        </div>
+      )}
     </div>
 
-    <!-- Notes Section -->
+    <!-- Description -->
+    {npc.description && (
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Description</h2>
+        </div>
+        <div class="t-prose" set:html={renderedDescription}/>
+      </div>
+    )}
+
+    <!-- Notes -->
     {npc.notes && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Notes</h2>
-        <div class="bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 dark:border-amber-400 p-4 rounded dark:border dark:border-amber-800">
-          <p class="text-gray-800 dark:text-gray-200 leading-relaxed">{npc.notes}</p>
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Notes</h2>
+        </div>
+        <div class="t-callout">
+          <p class="t-body-text leading-relaxed">{npc.notes}</p>
         </div>
       </div>
     )}
 
-    <!-- Diary Entries Mentioning This NPC -->
+    <!-- Diary Appearances -->
     {relatedDiaryEntries.length > 0 && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6 flex items-center gap-2">
-          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-          </svg>
-          Diary Entries
-        </h2>
-        <div class="space-y-4">
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Diary Appearances</h2>
+          <span class="t-badge t-badge-gold ml-auto">{relatedDiaryEntries.length}</span>
+        </div>
+        <div class="flex flex-col gap-3">
           {relatedDiaryEntries.map(entry => (
-            <a 
-              href={`/diary/${entry.id}`}
-              class="block p-6 border border-secondary-200 dark:border-secondary-900 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition"
-            >
-              <div class="flex items-start justify-between mb-2">
-                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">{entry.title}</h3>
-                <span class="bg-secondary-100 dark:bg-secondary-900/30 dark:border dark:border-secondary-800 text-secondary-700 dark:text-secondary-400 px-3 py-1 rounded-full text-sm whitespace-nowrap ml-4">
-                  Session {entry.session}
-                </span>
-              </div>
-              <p class="text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
-                {entry.content.substring(0, 200)}{entry.content.length > 200 ? '...' : ''}
-              </p>
-              {Array.isArray(entry.tags) && entry.tags.length > 0 && (
-                <div class="flex gap-2 flex-wrap">
-                  {entry.tags.slice(0, 3).map((tag: string) => (
-                    <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-2 py-1 rounded text-xs">
-                      #{tag}
-                    </span>
-                  ))}
-                  {entry.tags.length > 3 && (
-                    <span class="text-gray-500 dark:text-gray-400 text-xs py-1">
-                      +{entry.tags.length - 3} more
-                    </span>
-                  )}
+            <a href={`/diary/${entry.id}`} class="t-row p-4 flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="t-body-text font-medium truncate">{entry.title}</div>
+                <div class="t-faint text-xs mt-0.5 line-clamp-2">
+                  {entry.content.substring(0, 120)}{entry.content.length > 120 ? '…' : ''}
                 </div>
-              )}
+                {Array.isArray(entry.tags) && entry.tags.length > 0 && (
+                  <div class="flex gap-1.5 flex-wrap mt-2">
+                    {entry.tags.slice(0, 3).map((tag: string) => (
+                      <span class="t-badge t-badge-gold">#{tag}</span>
+                    ))}
+                    {entry.tags.length > 3 && <span class="t-faint text-xs">+{entry.tags.length - 3}</span>}
+                  </div>
+                )}
+              </div>
+              <span class="t-badge t-badge-accent shrink-0">Session {entry.session}</span>
             </a>
           ))}
         </div>
       </div>
     )}
+
   </div>
 </Layout>
 
 <script>
   function initializeDetailPage() {
-    const deleteBtn = document.getElementById('deleteNPC');
-    const editBtn = document.getElementById('editNPC');
-    
-    // Handle edit button click
-    if (editBtn) {
-      editBtn.addEventListener('click', () => {
-        const id = editBtn.getAttribute('data-id');
-        if (id) {
-          window.location.href = `/npcs?edit=${id}`;
-        }
-      });
-    }
-  
-  if (deleteBtn) {
-    deleteBtn.addEventListener('click', async () => {
-      const id = deleteBtn.getAttribute('data-id');
+    document.getElementById('editNPC')?.addEventListener('click', () => {
+      const id = document.getElementById('editNPC')?.getAttribute('data-id');
+      if (id) window.location.href = `/npcs?edit=${id}`;
+    });
+    document.getElementById('deleteNPC')?.addEventListener('click', async () => {
+      const id = document.getElementById('deleteNPC')?.getAttribute('data-id');
       if (!id) return;
-      
       if (confirm('Are you sure you want to delete this NPC?')) {
         try {
-          const response = await fetch(`/api/npcs/${id}`, {
-            method: 'DELETE',
-          });
-          
+          const response = await fetch(`/api/npcs/${id}`, { method: 'DELETE' });
           if (response.ok) {
             window.location.href = '/npcs';
           } else {
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
             alert(`Failed to delete NPC: ${error.error || response.statusText}`);
           }
-        } catch (error) {
-          console.error('Delete error:', error);
-          alert('An error occurred while deleting the NPC. Please check your connection and try again.');
-        }
+        } catch { alert('An error occurred while deleting the NPC.'); }
       }
     });
   }
-  }
-
-  // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
-
-<style>
-  /* Enhance markdown rendering */
-  .prose {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(h1):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-700 dark:text-primary-400;
-  }
-  
-  .prose :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400;
-  }
-  
-  .prose :where(h3):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-500;
-  }
-  
-  .prose :where(a):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
-  }
-  
-  .prose :where(strong):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(code):not(:where([class~="not-prose"] *)) {
-    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
-  }
-  
-  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
-  }
-  
-  .prose :where(ul):not(:where([class~="not-prose"] *)),
-  .prose :where(ol):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-700 dark:text-gray-300;
-  }
-  
-  .prose :where(hr):not(:where([class~="not-prose"] *)) {
-    @apply border-gray-300 dark:border-gray-700;
-  }
-</style>

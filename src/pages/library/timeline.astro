@@ -122,8 +122,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   )}
 
   {timelineEntries.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">No timeline entries yet. Start documenting your campaign history!</p>
+    <div class="t-panel text-center py-16">
+      <p class="t-faint text-lg">No timeline entries yet. Start documenting your campaign history!</p>
     </div>
   )}
 
@@ -133,7 +133,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   <div class="hidden md:block relative">
     <div class="overflow-x-auto pb-8">
       {/* Timeline line */}
-      <div class="absolute top-16 left-0 right-0 h-1 bg-primary-300 dark:bg-primary-800 mx-4" style="z-index: 0;"></div>
+      <div class="absolute top-16 left-0 right-0 h-1 mx-4" style="background:var(--border-gold);z-index:0;" style="z-index: 0;"></div>
       
       <div class="flex gap-6 min-w-max px-4 relative" style="z-index: 1;">
         {yearMarkers.map((year) => {
@@ -144,8 +144,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <div class="timeline-year-marker flex-shrink-0" key={year} style="min-width: 320px;">
               {/* Year marker with line connector */}
               <div class="text-center mb-4 relative" style="min-height: 80px;">
-                <div class={`absolute top-8 left-1/2 w-1 h-8 bg-primary-400 dark:bg-primary-700 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`}></div>
-                <div class={`inline-block ${isCenturyMarker ? 'bg-primary-600 dark:bg-primary-700' : 'bg-primary-700 dark:bg-primary-800'} text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-lg shadow-md relative z-10 border-4 border-white dark:border-gray-950 ${isCenturyMarker ? '' : 'opacity-90'}`}>
+                <div class={`absolute top-8 left-1/2 w-1 h-8 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`} style="background:var(--border-gold);"></div>
+                <div class={`inline-block text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-sm shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
                   <div class={isCenturyMarker ? 'text-2xl font-bold' : 'text-sm font-semibold'}>{year}</div>
                 </div>
               </div>
@@ -155,15 +155,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="space-y-2 mb-4">
                   {labelsAtYear.map((label) => (
                     <div class="timeline-label w-80" data-entry-id={label.id}>
-                      <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                      <div class="t-inset rounded-sm px-3 py-2">
                         <div class="flex items-center justify-between">
-                          <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                          <span class="text-sm font-semibold italic" style="color:var(--accent);">
                             {label.label}
                           </span>
                           {isLoggedIn && (
                             <span class="flex gap-1">
                               <button
-                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                class="edit-timeline-entry t-icon-btn"
                                 data-id={label.id}
                                 title="Edit label"
                                 aria-label="Edit label"
@@ -171,7 +171,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                               </button>
                               <button
-                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                class="delete-timeline-entry t-icon-btn t-icon-btn-danger"
                                 data-id={label.id}
                                 title="Delete label"
                                 aria-label="Delete label"
@@ -192,29 +192,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="space-y-4">
                   {eventsAtYear.map((event) => (
                     <div class="timeline-entry-card w-80" data-entry-id={event.id}>
-                      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition">
+                      <div class="t-panel p-6">
                         {event.imageUrl && (
                           <img 
                             src={event.imageUrl} 
                             alt={event.headline}
-                            class="w-full h-48 object-cover rounded-lg mb-4"
+                            class="w-full h-48 object-cover rounded-sm mb-4"
                           />
                         )}
                         
                         {event.month && (
-                          <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                          <div class="t-badge t-badge-accent text-xs mb-2">
                             {monthNames[event.month]}
                           </div>
                         )}
                         
                         <div class="flex items-center justify-between mb-3">
-                          <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                          <h3 class="t-body-text text-xl font-bold">
                             {event.headline}
                           </h3>
                           {isLoggedIn && (
                             <span class="flex gap-1">
                               <button
-                                class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                                class="edit-timeline-entry t-icon-btn"
                                 data-id={event.id}
                                 title="Edit event"
                                 aria-label="Edit event"
@@ -222,7 +222,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                               </button>
                               <button
-                                class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                                class="delete-timeline-entry t-icon-btn t-icon-btn-danger"
                                 data-id={event.id}
                                 title="Delete event"
                                 aria-label="Delete event"
@@ -234,13 +234,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                         </div>
                         
                         {event.shortDescription && (
-                          <p class="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3">
+                          <p class="t-muted mb-4 line-clamp-3">
                             {event.shortDescription}
                           </p>
                         )}
                         
                         <button 
-                          class="view-timeline-detail w-full bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+                          class="view-timeline-detail t-btn-secondary w-full px-4 py-2 font-medium text-sm"
                           data-entry-id={event.id}
                         >
                           + More
@@ -260,7 +260,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   {/* Mobile: Vertical timeline with numeric year scale */}
   <div class="md:hidden relative">
     {/* Vertical timeline line */}
-    <div class="absolute left-6 top-0 bottom-0 w-1 bg-primary-300 dark:bg-primary-800" style="z-index: 0;"></div>
+    <div class="absolute left-6 top-0 bottom-0 w-1" style="background:var(--border-gold);z-index:0;" style="z-index: 0;"></div>
     
     <div class="space-y-8 relative" style="z-index: 1;">
       {yearMarkers.map((year) => {
@@ -271,7 +271,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
             <div class="flex items-center mb-4" style="min-height: 60px;">
-              <div class={`flex-shrink-0 ${isCenturyMarker ? 'bg-primary-600 dark:bg-primary-700' : 'bg-primary-700 dark:bg-primary-800'} text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-lg shadow-md border-4 border-white dark:border-gray-950 relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`}>
+              <div class={`flex-shrink-0 text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-sm shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
                 <div class={isCenturyMarker ? 'text-lg font-bold' : 'text-sm font-semibold'}>{year}</div>
               </div>
             </div>
@@ -281,15 +281,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <div class="space-y-2 pl-14 mb-4">
                 {labelsAtYear.map((label) => (
                   <div class="timeline-label" data-entry-id={label.id}>
-                    <div class="bg-gradient-to-r from-accent-100 to-accent-50 dark:from-accent-900/30 dark:to-accent-900/10 rounded-lg shadow-sm dark:border dark:border-accent-800/50 px-3 py-2">
+                    <div class="t-inset rounded-sm px-3 py-2">
                       <div class="flex items-center justify-between">
-                        <span class="text-sm font-semibold text-accent-700 dark:text-accent-400 italic">
+                        <span class="text-sm font-semibold italic" style="color:var(--accent);">
                           {label.label}
                         </span>
                         {isLoggedIn && (
                           <span class="flex gap-1">
                             <button
-                              class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                              class="edit-timeline-entry t-icon-btn"
                               data-id={label.id}
                               title="Edit label"
                               aria-label="Edit label"
@@ -297,7 +297,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
                             <button
-                              class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                              class="delete-timeline-entry t-icon-btn t-icon-btn-danger"
                               data-id={label.id}
                               title="Delete label"
                               aria-label="Delete label"
@@ -318,29 +318,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <div class="space-y-4 pl-14">
                 {eventsAtYear.map((event) => (
                   <div class="timeline-entry-card" data-entry-id={event.id}>
-                    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+                    <div class="t-panel p-6">
                       {event.imageUrl && (
                         <img 
                           src={event.imageUrl} 
                           alt={event.headline}
-                          class="w-full h-48 object-cover rounded-lg mb-4"
+                          class="w-full h-48 object-cover rounded-sm mb-4"
                         />
                       )}
                       
                       {event.month && (
-                        <div class="inline-block bg-accent-100 dark:bg-accent-900/30 text-accent-700 dark:text-accent-400 text-xs font-medium px-2 py-1 rounded mb-2">
+                        <div class="t-badge t-badge-accent text-xs mb-2">
                           {monthNames[event.month]}
                         </div>
                       )}
                       
                       <div class="flex items-center justify-between mb-3">
-                        <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100">
+                        <h3 class="t-body-text text-xl font-bold">
                           {event.headline}
                         </h3>
                         {isLoggedIn && (
                           <span class="flex gap-1">
                             <button
-                              class="edit-timeline-entry inline-flex items-center justify-center hover:text-accent-900 dark:hover:text-accent-200 transition"
+                              class="edit-timeline-entry t-icon-btn"
                               data-id={event.id}
                               title="Edit event"
                               aria-label="Edit event"
@@ -348,7 +348,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
                             </button>
                             <button
-                              class="delete-timeline-entry inline-flex items-center justify-center hover:text-red-600 dark:hover:text-red-400 transition"
+                              class="delete-timeline-entry t-icon-btn t-icon-btn-danger"
                               data-id={event.id}
                               title="Delete event"
                               aria-label="Delete event"
@@ -360,14 +360,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                       </div>
                       
                       {event.shortDescription && (
-                        <p class="text-gray-600 dark:text-gray-400 mb-4">
+                        <p class="t-muted mb-4">
                           {event.shortDescription}
                         </p>
                       )}
                       
                       <div class="flex items-center justify-between gap-2">
                         <button 
-                          class="view-timeline-detail flex-1 bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+                          class="view-timeline-detail t-btn-secondary flex-1 px-4 py-2 font-medium text-sm"
                           data-entry-id={event.id}
                         >
                           + More
@@ -385,16 +385,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {/* Detail Modal */}
-  <div id="timelineDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
+  <div id="timelineDetailModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
       <div class="flex justify-between items-start mb-6">
         <div>
-          <div id="detailDate" class="inline-block bg-primary-600 dark:bg-primary-700 text-white px-4 py-2 rounded-lg shadow-md mb-4">
+          <div id="detailDate" class="t-badge t-badge-gold px-4 py-2 mb-4 inline-block">
             <div class="text-sm font-medium">Month Year</div>
           </div>
-          <h2 id="detailHeadline" class="text-3xl font-bold text-primary-700 dark:text-primary-400"></h2>
+          <h2 id="detailHeadline" class="font-display italic font-semibold text-3xl" style="color:var(--gold);"></h2>
         </div>
-        <button id="closeDetailModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+        <button id="closeDetailModal" class="t-icon-btn">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -402,87 +402,87 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       </div>
       
       <div id="detailImage" class="hidden mb-6">
-        <img src="" alt="" class="w-full h-64 object-cover rounded-lg" />
+        <img src="" alt="" class="w-full h-64 object-cover rounded-sm" />
       </div>
       
-      <div id="detailDescription" class="prose dark:prose-invert max-w-none mb-6"></div>
+      <div id="detailDescription" class="t-prose max-w-none mb-6"></div>
       
       <div id="detailConnections" class="space-y-4"></div>
     </div>
   </div>
 
   {/* Add/Edit Modal */}
-  <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="timelineModalTitle" class="text-2xl font-bold mb-6 text-primary-700 dark:text-primary-400">New Timeline Entry</h2>
+  <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="timelineModalTitle" class="font-display italic font-semibold text-2xl mb-6" style="color:var(--gold);">New Timeline Entry</h2>
       <form id="timelineEntryForm" class="space-y-6">
         <input type="hidden" id="timelineEntryId" name="id">
         
         <div>
-          <label for="entryType" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Entry Type</label>
+          <label for="entryType" class="t-label block mb-1">Entry Type</label>
           <select 
             id="entryType" 
             name="entryType" 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
           >
             <option value="event">Event</option>
             <option value="label">Label / Divider</option>
           </select>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Events appear on timeline at specific years. Labels are floating dividers.</p>
+          <p class="t-faint text-xs mt-1">Events appear on timeline at specific years. Labels are floating dividers.</p>
         </div>
         
         {/* Label fields (only for labels) */}
         <div id="labelFieldContainer" style="display: none;">
           <div>
-            <label for="labelYear" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="labelYear" class="t-label block mb-1">
               Year <span class="text-red-500">*</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(where to position the label on timeline)</span>
+              <span class="t-faint text-xs ml-2">(where to position the label on timeline)</span>
             </label>
             <input 
               type="number" 
               id="labelYear" 
               name="labelYear" 
               placeholder="e.g., 500"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Year determines where the label appears on the timeline</p>
+            <p class="t-faint text-xs mt-1">Year determines where the label appears on the timeline</p>
           </div>
           
           <div>
-            <label for="label" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Label Text <span class="text-red-500">*</span></label>
+            <label for="label" class="t-label block mb-1">Label Text <span class="text-red-500">*</span></label>
             <input 
               type="text" 
               id="label" 
               name="label" 
               placeholder="e.g., 100 years later..."
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter the text for the divider label (year will not be displayed)</p>
+            <p class="t-faint text-xs mt-1">Enter the text for the divider label (year will not be displayed)</p>
           </div>
         </div>
         
         {/* Event fields (only for events) */}
         <div id="eventFieldsContainer">
           <div>
-            <label for="year" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="year" class="t-label block mb-1">
               Year <span class="text-red-500">*</span>
-              <span class="text-xs text-gray-500 dark:text-gray-400 ml-2">(numeric, e.g., 0, 900, 1492)</span>
+              <span class="t-faint text-xs ml-2">(numeric, e.g., 0, 900, 1492)</span>
             </label>
             <input 
               type="number" 
               id="year" 
               name="year" 
               placeholder="e.g., 900"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             />
           </div>
           
           <div>
-            <label for="month" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Month (optional)</label>
+            <label for="month" class="t-label block mb-1">Month (optional)</label>
             <select 
               id="month" 
               name="month"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             >
               <option value="">-- Select Month --</option>
               <option value="1">Jalun</option>
@@ -501,29 +501,29 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </div>
           
           <div>
-            <label for="headline" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Headline <span class="text-red-500">*</span></label>
+            <label for="headline" class="t-label block mb-1">Headline <span class="text-red-500">*</span></label>
             <input 
               type="text" 
               id="headline" 
               name="headline" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             />
           </div>
           
           <div>
-            <label for="shortDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Short Description (optional)</label>
+            <label for="shortDescription" class="t-label block mb-1">Short Description (optional)</label>
             <textarea 
               id="shortDescription" 
               name="shortDescription" 
               rows="3"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-4 py-2"
             ></textarea>
           </div>
           
           <div>
-            <label for="fullDescription" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            <label for="fullDescription" class="t-label block mb-1">
               Full Description (optional, Markdown supported)
-              <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="text-xs text-primary-600 dark:text-primary-400 hover:underline ml-2">
+              <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="t-link text-xs ml-2">
                 Markdown Guide ↗
               </a>
             </label>
@@ -531,142 +531,142 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               id="fullDescription" 
               name="fullDescription" 
               rows="8"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 font-mono text-sm"
+              class="t-input w-full px-4 py-2 font-mono text-sm"
             ></textarea>
           </div>
           
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Image (optional)</label>
+            <label class="t-label block mb-1">Image (optional)</label>
             <div class="space-y-3">
               <div>
-                <label for="imageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+                <label for="imageFile" class="t-faint text-xs block mb-1">Upload Image (max 5MB)</label>
                 <input 
                   type="file" 
                   id="imageFile" 
                   name="imageFile" 
                   accept="image/*"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                  class="t-input px-4 py-2"
                 />
               </div>
-              <div class="text-center text-sm text-gray-500 dark:text-gray-400">— OR —</div>
+              <div class="t-faint text-sm text-center">— OR —</div>
               <div>
-                <label for="imageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+                <label for="imageUrl" class="t-faint text-xs block mb-1">Image URL</label>
                 <input 
                   type="text" 
                   id="imageUrl" 
                   name="imageUrl" 
                   placeholder="https://example.com/image.jpg or /uploads/image.jpg"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                  class="t-input px-4 py-2"
                 />
-                <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">External URL or uploaded image path</p>
+                <p class="t-faint text-xs mt-1">External URL or uploaded image path</p>
               </div>
             </div>
             
             <!-- Image Preview -->
             <div id="imagePreview" class="hidden mt-4">
-              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-lg" />
+              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-sm" />
             </div>
           </div>
           
-          <div class="border-t border-gray-200 dark:border-gray-700 pt-4">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Connections (optional)</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Select entries to connect to this timeline event</p>
+          <div class="pt-4" style="border-top:1px solid var(--border);">
+            <h3 class="t-body-text text-lg font-semibold mb-4">Connections (optional)</h3>
+            <p class="t-muted text-sm mb-4">Select entries to connect to this timeline event</p>
           
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label for="diaryEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Diary Entries</label>
+              <label for="diaryEntryIds" class="t-label block mb-1">Diary Entries</label>
               <select 
                 id="diaryEntryIds" 
                 name="diaryEntryIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {diaryEntries.map(entry => (
                   <option value={entry.id}>Session {entry.session}: {entry.title}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="libraryDocsEntryIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Library Docs</label>
+              <label for="libraryDocsEntryIds" class="t-label block mb-1">Library Docs</label>
               <select 
                 id="libraryDocsEntryIds" 
                 name="libraryDocsEntryIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {libraryEntries.map(entry => (
                   <option value={entry.id}>{entry.title}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="npcIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">NPCs</label>
+              <label for="npcIds" class="t-label block mb-1">NPCs</label>
               <select 
                 id="npcIds" 
                 name="npcIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {npcs.map(npc => (
                   <option value={npc.id}>{npc.name}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="locationIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Locations</label>
+              <label for="locationIds" class="t-label block mb-1">Locations</label>
               <select 
                 id="locationIds" 
                 name="locationIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {locations.map(location => (
                   <option value={location.id}>{location.name}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="characterIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Characters</label>
+              <label for="characterIds" class="t-label block mb-1">Characters</label>
               <select 
                 id="characterIds" 
                 name="characterIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {characters.map(character => (
                   <option value={character.id}>{character.name}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
             
             <div>
-              <label for="questIds" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Quests</label>
+              <label for="questIds" class="t-label block mb-1">Quests</label>
               <select 
                 id="questIds" 
                 name="questIds" 
                 multiple 
                 size="4"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
                 {quests.map(quest => (
                   <option value={quest.id}>{quest.title}</option>
                 ))}
               </select>
-              <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+              <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
             </div>
           </div>
         </div>
@@ -675,14 +675,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            class="t-btn-primary flex-1 px-6 py-2"
           >
             Save Entry
           </button>
           <button 
             type="button" 
             id="cancelTimelineModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            class="t-btn-secondary flex-1 px-6 py-2"
           >
             Cancel
           </button>
@@ -973,17 +973,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (npcs.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">NPCs</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">NPCs</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     ${npcs.map(npc => `
-                      <a href="/npcs/${npc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                      <a href="/npcs/${npc.id}" class="t-row p-3 flex items-center gap-3">
                         ${npc.avatarUrl ? 
-                          `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
-                          `<div class="w-12 h-12 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center text-xl font-bold text-primary-700 dark:text-primary-400">${npc.name.charAt(0)}</div>`
+                          `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-12 h-12 rounded-full object-cover" style="border:2px solid var(--border-gold);" />` :
+                          `<div class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold" style="background:var(--bg-raised);color:var(--gold);font-family:'Cormorant Garamond',serif;">${npc.name.charAt(0)}</div>`
                         }
                         <div class="flex-1 min-w-0">
-                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${npc.name}</div>
-                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${npc.race}${npc.occupation ? ` • ${npc.occupation}` : ''}</div>
+                          <div class="t-body-text font-semibold truncate">${npc.name}</div>
+                          <div class="t-muted text-sm truncate">${npc.race}${npc.occupation ? ` • ${npc.occupation}` : ''}</div>
                         </div>
                       </a>
                     `).join('')}
@@ -997,17 +997,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (characters.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Characters</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">Characters</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     ${characters.map(char => `
-                      <a href="/characters/${char.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                      <a href="/characters/${char.id}" class="t-row p-3 flex items-center gap-3">
                         ${char.avatarUrl ? 
-                          `<img src="${char.avatarUrl}" alt="${char.name}" class="w-12 h-12 rounded-full object-cover border-2 border-gray-200 dark:border-gray-600" />` :
-                          `<div class="w-12 h-12 bg-secondary-100 dark:bg-secondary-900 rounded-full flex items-center justify-center text-xl font-bold text-secondary-700 dark:text-secondary-400">${char.name.charAt(0)}</div>`
+                          `<img src="${char.avatarUrl}" alt="${char.name}" class="w-12 h-12 rounded-full object-cover" style="border:2px solid var(--border-gold);" />` :
+                          `<div class="w-12 h-12 rounded-full flex items-center justify-center text-xl font-bold" style="background:var(--bg-raised);color:var(--accent);font-family:'Cormorant Garamond',serif;">${char.name.charAt(0)}</div>`
                         }
                         <div class="flex-1 min-w-0">
-                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${char.name}</div>
-                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${char.class} ${char.level}</div>
+                          <div class="t-body-text font-semibold truncate">${char.name}</div>
+                          <div class="t-muted text-sm truncate">${char.class} ${char.level}</div>
                         </div>
                       </a>
                     `).join('')}
@@ -1021,17 +1021,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (locations.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Locations</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">Locations</h4>
                   <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     ${locations.map(loc => `
-                      <a href="/locations/${loc.id}" class="flex items-center gap-3 p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-primary-300 dark:hover:border-primary-600 transition">
+                      <a href="/locations/${loc.id}" class="t-row p-3 flex items-center gap-3">
                         ${loc.imageUrl ? 
-                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded object-cover border-2 border-gray-200 dark:border-gray-600" />` :
-                          `<div class="w-12 h-12 bg-accent-100 dark:bg-accent-900 rounded flex items-center justify-center text-xl font-bold text-accent-700 dark:text-accent-400">📍</div>`
+                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded object-cover" style="border:2px solid var(--border-gold);" />` :
+                          `<div class="w-12 h-12 rounded flex items-center justify-center text-xl font-bold" style="background:var(--bg-raised);color:var(--accent);">📍</div>`
                         }
                         <div class="flex-1 min-w-0">
-                          <div class="font-semibold text-gray-900 dark:text-gray-100 truncate">${loc.name}</div>
-                          <div class="text-sm text-gray-600 dark:text-gray-400 truncate">${loc.type}</div>
+                          <div class="t-body-text font-semibold truncate">${loc.name}</div>
+                          <div class="t-muted text-sm truncate">${loc.type}</div>
                         </div>
                       </a>
                     `).join('')}
@@ -1045,15 +1045,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (diaryEntries.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Diary Entries</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">Diary Entries</h4>
                   <div class="space-y-3">
                     ${diaryEntries.map(diary => `
-                      <a href="/diary/${diary.id}" class="block p-4 border border-secondary-200 dark:border-secondary-800 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition">
+                      <a href="/diary/${diary.id}" class="t-row p-4 block">
                         <div class="flex items-start justify-between mb-2">
-                          <h5 class="font-semibold text-gray-900 dark:text-gray-100">${diary.title}</h5>
-                          <span class="bg-secondary-100 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-400 px-2 py-1 rounded text-sm whitespace-nowrap ml-2">Session ${diary.session}</span>
+                          <h5 class="t-body-text font-semibold">${diary.title}</h5>
+                          <span class="t-badge t-badge-accent text-sm whitespace-nowrap ml-2">Session ${diary.session}</span>
                         </div>
-                        ${diary.summary ? `<p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">${diary.summary}</p>` : ''}
+                        ${diary.summary ? `<p class="t-muted text-sm line-clamp-2">${diary.summary}</p>` : ''}
                       </a>
                     `).join('')}
                   </div>
@@ -1066,11 +1066,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (libraryDocs.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Library Docs</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">Library Docs</h4>
                   <div class="space-y-2">
                     ${libraryDocs.map(doc => `
-                      <a href="/library/${doc.id}" class="block p-3 border border-purple-200 dark:border-purple-900 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-400 dark:hover:border-purple-700 transition">
-                        <div class="font-semibold text-gray-900 dark:text-gray-100">${doc.title}</div>
+                      <a href="/library/${doc.id}" class="t-row p-3 block">
+                        <div class="t-body-text font-semibold">${doc.title}</div>
                       </a>
                     `).join('')}
                   </div>
@@ -1083,16 +1083,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             if (quests.length > 0) {
               connectionsHtml += `
                 <div class="mb-6">
-                  <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">Quests</h4>
+                  <h4 class="t-body-text text-lg font-semibold mb-4">Quests</h4>
                   <div class="space-y-2">
                     ${quests.map(quest => `
-                      <a href="/quests/${quest.id}" class="block p-3 border border-gray-200 dark:border-gray-700 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 hover:border-accent-300 dark:hover:border-accent-600 transition">
+                      <a href="/quests/${quest.id}" class="t-row p-3 block">
                         <div class="flex items-center justify-between">
-                          <div class="font-semibold text-gray-900 dark:text-gray-100">${quest.title}</div>
+                          <div class="t-body-text font-semibold">${quest.title}</div>
                           <span class="px-2 py-1 rounded text-xs ${
-                            quest.status === 'completed' ? 'bg-green-100 dark:bg-green-900/20 text-green-700 dark:text-green-400' :
-                            quest.status === 'failed' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-                            'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+                            quest.status === 'completed' ? 't-badge t-badge-green' :
+                            quest.status === 'failed' ? 't-badge t-badge-red' :
+                            't-badge t-badge-accent'
                           }">${quest.status}</span>
                         </div>
                       </a>
@@ -1104,7 +1104,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             
             if (connectionsHtml) {
               detailConnections.innerHTML = `
-                <h3 class="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 mt-8 pt-6 border-t border-gray-200 dark:border-gray-800">Connected Entries</h3>
+                <h3 class="t-body-text text-xl font-bold mb-6 mt-8 pt-6" style="border-top:1px solid var(--border);">Connected Entries</h3>
                 ${connectionsHtml}
               `;
             } else {

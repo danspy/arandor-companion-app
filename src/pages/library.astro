@@ -14,58 +14,44 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Library">
-  <PageHero 
-    title="Library" 
+  <PageHero
+    title="Library"
     heroImageUrl={heroImageUrl}
     pageName="library"
     canEditHero={canEditHero}
   />
 
   <div class="mb-8">
-    <p class="text-gray-600 dark:text-gray-400">Access campaign knowledge and historical timeline</p>
+    <p class="t-muted">Access campaign knowledge and historical timeline</p>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
     <!-- Docs Card -->
-    <a 
-      href="/library/docs"
-      class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
-    >
+    <a href="/library/docs" class="t-panel p-6 t-tool-card block">
       <div class="flex items-start gap-4">
-        <div class="p-3 bg-primary-100 dark:bg-primary-900 rounded-lg group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition">
-          <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+        <div class="t-inset p-3 w-fit rounded-sm mb-0">
+          <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
           </svg>
         </div>
         <div class="flex-1">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
-            Docs
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">
-            Browse and search campaign documentation, lore, and knowledge entries
-          </p>
+          <h2 class="t-section-h text-lg mb-1">Docs</h2>
+          <p class="t-muted text-sm">Browse and search campaign documentation, lore, and knowledge entries</p>
         </div>
       </div>
     </a>
 
     <!-- Timeline Card -->
-    <a 
-      href="/library/timeline"
-      class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
-    >
+    <a href="/library/timeline" class="t-panel p-6 t-tool-card block">
       <div class="flex items-start gap-4">
-        <div class="p-3 bg-secondary-100 dark:bg-secondary-900 rounded-lg group-hover:bg-secondary-200 dark:group-hover:bg-secondary-800 transition">
-          <svg class="w-6 h-6 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        <div class="t-inset p-3 w-fit rounded-sm mb-0">
+          <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
           </svg>
         </div>
         <div class="flex-1">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
-            Timeline
-          </h2>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">
-            View campaign events in a chronological timeline with connections to characters, locations, and more
-          </p>
+          <h2 class="t-section-h text-lg mb-1">Timeline</h2>
+          <p class="t-muted text-sm">View campaign events in a chronological timeline with connections to characters, locations, and more</p>
         </div>
       </div>
     </a>

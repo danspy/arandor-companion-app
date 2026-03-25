@@ -29,97 +29,97 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   />
 
   <div class="mb-8">
-    <p class="text-gray-600 dark:text-gray-400">Roll dice for attacks, saves, and skill checks</p>
+    <p class="t-muted">Roll dice for attacks, saves, and skill checks</p>
   </div>
 
   <!-- Dice Roller Interface -->
   <div class="mx-auto">
     <!-- Dice Selection -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 mb-6">
-      <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Select Dice</h2>
+    <div class="t-panel p-6 mb-6">
+      <h2 class="t-section-h text-xl mb-4">Select Dice</h2>
 
       <!-- Dice Grid -->
       <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-4 mb-2">
         <!-- D4 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d4"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d4</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d4</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D6 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d6"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d6</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d6</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D8 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d8"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d8</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d8</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D10 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d10"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d10</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d10</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D12 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/30 dark:to-primary-800/30 border-2 border-primary-200 dark:border-primary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d12"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d12</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-primary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d12</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D20 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-secondary-50 to-secondary-100 dark:from-secondary-900/30 dark:to-secondary-800/30 border-2 border-secondary-200 dark:border-secondary-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d20"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d20</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-secondary-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <span class="t-body-text text-lg font-bold">d20</span>
+            <div class="dice-count absolute -top-2 -right-2 bg-[var(--gold)] text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
         <!-- D100 -->
         <button
           type="button"
-          class="dice-selector group relative bg-gradient-to-br from-accent-50 to-accent-100 dark:from-accent-900/30 dark:to-accent-800/30 border-2 border-accent-200 dark:border-accent-700 rounded-lg p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95"
+          class="dice-selector group relative t-panel p-4 hover:shadow-lg transition-all hover:scale-105 active:scale-95 cursor-pointer"
           data-dice="d100"
         >
           <div class="text-center">
-            <span class="text-lg font-bold text-gray-700 dark:text-gray-300">d100</span>
+            <span class="t-body-text text-lg font-bold">d100</span>
             <div class="dice-count absolute -top-2 -right-2 bg-accent-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
@@ -129,11 +129,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
       <!-- Modifier Input -->
       <div class="flex items-center gap-4 mb-6">
-        <label for="modifier" class="text-sm font-medium text-gray-700 dark:text-gray-300">Modifier:</label>
+        <label for="modifier" class="t-body-text text-sm font-medium">Modifier:</label>
         <input
           type="number"
           id="modifier"
-          class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+          class="t-input w-24 px-3 py-2"
           value="0"
           placeholder="0"
         />
@@ -144,7 +144,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         <button
           id="rollButton"
           type="button"
-          class="flex-1 min-w-[200px] bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white font-bold py-4 px-8 rounded-lg transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          class="t-btn-primary flex-1 min-w-[200px] font-bold py-4 px-8 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled
         >
           <span class="flex items-center justify-center gap-2">
@@ -158,27 +158,27 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         <button
           id="clearButton"
           type="button"
-          class="bg-gray-500 hover:bg-gray-600 dark:bg-gray-700 dark:hover:bg-gray-600 text-white font-bold py-4 px-8 rounded-lg transition shadow-lg hover:shadow-xl"
+          class="t-btn-secondary font-bold py-4 px-8"
         >
           Clear Selection
         </button>
       </div>
 
       <!-- Current Selection Display -->
-      <div id="currentSelection" class="mt-4 p-4 bg-gray-50 dark:bg-gray-900 rounded-lg hidden">
-        <p class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Selection:</p>
-        <p id="selectionText" class="text-lg font-bold text-primary-600 dark:text-primary-400"></p>
+      <div id="currentSelection" class="mt-4 t-inset p-4 rounded-sm hidden">
+        <p class="t-body-text text-sm font-medium mb-2">Current Selection:</p>
+        <p id="selectionText" class="text-lg font-bold" style="color:var(--accent);"></p>
       </div>
     </div>
 
     <!-- Roll Result -->
-    <div id="rollResult" class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 overflow-hidden mb-6 hidden">
+    <div id="rollResult" class="t-panel overflow-hidden mb-6 hidden">
       <div class="px-6 pt-6">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">Result</h2>
+        <h2 class="t-section-h text-xl mb-4">Result</h2>
       </div>
 
       <!-- 3D Canvas Tray -->
-      <div id="dice-canvas-wrap" class="relative w-full bg-gray-900 dark:bg-gray-950" style="height:480px">
+      <div id="dice-canvas-wrap" class="relative w-full" style="height:480px;background:var(--bg-page);">
         <div id="dice-canvas" class="absolute inset-0"></div>
         <div id="dice-loading" class="absolute inset-0 flex items-center justify-center bg-gray-900/80">
           <span class="text-gray-400 text-sm animate-pulse">Loading dice...</span>
@@ -188,9 +188,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       <!-- Result panel (hidden until roll settles) -->
       <div id="result-panel" class="p-8 hidden">
         <div class="text-center">
-          <div id="resultBreakdown" class="text-gray-600 dark:text-gray-400 mb-2"></div>
-          <div id="totalResult" class="text-6xl font-bold text-primary-600 dark:text-primary-400 mb-1">—</div>
-          <p class="text-sm text-gray-500 dark:text-gray-500">Total</p>
+          <div id="resultBreakdown" class="t-muted mb-2"></div>
+          <div id="totalResult" class="text-6xl font-bold mb-1" style="color:var(--gold);">—</div>
+          <p class="t-faint text-sm">Total</p>
           <div id="critBadge" class="hidden mt-2"></div>
         </div>
         <!-- Individual die chips -->
@@ -199,19 +199,19 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
 
     <!-- Roll History -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6">
+    <div class="t-panel p-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100">Roll History</h2>
+        <h2 class="t-section-h text-xl">Roll History</h2>
         <button
           id="clearHistoryButton"
           type="button"
-          class="text-sm text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 font-medium"
+          class="t-faint text-sm font-medium hover:opacity-80" style="color:var(--danger);"
         >
           Clear History
         </button>
       </div>
       <div id="rollHistory" class="space-y-2">
-        <p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>
+        <p class="t-faint text-center py-4">No rolls yet</p>
       </div>
     </div>
   </div>
@@ -449,7 +449,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       (modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : '');
 
     totalResult.textContent = total.toString();
-    totalResult.className = 'text-6xl font-bold text-primary-600 dark:text-primary-400 mb-1';
+    totalResult.className = 'text-6xl font-bold mb-1'; totalResult.style.color = 'var(--gold)';
 
     // Critical (single d20 only)
     critBadge.classList.add('hidden');
@@ -458,13 +458,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         totalResult.classList.add('critical-success');
         critBadge.textContent = 'Natural 20!';
         critBadge.className =
-          'inline-block px-4 py-1 rounded-full text-sm font-bold bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300';
+          't-badge t-badge-green text-sm font-bold';
         critBadge.classList.remove('hidden');
       } else if (results[0].value === 1) {
         totalResult.classList.add('critical-fail');
         critBadge.textContent = 'Critical Fail';
         critBadge.className =
-          'inline-block px-4 py-1 rounded-full text-sm font-bold bg-red-100 text-red-800 dark:bg-red-900/40 dark:text-red-300';
+          't-badge t-badge-red text-sm font-bold';
         critBadge.classList.remove('hidden');
       }
     }
@@ -474,10 +474,10 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       .map((r) => {
         const cls =
           r.sides === 20
-            ? 'border-secondary-300 dark:border-secondary-700 bg-secondary-50 dark:bg-secondary-900/30 text-secondary-700 dark:text-secondary-300'
+            ? 't-badge t-badge-accent text-sm'
             : r.sides === 100
-            ? 'border-accent-300 dark:border-accent-700 bg-accent-50 dark:bg-accent-900/30 text-accent-700 dark:text-accent-300'
-            : 'border-primary-300 dark:border-primary-700 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300';
+            ? 't-badge t-badge-gold text-sm'
+            : 't-badge text-sm';
         return `<div class="dice-chip ${cls}">
           <span class="text-xs opacity-60">d${r.sides}</span>
           <span class="text-xl font-bold">${r.value}</span>
@@ -566,7 +566,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   function updateHistoryDisplay() {
     if (rollHistory.length === 0) {
       rollHistoryEl.innerHTML =
-        '<p class="text-gray-500 dark:text-gray-500 text-center py-4">No rolls yet</p>';
+        '<p class="t-faint text-center py-4">No rolls yet</p>';
       return;
     }
 
@@ -575,13 +575,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       .map((roll) => {
         const time = roll.timestamp.toLocaleTimeString();
         return `
-          <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-900 rounded-lg">
+          <div class="t-row p-3 flex justify-between items-center">
             <div class="flex-1">
-              <span class="font-medium text-gray-900 dark:text-gray-100">${roll.formula}</span>
-              <span class="text-gray-500 dark:text-gray-500 text-sm ml-2">${time}</span>
+              <span class="t-body-text font-medium">${roll.formula}</span>
+              <span class="t-faint text-sm ml-2">${time}</span>
             </div>
             <div class="text-right">
-              <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">${roll.total}</div>
+              <div class="text-2xl font-bold" style="color:var(--gold);">${roll.total}</div>
             </div>
           </div>
         `;

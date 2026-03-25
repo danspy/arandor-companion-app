@@ -105,59 +105,59 @@ const getOwnershipText = (character: typeof characters[0]) => {
 
   <!-- Stats -->
   <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-400">{characters.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Characters</div>
+    <div class="t-panel p-5 text-center">
+      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length}</div>
+      <div class="text-xs md:text-base t-muted">Total Characters</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-green-600 dark:text-green-400">{characters.filter(c => c.isActive !== false).length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Active Players</div>
+    <div class="t-panel p-5 text-center">
+      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.filter(c => c.isActive !== false).length}</div>
+      <div class="text-xs md:text-base t-muted">Active Players</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-secondary-600 dark:text-secondary-400">{allClasses.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Unique Classes</div>
+    <div class="t-panel p-5 text-center">
+      <div class="text-2xl md:text-3xl font-bold t-gold">{allClasses.length}</div>
+      <div class="text-xs md:text-base t-muted">Unique Classes</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-accent-600 dark:text-accent-400">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Average Level</div>
+    <div class="t-panel p-5 text-center">
+      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
+      <div class="text-xs md:text-base t-muted">Average Level</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-5 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
-        <input 
-          type="text" 
-          id="searchInput" 
+        <input
+          type="text"
+          id="searchInput"
           placeholder="Search characters by name, race, class, or player..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-search px-3 py-2 pl-10 transition"
         >
-        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
         </svg>
       </div>
       <!-- Filter Tags Below -->
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
-        <button 
-          id="filterActive" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+        <span class="text-sm t-muted font-medium">Filter:</span>
+        <button
+          id="filterActive"
+          class="px-3 py-1.5 text-sm font-medium t-pill active transition-all duration-200 active:scale-95"
           data-active="true"
         >
           Active ({characters.filter(c => c.isActive !== false).length})
         </button>
-        <button 
-          id="filterInactive" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+        <button
+          id="filterInactive"
+          class="px-3 py-1.5 text-sm font-medium t-pill transition-all duration-200 active:scale-95"
           data-active="false"
         >
           Inactive ({characters.filter(c => c.isActive === false).length})
         </button>
-        <button 
-          id="filterAll" 
-          class="px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+        <button
+          id="filterAll"
+          class="px-3 py-1.5 text-sm font-medium t-pill transition-all duration-200 active:scale-95"
           data-active="false"
         >
           All ({characters.length})
@@ -168,8 +168,8 @@ const getOwnershipText = (character: typeof characters[0]) => {
 
   <div id="characterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
-      <div 
-        class="character-card bg-white dark:bg-black rounded-lg shadow-md overflow-hidden hover:shadow-lg transition dark:border dark:border-gray-900" 
+      <div
+        class="character-card t-panel overflow-hidden hover:shadow-lg transition"
         data-class={character.class} 
         data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} 
         data-is-active={character.isActive ? "true" : "false"}
@@ -191,7 +191,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
                 <div class="absolute inset-0 bg-black/30"></div>
               </>
             ) : (
-              <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-primary-600 to-secondary-600' : 'from-gray-500 to-gray-600'}`}></div>
+              <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-orange-800 to-amber-900' : 'from-stone-800 to-stone-700'}`}></div>
             )}
             
             <!-- Circular avatar on top -->
@@ -200,10 +200,10 @@ const getOwnershipText = (character: typeof characters[0]) => {
                 <img 
                   src={character.avatarUrl} 
                   alt={character.name}
-                  class="w-32 h-32 rounded-full object-cover border-4 border-white dark:border-gray-800 shadow-xl"
+                  class="w-32 h-32 rounded-full object-cover shadow-xl" style="border:3px solid var(--border-gold);"
                 />
               ) : (
-                <div class="w-32 h-32 bg-white dark:bg-gray-800 rounded-full flex items-center justify-center text-5xl font-bold text-primary-700 dark:text-primary-400 shadow-xl border-4 border-white dark:border-gray-700">
+                <div class="w-32 h-32 rounded-full flex items-center justify-center text-5xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
                   {character.name.charAt(0)}
                 </div>
               )}
@@ -211,7 +211,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
             
             <!-- Status badge -->
             {!character.isActive && (
-              <div class="absolute top-3 right-3 bg-gray-800/90 text-white text-xs px-3 py-1 rounded-full shadow-lg">
+              <div class="absolute top-3 right-3 t-badge" style="background:rgba(0,0,0,0.7);color:var(--text-muted);">
                 Inactive
               </div>
             )}
@@ -220,8 +220,8 @@ const getOwnershipText = (character: typeof characters[0]) => {
         
         <div class="p-6">
           <div class="flex items-start justify-between gap-2 mb-2">
-            <a href={`/characters/${character.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-              <h2 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{character.name}</h2>
+            <a href={`/characters/${character.id}`} class="block t-link transition">
+              <h2 class="text-2xl font-bold t-body-text">{character.name}</h2>
             </a>
             {canEditCharacter(character) && (
               <div class="flex gap-2 items-center flex-shrink-0">
@@ -240,7 +240,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
                   size="sm"
                   icon="delete"
                   iconPosition="only"
-                  class="delete-character hover:text-red-600 dark:hover:text-red-400"
+                  class="delete-character hover:text-red-400"
                   data-id={character.id}
                   title="Delete character"
                   ariaLabel="Delete character"
@@ -248,65 +248,65 @@ const getOwnershipText = (character: typeof characters[0]) => {
               </div>
             )}
           </div>
-          <a href={`/characters/${character.id}`} class="block hover:text-primary-700 dark:hover:text-primary-400 transition">
-            <p class="text-gray-600 dark:text-gray-400 mb-4">{character.race} {character.class}</p>
+          <a href={`/characters/${character.id}`} class="block t-link transition">
+            <p class="t-muted mb-4">{character.race} {character.class}</p>
           </a>
           
           <div class="grid grid-cols-2 gap-3 mb-4">
-            <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-3 rounded">
-              <div class="text-sm text-gray-600 dark:text-gray-400">Level</div>
-              <div class="text-xl font-bold text-primary-700 dark:text-primary-400">{character.level}</div>
+            <div class="t-inset p-3">
+              <div class="text-sm t-muted">Level</div>
+              <div class="text-xl font-bold t-gold">{character.level}</div>
             </div>
-            <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-3 rounded">
-              <div class="text-sm text-gray-600 dark:text-gray-400">Player</div>
-              <div class="text-lg font-semibold text-primary-700 dark:text-primary-400">{character.player}</div>
+            <div class="t-inset p-3">
+              <div class="text-sm t-muted">Player</div>
+              <div class="text-lg font-semibold t-gold">{character.player}</div>
             </div>
           </div>
 
           {character.stats && (
-            <div class="border-t dark:border-gray-900 pt-4">
-              <h3 class="font-semibold mb-3 dark:text-gray-200">Ability Scores</h3>
+            <div class="border-t pt-4" style="border-color:var(--border);">
+              <h3 class="font-semibold mb-3 t-body-text">Ability Scores</h3>
               <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">STR</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.strength}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">STR</div>
+                  <div class="font-bold t-body-text">{character.stats.strength}</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">DEX</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.dexterity}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">DEX</div>
+                  <div class="font-bold t-body-text">{character.stats.dexterity}</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">CON</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.constitution}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">CON</div>
+                  <div class="font-bold t-body-text">{character.stats.constitution}</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">INT</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.intelligence}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">INT</div>
+                  <div class="font-bold t-body-text">{character.stats.intelligence}</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">WIS</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.wisdom}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">WIS</div>
+                  <div class="font-bold t-body-text">{character.stats.wisdom}</div>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                  <div class="text-xs text-gray-500 dark:text-gray-400">CHA</div>
-                  <div class="font-bold dark:text-gray-100">{character.stats.charisma}</div>
+                <div class="t-inset p-2">
+                  <div class="t-label-sm">CHA</div>
+                  <div class="font-bold t-body-text">{character.stats.charisma}</div>
                 </div>
               </div>
             </div>
           )}
 
-          <a 
+          <a
             href={`/characters/${character.id}`}
-            class="block mt-4 text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="block mt-4 text-center t-btn-secondary text-sm"
           >
             View Details →
           </a>
 
           {character.dndbeyondUrl && (
-            <a 
+            <a
               href={character.dndbeyondUrl}
               target="_blank"
-              class="block mt-2 text-center text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300"
+              class="block mt-2 text-center t-link"
             >
               View on D&D Beyond →
             </a>
@@ -316,45 +316,45 @@ const getOwnershipText = (character: typeof characters[0]) => {
     ))}
   </div>
 
-  <div class="mt-8 bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded dark:border dark:border-blue-800">
-    <h3 class="font-semibold text-blue-900 dark:text-blue-300 mb-2">💡 D&D Beyond Integration</h3>
-    <p class="text-sm text-blue-800 dark:text-blue-200">
+  <div class="mt-8 t-inset p-4" style="border-left: 4px solid var(--accent);">
+    <h3 class="font-semibold t-gold mb-2">💡 D&D Beyond Integration</h3>
+    <p class="text-sm t-muted">
       You can import character data from D&D Beyond by providing the character URL or using the API endpoint.
       This feature allows automatic synchronization of character stats, levels, and equipment.
     </p>
   </div>
 
   <!-- Modal for Add/Edit Character -->
-  <div id="characterModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Character</h2>
+  <div id="characterModal" class="hidden fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="modalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 t-section-h">New Character</h2>
       <form id="characterForm" class="space-y-4">
         <input type="hidden" id="characterId" name="id">
         
-        <div class="mb-4 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-          <p class="text-xs sm:text-sm text-blue-800 dark:text-blue-200">
+        <div class="mb-4 p-3 sm:p-4 t-inset" style="border-color:var(--accent);">
+          <p class="text-xs sm:text-sm t-muted">
             💡 <strong>Tip:</strong> You can either fill out the form manually OR use the D&D Beyond Auto-fill feature. Just provide the D&D Beyond URL and click "Auto-fill" to populate the fields automatically.
           </p>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Name</label>
+            <label for="name" class="t-label block mb-1">Name</label>
             <input 
               type="text" 
               id="name" 
               name="name" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
           
           <div>
-            <label for="player" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Player</label>
+            <label for="player" class="t-label block mb-1">Player</label>
             <input 
               type="text" 
               id="player" 
               name="player" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
         </div>
@@ -365,9 +365,9 @@ const getOwnershipText = (character: typeof characters[0]) => {
             id="isActive" 
             name="isActive" 
             checked
-            class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 dark:bg-gray-700"
+            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
           >
-          <label for="isActive" class="text-sm font-medium text-gray-700 dark:text-gray-300">Active Player</label>
+          <label for="isActive" class="t-label">Active Player</label>
         </div>
         
         <div id="assignToMeContainer" class="hidden flex items-center gap-2">
@@ -376,97 +376,97 @@ const getOwnershipText = (character: typeof characters[0]) => {
             id="assignToMe" 
             name="assignToMe" 
             checked
-            class="w-4 h-4 text-primary-600 border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 dark:bg-gray-700"
+            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
           >
-          <label for="assignToMe" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label for="assignToMe" class="t-label">
             Assign this character to my account
-            <span class="text-xs text-gray-500 dark:text-gray-400 block">When checked, you'll be the only one (besides admins) who can edit or delete this character</span>
+            <span class="t-faint block" style="font-size:0.7rem;">When checked, you'll be the only one (besides admins) who can edit or delete this character</span>
           </label>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <label for="race" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Race</label>
+            <label for="race" class="t-label block mb-1">Race</label>
             <input 
               type="text" 
               id="race" 
               name="race" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
           
           <div>
-            <label for="class" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Class</label>
+            <label for="class" class="t-label block mb-1">Class</label>
             <input 
               type="text" 
               id="class" 
               name="class" 
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
           
           <div>
-            <label for="level" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Level</label>
+            <label for="level" class="t-label block mb-1">Level</label>
             <input 
               type="number" 
               id="level" 
               name="level" 
               min="1"
               max="20"
-              class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
             >
           </div>
         </div>
         
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div class="space-y-2">
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Avatar (optional)</label>
+            <label class="t-label block">Avatar (optional)</label>
             <div class="space-y-2">
               <div>
-                <label for="avatarFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+                <label for="avatarFile" class="t-label block mb-1">Upload Image (max 5MB)</label>
                 <input 
                   type="file" 
                   id="avatarFile" 
                   name="avatarFile" 
                   accept="image/*"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+                  class="t-input px-3 py-2"
                 >
               </div>
               <div class="flex items-center gap-2">
-                <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-                <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
-                <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+                <div class="flex-1 h-px" style="background:var(--border);"></div>
+                <span class="t-faint" style="font-size:0.7rem;">OR</span>
+                <div class="flex-1 h-px" style="background:var(--border);"></div>
               </div>
               <div>
-                <label for="avatarUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Avatar URL or File</label>
+                <label for="avatarUrl" class="t-label block mb-1">Avatar URL or File</label>
                 <input 
                   type="text" 
                   id="avatarUrl" 
                   name="avatarUrl" 
                   placeholder="https://example.com/avatar.jpg or /uploads/avatar.jpg"
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                  class="t-input px-3 py-2"
                 >
               </div>
             </div>
             <div id="avatarPreview" class="hidden mt-2">
-              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
             </div>
           </div>
           
           <div>
-            <label for="dndbeyondUrl" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">D&D Beyond URL (optional)</label>
+            <label for="dndbeyondUrl" class="t-label block mb-1">D&D Beyond URL (optional)</label>
             <div class="flex flex-col sm:flex-row gap-2">
               <input 
                 type="url" 
                 id="dndbeyondUrl" 
                 name="dndbeyondUrl" 
-                class="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2 flex-1"
                 placeholder="https://www.dndbeyond.com/characters/..."
               >
-              <button 
+              <button
                 type="button"
                 id="fetchFromDndBeyond"
-                class="bg-secondary-600 text-white px-4 py-2 rounded-lg hover:bg-secondary-700 dark:bg-secondary-700 dark:hover:bg-secondary-600 transition whitespace-nowrap"
+                class="t-btn-primary px-4 py-2 whitespace-nowrap"
                 title="Fetch character data from D&D Beyond"
               >
                 Auto-fill
@@ -475,181 +475,181 @@ const getOwnershipText = (character: typeof characters[0]) => {
           </div>
         </div>
         
-        <div id="fetchStatus" class="hidden p-3 rounded-lg mb-2"></div>
+        <div id="fetchStatus" class="hidden p-3 rounded-sm mb-2"></div>
         
         <div>
-          <h3 class="font-semibold mb-2 dark:text-gray-200">Ability Scores</h3>
+          <h3 class="font-semibold mb-2 t-body-text">Ability Scores</h3>
           <div class="grid grid-cols-6 gap-2">
             <div>
-              <label for="strength" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">STR</label>
+              <label for="strength" class="t-label block mb-1">STR</label>
               <input 
                 type="number" 
                 id="strength" 
                 name="strength" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="dexterity" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">DEX</label>
+              <label for="dexterity" class="t-label block mb-1">DEX</label>
               <input 
                 type="number" 
                 id="dexterity" 
                 name="dexterity" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="constitution" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">CON</label>
+              <label for="constitution" class="t-label block mb-1">CON</label>
               <input 
                 type="number" 
                 id="constitution" 
                 name="constitution" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="intelligence" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">INT</label>
+              <label for="intelligence" class="t-label block mb-1">INT</label>
               <input 
                 type="number" 
                 id="intelligence" 
                 name="intelligence" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="wisdom" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">WIS</label>
+              <label for="wisdom" class="t-label block mb-1">WIS</label>
               <input 
                 type="number" 
                 id="wisdom" 
                 name="wisdom" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="charisma" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">CHA</label>
+              <label for="charisma" class="t-label block mb-1">CHA</label>
               <input 
                 type="number" 
                 id="charisma" 
                 name="charisma" 
                 min="1"
                 max="30"
-                class="w-full px-2 py-1 border border-gray-300 dark:border-gray-600 rounded focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
           </div>
         </div>
         
         <div>
-          <h3 class="font-semibold mb-2 dark:text-gray-200">Additional Details (Optional)</h3>
+          <h3 class="font-semibold mb-2 t-body-text">Additional Details (Optional)</h3>
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
             <div>
-              <label for="background" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Background</label>
+              <label for="background" class="t-label block mb-1">Background</label>
               <input 
                 type="text" 
                 id="background" 
                 name="background" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="alignment" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Alignment</label>
+              <label for="alignment" class="t-label block mb-1">Alignment</label>
               <input 
                 type="text" 
                 id="alignment" 
                 name="alignment" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="gender" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Gender</label>
+              <label for="gender" class="t-label block mb-1">Gender</label>
               <input 
                 type="text" 
                 id="gender" 
                 name="gender" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="age" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Age</label>
+              <label for="age" class="t-label block mb-1">Age</label>
               <input 
                 type="number" 
                 id="age" 
                 name="age" 
                 min="1"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="height" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Height</label>
+              <label for="height" class="t-label block mb-1">Height</label>
               <input 
                 type="text" 
                 id="height" 
                 name="height" 
                 placeholder="e.g., 5'11&quot;"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="weight" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Weight (lbs)</label>
+              <label for="weight" class="t-label block mb-1">Weight (lbs)</label>
               <input 
                 type="number" 
                 id="weight" 
                 name="weight" 
                 min="1"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="eyes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Eye Color</label>
+              <label for="eyes" class="t-label block mb-1">Eye Color</label>
               <input 
                 type="text" 
                 id="eyes" 
                 name="eyes" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="skin" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Skin Color</label>
+              <label for="skin" class="t-label block mb-1">Skin Color</label>
               <input 
                 type="text" 
                 id="skin" 
                 name="skin" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
             <div>
-              <label for="hair" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Hair Color</label>
+              <label for="hair" class="t-label block mb-1">Hair Color</label>
               <input 
                 type="text" 
                 id="hair" 
                 name="hair" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-3 py-2"
               >
             </div>
           </div>
         </div>
         
         <div class="flex gap-4 pt-4">
-          <button 
-            type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+          <button
+            type="submit"
+            class="flex-1 t-btn-primary px-4 py-2"
           >
             Save Character
           </button>
-          <button 
-            type="button" 
+          <button
+            type="button"
             id="cancelModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            class="t-btn-secondary flex-1"
           >
             Cancel
           </button>
@@ -852,7 +852,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
       // Show loading status
       if (fetchStatus) {
         fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
-        fetchStatus.className = 'p-3 rounded-lg mb-2 bg-blue-100 text-blue-800';
+        fetchStatus.className = 'p-3 rounded-sm mb-2 bg-blue-100 text-blue-800';
         fetchStatus.classList.remove('hidden');
       }
       
@@ -896,20 +896,20 @@ const getOwnershipText = (character: typeof characters[0]) => {
           // Show success status
           if (fetchStatus) {
             fetchStatus.textContent = '✓ Character data fetched successfully!';
-            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-green-100 text-green-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-green-100 text-green-800';
           }
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
           if (fetchStatus) {
             fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
-            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
           }
         }
       } catch (error) {
         console.error('Fetch error:', error);
         if (fetchStatus) {
           fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
-          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+          fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
         }
       }
     });
@@ -1080,20 +1080,18 @@ const getOwnershipText = (character: typeof characters[0]) => {
       // Reset all buttons to inactive state
       [filterActive, filterInactive, filterAll].forEach(btn => {
         if (btn) {
-          btn.classList.remove('bg-primary-600', 'text-white', 'hover:bg-primary-700');
-          btn.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
+          btn.classList.remove('active');
           btn.setAttribute('data-active', 'false');
         }
       });
-      
+
       // Activate the selected button
       let activeButton = filterActive;
       if (filter === 'inactive') activeButton = filterInactive;
       if (filter === 'all') activeButton = filterAll;
-      
+
       if (activeButton) {
-        activeButton.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300', 'hover:bg-gray-300', 'dark:hover:bg-gray-600', 'hover:shadow-md');
-        activeButton.classList.add('bg-primary-600', 'text-white', 'hover:bg-primary-700');
+        activeButton.classList.add('active');
         activeButton.setAttribute('data-active', 'true');
       }
     };

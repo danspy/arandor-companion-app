@@ -110,135 +110,98 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 ---
 
 <Layout title="Dashboard">
-  <!-- Hero Image Section -->
+  <!-- Campaign Hero Image -->
   {campaignProgress.heroImageUrl ? (
-    <div class="relative mb-8 rounded-lg overflow-hidden shadow-lg">
-      <img 
-        src={campaignProgress.heroImageUrl} 
-        alt="Campaign Hero"
-        class="w-full h-64 md:h-80 lg:h-96 object-cover"
-      />
+    <div class="relative mb-8 rounded-sm overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--border-gold);">
+      <img src={campaignProgress.heroImageUrl} alt="Campaign Hero" class="w-full h-64 md:h-80 lg:h-96 object-cover" />
+      <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(8,6,3,0.85) 0%, rgba(8,6,3,0.35) 45%, transparent 100%);"></div>
+      <div class="absolute bottom-0 left-0 right-0 h-px" style="background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent); opacity:0.6;"></div>
       {canEdit && (
-        <button 
-            class="edit-hero-image-btn absolute top-4 right-4 px-3 py-2 bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 rounded-lg transition text-sm shadow-lg flex items-center gap-2"
-            title="Edit hero image"
-          >
-            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-            </svg>
-            <span>Edit</span>
-          </button>
+        <button class="edit-hero-image-btn absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all" style="background:rgba(8,6,3,0.65);border:1px solid rgba(201,144,50,0.3);color:rgba(242,232,213,0.7);backdrop-filter:blur(8px);" title="Edit hero image">
+          <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+          </svg>
+          Edit
+        </button>
       )}
     </div>
   ) : (
     <div class="mb-8">
       <div class="flex justify-between items-center">
-        <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400">Dashboard</h1>
+        <h1 class="text-4xl md:text-5xl">Dashboard</h1>
         {canEdit && (
-          <Button
-              variant="primary"
-              size="sm"
-              icon="add"
-              class="edit-hero-image-btn"
-              title="Add hero image"
-            >
-              Add Hero Image
-            </Button>
+          <button
+            class="edit-hero-image-btn shrink-0 flex items-center gap-1.5 text-xs font-medium transition-colors"
+            style="color: var(--accent); opacity: 0.7;"
+            title="Add hero image"
+          >
+            <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+            </svg>
+            Add Hero
+          </button>
         )}
       </div>
+      <div class="mt-3 h-px" style="background:linear-gradient(90deg, var(--accent) 0%, var(--border-gold) 40%, transparent 100%); max-width:280px;"></div>
     </div>
   )}
 
   <!-- Active Combat Indicator -->
   {isLoggedIn && (
-    <div id="activeCombatIndicator" class="mb-8" style="display: none;">
-      <a 
-        href="/tools/initiative" 
-        class="block bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-700 hover:to-orange-700 dark:from-red-700 dark:to-orange-700 dark:hover:from-red-600 dark:hover:to-orange-600 rounded-lg shadow-lg p-4 transition-all transform hover:scale-[1.02]"
-      >
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <div class="bg-white/20 rounded-full p-2">
-              <svg class="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
-              </svg>
-            </div>
-            <div>
-              <h3 class="text-lg font-bold text-white">Combat Active</h3>
-              <p class="text-sm text-white/90">Initiative tracker is running</p>
-            </div>
-          </div>
-          <div class="text-white">
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+    <div id="activeCombatIndicator" class="mb-6" style="display: none;">
+      <a href="/tools/initiative" class="flex items-center justify-between p-4 rounded-sm transition-all hover:opacity-90" style="background:linear-gradient(to right, #dc2626, #c99032); box-shadow: 0 0 30px rgba(201,144,50,0.35);">
+        <div class="flex items-center gap-3">
+          <div class="rounded-full p-2" style="background:rgba(255,255,255,0.15);">
+            <svg class="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
             </svg>
           </div>
+          <div>
+            <h3 class="text-lg font-bold text-white">Combat Active</h3>
+            <p class="text-sm text-white/90">Initiative tracker is running</p>
+          </div>
         </div>
+        <svg class="w-6 h-6 text-white pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+        </svg>
       </a>
     </div>
   )}
 
-  <!-- Next Event Card -->
+  <!-- Next Event -->
   {isLoggedIn && nextEvent && (
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+    <div class="t-panel p-5 mb-6">
       <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Next Event</h2>
-        <a href="/calendar" class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-          View Calendar →
-        </a>
+        <h2 class="t-section-h text-xl">Next Event</h2>
+        <a href="/calendar" class="t-link">View Calendar →</a>
       </div>
-      
-      <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
-        <h3 class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">{nextEvent.title}</h3>
-        {nextEvent.description && (
-          <p class="text-gray-700 dark:text-gray-300 mb-4">{nextEvent.description}</p>
-        )}
-        
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
-            <div class="flex-shrink-0 w-10 h-10 bg-primary-100 dark:bg-primary-900/40 rounded-full flex items-center justify-center">
-              <svg class="w-5 h-5 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-              </svg>
+      <div class="t-inset p-4">
+        <h3 class="t-body-text font-medium text-sm mb-1">{nextEvent.title}</h3>
+        {nextEvent.description && <p class="t-muted text-sm mb-3">{nextEvent.description}</p>}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="t-inset flex items-center gap-3 p-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style="background:rgba(201,144,50,0.12);">
+              <svg class="w-4 h-4 t-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
-            <div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Date</div>
-              <div class="font-semibold text-gray-800 dark:text-gray-200">{formatDate(nextEvent.date)}</div>
-            </div>
+            <div><div class="t-faint text-xs">Date</div><div class="t-strong-text font-semibold text-sm">{formatDate(nextEvent.date)}</div></div>
           </div>
-          
           {nextEvent.time && (
-            <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
-              <div class="flex-shrink-0 w-10 h-10 bg-secondary-100 dark:bg-secondary-900/40 rounded-full flex items-center justify-center">
-                <svg class="w-5 h-5 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
+            <div class="t-inset flex items-center gap-3 p-3">
+              <div class="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style="background:rgba(201,144,50,0.10);">
+                <svg class="w-4 h-4 t-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
-              <div>
-                <div class="text-xs text-gray-500 dark:text-gray-400">Time & Duration</div>
-                <div class="font-semibold text-gray-800 dark:text-gray-200">{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</div>
-              </div>
+              <div><div class="t-faint text-xs">Time &amp; Duration</div><div class="t-strong-text font-semibold text-sm">{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</div></div>
             </div>
           )}
-          
-          <div class="flex items-center gap-3 bg-white dark:bg-gray-800/50 rounded-lg p-3">
-            <div class="flex-shrink-0 w-10 h-10 bg-accent-100 dark:bg-accent-900/40 rounded-full flex items-center justify-center overflow-hidden">
+          <div class="t-inset flex items-center gap-3 p-3">
+            <div class="flex-shrink-0 w-9 h-9 rounded-full overflow-hidden flex items-center justify-center" style="background:rgba(201,144,50,0.08);">
               {getHostInfo(nextEvent.hostId).imageUrl ? (
-                <img 
-                  src={getHostInfo(nextEvent.hostId).imageUrl} 
-                  alt={getHostInfo(nextEvent.hostId).name}
-                  class="w-full h-full object-cover"
-                />
+                <img src={getHostInfo(nextEvent.hostId).imageUrl} alt={getHostInfo(nextEvent.hostId).name} class="w-full h-full object-cover" />
               ) : (
-                <svg class="w-5 h-5 text-accent-600 dark:text-accent-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-                </svg>
+                <svg class="w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
               )}
             </div>
-            <div>
-              <div class="text-xs text-gray-500 dark:text-gray-400">Host</div>
-              <div class="font-semibold text-gray-800 dark:text-gray-200">{getHostName(nextEvent.hostId)}</div>
-            </div>
+            <div><div class="t-faint text-xs">Host</div><div class="t-strong-text font-semibold text-sm">{getHostName(nextEvent.hostId)}</div></div>
           </div>
         </div>
       </div>
@@ -246,9 +209,9 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   )}
 
   <!-- Campaign Progress -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+  <div class="t-panel p-5 mb-6">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Campaign Progress</h2>
+      <h2 class="t-section-h text-xl">Campaign Progress</h2>
       {canEdit && (
         <Button
             variant="primary"
@@ -261,93 +224,88 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           </Button>
       )}
     </div>
-    
+
     <!-- Level Progress Bar -->
-    <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+    <div class="t-inset p-4">
       <div class="flex items-center justify-between mb-2">
-        <span class="text-sm font-medium text-gray-700 dark:text-gray-300">Party Level Progress</span>
-        <span class="text-xs text-gray-500 dark:text-gray-400">{Math.round(progressPercentage)}%</span>
+        <span class="t-label-sm">Party Level Progress</span>
+        <span class="t-faint text-xs">{Math.round(progressPercentage)}%</span>
       </div>
       <div class="flex items-center gap-4">
         <div class="flex-shrink-0 text-center">
-          <div class="text-2xl font-bold text-primary-600 dark:text-primary-400">{campaignProgress.currentLevel}</div>
-          <div class="text-xs text-gray-500 dark:text-gray-400">Level</div>
+          <div class="t-num text-3xl">{campaignProgress.currentLevel}</div>
+          <div class="t-faint text-xs">Level</div>
         </div>
         <div class="flex-1">
-          <div class="w-full bg-gray-200 dark:bg-black rounded-full h-6 overflow-hidden">
-            <div 
-              class="bg-gradient-to-r from-primary-500 to-secondary-500 h-6 rounded-full transition-all duration-300 flex items-center justify-center"
-              style={`width: ${progressPercentage}%`}
+          <div class="t-progress-track h-5">
+            <div
+              class="t-progress-fill flex items-center justify-center"
+              style={`width: ${progressPercentage}%; height: 100%`}
             >
               {progressPercentage > 15 && (
-                <span class="text-xs font-medium text-white">{progressPercentage}%</span>
+                <span class="text-xs font-semibold text-white">{progressPercentage}%</span>
               )}
             </div>
           </div>
           <div class="flex justify-between mt-1">
-            <span class="text-xs text-gray-500 dark:text-gray-400">0%</span>
-            <span class="text-xs text-gray-500 dark:text-gray-400">100%</span>
+            <span class="t-faint text-xs">0%</span>
+            <span class="t-faint text-xs">100%</span>
           </div>
         </div>
         <div class="flex-shrink-0 text-center">
-          <div class="text-2xl font-bold text-secondary-600 dark:text-secondary-400">{campaignProgress.currentLevel + 1}</div>
-          <div class="text-xs text-gray-500 dark:text-gray-400">Next</div>
+          <div class="t-num text-3xl">{campaignProgress.currentLevel + 1}</div>
+          <div class="t-faint text-xs">Next</div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
     <!-- Latest Diary Entries Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Latest Diary</h2>
-      <div class="space-y-3">
+    <div class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-4">Latest Diary</h2>
+      <div class="space-y-2">
         {latestEntries.map(entry => (
-          <a href={`/diary/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
-            <div>
-              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content}</p>
+          <a href={`/diary/${entry.id}`} class="t-row flex items-center justify-between p-3 block">
+            <div class="flex-1 min-w-0">
+              <h3 class="t-gold font-semibold text-sm truncate">{entry.title}</h3>
+              <p class="t-muted text-xs line-clamp-2 mt-0.5">{entry.content}</p>
             </div>
-            <div class="text-right">
-              <span class="text-sm text-gray-500 dark:text-gray-400 whitespace-nowrap">Session {entry.session}</span>
+            <div class="flex-shrink-0 ml-2">
+              <span class="t-badge">S{entry.session}</span>
             </div>
           </a>
         ))}
       </div>
-      <a href="/diary" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all diary →
-      </a>
+      <a href="/diary" class="t-link block mt-4">View all diary →</a>
     </div>
 
     <!-- Party Members Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Characters</h2>
-      <div class="space-y-3">
+    <div class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-4">Active Characters</h2>
+      <div class="space-y-2">
         {characters.filter(char => char.isActive !== false).map(char => (
-          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-lg hover:shadow-md transition cursor-pointer group">
-            <div class="relative h-24 overflow-hidden">
-              {/* Character teaser image */}
+          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-sm cursor-pointer group" style="border:1px solid var(--border);">
+            <div class="relative h-20 overflow-hidden">
               {char.avatarUrl ? (
-                <img 
-                  src={char.avatarUrl} 
+                <img
+                  src={char.avatarUrl}
                   alt={char.name}
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               ) : (
-                <div class="w-full h-full bg-gradient-to-r from-primary-500 to-secondary-500 flex items-center justify-center">
-                  <span class="text-4xl font-bold text-white opacity-40">{char.name.charAt(0)}</span>
+                <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,rgba(201,144,50,0.25),rgba(201,144,50,0.18));">
+                  <span class="text-3xl font-bold opacity-40" style="color:var(--gold);font-family:'Cormorant Garamond',serif;">{char.name.charAt(0)}</span>
                 </div>
               )}
-              {/* Overlay gradient */}
-              <div class="absolute inset-0 bg-gradient-to-r from-black/70 via-black/50 to-transparent"></div>
-              {/* Character info overlay */}
-              <div class="absolute inset-0 flex items-center px-4">
+              <div class="absolute inset-0 bg-gradient-to-r from-black/75 via-black/50 to-transparent"></div>
+              <div class="absolute inset-0 flex items-center px-3">
                 <div class="flex-1">
-                  <h3 class="font-bold text-white text-lg drop-shadow-lg">{char.name}</h3>
-                  <p class="text-sm text-white/90 drop-shadow-md">{char.race} {char.class}</p>
+                  <h3 class="font-bold text-white text-sm drop-shadow-lg">{char.name}</h3>
+                  <p class="text-xs text-white/80">{char.race} {char.class}</p>
                   <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-medium text-white bg-white/20 backdrop-blur-sm px-2 py-0.5 rounded">Level {char.level}</span>
-                    <span class="text-xs text-white/80">{char.player}</span>
+                    <span class="text-xs font-medium text-white/90 bg-white/15 backdrop-blur-sm px-1.5 py-0.5 rounded">Lv {char.level}</span>
+                    <span class="text-xs text-white/60">{char.player}</span>
                   </div>
                 </div>
               </div>
@@ -355,59 +313,51 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           </a>
         ))}
       </div>
-      <a href="/characters" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all characters →
-      </a>
+      <a href="/characters" class="t-link block mt-4">View all characters →</a>
     </div>
 
     <!-- Latest Library Entries Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400 flex items-center gap-2">
-        Latest Library
-      </h2>
-      <div class="space-y-3">
+    <div class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-4">Latest Library</h2>
+      <div class="space-y-2">
         {latestLibraryEntries.map(entry => (
-          <a href={`/library/${entry.id}`} class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-900/50 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-900 transition cursor-pointer">
+          <a href={`/library/${entry.id}`} class="t-row flex items-start p-3 block">
             <div class="flex-1 min-w-0">
-              <h3 class="font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300">{entry.title}</h3>
-              <p class="text-sm text-gray-600 dark:text-gray-400 line-clamp-2">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
+              <h3 class="t-gold font-semibold text-sm truncate">{entry.title}</h3>
+              <p class="t-muted text-xs line-clamp-2 mt-0.5">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
             </div>
           </a>
         ))}
       </div>
-      <a href="/library" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all library →
-      </a>
+      <a href="/library" class="t-link block mt-4">View all library →</a>
     </div>
 
     <!-- Active Quests Card -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-semibold mb-4 text-primary-600 dark:text-primary-400">Active Quests</h2>
-      <div class="space-y-3">
+    <div class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-4">Active Quests</h2>
+      <div class="space-y-2">
         {activeQuests.map(quest => (
-          <div class="border-l-4 border-primary-500 dark:border-primary-400 pl-4 py-2">
-            <h3 class="font-semibold dark:text-gray-100">{quest.title}</h3>
-            <p class="text-sm text-gray-600 dark:text-gray-400">{quest.description.substring(0, 80)}{quest.description.length > 80 ? '...' : ''}</p>
-            <span class={`inline-block px-2 py-1 text-xs rounded mt-2 ${
-              quest.priority === 'high' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-400' :
-              quest.priority === 'medium' ? 'bg-secondary-100 text-secondary-700 dark:bg-secondary-900/20 dark:text-secondary-400' :
-              'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400'
-            }`}>
+          <div class="t-inset p-3" style="border-left:3px solid var(--accent);">
+            <h3 class="t-strong-text font-semibold text-sm">{quest.title}</h3>
+            <p class="t-muted text-xs mt-0.5 line-clamp-2">{quest.description.substring(0, 80)}{quest.description.length > 80 ? '...' : ''}</p>
+            <span class={`inline-block mt-2 ${
+              quest.priority === 'high' ? 't-badge-red' :
+              quest.priority === 'medium' ? 't-badge-gold' :
+              't-badge-green'
+            } t-badge`}>
               {quest.priority}
             </span>
           </div>
         ))}
       </div>
-      <a href="/quests" class="block mt-4 text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 font-medium">
-        View all quests →
-      </a>
+      <a href="/quests" class="t-link block mt-4">View all quests →</a>
     </div>
   </div>
 
   <!-- Faction Standings -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
+  <div class="t-panel p-5 mb-6">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-semibold text-primary-600 dark:text-primary-400">Faction Standings</h2>
+      <h2 class="t-section-h text-xl">Faction Standings</h2>
       {canEdit && (
         <Button
             variant="primary"
@@ -420,29 +370,29 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           </Button>
       )}
     </div>
-    
+
     <!-- Status Legend -->
-    <div class="flex flex-wrap gap-2 mb-4 text-xs">
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-red-500 rounded"></span> Enemy</span>
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-orange-500 rounded"></span> Suspicious</span>
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-yellow-500 rounded"></span> Neutral</span>
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-green-500 rounded"></span> Friendly</span>
-      <span class="flex items-center gap-1"><span class="w-3 h-3 bg-teal-500 rounded"></span> Respectful</span>
+    <div class="flex flex-wrap gap-3 mb-4">
+      <span class="flex items-center gap-1.5 t-faint text-xs"><span class="w-2.5 h-2.5 rounded-full bg-red-500 opacity-80"></span>Enemy</span>
+      <span class="flex items-center gap-1.5 t-faint text-xs"><span class="w-2.5 h-2.5 rounded-full bg-orange-500 opacity-80"></span>Suspicious</span>
+      <span class="flex items-center gap-1.5 t-faint text-xs"><span class="w-2.5 h-2.5 rounded-full bg-yellow-500 opacity-80"></span>Neutral</span>
+      <span class="flex items-center gap-1.5 t-faint text-xs"><span class="w-2.5 h-2.5 rounded-full bg-green-500 opacity-80"></span>Friendly</span>
+      <span class="flex items-center gap-1.5 t-faint text-xs"><span class="w-2.5 h-2.5 rounded-full bg-teal-500 opacity-80"></span>Respectful</span>
     </div>
-    
+
     {factions.length === 0 ? (
-      <p class="text-gray-500 dark:text-gray-400 text-center py-4">No factions tracked yet. Add your first faction to begin tracking relationships!</p>
+      <p class="t-muted text-center py-4 text-sm">No factions tracked yet. Add your first faction to begin tracking relationships!</p>
     ) : (
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         {factions.map(faction => (
-          <div class="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg faction-item" data-faction-id={faction.id}>
+          <div class="t-inset p-4 faction-item" data-faction-id={faction.id}>
             <div class="flex items-center justify-between mb-2">
-              <span class="font-medium text-gray-700 dark:text-gray-300">{faction.name}</span>
+              <span class="t-strong-text font-semibold text-sm">{faction.name}</span>
               <div class="flex items-center gap-2">
-                <span class="text-xs text-gray-500 dark:text-gray-400">{faction.progress}%</span>
+                <span class="t-faint text-xs">{faction.progress}%</span>
                 {canEdit && (
-                  <button 
-                    class="edit-faction-btn text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                  <button
+                    class="edit-faction-btn t-muted hover:text-[var(--gold)] transition-colors"
                     data-faction-id={faction.id}
                     data-faction-name={faction.name}
                     data-faction-status={faction.status}
@@ -454,8 +404,8 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
                   </button>
                 )}
                 {canEdit && (
-                  <button 
-                    class="delete-faction-btn text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                  <button
+                    class="delete-faction-btn t-muted hover:text-red-400 transition-colors"
                     data-faction-id={faction.id}
                   >
                     <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -465,14 +415,14 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
                 )}
               </div>
             </div>
-            <div class="w-full bg-gray-200 dark:bg-black rounded-full h-4 overflow-hidden">
-              <div 
-                class={`${statusToColor(faction.status)} h-4 rounded-full transition-all duration-300`}
+            <div class="t-progress-track h-3">
+              <div
+                class={`${statusToColor(faction.status)} h-3 rounded-full transition-all duration-300`}
                 style={`width: ${faction.progress}%`}
               >
               </div>
             </div>
-            <div class="flex justify-between mt-1 text-xs text-gray-500 dark:text-gray-400">
+            <div class="flex justify-between mt-1 t-faint text-xs">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
@@ -483,90 +433,75 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     )}
   </div>
 
-  <!-- Campaign Progress -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900 mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <div class="text-center p-4 bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 rounded">
-        <div class="text-3xl font-bold text-primary-600 dark:text-primary-500">{diaryEntries.length}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Sessions Played</div>
+  <!-- Campaign Stats -->
+  <div class="t-panel p-5 mb-6">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div class="t-inset text-center p-4">
+        <div class="t-num text-4xl">{diaryEntries.length}</div>
+        <div class="t-label-sm mt-1">Sessions Played</div>
       </div>
-      <div class="text-center p-4 bg-accent-50 dark:bg-accent-900/20 dark:border dark:border-accent-800 rounded">
-        <div class="text-3xl font-bold text-accent-600 dark:text-accent-500">{quests.length}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Total Quests</div>
+      <div class="t-inset text-center p-4">
+        <div class="t-num text-4xl">{quests.length}</div>
+        <div class="t-label-sm mt-1">Total Quests</div>
       </div>
-      <div class="text-center p-4 bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800 rounded">
-        <div class="text-3xl font-bold text-green-600 dark:text-green-500">{characters.filter(c => c.isActive !== false).length}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Active Characters</div>
+      <div class="t-inset text-center p-4">
+        <div class="t-num text-4xl">{characters.filter(c => c.isActive !== false).length}</div>
+        <div class="t-label-sm mt-1">Active Characters</div>
       </div>
-      <div class="text-center p-4 bg-secondary-50 dark:bg-secondary-900/20 dark:border dark:border-secondary-800 rounded">
-        <div class="text-3xl font-bold text-secondary-600 dark:text-secondary-500">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
-        <div class="text-sm text-gray-600 dark:text-gray-400">Average Level</div>
+      <div class="t-inset text-center p-4">
+        <div class="t-num text-4xl">{characters.length > 0 ? (characters.reduce((sum, c) => sum + c.level, 0) / characters.length).toFixed(1) : 0}</div>
+        <div class="t-label-sm mt-1">Average Level</div>
       </div>
     </div>
   </div>
 
   <!-- Edit Progress Modal -->
   {canEdit && (
-    <div id="editProgressModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700 modal-content-safe">
+    <div id="editProgressModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 modal-overlay-safe">
+      <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-semibold text-primary-700 dark:text-primary-400">Edit Campaign Progress</h3>
-          <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="t-section-h text-lg">Edit Campaign Progress</h3>
+          <button id="closeModalBtn" class="t-muted hover:text-white transition-colors">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
-        
+
         <form id="editProgressForm" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Current Level
-            </label>
-            <input 
-              type="number" 
-              id="currentLevel" 
-              name="currentLevel" 
+            <label class="t-label block mb-2">Current Level</label>
+            <input
+              type="number"
+              id="currentLevel"
+              name="currentLevel"
               value={campaignProgress.currentLevel}
               min="1"
               max="20"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
               required
             />
           </div>
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Progress to Next Level (%)
-            </label>
-            <input 
-              type="number" 
-              id="progressPercent" 
-              name="progressPercent" 
+            <label class="t-label block mb-2">Progress to Next Level (%)</label>
+            <input
+              type="number"
+              id="progressPercent"
+              name="progressPercent"
               value={campaignProgress.progressPercent}
               min="0"
               max="100"
               step="10"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
               required
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Enter in steps of 10 (0, 10, 20, ..., 100)</p>
+            <p class="t-faint text-xs mt-1">Enter in steps of 10 (0, 10, 20, ..., 100)</p>
           </div>
-          
+
           <div class="flex gap-3 pt-4">
-            <button 
-              type="submit" 
-              class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
-            >
-              Save Changes
-            </button>
-            <button 
-              type="button" 
-              id="cancelBtn"
-              class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
-            >
-              Cancel
-            </button>
+            <button type="submit" class="t-btn-primary flex-1 px-4 py-2">Save Changes</button>
+            <button type="button" id="cancelBtn" class="t-btn-secondary flex-1">Cancel</button>
           </div>
         </form>
       </div>
@@ -575,61 +510,53 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 
   <!-- Hero Image Modal -->
   {canEdit && (
-    <div id="heroImageModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700 modal-content-safe">
+    <div id="heroImageModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 modal-overlay-safe">
+      <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
         <div class="flex justify-between items-center mb-6">
-          <h3 class="text-xl font-semibold text-primary-700 dark:text-primary-400">Hero Image</h3>
-          <button id="closeHeroImageModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 class="t-section-h text-lg">Hero Image</h3>
+          <button id="closeHeroImageModalBtn" class="t-muted hover:text-white transition-colors">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
-        
+
         <form id="heroImageForm" class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Upload Hero Image
-            </label>
-            <input 
-              type="file" 
+            <label class="t-label block mb-2">Upload Hero Image</label>
+            <input
+              type="file"
               accept="image/*"
               id="heroImageFile"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100 dark:file:bg-primary-900/20 dark:file:text-primary-400"
+              class="t-input px-3 py-2 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-900/30 file:text-amber-300 hover:file:bg-amber-900/40"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Upload an image file (max 5MB)</p>
+            <p class="t-faint text-xs mt-1">Upload an image file (max 5MB)</p>
           </div>
-          
+
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
+              <div class="w-full" style="border-top:1px solid var(--border);"></div>
             </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">OR</span>
+            <div class="relative flex justify-center text-xs">
+              <span class="px-2 t-muted" style="background:var(--bg-raised);">OR</span>
             </div>
           </div>
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Hero Image URL
-            </label>
-            <input 
-              type="text" 
-              id="heroImageUrl" 
-              name="heroImageUrl" 
+            <label class="t-label block mb-2">Hero Image URL</label>
+            <input
+              type="text"
+              id="heroImageUrl"
+              name="heroImageUrl"
               value={campaignProgress.heroImageUrl || ''}
-              placeholder="https://example.com/hero-image.jpg or /uploads/image.jpg"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              placeholder="https://example.com/hero-image.jpg"
+              class="t-input px-3 py-2"
             />
-            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Or provide an image URL (absolute or relative)</p>
+            <p class="t-faint text-xs mt-1">Or provide an image URL (absolute or relative)</p>
           </div>
-          
+
           <div class="flex gap-3 pt-4">
-            <button 
-              type="submit"
-              id="heroImageSubmitBtn"
-              class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
-            >
+            <button type="submit" id="heroImageSubmitBtn" class="t-btn-primary flex-1 px-4 py-2">
               <span id="heroImageSubmitText">Save</span>
               <span id="heroImageSubmitLoading" class="hidden">
                 <svg class="animate-spin inline-block h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -639,13 +566,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
                 Uploading...
               </span>
             </button>
-            <button 
-              type="button" 
-              id="cancelHeroImageBtn"
-              class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
-            >
-              Cancel
-            </button>
+            <button type="button" id="cancelHeroImageBtn" class="t-btn-secondary flex-1">Cancel</button>
           </div>
         </form>
       </div>
@@ -654,42 +575,38 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
 
   <!-- Faction Modal (Add/Edit) -->
   {canEdit && (
-    <div id="factionModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-overlay-safe">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6 dark:border dark:border-gray-700 modal-content-safe">
+    <div id="factionModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 modal-overlay-safe">
+      <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
         <div class="flex justify-between items-center mb-6">
-          <h3 id="factionModalTitle" class="text-xl font-semibold text-primary-700 dark:text-primary-400">Add Faction</h3>
-          <button id="closeFactionModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <h3 id="factionModalTitle" class="t-section-h text-lg">Add Faction</h3>
+          <button id="closeFactionModalBtn" class="t-muted hover:text-white transition-colors">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
         </div>
-        
+
         <form id="factionForm" class="space-y-4">
           <input type="hidden" id="factionId" name="factionId" value="" />
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Faction Name
-            </label>
-            <input 
-              type="text" 
-              id="factionName" 
-              name="factionName" 
+            <label class="t-label block mb-2">Faction Name</label>
+            <input
+              type="text"
+              id="factionName"
+              name="factionName"
               placeholder="Enter faction name"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
               required
             />
           </div>
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Status
-            </label>
-            <select 
-              id="factionStatus" 
+            <label class="t-label block mb-2">Status</label>
+            <select
+              id="factionStatus"
               name="factionStatus"
-              class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-gray-100"
+              class="t-input px-3 py-2"
               required
             >
               <option value="enemy">Enemy</option>
@@ -699,41 +616,29 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               <option value="respectful">Respectful</option>
             </select>
           </div>
-          
+
           <div>
-            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Progress (<span id="progressValue">50</span>%)
-            </label>
-            <input 
-              type="range" 
-              id="factionProgress" 
-              name="factionProgress" 
+            <label class="t-label block mb-2">Progress (<span id="progressValue">50</span>%)</label>
+            <input
+              type="range"
+              id="factionProgress"
+              name="factionProgress"
               min="0"
               max="100"
               value="50"
-              class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700"
+              class="w-full h-2 rounded-sm appearance-none cursor-pointer"
+              style="background:var(--bg-page); accent-color:var(--accent);"
             />
-            <div class="flex justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <div class="flex justify-between t-faint text-xs mt-1">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
             </div>
           </div>
-          
+
           <div class="flex gap-3 pt-4">
-            <button 
-              type="submit" 
-              class="flex-1 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 text-white px-4 py-2 rounded-lg transition"
-            >
-              Save
-            </button>
-            <button 
-              type="button" 
-              id="cancelFactionBtn"
-              class="flex-1 bg-gray-300 hover:bg-gray-400 dark:bg-gray-600 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 px-4 py-2 rounded-lg transition"
-            >
-              Cancel
-            </button>
+            <button type="submit" class="t-btn-primary flex-1 px-4 py-2">Save</button>
+            <button type="button" id="cancelFactionBtn" class="t-btn-secondary flex-1">Cancel</button>
           </div>
         </form>
       </div>

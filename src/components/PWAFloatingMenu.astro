@@ -19,8 +19,8 @@ function isActiveLink(href: string): boolean {
 <!-- Floating Menu Button (only visible in PWA mode) -->
 <div class="pwa-floating-menu-container hidden-in-browser">
   <!-- Menu Button -->
-  <button 
-    id="pwaMenuBtn" 
+  <button
+    id="pwaMenuBtn"
     class="pwa-menu-button"
     aria-label="Open menu"
   >
@@ -31,7 +31,7 @@ function isActiveLink(href: string): boolean {
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
     </svg>
   </button>
-  
+
   <!-- Menu Panel -->
   <div id="pwaMenuPanel" class="pwa-menu-panel hidden">
     <nav class="pwa-menu-nav">
@@ -93,12 +93,12 @@ function isActiveLink(href: string): boolean {
           <span>Tools</span>
         </a>
       )}
-      
+
       <!-- Divider -->
       <div class="pwa-menu-divider"></div>
-      
+
       <!-- Theme Toggle -->
-      <button 
+      <button
         id="pwaThemeToggle"
         class="pwa-menu-item"
         aria-label="Toggle dark mode"
@@ -112,7 +112,7 @@ function isActiveLink(href: string): boolean {
         <span id="pwaThemeText" class="dark:hidden">Dark Mode</span>
         <span id="pwaThemeText2" class="hidden dark:block">Light Mode</span>
       </button>
-      
+
       <!-- User Menu -->
       {!isLoggedIn ? (
         <a href="/login" class="pwa-menu-item">
@@ -137,9 +137,9 @@ function isActiveLink(href: string): boolean {
               <span>Users</span>
             </a>
           )}
-          <button 
+          <button
             id="pwaLogoutBtn"
-            class="pwa-menu-item"
+            class="pwa-menu-item pwa-menu-item-danger"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
@@ -150,7 +150,7 @@ function isActiveLink(href: string): boolean {
       )}
     </nav>
   </div>
-  
+
   <!-- Overlay for closing menu when clicking outside -->
   <div id="pwaMenuOverlay" class="pwa-menu-overlay hidden"></div>
 </div>
@@ -165,24 +165,24 @@ function isActiveLink(href: string): boolean {
     const closeIcon = document.getElementById('pwaCloseIcon');
     const themeToggle = document.getElementById('pwaThemeToggle');
     const logoutBtn = document.getElementById('pwaLogoutBtn');
-    
+
     if (!menuBtn || !menuPanel || !menuOverlay) return;
-    
+
     // Get animation durations from CSS custom properties
     const styles = getComputedStyle(document.documentElement);
     const animationDuration = parseInt(styles.getPropertyValue('--pwa-menu-animation-duration')) || 300;
     const animationDelay = parseInt(styles.getPropertyValue('--pwa-menu-animation-delay')) || 10;
-    
+
     // Toggle menu
     const toggleMenu = () => {
       const isHidden = menuPanel.classList.contains('hidden');
-      
+
       if (isHidden) {
         menuPanel.classList.remove('hidden');
         menuOverlay.classList.remove('hidden');
         menuIcon?.classList.add('hidden');
         closeIcon?.classList.remove('hidden');
-        
+
         // Trigger animation after a small delay to ensure CSS transition works
         setTimeout(() => {
           menuPanel.classList.add('pwa-menu-panel-open');
@@ -192,14 +192,14 @@ function isActiveLink(href: string): boolean {
         menuOverlay.classList.add('hidden');
         menuIcon?.classList.remove('hidden');
         closeIcon?.classList.add('hidden');
-        
+
         // Wait for animation to finish before hiding
         setTimeout(() => {
           menuPanel.classList.add('hidden');
         }, animationDuration);
       }
     };
-    
+
     // Close menu
     const closeMenu = () => {
       if (!menuPanel.classList.contains('hidden')) {
@@ -207,16 +207,16 @@ function isActiveLink(href: string): boolean {
         menuOverlay.classList.add('hidden');
         menuIcon?.classList.remove('hidden');
         closeIcon?.classList.add('hidden');
-        
+
         setTimeout(() => {
           menuPanel.classList.add('hidden');
         }, animationDuration);
       }
     };
-    
+
     menuBtn.addEventListener('click', toggleMenu);
     menuOverlay.addEventListener('click', closeMenu);
-    
+
     // Close menu when clicking on navigation links
     const menuLinks = menuPanel.querySelectorAll('a[href^="/"]');
     menuLinks.forEach(link => {
@@ -224,13 +224,13 @@ function isActiveLink(href: string): boolean {
         closeMenu();
       });
     });
-    
+
     // Theme toggle
     if (themeToggle) {
       themeToggle.addEventListener('click', () => {
         const html = document.documentElement;
         const isDark = html.classList.contains('dark');
-        
+
         if (isDark) {
           html.classList.remove('dark');
           try {
@@ -248,7 +248,7 @@ function isActiveLink(href: string): boolean {
         }
       });
     }
-    
+
     // Logout handler
     if (logoutBtn) {
       logoutBtn.addEventListener('click', async () => {
@@ -256,7 +256,7 @@ function isActiveLink(href: string): boolean {
           const response = await fetch('/api/auth/logout', {
             method: 'POST',
           });
-          
+
           if (response.ok) {
             window.location.href = '/';
           }
@@ -266,7 +266,7 @@ function isActiveLink(href: string): boolean {
       });
     }
   }
-  
+
   // Run on page load
   document.addEventListener('astro:page-load', initPWAFloatingMenu);
 </script>
@@ -274,169 +274,165 @@ function isActiveLink(href: string): boolean {
 <style>
   /* CSS Custom Properties */
   :root {
-    /* Base spacing for menu button from edges */
     --pwa-menu-button-spacing: 16px;
-    /* Gap between button and panel */
     --pwa-menu-panel-gap: 8px;
-    /* Top spacing to prevent menu from going too high */
     --pwa-menu-top-spacing: calc(16px + env(safe-area-inset-top));
-    --pwa-menu-animation-duration: 300ms; /* Menu open/close animation duration */
-    --pwa-menu-animation-delay: 10ms; /* Small delay to trigger CSS transitions */
+    --pwa-menu-animation-duration: 300ms;
+    --pwa-menu-animation-delay: 10ms;
   }
-  
+
   /* Only show floating menu in PWA mode (standalone) on mobile devices */
   .hidden-in-browser {
     display: none;
   }
-  
-  /* Show floating menu only on mobile devices in PWA standalone mode */
+
   @media (display-mode: standalone) and (max-width: 1024px) {
     .hidden-in-browser {
       display: block;
     }
   }
-  
-  /* Floating menu container - not positioned since children handle their own positioning */
+
   .pwa-floating-menu-container {
-    /* Container only serves as a wrapper, children are positioned independently */
+    /* Container wrapper */
   }
-  
-  /* Menu button */
+
+  /* ── FAB button ── */
   .pwa-menu-button {
     position: fixed;
-    /* Fixed spacing from edges, consistent on all pages */
     bottom: var(--pwa-menu-button-spacing);
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: rgba(160, 88, 88, 0.8);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-gold);
+    color: var(--gold);
     -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
-    color: white;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), 0 2px 4px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 4px 16px rgba(0, 0, 0, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    border: none;
     z-index: 10001;
   }
 
-  :global(.dark) .pwa-menu-button {
-    background: rgba(160, 88, 88, 0.6);
-    color: white;
-  }
-    
   .pwa-menu-button:active {
     transform: scale(0.95);
+    border-color: var(--gold);
   }
-  
-  /* Menu overlay */
+
+  /* ── Overlay ── */
   .pwa-menu-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.55);
     backdrop-filter: blur(2px);
     z-index: 9998;
     transition: opacity var(--pwa-menu-animation-duration) ease;
   }
-  
-  /* Menu panel */
+
+  /* ── Panel ── */
   .pwa-menu-panel {
     position: fixed;
-    /* Position panel directly above button with a small gap */
-    /* Bottom = button bottom (spacing) + button height (56px) + gap */
     bottom: calc(var(--pwa-menu-button-spacing) + 56px + var(--pwa-menu-panel-gap));
     right: calc(var(--pwa-menu-button-spacing) + env(safe-area-inset-right));
     width: 280px;
-    /* Calculate max-height: viewport height - panel bottom - top spacing */
     max-height: calc(100vh - (var(--pwa-menu-button-spacing) + 56px + var(--pwa-menu-panel-gap)) - var(--pwa-menu-top-spacing));
-    background: white;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-gold);
     border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+    box-shadow:
+      0 8px 32px rgba(0, 0, 0, 0.35),
+      0 2px 8px rgba(0, 0, 0, 0.2);
     overflow: hidden;
     z-index: 10000;
     transform: translateY(20px) scale(0.9);
     opacity: 0;
     transition: all var(--pwa-menu-animation-duration) cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
-  :global(.dark) .pwa-menu-panel {
-    background: #000000;
-    border: 1px solid #1f2937;
-  }
-  
+
   .pwa-menu-panel-open {
     transform: translateY(0) scale(1);
     opacity: 1;
   }
-  
-  /* Menu navigation */
+
+  /* ── Nav wrapper ── */
   .pwa-menu-nav {
     padding: 8px;
     overflow-y: auto;
-    /* Inherit max-height from parent */
   }
-  
-  /* Menu items */
+
+  /* ── Menu items ── */
   .pwa-menu-item {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 11px 16px;
     border-radius: 8px;
-    color: #374151;
-    font-size: 15px;
+    color: var(--text-body);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
     transition: all 0.2s ease;
     cursor: pointer;
     text-decoration: none;
     width: 100%;
     text-align: left;
-    border: none;
+    border: 1px solid transparent;
     background: transparent;
   }
-  
-  :global(.dark) .pwa-menu-item {
-    color: #e5e7eb;
-  }
-  
-  .pwa-menu-item:hover {
-    background: #f3f4f6;
-  }
-  
-  :global(.dark) .pwa-menu-item:hover {
-    background: #1f2937;
-  }
-  
-  .pwa-menu-item-active {
-    background: #fef3c7;
-    color: #92400e;
-    font-weight: 600;
-  }
-  
-  :global(.dark) .pwa-menu-item-active {
-    background: #92400e;
-    color: #fde047;
-  }
-  
+
   .pwa-menu-item svg {
     flex-shrink: 0;
+    color: var(--text-muted);
+    transition: color 0.2s ease;
   }
-  
-  /* Menu divider */
+
+  .pwa-menu-item:hover {
+    background: var(--accent-dim);
+    border-color: var(--border-gold);
+  }
+
+  .pwa-menu-item:hover svg {
+    color: var(--gold);
+  }
+
+  /* Active state */
+  .pwa-menu-item-active {
+    background: var(--accent-dim);
+    border-color: var(--border-gold);
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .pwa-menu-item-active svg {
+    color: var(--gold);
+  }
+
+  /* Danger item (logout) */
+  .pwa-menu-item-danger:hover {
+    background: rgba(220, 38, 38, 0.08);
+    border-color: rgba(220, 38, 38, 0.2);
+    color: #dc2626;
+  }
+
+  .pwa-menu-item-danger:hover svg {
+    color: #dc2626;
+  }
+
+  /* ── Divider ── */
   .pwa-menu-divider {
     height: 1px;
-    background: #e5e7eb;
-    margin: 8px 0;
+    background: var(--border);
+    margin: 6px 8px;
   }
-  
-  :global(.dark) .pwa-menu-divider {
-    background: #374151;
-  }
-  
-  /* Responsive adjustments for smaller screens */
+
+  /* ── Small screen adjustments ── */
   @media (max-width: 640px) {
     .pwa-menu-panel {
       width: calc(100vw - 32px);
