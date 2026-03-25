@@ -169,7 +169,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
   <div id="characterGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     {characters.map(character => (
       <div
-        class="character-card t-panel overflow-hidden transition"
+        class="character-card t-panel overflow-hidden hover:shadow-lg transition"
         data-class={character.class} 
         data-search={`${character.name} ${character.race} ${character.class} ${character.player}`.toLowerCase()} 
         data-is-active={character.isActive ? "true" : "false"}
@@ -297,7 +297,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
 
           <a
             href={`/characters/${character.id}`}
-            class="block mt-4 text-center t-inset px-4 py-2 t-accent transition font-medium text-sm hover:border-orange-500/40"
+            class="block mt-4 text-center t-btn-secondary text-sm"
           >
             View Details →
           </a>
@@ -449,7 +449,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
               </div>
             </div>
             <div id="avatarPreview" class="hidden mt-2">
-              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
             </div>
           </div>
           
@@ -475,7 +475,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
           </div>
         </div>
         
-        <div id="fetchStatus" class="hidden p-3 rounded-lg mb-2"></div>
+        <div id="fetchStatus" class="hidden p-3 rounded-sm mb-2"></div>
         
         <div>
           <h3 class="font-semibold mb-2 t-body-text">Ability Scores</h3>
@@ -649,7 +649,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
           <button
             type="button"
             id="cancelModal"
-            class="flex-1 t-inset px-4 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors"
+            class="t-btn-secondary flex-1"
           >
             Cancel
           </button>
@@ -852,7 +852,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
       // Show loading status
       if (fetchStatus) {
         fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
-        fetchStatus.className = 'p-3 rounded-lg mb-2 bg-blue-100 text-blue-800';
+        fetchStatus.className = 'p-3 rounded-sm mb-2 bg-blue-100 text-blue-800';
         fetchStatus.classList.remove('hidden');
       }
       
@@ -896,20 +896,20 @@ const getOwnershipText = (character: typeof characters[0]) => {
           // Show success status
           if (fetchStatus) {
             fetchStatus.textContent = '✓ Character data fetched successfully!';
-            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-green-100 text-green-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-green-100 text-green-800';
           }
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
           if (fetchStatus) {
             fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
-            fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
           }
         }
       } catch (error) {
         console.error('Fetch error:', error);
         if (fetchStatus) {
           fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
-          fetchStatus.className = 'p-3 rounded-lg mb-2 bg-red-100 text-red-800';
+          fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
         }
       }
     });

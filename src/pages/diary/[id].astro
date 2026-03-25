@@ -107,35 +107,35 @@ const renderedContent = renderMarkdown(entry.content);
       )}
     </div>
 
-    <!-- Cover Video or Image -->
-    {entry.coverVideoUrl ? (
-      <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
-        <video 
-          autoplay
-          muted
-          playsinline
-          loop
-          preload="auto"
-          disablePictureInPicture
-          class="w-full h-96 object-cover"
-          aria-label={`Cover video for ${entry.title}`}
-        >
-          <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
-          Your browser does not support the video tag.
-        </video>
-      </div>
-    ) : entry.coverImageUrl && (
-      <div class="mb-8 rounded-lg overflow-hidden shadow-lg">
-        <img 
-          src={entry.coverImageUrl} 
-          alt={entry.title}
-          class="w-full h-96 object-cover"
-        />
-      </div>
-    )}
-
     <!-- Entry Header -->
-    <article class="t-panel p-6 sm:p-8 mb-6">
+    <article class="t-panel mb-6 overflow-hidden">
+      <!-- Cover Video or Image (integrated into panel) -->
+      {entry.coverVideoUrl ? (
+        <div style="border-bottom:1px solid var(--border-gold);">
+          <video
+            autoplay
+            muted
+            playsinline
+            loop
+            preload="auto"
+            disablePictureInPicture
+            class="w-full h-80 sm:h-96 object-cover block"
+            aria-label={`Cover video for ${entry.title}`}
+          >
+            <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
+            Your browser does not support the video tag.
+          </video>
+        </div>
+      ) : entry.coverImageUrl && (
+        <div style="border-bottom:1px solid var(--border-gold);">
+          <img
+            src={entry.coverImageUrl}
+            alt={entry.title}
+            class="w-full h-80 sm:h-96 object-cover block"
+          />
+        </div>
+      )}
+      <div class="p-6 sm:p-8">
       <h1 class="mb-4" style="font-size:2.25rem;">{entry.title}</h1>
       
       <div class="flex gap-4 text-sm t-faint mb-6">
@@ -158,7 +158,7 @@ const renderedContent = renderMarkdown(entry.content);
       <!-- AI Tools Accordion (only for DM/admin) -->
       {canGenerateSummary && (
         <details class="mb-6 t-inset">
-          <summary class="cursor-pointer px-4 py-3 font-semibold t-body-text flex items-center gap-2 rounded-lg">
+          <summary class="cursor-pointer px-4 py-3 font-semibold t-body-text flex items-center gap-2 rounded-sm">
             <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
             </svg>
@@ -290,7 +290,7 @@ const renderedContent = renderMarkdown(entry.content);
             <span>Session {previousEntry.session}</span>
           </a>
         ) : (
-          <div class="t-inset flex-1 flex items-center justify-center gap-2 text-sm cursor-not-allowed opacity-40">
+          <div class="t-btn-secondary flex-1 flex items-center justify-center gap-2 text-sm cursor-not-allowed opacity-40" style="pointer-events:none;">
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
             </svg>
@@ -310,13 +310,14 @@ const renderedContent = renderMarkdown(entry.content);
             </svg>
           </a>
         ) : (
-          <div class="t-inset flex-1 flex items-center justify-center gap-2 text-sm cursor-not-allowed opacity-40">
+          <div class="t-btn-secondary flex-1 flex items-center justify-center gap-2 text-sm cursor-not-allowed opacity-40" style="pointer-events:none;">
             <span>Next</span>
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
             </svg>
           </div>
         )}
+      </div>
       </div>
     </article>
 
@@ -502,7 +503,7 @@ const renderedContent = renderMarkdown(entry.content);
   <div id="imagePreviewModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-4xl w-full relative modal-content-safe overflow-y-auto max-h-[90vh]">
       <!-- Loading Overlay -->
-      <div id="modalLoadingOverlay" class="hidden absolute inset-0 flex items-center justify-center z-10 rounded-lg" style="background:var(--bg-raised);opacity:0.95;">
+      <div id="modalLoadingOverlay" class="hidden absolute inset-0 flex items-center justify-center z-10 rounded-sm" style="background:var(--bg-raised);opacity:0.95;">
         <div class="text-center">
           <svg class="animate-spin h-12 w-12 mx-auto mb-4" style="color:var(--accent);" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -516,7 +517,7 @@ const renderedContent = renderMarkdown(entry.content);
       <div class="p-6">
         <h2 class="t-section-h text-xl mb-4">AI Generated Image Preview</h2>
         
-        <div id="previewImageContainer" class="mb-6 t-inset overflow-hidden rounded-lg">
+        <div id="previewImageContainer" class="mb-6 t-inset overflow-hidden rounded-sm">
           <img 
             id="previewImage" 
             src="" 

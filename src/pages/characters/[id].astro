@@ -331,7 +331,7 @@ const statMod = (v: number) => {
         syncBtn.disabled = true;
         if (syncButtonText) syncButtonText.textContent = 'Syncing…';
         if (syncStatus) {
-          syncStatus.className = 'mt-3 p-3 rounded-lg t-inset t-body-text text-sm';
+          syncStatus.className = 'mt-3 p-3 rounded-sm t-inset t-body-text text-sm';
           syncStatus.textContent = 'Syncing character data from D&D Beyond…';
           syncStatus.classList.remove('hidden');
         }

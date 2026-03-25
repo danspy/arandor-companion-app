@@ -71,7 +71,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text"
           id="searchInput"
           placeholder="Search NPCs by name, race, occupation, or location..."
-          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -163,16 +163,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   title="Edit NPC"
                   ariaLabel="Edit NPC"
                 />
-                <button
-                  class="delete-npc p-1.5 t-muted hover:text-red-400 rounded-lg transition cursor-pointer"
+                <Button
+                  variant="icon"
+                  size="sm"
+                  icon="delete"
+                  iconPosition="only"
+                  class="delete-npc hover:text-red-400"
                   data-id={npc.id}
                   title="Delete NPC"
-                  aria-label="Delete NPC"
-                >
-                  <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-                  </svg>
-                </button>
+                  ariaLabel="Delete NPC"
+                />
               </div>
             )}
           </div>
@@ -189,7 +189,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
           <a
             href={`/npcs/${npc.id}`}
-            class="t-link block mt-4 text-center px-4 py-2 rounded-lg transition font-medium text-sm"
+            class="t-btn-secondary block mt-4 text-center text-sm"
           >
             View Details →
           </a>
@@ -243,7 +243,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <div class="space-y-2">
             <div>
               <label for="avatarFile" class="t-faint text-xs block mb-1">Upload Image (max 5MB)</label>
-              <input type="file" id="avatarFile" name="avatarFile" accept="image/*" class="t-input px-4 py-2 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-orange-900/30 file:text-orange-300">
+              <input type="file" id="avatarFile" name="avatarFile" accept="image/*" class="t-input px-4 py-2 file:mr-3 file:py-1 file:px-3 file:rounded file:border-0 file:text-xs file:font-semibold file:bg-amber-900/30 file:text-amber-300">
             </div>
             <div class="flex items-center gap-2">
               <div class="flex-1 h-px" style="background:var(--border);"></div>
@@ -256,7 +256,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
           </div>
           <div id="avatarPreview" class="hidden mt-2">
-            <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+            <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
           </div>
         </div>
 
@@ -281,7 +281,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
         <div class="flex gap-4 pt-4">
           <button type="submit" class="t-btn-primary flex-1 px-6 py-2">Save NPC</button>
-          <button type="button" id="cancelModal" class="t-inset flex-1 px-6 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors">Cancel</button>
+          <button type="button" id="cancelModal" class="t-btn-secondary flex-1">Cancel</button>
         </div>
       </form>
     </div>

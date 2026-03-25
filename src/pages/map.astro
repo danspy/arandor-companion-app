@@ -89,7 +89,7 @@ libraryEntries.forEach(entry => {
           <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
         </Button>
         <Button
-          variant="ghost"
+          variant="secondary"
           size="sm"
           id="toggleLegend"
           title="Toggle legend"
@@ -121,40 +121,37 @@ libraryEntries.forEach(entry => {
   <div id="mapPageContainer" class="t-panel overflow-hidden">
 
     <!-- Map Viewport with max-height: navbar (72px) + external header (~120px) + container padding + footer (68px) ≈ 310px -->
-    <div id="mapColumn" class="relative" style="background:var(--bg-page);" style="height: calc(100vh - 310px); min-height: 500px;">
+    <div id="mapColumn" class="relative" style="background:var(--bg-page); height: calc(100vh - 310px); min-height: 500px;">
       <!-- Zoom controls - positioned in top-left to avoid PWA menu -->
       <div class="absolute top-4 left-4 z-20 flex gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
+        <button
           id="zoomIn"
           title="Zoom In"
-          class="backdrop-blur-sm shadow-lg" style="background:rgba(8,6,3,0.9);"
+          class="map-ctrl-btn"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"></path>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
           </svg>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
+        </button>
+        <button
           id="zoomOut"
           title="Zoom Out"
-          class="backdrop-blur-sm shadow-lg" style="background:rgba(8,6,3,0.9);"
+          class="map-ctrl-btn"
         >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM13 10H7"></path>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
           </svg>
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
+        </button>
+        <button
           id="resetZoom"
           title="Reset View"
-          class="backdrop-blur-sm shadow-lg" style="background:rgba(8,6,3,0.9);"
+          class="map-ctrl-btn px-3"
         >
-          Reset
-        </Button>
+          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+          </svg>
+          <span class="text-xs font-medium">Reset</span>
+        </button>
       </div>
 
       <!-- Map container with panning and zooming -->
@@ -193,7 +190,7 @@ libraryEntries.forEach(entry => {
       </div>
 
       <!-- Legend - positioned in bottom-left, toggleable, hidden by default -->
-      <div id="mapLegend" class="absolute bottom-6 left-4 max-w-[calc(100%-2rem)] z-20 backdrop-blur-sm rounded-lg shadow-lg p-3 sm:p-4 transition-opacity duration-300 opacity-0 pointer-events-none" style="background:rgba(8,6,3,0.9);">
+      <div id="mapLegend" class="absolute bottom-6 left-4 max-w-[calc(100%-2rem)] z-20 backdrop-blur-sm rounded-sm p-3 sm:p-4 transition-opacity duration-300 opacity-0 pointer-events-none" style="background:rgba(12,9,6,0.92); border:1px solid var(--border-gold); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
         <div class="t-body-text flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm">
           <div class="flex items-center gap-2">
             <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
@@ -825,7 +822,7 @@ libraryEntries.forEach(entry => {
             ${capitalizeType(location.type)}
           </span>
           ${location.region ? `<span class="t-muted text-sm">📍 ${location.region}</span>` : ''}
-          ${location.visited ? `<span class="text-sm" style="color:#4ade80;">✓ Visited</span>` : ''}
+          ${location.visited ? `<span class="t-badge t-badge-green">✓ Visited</span>` : ''}
         </div>
         <div class="t-prose max-w-none">${renderedDescription}</div>
         ${location.notes ? `<div class="t-callout p-3"><p class="t-body-text text-sm"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
@@ -1443,6 +1440,30 @@ libraryEntries.forEach(entry => {
 
   /* Hero path styling (SVG) */
   #mapSvg { z-index: 5; }
+
+  /* Map control buttons */
+  .map-ctrl-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.25rem;
+    height: 2.25rem;
+    padding: 0 0.5rem;
+    background: rgba(12, 9, 6, 0.92);
+    border: 1px solid var(--border-gold);
+    border-radius: 2px;
+    color: var(--gold);
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  }
+  .map-ctrl-btn:hover {
+    background: rgba(12, 9, 6, 0.98);
+    border-color: var(--gold);
+    color: #d4a43e;
+  }
 
   /* Prose handled by t-prose class */
 </style>

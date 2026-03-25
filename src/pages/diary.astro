@@ -76,7 +76,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text"
           id="searchInput"
           placeholder="Search diary entries by title, content, or tags..."
-          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -114,14 +114,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       return (
       <article class="diary-entry t-panel p-6 hover:shadow-lg transition" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
         {entry.coverVideoUrl ? (
-          <div class="mb-4 rounded-lg overflow-hidden">
+          <div class="-mx-6 -mt-6 mb-5 overflow-hidden" style="border-bottom:1px solid var(--border-gold);">
             <video
               autoplay
               muted
               playsinline
               preload="auto"
               disablePictureInPicture
-              class="w-full h-48 object-cover"
+              class="w-full h-52 object-cover block"
               aria-label={`Video for ${entry.title}`}
             >
               <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
@@ -129,11 +129,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </video>
           </div>
         ) : entry.coverImageUrl && (
-          <div class="mb-4 rounded-lg overflow-hidden">
+          <div class="-mx-6 -mt-6 mb-5 overflow-hidden" style="border-bottom:1px solid var(--border-gold);">
             <img
               src={entry.coverImageUrl}
               alt={entry.title}
-              class="w-full h-48 object-cover"
+              class="w-full h-52 object-cover block"
             />
           </div>
         )}
@@ -192,7 +192,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
         <a
           href={`/diary/${entry.id}`}
-          class="t-link block text-center px-4 py-2 rounded-lg transition font-medium text-sm"
+          class="t-btn-secondary block text-center text-sm mt-4"
         >
           View Details →
         </a>
@@ -294,7 +294,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
           </div>
           <div id="imagePreview" class="mt-3 hidden">
-            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-lg shadow-md">
+            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-sm shadow-md">
           </div>
         </div>
 
@@ -334,7 +334,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               loop
               preload="auto"
               disablePictureInPicture
-              class="max-w-xs rounded-lg shadow-md"
+              class="max-w-xs rounded-sm shadow-md"
               aria-label="Video preview"
             ></video>
           </div>
@@ -429,7 +429,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <button
             type="button"
             id="cancelDiaryModal"
-            class="t-inset flex-1 px-4 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors"
+            class="t-btn-secondary flex-1"
           >
             Cancel
           </button>

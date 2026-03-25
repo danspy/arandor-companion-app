@@ -16,7 +16,7 @@ if (isAuthenticated(Astro.cookies)) {
         <!-- Outer ring -->
         <circle cx="200" cy="200" r="190" stroke="rgba(201,144,50,0.18)" stroke-width="1" stroke-dasharray="8 6"/>
         <!-- Inner ring -->
-        <circle cx="200" cy="200" r="148" stroke="rgba(234,88,12,0.12)" stroke-width="1"/>
+        <circle cx="200" cy="200" r="148" stroke="rgba(201,144,50,0.12)" stroke-width="1"/>
         <!-- Tick marks -->
         {Array.from({ length: 24 }).map((_, i) => {
           const angle = (i * 15 * Math.PI) / 180;
@@ -46,9 +46,9 @@ if (isAuthenticated(Astro.cookies)) {
           <div class="login-sigil" aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="none">
               <!-- Diamond / D20 evocation -->
-              <polygon points="24,4 44,18 44,30 24,44 4,30 4,18" stroke="rgba(234,88,12,0.9)" stroke-width="1.5" fill="rgba(234,88,12,0.06)"/>
+              <polygon points="24,4 44,18 44,30 24,44 4,30 4,18" stroke="rgba(201,144,50,0.9)" stroke-width="1.5" fill="rgba(201,144,50,0.06)"/>
               <polygon points="24,10 38,20 38,28 24,38 10,28 10,20" stroke="rgba(201,144,50,0.5)" stroke-width="1" fill="none"/>
-              <circle cx="24" cy="24" r="4" fill="rgba(234,88,12,0.8)"/>
+              <circle cx="24" cy="24" r="4" fill="rgba(201,144,50,0.8)"/>
             </svg>
           </div>
           <h1 class="login-title">Arandor</h1>
@@ -139,7 +139,7 @@ if (isAuthenticated(Astro.cookies)) {
     box-shadow:
       0 0 0 1px rgba(201,144,50,0.08),
       0 20px 60px rgba(0,0,0,0.4),
-      0 0 60px rgba(234,88,12,0.04);
+      0 0 60px rgba(201,144,50,0.04);
     z-index: 1;
   }
 
@@ -187,7 +187,7 @@ if (isAuthenticated(Astro.cookies)) {
     width: 52px;
     height: 52px;
     margin: 0 auto 0.75rem;
-    filter: drop-shadow(0 0 10px rgba(234,88,12,0.35));
+    filter: drop-shadow(0 0 10px rgba(201,144,50,0.35));
   }
   .login-sigil svg { width: 100%; height: 100%; }
 
@@ -230,7 +230,7 @@ if (isAuthenticated(Astro.cookies)) {
     height: 4px;
     border-radius: 50%;
     background: var(--accent);
-    box-shadow: 0 0 6px rgba(234,88,12,0.6);
+    box-shadow: 0 0 6px rgba(201,144,50,0.6);
     flex-shrink: 0;
   }
 
@@ -260,7 +260,7 @@ if (isAuthenticated(Astro.cookies)) {
     padding: 0.625rem 0.875rem;
     background: var(--bg-page);
     border: 1px solid var(--border);
-    border-radius: 8px;
+    border-radius: 2px;
     color: var(--text-body);
     font-family: 'Outfit', sans-serif;
     font-size: 0.9rem;
@@ -269,8 +269,8 @@ if (isAuthenticated(Astro.cookies)) {
   }
   .login-input::placeholder { color: var(--text-faint); }
   .login-input:focus {
-    border-color: rgba(234,88,12,0.5);
-    box-shadow: 0 0 0 3px rgba(234,88,12,0.10);
+    border-color: rgba(201,144,50,0.5);
+    box-shadow: 0 0 0 3px rgba(201,144,50,0.10);
   }
 
   /* ── Error ─────────────────────────────────────────────────────── */
@@ -301,14 +301,14 @@ if (isAuthenticated(Astro.cookies)) {
     letter-spacing: 0.06em;
     text-transform: uppercase;
     border: none;
-    border-radius: 8px;
+    border-radius: 2px;
     cursor: pointer;
     transition: background 0.18s ease, box-shadow 0.18s ease, transform 0.12s ease;
-    box-shadow: 0 0 20px rgba(234,88,12,0.25);
+    box-shadow: 0 0 20px rgba(201,144,50,0.25);
   }
   .login-btn:hover {
-    background: #c2410c;
-    box-shadow: 0 0 30px rgba(234,88,12,0.4);
+    background: #b5822d;
+    box-shadow: 0 0 30px rgba(201,144,50,0.4);
     transform: translateY(-1px);
   }
   .login-btn:active { transform: translateY(0); }

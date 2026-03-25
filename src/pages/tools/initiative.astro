@@ -174,7 +174,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
           {sortedInitiatives.length > 0 && (
-            <div class="t-inset flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg w-fit">
+            <div class="t-inset flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-sm w-fit">
               <span class="t-body-text text-xs font-medium">Round:</span>
               <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold" style="color:var(--gold);">{combatState.currentRound}</span>
             </div>
@@ -752,7 +752,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           
           <!-- Death Saves (shown when HP = 0) -->
           <div id="deathSavesContainer" class="hidden">
-            <div class="t-inset p-4 rounded-lg" style="border:1px solid var(--danger);">
+            <div class="t-inset p-4 rounded-sm" style="border:1px solid var(--danger);">
               <h3 class="text-sm font-semibold mb-3" style="color:var(--danger);">Death Saves</h3>
               
               <div class="space-y-3">

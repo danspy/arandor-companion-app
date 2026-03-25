@@ -36,16 +36,16 @@ const COMBAT_STATE_ID = 'current-combat';
       <!-- Mobile/Tablet Warning - Only shown on smaller screens -->
       <div id="mobileWarning" class="hidden lg:hidden w-full h-full flex items-center justify-center p-8">
         <div class="text-center max-w-2xl">
-          <svg class="w-24 h-24 mx-auto mb-6 text-secondary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-24 h-24 mx-auto mb-6 text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
           </svg>
           <h1 class="text-3xl md:text-4xl font-bold mb-4 text-gray-100">Please Use a Larger Screen</h1>
           <p class="text-lg md:text-xl text-gray-300 mb-6">
             The Player Display is designed for larger screens such as desktops, laptops, or TVs for the best D&D session experience.
           </p>
-          <div class="bg-secondary-900/30 border-2 border-secondary-700 rounded-lg p-6 text-left">
+          <div class="bg-primary-900/30 border-2 border-primary-700 rounded-sm p-6 text-left">
             <p class="text-sm md:text-base text-gray-400 mb-3">
-              <strong class="text-secondary-400">Recommended devices:</strong>
+              <strong class="text-primary-400">Recommended devices:</strong>
             </p>
             <ul class="text-sm md:text-base text-gray-400 space-y-2">
               <li class="flex items-center gap-2">
@@ -152,15 +152,15 @@ const COMBAT_STATE_ID = 'current-combat';
             <!-- Timer Display -->
             <div id="timerDisplay" class="hidden">
               <div class="flex flex-col p-4 md:p-8">
-                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-secondary-600 p-6 md:p-8">
+                <div class="bg-gray-800 rounded-sm shadow-2xl border-2 border-primary-600 p-6 md:p-8">
                   <div class="flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8 md:w-12 md:h-12 text-secondary-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="w-8 h-8 md:w-12 md:h-12 text-primary-400 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                     </svg>
                     <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold">Timer</h2>
                   </div>
                   <div class="text-center">
-                    <div id="playerTimerDisplay" class="text-6xl md:text-8xl font-bold text-secondary-400 mb-2 font-mono">
+                    <div id="playerTimerDisplay" class="text-6xl md:text-8xl font-bold text-primary-400 mb-2 font-mono">
                       00:00
                     </div>
                     <div id="playerTimerStatus" class="text-lg md:text-xl text-gray-400">
@@ -174,7 +174,7 @@ const COMBAT_STATE_ID = 'current-combat';
             <!-- Initiative Display -->
             <div id="initiativeDisplay" class="hidden h-full">
               <div class="h-full flex flex-col p-4 md:p-8">
-                <div class="bg-gray-800 rounded-lg shadow-2xl border-2 border-primary-600 p-4 md:p-6 flex-1 flex flex-col">
+                <div class="bg-gray-800 rounded-sm shadow-2xl border-2 border-primary-600 p-4 md:p-6 flex-1 flex flex-col">
                   <div class="flex items-center justify-between mb-4 md:mb-6 md:flex-row flex-col md:gap-0 gap-3">
                     <h2 class="text-2xl md:text-3xl lg:text-4xl font-bold flex items-center gap-2 md:gap-3">
                       <svg class="w-6 h-6 md:w-10 md:h-10 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +182,7 @@ const COMBAT_STATE_ID = 'current-combat';
                       </svg>
                       Initiative
                     </h2>
-                    <div class="bg-primary-600 px-3 py-1.5 md:px-4 md:py-2 rounded-lg">
+                    <div class="t-btn-gold px-3 py-1.5 md:px-4 md:py-2">
                       <span class="text-xs md:text-sm font-medium">Round: </span>
                       <span id="currentRound" class="text-lg md:text-2xl font-bold">1</span>
                     </div>
@@ -286,7 +286,7 @@ const COMBAT_STATE_ID = 'current-combat';
           if (remaining <= 0 && currentDisplayState.timerStatus === 'running') {
             timerDisplayEl.className = 'text-6xl md:text-8xl font-bold text-red-500 mb-2 font-mono animate-pulse';
           } else {
-            timerDisplayEl.className = 'text-6xl md:text-8xl font-bold text-secondary-400 mb-2 font-mono';
+            timerDisplayEl.className = 'text-6xl md:text-8xl font-bold text-primary-400 mb-2 font-mono';
           }
         }
       }
@@ -726,7 +726,7 @@ const COMBAT_STATE_ID = 'current-combat';
           if (!npc) return;
 
           const card = document.createElement('div');
-          card.className = 'bg-gray-800 rounded-lg overflow-hidden shadow-xl border-2 grid grid-cols-1 lg:grid-cols-[4.5fr_2.5fr] lg:aspect-[4/3] border-gray-700 hover:border-primary-600 transition';
+          card.className = 'bg-gray-800 rounded-sm overflow-hidden shadow-xl border-2 grid grid-cols-1 lg:grid-cols-[4.5fr_2.5fr] lg:aspect-[4/3] border-gray-700 hover:border-primary-600 transition';
           
           const avatarHtml = npc.avatarUrl 
             ? `<img src="${npc.avatarUrl}" alt="${npc.name}" class="w-full aspect-video lg:aspect-auto lg:h-full object-cover" />`
@@ -830,7 +830,7 @@ const COMBAT_STATE_ID = 'current-combat';
             const health = getHealthStatus(entry.hp, entry.maxHp, entry.type);
             
             const entryEl = document.createElement('div');
-            entryEl.className = `p-3 md:p-4 rounded-lg transition ${getTypeBadge(entry.type)} ${
+            entryEl.className = `p-3 md:p-4 rounded-sm transition ${getTypeBadge(entry.type)} ${
               isCurrentTurn 
                 ? 'border-2 border-yellow-500 shadow-lg' 
                 : ''

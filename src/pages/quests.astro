@@ -92,7 +92,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text"
           id="searchInput"
           placeholder="Search quests by title or description..."
-          class="t-search w-full px-4 py-2 pl-10 rounded-lg transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -162,7 +162,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <div class="flex gap-2 items-center">
                 <Button
                 variant="icon"
-                size="md"
+                size="sm"
                 icon="edit"
                 iconPosition="only"
                 class="edit-quest"
@@ -171,11 +171,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 ariaLabel="Edit quest"
               />
                 <Button
-                variant="ghost"
-                size="md"
+                variant="icon"
+                size="sm"
                 icon="delete"
                 iconPosition="only"
-                class="delete-quest t-icon-btn t-icon-btn-danger"
+                class="delete-quest hover:text-red-400"
                 data-id={quest.id}
                 title="Delete quest"
                 ariaLabel="Delete quest"
@@ -233,7 +233,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
         <div class="flex gap-4 pt-4">
           <button type="submit" class="t-btn-primary flex-1 px-6 py-2">Save Quest</button>
-          <button type="button" id="cancelModal" class="t-inset flex-1 px-6 py-2 rounded-lg t-body-text hover:border-orange-500/40 transition-colors">Cancel</button>
+          <button type="button" id="cancelModal" class="t-btn-secondary flex-1">Cancel</button>
         </div>
       </form>
     </div>

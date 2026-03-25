@@ -26,18 +26,18 @@
   --bg-raised:  #faf6ee;
   --text-strong: #1e1408;
   --text-body:   #3d2e1a;
-  --text-muted:  #8a7355;
-  --text-faint:  #b8a080;
+  --text-muted:  #7a6340;
+  --text-faint:  #a08a60;
   --border:      rgba(110, 69, 20, 0.14);
   --border-gold: rgba(201, 144, 50, 0.28);
-  --accent-rgb:  234, 88, 12;
-  --accent:      #ea580c;
-  --accent-dim:  rgba(234, 88, 12, 0.10);
-  --accent-glow: rgba(234, 88, 12, 0.22);
+  --accent-rgb:  201, 144, 50;
+  --accent:      #c99032;
+  --accent-dim:  rgba(201, 144, 50, 0.10);
+  --accent-glow: rgba(201, 144, 50, 0.22);
   --gold:        #c99032;
   --gold-dim:    rgba(201, 144, 50, 0.12);
   --nav-bg:      rgba(30, 20, 8, 0.93);
-  --nav-border:  rgba(234, 88, 12, 0.20);
+  --nav-border:  rgba(201, 144, 50, 0.18);
 }
 
 .dark {
@@ -46,16 +46,16 @@
   --bg-surface: #13100a;
   --bg-raised:  #1a1410;
   --text-strong: #f2e8d5;
-  --text-body:   #c4b49a;
-  --text-muted:  #7a6a54;
-  --text-faint:  #4a3e30;
+  --text-body:   #d0c4aa;
+  --text-muted:  #8c7c60;
+  --text-faint:  #5c5040;
   --border:      rgba(201, 144, 50, 0.10);
   --border-gold: rgba(201, 144, 50, 0.22);
-  --accent-dim:  rgba(234, 88, 12, 0.12);
-  --accent-glow: rgba(234, 88, 12, 0.28);
+  --accent-dim:  rgba(201, 144, 50, 0.12);
+  --accent-glow: rgba(201, 144, 50, 0.28);
   --gold-dim:    rgba(201, 144, 50, 0.10);
   --nav-bg:      rgba(8, 6, 3, 0.94);
-  --nav-border:  rgba(234, 88, 12, 0.18);
+  --nav-border:  rgba(201, 144, 50, 0.14);
 }
 
 /* ── Base ───────────────────────────────────────────────────────── */
@@ -90,7 +90,7 @@ body::before {
   position: fixed;
   inset: 0;
   background: radial-gradient(ellipse 140% 50% at 50% -5%,
-    rgba(234, 88, 12, 0.04) 0%,
+    rgba(201, 144, 50, 0.03) 0%,
     transparent 70%);
   pointer-events: none;
   z-index: 0;
@@ -98,7 +98,7 @@ body::before {
 
 .dark body::before {
   background: radial-gradient(ellipse 140% 50% at 50% -5%,
-    rgba(234, 88, 12, 0.06) 0%,
+    rgba(201, 144, 50, 0.04) 0%,
     transparent 70%);
 }
 
@@ -124,7 +124,7 @@ main {
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
 /* ── Navigation ─────────────────────────────────────────────────── */
 
@@ -147,9 +147,9 @@ main {
   height: 1px;
   background: linear-gradient(90deg,
     transparent,
-    rgba(234, 88, 12, 0.35) 30%,
-    rgba(234, 88, 12, 0.55) 50%,
-    rgba(234, 88, 12, 0.35) 70%,
+    rgba(201, 144, 50, 0.25) 30%,
+    rgba(201, 144, 50, 0.40) 50%,
+    rgba(201, 144, 50, 0.25) 70%,
     transparent);
   filter: blur(0.5px);
 }
@@ -225,12 +225,12 @@ main {
   background: rgba(201, 144, 50, 0.06);
 }
 .nav-link-active {
-  color: var(--accent);
-  background: var(--accent-dim);
+  color: var(--gold);
+  background: var(--gold-dim);
   font-weight: 500;
 }
 .nav-link-active:hover {
-  color: var(--accent);
+  color: var(--gold);
 }
 
 /* ── Cards & surfaces ───────────────────────────────────────────── */
@@ -238,7 +238,7 @@ main {
 .card {
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 2px;
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
@@ -249,12 +249,12 @@ main {
 }
 
 .dark .card:hover {
-  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 12px rgba(234, 88, 12, 0.08);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.4), 0 0 12px rgba(201, 144, 50, 0.06);
 }
 
 /* Orange left-border accent for featured items */
 .card-featured {
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--gold);
 }
 
 /* ── Utilities ──────────────────────────────────────────────────── */
@@ -323,8 +323,8 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 /* ── Loading spinner ────────────────────────────────────────────── */
 
 .loading-spinner {
-  border: 2px solid rgba(234, 88, 12, 0.15);
-  border-top-color: #ea580c;
+  border: 2px solid rgba(201, 144, 50, 0.20);
+  border-top-color: var(--gold);
   border-radius: 50%;
   width: 36px;
   height: 36px;
@@ -371,14 +371,14 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
   background-position: 0 0, 0 0,  100% 0, 100% 0,  0 100%, 0 100%,  100% 100%, 100% 100%;
   background-repeat: no-repeat;
   border: 1px solid var(--border-gold);
-  border-radius: 10px;
+  border-radius: 2px;
 }
 
 /* Nested inner section — slightly raised */
 .t-inset {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 2px;
 }
 
 /* ── Typography ──────────────────────────────────────────────────── */
@@ -402,7 +402,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 
 /* Small all-caps label */
 .t-label-sm {
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--text-muted);
@@ -410,7 +410,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 
 /* Text colour helpers */
 .t-gold        { color: var(--gold); }
-.t-accent      { color: var(--accent); }
+.t-accent      { color: var(--gold); }
 .t-body-text   { color: var(--text-body); }
 .t-muted       { color: var(--text-muted); }
 .t-faint       { color: var(--text-faint); }
@@ -423,7 +423,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
   font-weight: 500;
   transition: color 0.15s ease;
 }
-.t-link:hover { color: var(--accent); }
+.t-link:hover { color: #d4a43e; }
 
 /* ── Inputs ──────────────────────────────────────────────────────── */
 
@@ -433,7 +433,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
   width: 100%;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 2px;
   color: var(--text-body);
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.875rem;
@@ -442,8 +442,8 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 }
 .t-search:focus,
 .t-input:focus {
-  border-color: rgba(234, 88, 12, 0.45);
-  box-shadow: 0 0 0 3px rgba(234, 88, 12, 0.08);
+  border-color: rgba(201, 144, 50, 0.45);
+  box-shadow: 0 0 0 3px rgba(201, 144, 50, 0.08);
 }
 .t-search::placeholder,
 .t-input::placeholder { color: var(--text-faint); }
@@ -464,7 +464,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 .t-pill {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 20px;
+  border-radius: 2px;
   padding: 0.25rem 0.875rem;
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.75rem;
@@ -478,9 +478,9 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
   color: var(--text-body);
 }
 .t-pill.active {
-  background: rgba(234, 88, 12, 0.12);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: rgba(201, 144, 50, 0.14);
+  border-color: var(--gold);
+  color: var(--gold);
   font-weight: 500;
 }
 
@@ -489,7 +489,7 @@ html[data-transition="slide-right"] ::view-transition-new(root) { animation-name
 .t-row {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 2px;
   transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
 .t-row:hover {
@@ -505,17 +505,17 @@ a.t-row:hover { text-decoration: none; }
   display: inline-block;
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0.1rem 0.45rem;
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--text-muted);
 }
 .t-badge-accent {
-  background: rgba(234, 88, 12, 0.10);
-  border-color: rgba(234, 88, 12, 0.25);
-  color: var(--accent);
+  background: rgba(201, 144, 50, 0.10);
+  border-color: rgba(201, 144, 50, 0.25);
+  color: var(--gold);
 }
 .t-badge-gold {
   background: rgba(201, 144, 50, 0.10);
@@ -546,7 +546,7 @@ a.t-row:hover { text-decoration: none; }
   overflow: hidden;
 }
 .t-progress-fill {
-  background: linear-gradient(to right, var(--gold), var(--accent));
+  background: linear-gradient(to right, var(--gold), #d4a43e);
   border-radius: 999px;
   height: 100%;
   transition: width 0.4s ease;
@@ -561,21 +561,21 @@ a.t-row:hover { text-decoration: none; }
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  background: var(--accent);
+  background: var(--gold);
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.5rem 1.125rem;
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.825rem;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: 0 0 16px rgba(234, 88, 12, 0.20);
+  box-shadow: 0 0 16px rgba(201, 144, 50, 0.15);
 }
 .t-btn-primary:hover {
-  background: #c2410c;
-  box-shadow: 0 0 24px rgba(234, 88, 12, 0.35);
+  background: #b5822d;
+  box-shadow: 0 0 24px rgba(201, 144, 50, 0.25);
 }
 
 /* ── Modal ───────────────────────────────────────────────────────── */
@@ -595,7 +595,7 @@ a.t-row:hover { text-decoration: none; }
   background-position: 0 0, 0 0,  100% 0, 100% 0,  0 100%, 0 100%,  100% 100%, 100% 100%;
   background-repeat: no-repeat;
   border: 1px solid var(--border-gold);
-  border-radius: 14px;
+  border-radius: 2px;
   box-shadow: 0 20px 60px rgba(0,0,0,0.5);
 }
 
@@ -632,6 +632,28 @@ main h1 {
 .t-back-link svg { transition: transform 0.15s ease; }
 .t-back-link:hover svg { transform: translateX(-3px); }
 
+/* ── Ghost button (text with subtle border) ──────────────────────── */
+.t-btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: transparent;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0.5rem 1.125rem;
+  font-family: 'Outfit', system-ui, sans-serif;
+  font-size: 0.825rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.t-btn-ghost:hover {
+  border-color: var(--border-gold);
+  color: var(--gold);
+  background: var(--gold-dim);
+}
+
 /* ── Icon buttons (edit / delete toolbar) ────────────────────────── */
 .t-icon-btn {
   display: inline-flex;
@@ -639,7 +661,7 @@ main h1 {
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border-radius: 8px;
+  border-radius: 2px;
   border: 1px solid var(--border);
   background: var(--bg-raised);
   color: var(--text-muted);
@@ -661,7 +683,7 @@ main h1 {
 .t-stat-block {
   background: var(--bg-raised);
   border: 1px solid var(--border-gold);
-  border-radius: 8px;
+  border-radius: 2px;
   text-align: center;
   padding: 0.875rem 0.625rem 0.75rem;
   position: relative;
@@ -676,7 +698,7 @@ main h1 {
   opacity: 0.55;
 }
 .t-stat-label {
-  font-size: 0.58rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-muted);
@@ -699,7 +721,7 @@ main h1 {
   color: var(--gold);
   background: var(--gold-dim);
   border: 1px solid var(--border-gold);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0.05rem 0.45rem;
   min-width: 2.5rem;
 }
@@ -708,8 +730,8 @@ main h1 {
 .t-callout {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
-  border-radius: 0 8px 8px 0;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 2px 2px 0;
   padding: 1rem 1.25rem;
 }
 .t-callout-title {
@@ -729,7 +751,7 @@ main h1 {
   background: var(--bg-raised);
   color: var(--text-body);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.5rem 1.125rem;
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.825rem;
@@ -750,7 +772,7 @@ main h1 {
   background: rgba(220,38,38,0.10);
   color: #f87171;
   border: 1px solid rgba(220,38,38,0.25);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.5rem 1.125rem;
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.825rem;
@@ -771,7 +793,7 @@ main h1 {
   background: rgba(201,144,50,0.12);
   color: var(--gold);
   border: 1px solid var(--border-gold);
-  border-radius: 8px;
+  border-radius: 2px;
   padding: 0.5rem 1.125rem;
   font-family: 'Outfit', system-ui, sans-serif;
   font-size: 0.825rem;
@@ -833,22 +855,23 @@ main h1 {
 .t-prose p { margin-bottom: 1em; }
 .t-prose strong { color: var(--text-strong); font-weight: 600; }
 .t-prose em { color: var(--gold); }
-.t-prose a { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
-.t-prose ul, .t-prose ol { margin: 0.75em 0 0.75em 1.25em; }
+.t-prose a { color: var(--gold); text-decoration: underline; text-underline-offset: 3px; }
+.t-prose ul { margin: 0.75em 0 0.75em 1.25em; list-style-type: disc; }
+.t-prose ol { margin: 0.75em 0 0.75em 1.25em; list-style-type: decimal; }
 .t-prose li { margin-bottom: 0.3em; }
 .t-prose blockquote {
   border-left: 3px solid var(--border-gold);
   padding: 0.5em 1em;
   margin: 1em 0;
   background: var(--bg-raised);
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 2px 2px 0;
   font-style: italic;
   color: var(--text-muted);
 }
 .t-prose code {
   background: var(--bg-raised);
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 2px;
   padding: 0.1em 0.35em;
   font-size: 0.85em;
   color: var(--gold);
@@ -884,7 +907,7 @@ main h1 {
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 1rem;
-  border-radius: 10px;
+  border-radius: 2px;
   border: 1px solid var(--border-gold);
   background: var(--bg-raised);
   color: var(--text-body);
@@ -897,7 +920,7 @@ main h1 {
 
 /* ── Detail field (label + value pair) ───────────────────────────── */
 .t-field-label {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   color: var(--text-faint);
@@ -927,7 +950,7 @@ main h1 {
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
-  border-radius: 10px 10px 0 0;
+  border-radius: 2px 2px 0 0;
 }
 .t-hero-banner::after {
   content: '';

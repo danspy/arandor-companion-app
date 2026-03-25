@@ -194,20 +194,20 @@ function getHostName(hostId: string | null): string {
   <div class="t-panel p-4 mb-6">
     <div class="flex flex-wrap gap-2 items-center">
       <span class="t-muted text-sm font-medium">Filter:</span>
-      <button 
-        class="event-filter t-badge transition-all duration-200 hover:opacity-80 active:scale-95 cursor-pointer"
+      <button
+        class="event-filter t-pill cursor-pointer"
         data-filter="all"
       >
         All ({events.length})
       </button>
-      <button 
-        class="event-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+      <button
+        class="event-filter t-pill active cursor-pointer"
         data-filter="upcoming"
       >
         Upcoming ({upcomingEventsCount})
       </button>
-      <button 
-        class="event-filter t-badge transition-all duration-200 hover:opacity-80 active:scale-95 cursor-pointer"
+      <button
+        class="event-filter t-pill cursor-pointer"
         data-filter="past"
       >
         Past ({pastEventsCount})
@@ -277,7 +277,7 @@ function getHostName(hostId: string | null): string {
                   <p class="t-muted mb-3">{event.description}</p>
                 )}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                  <div class="t-inset flex items-center gap-3 rounded-lg p-3">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
                     <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
                       <svg class="w-5 h-5" style="color:var(--gold);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
@@ -288,7 +288,7 @@ function getHostName(hostId: string | null): string {
                       <div class="t-body-text font-semibold">{formatDate(event.date)}</div>
                     </div>
                   </div>
-                  <div class="t-inset flex items-center gap-3 rounded-lg p-3">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
                     <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
                       <svg class="w-5 h-5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -299,7 +299,7 @@ function getHostName(hostId: string | null): string {
                       <div class="t-body-text font-semibold">{event.time}{event.duration ? ` (${formatDuration(event.duration)})` : ''}</div>
                     </div>
                   </div>
-                  <div class="t-inset flex items-center gap-3 rounded-lg p-3">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
                     <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center overflow-hidden">
                       {getHostInfo(event.hostId).imageUrl ? (
                         <img 
@@ -476,7 +476,7 @@ function getHostName(hostId: string | null): string {
             />
             <button 
               id="copyUrlBtn"
-              class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition"
+              class="t-btn-primary"
             >
               Copy
             </button>
@@ -553,7 +553,7 @@ function getHostName(hostId: string | null): string {
 
         <!-- Note about updates -->
         <div class="pt-4" style="border-top:1px solid var(--border);">
-          <div class="t-callout p-4 rounded-lg">
+          <div class="t-callout p-4 rounded-sm">
             <div class="flex gap-3">
               <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
@@ -732,13 +732,7 @@ function getHostName(hostId: string | null): string {
         // Update button styles
         filterButtons.forEach(btn => {
           const isActive = btn.getAttribute('data-filter') === filter;
-          if (isActive) {
-            btn.classList.remove('active-filter');
-            btn.classList.add('bg-primary-600', 'text-white');
-          } else {
-            btn.classList.remove('bg-primary-600', 'text-white');
-            btn.classList.add('active-filter');
-          }
+          btn.classList.toggle('active', isActive);
         });
 
         // Filter events

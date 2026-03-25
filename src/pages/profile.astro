@@ -31,7 +31,7 @@ const roleDisplay = {
           <label class="t-label block mb-1">
             Username
           </label>
-          <p class="t-inset px-4 py-2 rounded-lg t-body-text w-full">
+          <p class="t-inset px-4 py-2 rounded-sm t-body-text w-full">
             {user.username}
           </p>
         </div>
@@ -40,7 +40,7 @@ const roleDisplay = {
           <label class="t-label block mb-1">
             Role
           </label>
-          <p class="t-inset px-4 py-2 rounded-lg w-full">
+          <p class="t-inset px-4 py-2 rounded-sm w-full">
             <span class={`px-2 py-1 rounded-full text-xs font-medium ${
               user.role === 'admin' ? 't-badge t-badge-red' :
               user.role === 'dungeonmaster' ? 't-badge t-badge-accent' :
@@ -55,7 +55,7 @@ const roleDisplay = {
           <label class="t-label block mb-1">
             Member Since
           </label>
-          <p class="t-inset px-4 py-2 rounded-lg t-body-text w-full">
+          <p class="t-inset px-4 py-2 rounded-sm t-body-text w-full">
             {new Date(user.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -113,7 +113,7 @@ const roleDisplay = {
             </div>
           </div>
           <div id="profileImagePreview" class={user.profileImageUrl ? '' : 'hidden'} style="margin-top: 0.5rem;">
-            <img id="profileImagePreviewImg" src={user.profileImageUrl || ''} alt="Preview" class="max-w-full h-32 object-cover rounded-lg">
+            <img id="profileImagePreviewImg" src={user.profileImageUrl || ''} alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
           </div>
         </div>
 

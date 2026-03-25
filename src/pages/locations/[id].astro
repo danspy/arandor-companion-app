@@ -99,10 +99,11 @@ const npcRelBadge = (rel: string) =>
         )}
         <div class="px-5 py-4" style="background:var(--bg-surface);">
           <div class="t-field-label">Status</div>
-          <div class={location.visited ? 'text-sm font-semibold' : 't-muted text-sm font-medium'}
-            style={location.visited ? 'color:#4ade80;' : ''}>
-            {location.visited ? '✓ Visited' : 'Not Visited'}
-          </div>
+          {location.visited ? (
+            <span class="t-badge t-badge-green">✓ Visited</span>
+          ) : (
+            <span class="t-muted text-sm font-medium">Not Visited</span>
+          )}
         </div>
       </div>
     </div>

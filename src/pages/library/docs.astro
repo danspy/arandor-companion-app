@@ -81,8 +81,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       <!-- Tag Filter Below -->
       <div class="flex flex-wrap gap-2 items-center">
         <span class="t-muted text-sm font-medium">Filter:</span>
-        <button 
-          class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
+        <button
+          class="tag-filter t-pill active cursor-pointer"
           data-tag="all"
         >
           All ({libraryEntries.length})
@@ -90,8 +90,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         {allTags.map(tag => {
           const count = sortedEntries.filter(e => Array.isArray(e.tags) && e.tags.includes(tag)).length;
           return (
-            <button 
-              class="tag-filter t-badge transition-all duration-200 hover:opacity-80 active:scale-95 cursor-pointer"
+            <button
+              class="tag-filter t-pill cursor-pointer"
               data-tag={tag}
             >
               #{tag} ({count})
@@ -110,7 +110,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       
       return (
         <article 
-          class="library-entry t-panel p-6" 
+          class="library-entry t-panel p-6 hover:shadow-lg transition"
           data-entry-id={entry.id}
           data-tags={JSON.stringify(tags)}
           data-search={`${entry.title} ${entry.content}`.toLowerCase()}
@@ -137,7 +137,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                     size="sm"
                     icon="delete"
                     iconPosition="only"
-                    class="delete-entry t-icon-btn t-icon-btn-danger"
+                    class="delete-entry hover:text-red-400"
                     data-id={entry.id}
                     title="Delete entry"
                     ariaLabel="Delete entry"
@@ -166,9 +166,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
           )}
 
-          <a 
+          <a
             href={`/library/${entry.id}`}
-            class="t-badge t-badge-accent block text-center px-4 py-2 font-medium"
+            class="t-btn-secondary block text-center text-sm mt-4"
           >
             View Details →
           </a>
@@ -222,7 +222,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               Toggle Preview
             </button>
           </div>
-          <div id="markdownPreview" class="t-prose hidden mt-4 p-4 t-inset rounded-lg max-w-none"></div>
+          <div id="markdownPreview" class="t-prose hidden mt-4 p-4 t-inset rounded-sm max-w-none"></div>
         </div>
 
         <div>
@@ -315,13 +315,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         
         // Update button styles
         tagFilters.forEach(b => {
-          if (b.getAttribute('data-tag') === currentFilter) {
-            b.classList.remove('active-tag');
-            b.classList.add('bg-primary-600', 'text-white');
-          } else {
-            b.classList.remove('bg-primary-600', 'text-white');
-            b.classList.add('active-tag');
-          }
+          b.classList.toggle('active', b.getAttribute('data-tag') === currentFilter);
         });
         
         applyFilters();
