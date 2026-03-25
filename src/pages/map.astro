@@ -300,6 +300,11 @@ libraryEntries.forEach(entry => {
 </script>
 
 <script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), locationLibraryEntries: Object.fromEntries(locationLibraryEntries), isLoggedIn: isLoggedIn, canEdit: canEdit }}>
+  // Clean up tooltips before View Transition swaps to prevent them persisting on other pages
+  document.addEventListener('astro:before-swap', () => {
+    document.querySelectorAll('.landmark-tooltip, .pin-tooltip').forEach(t => t.remove());
+  });
+
   let editMode = false;
   let selectedLocationId = null;
   let draggedPin = null;
@@ -468,8 +473,8 @@ libraryEntries.forEach(entry => {
 
       // create tooltip element for this landmark (DOM) and position it over the svg group
       const tooltip = document.createElement('div');
-      tooltip.className = 'landmark-tooltip fixed t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
-      tooltip.style.cssText = 'min-width: 100px; max-width: 220px; white-space: normal; z-index: 9999; pointer-events: none;';
+      tooltip.className = 'landmark-tooltip t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
+      tooltip.style.cssText = 'position:fixed; min-width: 100px; max-width: 220px; white-space: normal; z-index: 9999; pointer-events: none;';
       tooltip.innerHTML = `<div class="font-semibold">${l.name}</div>${l.notes ? `<div class="t-muted text-xs mt-1">${l.notes}</div>` : ''}`;
       document.body.appendChild(tooltip);
 
@@ -709,8 +714,8 @@ libraryEntries.forEach(entry => {
     }
 
     const tooltip = document.createElement('div');
-    tooltip.className = 'pin-tooltip fixed t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
-    tooltip.style.cssText = 'min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999; pointer-events: none;';
+    tooltip.className = 'pin-tooltip t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
+    tooltip.style.cssText = 'position:fixed; min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999; pointer-events: none;';
     tooltip.innerHTML = tooltipContent;
     document.body.appendChild(tooltip);
 
