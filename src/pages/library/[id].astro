@@ -37,7 +37,7 @@ const renderedContent = renderMarkdown(entry.content);
   <div class="max-w-4xl mx-auto">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/library/docs" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
+      <a href="/library/docs" class="t-back-link">
         <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
@@ -48,7 +48,7 @@ const renderedContent = renderMarkdown(entry.content);
           <button 
             id="editEntry"
             data-id={entry.id}
-            class="p-2.5 text-gray-700 hover:text-primary-600 dark:text-gray-300 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+            class="t-icon-btn"
             title="Edit entry"
             aria-label="Edit entry"
           >
@@ -59,7 +59,7 @@ const renderedContent = renderMarkdown(entry.content);
           <button 
             id="deleteEntry"
             data-id={entry.id}
-            class="p-2.5 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+            class="t-icon-btn t-icon-btn-danger"
             title="Delete entry"
             aria-label="Delete entry"
           >
@@ -72,13 +72,13 @@ const renderedContent = renderMarkdown(entry.content);
     </div>
 
     <!-- Entry Header -->
-    <article class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-      <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-4">{entry.title}</h1>
+    <article class="t-panel p-6 sm:p-8 mb-6">
+      <h1 class="font-display italic font-semibold text-4xl mb-4" style="color:var(--gold);">{entry.title}</h1>
       
       <!-- Metadata -->
       {location && (
-        <div class="flex gap-4 text-sm text-gray-600 dark:text-gray-400 mb-6">
-          <a href={`/locations/${location.id}`} class="flex items-center gap-1 text-secondary-600 dark:text-secondary-400 hover:underline">
+        <div class="flex gap-4 text-sm t-muted mb-6">
+          <a href={`/locations/${location.id}`} class="t-link flex items-center gap-1">
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -94,7 +94,7 @@ const renderedContent = renderMarkdown(entry.content);
           {entry.tags.map((tag: string) => (
             <a 
               href={`/library/docs?tag=${encodeURIComponent(tag)}`}
-              class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm hover:bg-primary-200 dark:hover:bg-primary-900/30 transition"
+              class="t-badge t-badge-gold"
             >
               #{tag}
             </a>
@@ -103,9 +103,9 @@ const renderedContent = renderMarkdown(entry.content);
       )}
 
       <!-- Content -->
-      <div class="prose dark:prose-invert max-w-none">
+      <div class="t-prose max-w-none">
         <div 
-          class="library-text text-gray-700 dark:text-gray-300 text-lg leading-relaxed"
+          class="t-prose text-lg leading-relaxed"
           set:html={renderedContent}
         />
       </div>
@@ -150,47 +150,3 @@ const renderedContent = renderMarkdown(entry.content);
   // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
-
-<style>
-  /* Enhance markdown rendering */
-  .prose {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(h1):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-700 dark:text-primary-400;
-  }
-  
-  .prose :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400;
-  }
-  
-  .prose :where(h3):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-500;
-  }
-  
-  .prose :where(a):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
-  }
-  
-  .prose :where(strong):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(code):not(:where([class~="not-prose"] *)) {
-    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
-  }
-  
-  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
-  }
-  
-  .prose :where(ul):not(:where([class~="not-prose"] *)),
-  .prose :where(ol):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-700 dark:text-gray-300;
-  }
-  
-  .prose :where(hr):not(:where([class~="not-prose"] *)) {
-    @apply border-gray-300 dark:border-gray-700;
-  }
-</style>

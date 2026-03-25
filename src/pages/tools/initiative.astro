@@ -130,13 +130,13 @@ const canViewActualHP = (entry: typeof sortedInitiatives[0]) => {
 const getTypeBadgeColor = (type: string) => {
   switch (type) {
     case 'character':
-      return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
+      return 't-badge t-badge-green';
     case 'npc':
-      return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
+      return 't-badge t-badge-accent';
     case 'monster':
-      return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
+      return 't-badge t-badge-red';
     default:
-      return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
+      return 't-badge';
   }
 };
 
@@ -146,16 +146,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
   // At 0 HP: Characters show "Unconscious" (they have death saves), NPCs/monsters/others show "Dead"
   if (hp === 0) {
     if (type === 'character') {
-      return { text: 'Unconscious', classes: 'bg-red-900 text-white dark:bg-red-950' };
+      return { text: 'Unconscious', classes: 't-badge t-badge-red' };
     } else {
-      return { text: 'Dead', classes: 'bg-black text-white dark:bg-gray-900' };
+      return { text: 'Dead', classes: 't-badge' };
     }
   }
   const percent = hp / maxHp;
-  if (percent <= 0.25) return { text: 'Bloodied', classes: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' };
-  if (percent <= 0.5) return { text: 'Hurt', classes: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' };
-  if (percent <= 0.75) return { text: 'Injured', classes: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' };
-  return { text: 'Healthy', classes: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' };
+  if (percent <= 0.25) return { text: 'Bloodied', classes: 't-badge t-badge-red' };
+  if (percent <= 0.5) return { text: 'Hurt', classes: 't-badge' };
+  if (percent <= 0.75) return { text: 'Injured', classes: 't-badge t-badge-gold' };
+  return { text: 'Healthy', classes: 't-badge t-badge-green' };
 };
 ---
 
@@ -174,9 +174,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
           {sortedInitiatives.length > 0 && (
-            <div class="flex items-center gap-1.5 sm:gap-2 bg-primary-100 dark:bg-primary-900 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg w-fit">
-              <span class="text-xs font-medium text-gray-700 dark:text-gray-300">Round:</span>
-              <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold text-primary-700 dark:text-primary-400">{combatState.currentRound}</span>
+            <div class="t-inset flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg w-fit">
+              <span class="t-body-text text-xs font-medium">Round:</span>
+              <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold" style="color:var(--gold);">{combatState.currentRound}</span>
             </div>
           )}
         </div>
@@ -268,8 +268,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     </div>
 
     {sortedInitiatives.length === 0 ? (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 sm:p-8 text-center">
-        <p class="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+      <div class="t-panel p-6 sm:p-8 text-center">
+        <p class="t-muted text-sm sm:text-base">
           No initiative entries yet. {canEdit ? 'Add your first entry to start tracking combat!' : 'The DM will add entries when combat starts.'}
         </p>
       </div>
@@ -283,10 +283,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           return (
             <div 
               class:list={[
-                "initiative-card relative bg-white dark:bg-gray-800 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden border",
+                "initiative-card relative t-panel overflow-hidden",
                 { 'opacity-60': !entry.isActive },
-                { 'border-gray-200 dark:border-gray-700': !isCurrentTurn },
-                { 'border-yellow-500 dark:border-yellow-500': isCurrentTurn }
+                
+                { 'ring-2 ring-amber-500': isCurrentTurn }
               ]}
               data-index={index}
               data-active-index={activeIndex}
@@ -300,13 +300,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 <!-- Compact layout: Single line on mobile and desktop -->
                 <div class="flex items-center gap-2 sm:gap-3">
                   <!-- Initiative number -->
-                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold text-primary-600 dark:text-primary-400 min-w-12 sm:min-w-16">
+                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold min-w-12 sm:min-w-16" style="color:var(--gold);">
                     {entry.initiative}
                   </div>
                   
                   <!-- Name & Type (mobile: very compact, desktop: normal) -->
                   <div class="flex-1 min-w-0 flex items-center gap-1 sm:gap-2">
-                    <h3 class="text-base sm:text-lg font-semibold text-gray-900 dark:text-gray-100 truncate">
+                    <h3 class="t-body-text text-base sm:text-lg font-semibold truncate">
                       {entry.name}
                     </h3>
                     <span class:list={["inline-block px-1.5 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap", getTypeBadgeColor(entry.type)]}>
@@ -317,19 +317,19 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   <!-- HP display (inline for all) -->
                   <div class="flex-shrink-0 flex items-center gap-1">
                     {canViewActualHP(entry) ? (
-                      <div class="text-xs sm:text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      <div class="t-body-text text-xs sm:text-sm font-semibold">
                         {entry.hp !== null && entry.maxHp !== null ? (
                           <span data-hp-display>
                             {entry.hp}/{entry.maxHp}
                             {entry.tempHp && entry.tempHp > 0 ? (
-                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                              <span class="" style="color:var(--accent);"> (+{entry.tempHp})</span>
                             ) : null}
                           </span>
                         ) : entry.hp !== null ? (
                           <span data-hp-display>
                             {entry.hp}
                             {entry.tempHp && entry.tempHp > 0 ? (
-                              <span class="text-blue-600 dark:text-blue-400"> (+{entry.tempHp})</span>
+                              <span class="" style="color:var(--accent);"> (+{entry.tempHp})</span>
                             ) : null}
                           </span>
                         ) : (
@@ -350,7 +350,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     )}
                     {!canEdit && canEditHP(entry) && (
                       <button 
-                        class="edit-hp-btn text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                        class="edit-hp-btn t-icon-btn"
                         data-id={entry.id}
                         data-hp={entry.hp || ''}
                         data-max-hp={entry.maxHp || ''}
@@ -368,7 +368,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   <!-- AC display (DM/Admin only, inline) -->
                   {canEdit && (
                     <div class="hidden sm:block text-center min-w-10">
-                      <div class="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                      <div class="t-body-text text-sm font-semibold">
                         <span data-ac-display>{entry.ac !== null ? entry.ac : '-'}</span>
                       </div>
                     </div>
@@ -378,7 +378,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   {canEdit && (
                     <div class="flex gap-1 sm:gap-2 flex-shrink-0">
                       <button 
-                        class="edit-initiative-btn text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400"
+                        class="edit-initiative-btn t-icon-btn"
                         data-id={entry.id}
                         title="Edit"
                       >
@@ -387,7 +387,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                         </svg>
                       </button>
                       <button 
-                        class="delete-initiative-btn text-gray-600 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400"
+                        class="delete-initiative-btn t-icon-btn t-icon-btn-danger"
                         data-id={entry.id}
                         data-name={entry.name}
                         title="Delete"
@@ -402,41 +402,41 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
 
                 <!-- Notes (if present, shown below) -->
                 {canEdit && entry.notes && (
-                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-0.5 sm:mb-1">Notes</div>
-                    <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300" data-notes-display>{entry.notes}</div>
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2" style="border-top:1px solid var(--border);">
+                    <div class="t-faint text-xs uppercase mb-0.5 sm:mb-1">Notes</div>
+                    <div class="t-body-text text-xs sm:text-sm" data-notes-display>{entry.notes}</div>
                   </div>
                 )}
                 {canEdit && !entry.notes && (
-                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700 hidden">
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-0.5 sm:mb-1">Notes</div>
-                    <div class="text-xs sm:text-sm text-gray-700 dark:text-gray-300" data-notes-display></div>
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 hidden" style="border-top:1px solid var(--border);">
+                    <div class="t-faint text-xs uppercase mb-0.5 sm:mb-1">Notes</div>
+                    <div class="t-body-text text-xs sm:text-sm" data-notes-display></div>
                   </div>
                 )}
                 
                 <!-- Death Saves (only for characters at HP = 0) -->
                 {entry.hp === 0 && entry.maxHp !== null && entry.type === 'character' && (
-                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
-                    <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
+                  <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2" style="border-top:1px solid var(--border);" data-death-saves-section>
+                    <div class="t-faint text-xs uppercase mb-1">Death Saves</div>
                     <div class="flex items-center gap-4">
                       <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-medium text-green-600 dark:text-green-400">Successes:</span>
+                        <span class="text-xs font-medium" style="color:#4ade80;">Successes:</span>
                         <div class="flex gap-1">
                           {[1, 2, 3].map(i => (
-                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveSuccesses || 0) >= i ? 'bg-green-500 border-green-500' : 'border-gray-400 dark:border-gray-600'}`} data-death-save-success={i}></span>
+                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveSuccesses || 0) >= i ? 'bg-green-500 border-green-500' : 'border-gray-500'}`} data-death-save-success={i}></span>
                           ))}
                         </div>
                       </div>
                       <div class="flex items-center gap-1.5">
-                        <span class="text-xs font-medium text-red-600 dark:text-red-400">Failures:</span>
+                        <span class="text-xs font-medium" style="color:var(--danger);">Failures:</span>
                         <div class="flex gap-1">
                           {[1, 2, 3].map(i => (
-                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveFailures || 0) >= i ? 'bg-red-500 border-red-500' : 'border-gray-400 dark:border-gray-600'}`} data-death-save-failure={i}></span>
+                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveFailures || 0) >= i ? 'bg-red-500 border-red-500' : 'border-gray-500'}`} data-death-save-failure={i}></span>
                           ))}
                         </div>
                       </div>
                       {entry.isStable && (
-                        <span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold" data-stable-indicator>
+                        <span class="t-badge t-badge-accent font-semibold" data-stable-indicator>
                           Stable
                         </span>
                       )}
@@ -473,12 +473,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
 
   <!-- Add/Edit Initiative Modal -->
   {canEdit && (
-    <div id="initiativeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 modal-overlay-safe">
-      <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+    <div id="initiativeModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-overlay-safe">
+      <div class="t-modal-panel max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
         <div class="p-6">
           <div class="flex justify-between items-center mb-6">
-            <h2 id="modalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Add Initiative Entry</h2>
-            <button id="closeModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+            <h2 id="modalTitle" class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Add Initiative Entry</h2>
+            <button id="closeModalBtn" class="t-icon-btn">
               <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
               </svg>
@@ -490,40 +490,40 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label for="name" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="name" class="t-label block mb-2">
                   Name *
                 </label>
                 <input 
                   type="text" 
                   id="name" 
                   required
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Character or monster name"
                 />
               </div>
 
               <div>
-                <label for="initiative" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="initiative" class="t-label block mb-2">
                   Initiative *
                 </label>
                 <input 
                   type="number" 
                   id="initiative" 
                   required
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Initiative roll"
                 />
               </div>
             </div>
 
             <div>
-              <label for="type" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="type" class="t-label block mb-2">
                 Type *
               </label>
               <select 
                 id="type" 
                 required
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
               >
                 <option value="character">Character</option>
                 <option value="npc">NPC</option>
@@ -533,12 +533,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             </div>
 
             <div id="characterSelectContainer" class="hidden">
-              <label for="characterSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="characterSelect" class="t-label block mb-2">
                 Select Character
               </label>
               <select 
                 id="characterSelect" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
               >
                 <option value="">-- Select a character --</option>
                 {activeCharacters.map(char => (
@@ -557,12 +557,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             </div>
 
             <div id="npcSelectContainer" class="hidden">
-              <label for="npcSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="npcSelect" class="t-label block mb-2">
                 Select NPC
               </label>
               <select 
                 id="npcSelect" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
               >
                 <option value="">-- Select an NPC --</option>
                 {activeNPCs.map(npc => (
@@ -577,7 +577,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             </div>
 
             <div id="monsterGroupContainer" class="hidden">
-              <label for="monsterCount" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="monsterCount" class="t-label block mb-2">
                 Number of Monsters
               </label>
               <input 
@@ -586,72 +586,72 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 min="1"
                 max="20"
                 value="1"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
                 placeholder="1"
               />
-              <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              <p class="t-faint text-sm mt-1">
                 Creates multiple monsters with individual initiatives (rolled automatically)
               </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label for="hp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="hp" class="t-label block mb-2">
                   Current HP
                 </label>
                 <input 
                   type="number" 
                   id="hp" 
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Current HP"
                 />
               </div>
 
               <div>
-                <label for="maxHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="maxHp" class="t-label block mb-2">
                   Max HP
                 </label>
                 <input 
                   type="number" 
                   id="maxHp" 
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Max HP"
                 />
               </div>
 
               <div>
-                <label for="tempHp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="tempHp" class="t-label block mb-2">
                   Temp HP
                 </label>
                 <input 
                   type="number" 
                   id="tempHp" 
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Temp HP"
                 />
               </div>
 
               <div>
-                <label for="ac" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                <label for="ac" class="t-label block mb-2">
                   AC
                 </label>
                 <input 
                   type="number" 
                   id="ac" 
-                  class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                  class="t-input w-full px-4 py-2"
                   placeholder="Armor Class"
                 />
               </div>
             </div>
 
             <div>
-              <label for="notes" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="notes" class="t-label block mb-2">
                 Notes
               </label>
               <textarea 
                 id="notes" 
                 rows="3"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
                 placeholder="Optional notes (conditions, effects, etc.)"
               ></textarea>
             </div>
@@ -661,9 +661,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 type="checkbox" 
                 id="isActive" 
                 checked
-                class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+                class="w-4 h-4 rounded" style="accent-color:var(--accent);"
               />
-              <label for="isActive" class="ml-2 text-sm text-gray-700 dark:text-gray-300">
+              <label for="isActive" class="ml-2 t-body-text text-sm">
                 Active in combat
               </label>
             </div>
@@ -672,14 +672,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               <button 
                 type="submit" 
                 id="saveBtn"
-                class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+                class="t-btn-primary flex-1 px-6 py-2"
               >
                 <span id="saveBtnText">Save</span>
               </button>
               <button 
                 type="button" 
                 id="cancelBtn"
-                class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+                class="t-btn-secondary flex-1 px-6 py-2"
               >
                 Cancel
               </button>
@@ -691,12 +691,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
   )}
 
   <!-- HP Edit Modal for Players -->
-  <div id="hpEditModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full modal-content-safe">
+  <div id="hpEditModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel max-w-md w-full modal-content-safe">
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
-          <h2 id="hpModalTitle" class="text-2xl font-bold text-gray-900 dark:text-gray-100">Edit HP</h2>
-          <button id="closeHpModalBtn" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+          <h2 id="hpModalTitle" class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Edit HP</h2>
+          <button id="closeHpModalBtn" class="t-icon-btn">
             <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
@@ -707,44 +707,44 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           <input type="hidden" id="hpEntryId" />
           
           <div>
-            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p class="t-muted text-sm mb-4">
               Update HP for <span id="hpCharacterName" class="font-semibold"></span>
             </p>
           </div>
           
           <div class="grid grid-cols-3 gap-4">
             <div>
-              <label for="hpCurrent" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="hpCurrent" class="t-label block mb-2">
                 Current HP
               </label>
               <input 
                 type="number" 
                 id="hpCurrent" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
                 placeholder="HP"
               />
             </div>
 
             <div>
-              <label for="hpMax" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="hpMax" class="t-label block mb-2">
                 Max HP
               </label>
               <input 
                 type="number" 
                 id="hpMax" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
                 placeholder="Max HP"
               />
             </div>
 
             <div>
-              <label for="hpTemp" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label for="hpTemp" class="t-label block mb-2">
                 Temp HP
               </label>
               <input 
                 type="number" 
                 id="hpTemp" 
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input w-full px-4 py-2"
                 placeholder="Temp"
               />
             </div>
@@ -752,12 +752,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           
           <!-- Death Saves (shown when HP = 0) -->
           <div id="deathSavesContainer" class="hidden">
-            <div class="p-4 bg-red-50 dark:bg-red-900/20 rounded-lg border border-red-200 dark:border-red-800">
-              <h3 class="text-sm font-semibold text-red-900 dark:text-red-100 mb-3">Death Saves</h3>
+            <div class="t-inset p-4 rounded-lg" style="border:1px solid var(--danger);">
+              <h3 class="text-sm font-semibold mb-3" style="color:var(--danger);">Death Saves</h3>
               
               <div class="space-y-3">
                 <div>
-                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="t-label block mb-1 text-xs">
                     Successes (0-3)
                   </label>
                   <input 
@@ -766,12 +766,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     min="0"
                     max="3"
                     value="0"
-                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                    class="t-input w-full px-3 py-1.5"
                   />
                 </div>
                 
                 <div>
-                  <label class="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  <label class="t-label block mb-1 text-xs">
                     Failures (0-3)
                   </label>
                   <input 
@@ -780,7 +780,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     min="0"
                     max="3"
                     value="0"
-                    class="w-full px-3 py-1.5 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                    class="t-input w-full px-3 py-1.5"
                   />
                 </div>
                 
@@ -788,9 +788,9 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   <input 
                     type="checkbox" 
                     id="hpIsStable"
-                    class="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500 dark:border-gray-600"
+                    class="w-4 h-4 rounded" style="accent-color:var(--accent);"
                   />
-                  <label for="hpIsStable" class="ml-2 text-xs text-gray-700 dark:text-gray-300">
+                  <label for="hpIsStable" class="ml-2 t-body-text text-xs">
                     Character is stabilized
                   </label>
                 </div>
@@ -802,14 +802,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             <button 
               type="submit" 
               id="saveHpBtn"
-              class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+              class="t-btn-primary flex-1 px-6 py-2"
             >
               <span id="saveHpBtnText">Save</span>
             </button>
             <button 
               type="button" 
               id="cancelHpBtn"
-              class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+              class="t-btn-secondary flex-1 px-6 py-2"
             >
               Cancel
             </button>
@@ -1243,8 +1243,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           // Remove turn styling from all cards
           cards.forEach(card => {
             // Remove yellow border and add gray border
-            card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
-            card.classList.add('border-gray-200', 'dark:border-gray-700');
+            card.classList.remove('ring-2', 'ring-amber-500');
+            
           });
           
           // Add turn styling to the active card (yellow border only)
@@ -1252,8 +1252,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             const targetCard = activeCards[newIndex];
             if (targetCard) {
               // Add yellow border
-              targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
-              targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
+              
+              targetCard.classList.add('ring-2', 'ring-amber-500');
               
               // Scroll into view
               targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1416,7 +1416,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   if (hpElement && entry.hp !== null && entry.maxHp !== null) {
                     let hpText = `${entry.hp}/${entry.maxHp}`;
                     if (entry.tempHp && entry.tempHp > 0) {
-                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                      hpText += ` <span style="color:var(--accent);">(+${entry.tempHp})</span>`;
                     }
                     hpElement.innerHTML = hpText;
                   }
@@ -1761,7 +1761,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   if (entry.hp !== null && entry.maxHp !== null) {
                     let hpText = `${entry.hp}/${entry.maxHp}`;
                     if (entry.tempHp && entry.tempHp > 0) {
-                      hpText += ` <span class="text-blue-600 dark:text-blue-400">(+${entry.tempHp})</span>`;
+                      hpText += ` <span style="color:var(--accent);">(+${entry.tempHp})</span>`;
                     }
                     hpElement.innerHTML = hpText;
                   } else if (entry.hp !== null) {
@@ -1803,23 +1803,23 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   const cardContent = card.querySelector('.p-2');
                   if (cardContent) {
                     const deathSavesHtml = `
-                      <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2 border-t border-gray-200 dark:border-gray-700" data-death-saves-section>
-                        <div class="text-xs text-gray-500 dark:text-gray-400 uppercase mb-1">Death Saves</div>
+                      <div class="mt-1.5 sm:mt-2 pt-1.5 sm:pt-2" style="border-top:1px solid var(--border);" data-death-saves-section>
+                        <div class="t-faint text-xs uppercase mb-1">Death Saves</div>
                         <div class="flex items-center gap-4">
                           <div class="flex items-center gap-1.5">
-                            <span class="text-xs font-medium text-green-600 dark:text-green-400">Successes:</span>
+                            <span class="text-xs font-medium" style="color:#4ade80;">Successes:</span>
                             <div class="flex gap-1">
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="1"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="2"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-success="3"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="1"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="2"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="3"></span>
                             </div>
                           </div>
                           <div class="flex items-center gap-1.5">
-                            <span class="text-xs font-medium text-red-600 dark:text-red-400">Failures:</span>
+                            <span class="text-xs font-medium" style="color:var(--danger);">Failures:</span>
                             <div class="flex gap-1">
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="1"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="2"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600" data-death-save-failure="3"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="1"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="2"></span>
+                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="3"></span>
                             </div>
                           </div>
                         </div>
@@ -1841,7 +1841,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   if (successes > idx) {
                     dot.className = 'w-4 h-4 rounded-full border-2 bg-green-500 border-green-500';
                   } else {
-                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600';
+                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-500';
                   }
                 });
                 
@@ -1849,7 +1849,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   if (failures > idx) {
                     dot.className = 'w-4 h-4 rounded-full border-2 bg-red-500 border-red-500';
                   } else {
-                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-400 dark:border-gray-600';
+                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-500';
                   }
                 });
                 
@@ -1857,7 +1857,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 if (entry.isStable && !stableIndicator) {
                   const deathSavesContainer = card.querySelector('[data-death-saves-section] .flex.items-center.gap-4');
                   if (deathSavesContainer) {
-                    const stableHtml = `<span class="text-xs px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 font-semibold" data-stable-indicator>Stable</span>`;
+                    const stableHtml = `<span class="t-badge t-badge-accent font-semibold" data-stable-indicator>Stable</span>`;
                     deathSavesContainer.insertAdjacentHTML('beforeend', stableHtml);
                   }
                 } else if (!entry.isStable && stableIndicator) {
@@ -1899,16 +1899,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             
             // Remove turn styling from all cards
             cards.forEach(card => {
-              card.classList.remove('border-yellow-500', 'dark:border-yellow-500');
-              card.classList.add('border-gray-200', 'dark:border-gray-700');
+              card.classList.remove('ring-2', 'ring-amber-500');
+              
             });
             
             // Add turn styling to active card (yellow border only)
             if (activeCards.length > 0 && state.currentTurnIndex >= 0 && state.currentTurnIndex < activeCards.length) {
               const targetCard = activeCards[state.currentTurnIndex];
               if (targetCard) {
-                targetCard.classList.remove('border-gray-200', 'dark:border-gray-700');
-                targetCard.classList.add('border-yellow-500', 'dark:border-yellow-500');
+                
+                targetCard.classList.add('ring-2', 'ring-amber-500');
               }
             }
             

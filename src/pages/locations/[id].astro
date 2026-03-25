@@ -1,204 +1,158 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import Button from '../../components/Button.astro';
 import { db, Location, NPC, LibraryEntry, DiaryEntry, eq } from 'astro:db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
 
 const { id } = Astro.params;
-
-if (!id) {
-  return Astro.redirect('/locations');
-}
+if (!id) return Astro.redirect('/locations');
 
 const locations = await db.select().from(Location).where(eq(Location.id, id));
 const location = locations[0];
+if (!location) return Astro.redirect('/locations');
 
-if (!location) {
-  return Astro.redirect('/locations');
-}
-
-// Fetch all NPCs at this location
 const npcsAtLocation = await db.select().from(NPC).where(eq(NPC.locationId, id));
-
-// Fetch all library entries for this location
 const libraryEntries = await db.select().from(LibraryEntry).where(eq(LibraryEntry.locationId, id));
-
-// Fetch all diary entries that mention this location
 const allDiaryEntries = await db.select().from(DiaryEntry);
 const relatedDiaryEntries = allDiaryEntries.filter(entry => {
   const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
   return locationIds.includes(id);
-}).sort((a, b) => b.session - a.session); // Sort by session number, newest first
+}).sort((a, b) => b.session - a.session);
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
-
-// Render markdown content for description
 const renderedDescription = renderMarkdown(location.description);
+
+const typeColors: Record<string, string> = {
+  city: 'from-blue-950 to-stone-900',
+  dungeon: 'from-purple-950 to-stone-900',
+  wilderness: 'from-emerald-950 to-stone-900',
+  building: 'from-amber-950 to-stone-900',
+};
+const heroBg = typeColors[location.type] || 'from-stone-900 to-stone-800';
+
+const npcRelBadge = (rel: string) =>
+  rel === 'ally' ? 't-badge-green' : rel === 'enemy' ? 't-badge-red' : '';
 ---
 
 <Layout title={location.name}>
-  <div class="max-w-4xl mx-auto">
-    <!-- Header with Back Button -->
+  <div class="max-w-4xl mx-auto px-1 sm:px-0">
+
+    <!-- Nav row -->
     <div class="flex items-center justify-between mb-6">
-      <a href="/locations" class="text-primary-600 dark:text-primary-400 hover:text-primary-800 dark:hover:text-primary-300 flex items-center gap-2">
-        <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      <a href="/locations" class="t-back-link">
+        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
         </svg>
-        Back to Locations
+        Locations
       </a>
       {isLoggedIn && (
         <div class="flex gap-2">
-          <button 
-            id="editLocation"
-            data-id={location.id}
-            class="p-2 text-gray-600 hover:text-primary-600 dark:text-gray-400 dark:hover:text-primary-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-            title="Edit location"
-            aria-label="Edit location"
-          >
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          <button id="editLocation" data-id={location.id} class="t-icon-btn" title="Edit location" aria-label="Edit location">
+            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
             </svg>
           </button>
-          <button 
-            id="deleteLocation"
-            data-id={location.id}
-            class="p-2.5 text-gray-700 hover:text-red-600 dark:text-gray-300 dark:hover:text-red-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
-            title="Delete location"
-            aria-label="Delete location"
-          >
-            <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+          <button id="deleteLocation" data-id={location.id} class="t-icon-btn t-icon-btn-danger" title="Delete location" aria-label="Delete location">
+            <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
             </svg>
           </button>
         </div>
       )}
     </div>
 
-    <!-- Location Header -->
-    <article class="bg-white dark:bg-black rounded-lg shadow-md overflow-hidden mb-6 dark:border dark:border-gray-900">
-      <!-- Location Banner -->
-      <div class={`relative overflow-hidden ${location.imageUrl ? 'h-96' : 'h-48'}`}>
-        <!-- Image or gradient background -->
-        {location.imageUrl ? (
+    <!-- Location header card -->
+    <div class="t-panel overflow-hidden mb-6">
+      <div class={`t-hero-banner bg-gradient-to-br ${heroBg}`} style="min-height:220px;">
+        {location.imageUrl && (
           <>
-            <img 
-              src={location.imageUrl} 
-              alt={location.name}
-              class="absolute inset-0 w-full h-full object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/20 to-transparent"></div>
+            <img src={location.imageUrl} alt={location.name}
+              class="absolute inset-0 w-full h-full object-cover"/>
+            <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,6,3,0.1),rgba(8,6,3,0.75));"></div>
           </>
-        ) : (
-          <div class={`absolute inset-0 ${
-            location.type === 'city' ? 'bg-gradient-to-r from-blue-600 to-blue-500' :
-            location.type === 'dungeon' ? 'bg-gradient-to-r from-purple-600 to-purple-500' :
-            location.type === 'wilderness' ? 'bg-gradient-to-r from-green-600 to-green-500' :
-            location.type === 'building' ? 'bg-gradient-to-r from-amber-600 to-amber-500' :
-            'bg-gradient-to-r from-gray-600 to-gray-500'
-          }`}></div>
         )}
-        
-        <!-- Location name -->
-        <div class="relative h-full flex items-end">
-          <div class="p-8">
-            <h1 class="text-5xl font-bold text-white drop-shadow-lg">{location.name}</h1>
-          </div>
-        </div>
-      </div>
-
-      <!-- Location Info -->
-      <div class="p-8">
-        <!-- Quick Info -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class={`p-4 rounded-lg ${
-            location.type === 'city' ? 'bg-blue-50 dark:bg-blue-900/20 dark:border dark:border-blue-800' :
-            location.type === 'dungeon' ? 'bg-purple-50 dark:bg-purple-900/20 dark:border dark:border-purple-800' :
-            location.type === 'wilderness' ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' :
-            location.type === 'building' ? 'bg-amber-50 dark:bg-amber-900/20 dark:border dark:border-amber-800' :
-            'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
-          }`}>
-            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Type</div>
-            <div class={`text-2xl font-semibold ${
-              location.type === 'city' ? 'text-blue-700 dark:text-blue-400' :
-              location.type === 'dungeon' ? 'text-purple-700 dark:text-purple-400' :
-              location.type === 'wilderness' ? 'text-green-700 dark:text-green-400' :
-              location.type === 'building' ? 'text-amber-700 dark:text-amber-400' :
-              'text-gray-700 dark:text-gray-300'
-            }`}>
+        <div class="t-hero-banner-content">
+          <h1 class="font-display italic font-semibold text-3xl sm:text-4xl md:text-5xl leading-tight mb-2"
+            style="color:#fff;text-shadow:0 2px 20px rgba(0,0,0,0.8);">{location.name}</h1>
+          <div class="flex flex-wrap gap-2">
+            <span class="t-badge" style="backdrop-filter:blur(8px);background:rgba(8,6,3,0.6);border-color:rgba(201,144,50,0.3);">
               {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
-            </div>
-          </div>
-          {location.region && (
-            <div class="bg-primary-50 dark:bg-primary-900/20 dark:border dark:border-primary-800 p-4 rounded-lg">
-              <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Region</div>
-              <div class="text-2xl font-semibold text-primary-700 dark:text-primary-400">{location.region}</div>
-            </div>
-          )}
-          <div class={`p-4 rounded-lg ${
-            location.visited ? 'bg-green-50 dark:bg-green-900/20 dark:border dark:border-green-800' : 'bg-gray-50 dark:bg-gray-800 dark:border dark:border-gray-700'
-          }`}>
-            <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Status</div>
-            <div class={`text-2xl font-semibold ${
-              location.visited ? 'text-green-700 dark:text-green-400' : 'text-gray-700 dark:text-gray-300'
-            }`}>
-              {location.visited ? '✓ Visited' : 'Not Visited'}
-            </div>
+            </span>
+            {location.visited && (
+              <span class="t-badge t-badge-green" style="backdrop-filter:blur(8px);">✓ Visited</span>
+            )}
           </div>
         </div>
       </div>
-    </article>
 
-    <!-- Description Section -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Description</h2>
-      <div 
-        class="prose dark:prose-invert max-w-none"
-        set:html={renderedDescription}
-      />
+      <!-- Quick facts -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 gap-px" style="background:var(--border-gold);">
+        <div class="px-5 py-4" style="background:var(--bg-surface);">
+          <div class="t-field-label">Type</div>
+          <div class="t-field-value font-medium capitalize">{location.type}</div>
+        </div>
+        {location.region && (
+          <div class="px-5 py-4" style="background:var(--bg-surface);">
+            <div class="t-field-label">Region</div>
+            <div class="t-field-value font-medium">{location.region}</div>
+          </div>
+        )}
+        <div class="px-5 py-4" style="background:var(--bg-surface);">
+          <div class="t-field-label">Status</div>
+          <div class={location.visited ? 'text-sm font-semibold' : 't-muted text-sm font-medium'}
+            style={location.visited ? 'color:#4ade80;' : ''}>
+            {location.visited ? '✓ Visited' : 'Not Visited'}
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- Notes Section -->
+    <!-- Description -->
+    {location.description && (
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Description</h2>
+        </div>
+        <div class="t-prose" set:html={renderedDescription}/>
+      </div>
+    )}
+
+    <!-- Notes -->
     {location.notes && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Notes</h2>
-        <div class="bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500 dark:border-blue-400 p-4 rounded dark:border dark:border-blue-800">
-          <p class="text-gray-800 dark:text-gray-200 leading-relaxed">{location.notes}</p>
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Notes</h2>
+        </div>
+        <div class="t-callout">
+          <p class="t-body-text leading-relaxed">{location.notes}</p>
         </div>
       </div>
     )}
 
-    <!-- NPCs at this Location -->
+    <!-- NPCs here -->
     {npcsAtLocation.length > 0 && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6">NPCs at this Location</h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Inhabitants</h2>
+          <span class="t-badge t-badge-gold ml-auto">{npcsAtLocation.length}</span>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {npcsAtLocation.map(npc => (
-            <a 
-              href={`/npcs/${npc.id}`}
-              class="flex items-center gap-4 p-4 border border-gray-200 dark:border-gray-900 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 hover:border-primary-300 dark:hover:border-primary-600 transition"
-            >
+            <a href={`/npcs/${npc.id}`} class="t-row p-4 flex items-center gap-3">
               {npc.avatarUrl ? (
-                <img 
-                  src={npc.avatarUrl} 
-                  alt={npc.name}
-                  class="w-16 h-16 rounded-full object-cover border-2 border-gray-200"
-                />
+                <img src={npc.avatarUrl} alt={npc.name}
+                  class="w-12 h-12 rounded-full object-cover shrink-0"
+                  style="border:2px solid var(--border-gold);"/>
               ) : (
-                <div class="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center text-2xl font-bold text-primary-700">
+                <div class="w-12 h-12 rounded-full shrink-0 flex items-center justify-center text-lg font-bold"
+                  style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
                   {npc.name.charAt(0)}
                 </div>
               )}
-              <div class="flex-1">
-                <h3 class="font-bold text-gray-900 dark:text-gray-100">{npc.name}</h3>
-                <p class="text-sm text-gray-600 dark:text-gray-400">{npc.race} {npc.occupation && `• ${npc.occupation}`}</p>
-                <span class={`inline-block mt-1 px-2 py-1 rounded text-xs font-medium ${
-                  npc.relationship === 'ally' ? 'bg-green-100 dark:bg-green-900/20 dark:border dark:border-green-800 text-green-700 dark:text-green-400' :
-                  npc.relationship === 'enemy' ? 'bg-red-100 dark:bg-red-900/20 dark:border dark:border-red-800 text-red-700 dark:text-red-400' :
-                  'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
-                }`}>
-                  {npc.relationship}
-                </span>
+              <div class="min-w-0">
+                <div class="t-body-text font-medium truncate">{npc.name}</div>
+                <div class="t-faint text-xs">{[npc.race, npc.occupation].filter(Boolean).join(' · ')}</div>
+                <span class={`t-badge ${npcRelBadge(npc.relationship)} mt-1`}>{npc.relationship}</span>
               </div>
             </a>
           ))}
@@ -206,31 +160,24 @@ const renderedDescription = renderMarkdown(location.description);
       </div>
     )}
 
-    <!-- Library Entries for this Location -->
+    <!-- Library entries -->
     {libraryEntries.length > 0 && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6 flex items-center gap-2">
-          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-          </svg>
-          Library Entries Found Here
-        </h2>
-        <div class="grid grid-cols-1 gap-4">
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Lore &amp; Records</h2>
+          <span class="t-badge t-badge-gold ml-auto">{libraryEntries.length}</span>
+        </div>
+        <div class="flex flex-col gap-3">
           {libraryEntries.map(entry => (
-            <a 
-              href={`/library/${entry.id}`}
-              class="block p-6 border border-purple-200 dark:border-purple-900 rounded-lg hover:bg-purple-50 dark:hover:bg-purple-900/20 hover:border-purple-400 dark:hover:border-purple-700 transition"
-            >
-              <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">{entry.title}</h3>
-              <p class="text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
-                {entry.content.substring(0, 150)}{entry.content.length > 150 ? '...' : ''}
-              </p>
+            <a href={`/library/${entry.id}`} class="t-row p-4">
+              <div class="t-body-text font-medium mb-1">{entry.title}</div>
+              <div class="t-faint text-xs line-clamp-2">
+                {entry.content.substring(0, 140)}{entry.content.length > 140 ? '…' : ''}
+              </div>
               {Array.isArray(entry.tags) && entry.tags.length > 0 && (
-                <div class="flex gap-2 flex-wrap">
+                <div class="flex gap-1.5 flex-wrap mt-2">
                   {entry.tags.map((tag: string) => (
-                    <span class="bg-purple-100 dark:bg-purple-900/30 dark:border dark:border-purple-800 text-purple-700 dark:text-purple-400 px-3 py-1 rounded-full text-sm">
-                      #{tag}
-                    </span>
+                    <span class="t-badge t-badge-gold">#{tag}</span>
                   ))}
                 </div>
               )}
@@ -240,137 +187,61 @@ const renderedDescription = renderMarkdown(location.description);
       </div>
     )}
 
-    <!-- Diary Entries Mentioning This Location -->
+    <!-- Diary appearances -->
     {relatedDiaryEntries.length > 0 && (
-      <div class="bg-white dark:bg-black rounded-lg shadow-md p-8 mb-6 dark:border dark:border-gray-900">
-        <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-6 flex items-center gap-2">
-          <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
-          </svg>
-          Diary Entries
-        </h2>
-        <div class="space-y-4">
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">Diary Appearances</h2>
+          <span class="t-badge t-badge-gold ml-auto">{relatedDiaryEntries.length}</span>
+        </div>
+        <div class="flex flex-col gap-3">
           {relatedDiaryEntries.map(entry => (
-            <a 
-              href={`/diary/${entry.id}`}
-              class="block p-6 border border-secondary-200 dark:border-secondary-900 rounded-lg hover:bg-secondary-50 dark:hover:bg-secondary-900/20 hover:border-secondary-400 dark:hover:border-secondary-700 transition"
-            >
-              <div class="flex items-start justify-between mb-2">
-                <h3 class="font-bold text-lg text-gray-900 dark:text-gray-100">{entry.title}</h3>
-                <span class="bg-secondary-100 dark:bg-secondary-900/30 dark:border dark:border-secondary-800 text-secondary-700 dark:text-secondary-400 px-3 py-1 rounded-full text-sm whitespace-nowrap ml-4">
-                  Session {entry.session}
-                </span>
-              </div>
-              <p class="text-gray-700 dark:text-gray-300 mb-3 line-clamp-2">
-                {entry.content.substring(0, 200)}{entry.content.length > 200 ? '...' : ''}
-              </p>
-              {Array.isArray(entry.tags) && entry.tags.length > 0 && (
-                <div class="flex gap-2 flex-wrap">
-                  {entry.tags.slice(0, 3).map((tag: string) => (
-                    <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-2 py-1 rounded text-xs">
-                      #{tag}
-                    </span>
-                  ))}
-                  {entry.tags.length > 3 && (
-                    <span class="text-gray-500 dark:text-gray-400 text-xs py-1">
-                      +{entry.tags.length - 3} more
-                    </span>
-                  )}
+            <a href={`/diary/${entry.id}`} class="t-row p-4 flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="t-body-text font-medium truncate">{entry.title}</div>
+                <div class="t-faint text-xs mt-0.5 line-clamp-2">
+                  {entry.content.substring(0, 120)}{entry.content.length > 120 ? '…' : ''}
                 </div>
-              )}
+                {Array.isArray(entry.tags) && entry.tags.length > 0 && (
+                  <div class="flex gap-1.5 flex-wrap mt-2">
+                    {entry.tags.slice(0, 3).map((tag: string) => (
+                      <span class="t-badge t-badge-gold">#{tag}</span>
+                    ))}
+                    {entry.tags.length > 3 && <span class="t-faint text-xs">+{entry.tags.length - 3}</span>}
+                  </div>
+                )}
+              </div>
+              <span class="t-badge t-badge-accent shrink-0">Session {entry.session}</span>
             </a>
           ))}
         </div>
       </div>
     )}
+
   </div>
 </Layout>
 
 <script>
   function initializeDetailPage() {
-    const deleteBtn = document.getElementById('deleteLocation');
-    const editBtn = document.getElementById('editLocation');
-    
-    // Handle edit button click
-    if (editBtn) {
-      editBtn.addEventListener('click', () => {
-        const id = editBtn.getAttribute('data-id');
-        if (id) {
-          window.location.href = `/locations?edit=${id}`;
-        }
-      });
-    }
-  
-  if (deleteBtn) {
-    deleteBtn.addEventListener('click', async () => {
-      const id = deleteBtn.getAttribute('data-id');
+    document.getElementById('editLocation')?.addEventListener('click', () => {
+      const id = document.getElementById('editLocation')?.getAttribute('data-id');
+      if (id) window.location.href = `/locations?edit=${id}`;
+    });
+    document.getElementById('deleteLocation')?.addEventListener('click', async () => {
+      const id = document.getElementById('deleteLocation')?.getAttribute('data-id');
       if (!id) return;
-      
       if (confirm('Are you sure you want to delete this location?')) {
         try {
-          const response = await fetch(`/api/locations/${id}`, {
-            method: 'DELETE',
-          });
-          
+          const response = await fetch(`/api/locations/${id}`, { method: 'DELETE' });
           if (response.ok) {
             window.location.href = '/locations';
           } else {
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
             alert(`Failed to delete location: ${error.error || response.statusText}`);
           }
-        } catch (error) {
-          console.error('Delete error:', error);
-          alert('An error occurred while deleting the location. Please check your connection and try again.');
-        }
+        } catch { alert('An error occurred while deleting the location.'); }
       }
     });
   }
-  }
-
-  // Run on initial page load and after View Transitions navigation
   document.addEventListener('astro:page-load', initializeDetailPage);
 </script>
-
-<style>
-  /* Enhance markdown rendering */
-  .prose {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(h1):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-700 dark:text-primary-400;
-  }
-  
-  .prose :where(h2):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400;
-  }
-  
-  .prose :where(h3):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-500;
-  }
-  
-  .prose :where(a):not(:where([class~="not-prose"] *)) {
-    @apply text-primary-600 dark:text-primary-400 no-underline hover:underline;
-  }
-  
-  .prose :where(strong):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-900 dark:text-gray-100;
-  }
-  
-  .prose :where(code):not(:where([class~="not-prose"] *)) {
-    @apply bg-gray-100 dark:bg-gray-800 text-primary-700 dark:text-primary-400 px-1 py-0.5 rounded;
-  }
-  
-  .prose :where(blockquote):not(:where([class~="not-prose"] *)) {
-    @apply border-l-4 border-primary-500 dark:border-primary-600 bg-gray-50 dark:bg-gray-900 pl-4 py-2;
-  }
-  
-  .prose :where(ul):not(:where([class~="not-prose"] *)),
-  .prose :where(ol):not(:where([class~="not-prose"] *)) {
-    @apply text-gray-700 dark:text-gray-300;
-  }
-  
-  .prose :where(hr):not(:where([class~="not-prose"] *)) {
-    @apply border-gray-300 dark:border-gray-700;
-  }
-</style>

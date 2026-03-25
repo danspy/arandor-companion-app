@@ -53,18 +53,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Stats -->
   <div class="grid grid-cols-2 gap-2 md:gap-4 mb-8">
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-primary-600 dark:text-primary-500">{libraryEntries.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Total Entries</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="text-2xl md:text-3xl font-bold" style="color:var(--gold);">{libraryEntries.length}</div>
+      <div class="t-muted text-xs md:text-base">Total Entries</div>
     </div>
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-3 md:p-6 text-center dark:border dark:border-gray-900">
-      <div class="text-2xl md:text-3xl font-bold text-secondary-600 dark:text-secondary-500">{allTags.length}</div>
-      <div class="text-xs md:text-base text-gray-600 dark:text-gray-400">Unique Tags</div>
+    <div class="t-panel p-3 md:p-6 text-center">
+      <div class="text-2xl md:text-3xl font-bold" style="color:var(--accent);">{allTags.length}</div>
+      <div class="t-muted text-xs md:text-base">Unique Tags</div>
     </div>
   </div>
 
   <!-- Search and Filter -->
-  <div class="bg-white dark:bg-black rounded-lg shadow-md p-4 mb-6 dark:border dark:border-gray-900">
+  <div class="t-panel p-4 mb-6">
     <div class="flex flex-col gap-3">
       <!-- Search Input - Always Full Width -->
       <div class="relative w-full">
@@ -72,7 +72,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text" 
           id="searchInput" 
           placeholder="Search library entries by title or content..."
-          class="w-full px-4 py-2 pl-10 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 transition"
+          class="t-input w-full px-4 py-2 pl-10"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -80,7 +80,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       </div>
       <!-- Tag Filter Below -->
       <div class="flex flex-wrap gap-2 items-center">
-        <span class="text-sm text-gray-600 dark:text-gray-400 font-medium">Filter:</span>
+        <span class="t-muted text-sm font-medium">Filter:</span>
         <button 
           class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-primary-600 text-white transition-all duration-200 hover:bg-primary-700 active:scale-95"
           data-tag="all"
@@ -91,7 +91,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           const count = sortedEntries.filter(e => Array.isArray(e.tags) && e.tags.includes(tag)).length;
           return (
             <button 
-              class="tag-filter px-3 py-1.5 rounded-full text-sm font-medium bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 transition-all duration-200 hover:bg-gray-300 dark:hover:bg-gray-600 hover:shadow-md active:scale-95"
+              class="tag-filter t-badge transition-all duration-200 hover:opacity-80 active:scale-95 cursor-pointer"
               data-tag={tag}
             >
               #{tag} ({count})
@@ -110,14 +110,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       
       return (
         <article 
-          class="library-entry bg-white dark:bg-black rounded-lg shadow-md p-6 hover:shadow-lg transition dark:border dark:border-gray-900" 
+          class="library-entry t-panel p-6" 
           data-entry-id={entry.id}
           data-tags={JSON.stringify(tags)}
           data-search={`${entry.title} ${entry.content}`.toLowerCase()}
         >
           <div class="mb-4">
             <div class="flex items-start justify-between gap-2 mb-2">
-              <a href={`/library/${entry.id}`} class="text-xl font-semibold text-primary-700 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 transition">
+              <a href={`/library/${entry.id}`} class="t-link text-xl font-semibold">
                 {entry.title}
               </a>
               {isLoggedIn && (
@@ -137,7 +137,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                     size="sm"
                     icon="delete"
                     iconPosition="only"
-                    class="delete-entry hover:text-red-600 dark:hover:text-red-400"
+                    class="delete-entry t-icon-btn t-icon-btn-danger"
                     data-id={entry.id}
                     title="Delete entry"
                     ariaLabel="Delete entry"
@@ -146,7 +146,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               )}
             </div>
             {locationName && (
-              <a href={`/locations/${entry.locationId}`} class="text-sm text-secondary-600 dark:text-secondary-400 hover:underline flex items-center gap-1">
+              <a href={`/locations/${entry.locationId}`} class="t-link text-sm flex items-center gap-1">
                 <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
@@ -159,7 +159,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           {tags.length > 0 && (
             <div class="flex gap-2 flex-wrap mb-4">
               {tags.map((tag: string) => (
-                <span class="bg-primary-100 dark:bg-primary-900/20 dark:border dark:border-primary-800 text-primary-700 dark:text-primary-400 px-3 py-1 rounded-full text-sm">
+                <span class="t-badge t-badge-gold">
                   #{tag}
                 </span>
               ))}
@@ -168,7 +168,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
           <a 
             href={`/library/${entry.id}`}
-            class="block text-center bg-accent-100 dark:bg-accent-900/20 dark:border dark:border-accent-800 text-accent-700 dark:text-accent-400 px-4 py-2 rounded-lg hover:bg-accent-200 dark:hover:bg-accent-900/30 transition font-medium text-sm"
+            class="t-badge t-badge-accent block text-center px-4 py-2 font-medium"
           >
             View Details →
           </a>
@@ -178,33 +178,33 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {sortedEntries.length === 0 && (
-    <div class="text-center py-16 bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900">
-      <p class="text-gray-500 dark:text-gray-400 text-lg">No library entries yet. Start documenting your knowledge!</p>
+    <div class="t-panel text-center py-16">
+      <p class="t-faint text-lg">No library entries yet. Start documenting your knowledge!</p>
     </div>
   )}
 
   <!-- Modal for Add/Edit Entry -->
-  <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 modal-overlay-safe">
-    <div class="bg-white dark:bg-black rounded-lg p-4 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto dark:border dark:border-gray-900 modal-content-safe">
-      <h2 id="libraryModalTitle" class="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-primary-700 dark:text-primary-400">New Docs Entry</h2>
+  <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div class="t-modal-panel p-4 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
+      <h2 id="libraryModalTitle" class="font-display italic font-semibold text-xl sm:text-2xl mb-4 sm:mb-6" style="color:var(--gold);">New Docs Entry</h2>
       <form id="libraryEntryForm" class="space-y-4">
         <input type="hidden" id="libraryEntryId" name="id">
         
         <div>
-          <label for="title" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Title</label>
+          <label for="title" class="t-label block mb-1">Title</label>
           <input 
             type="text" 
             id="title" 
             name="title" 
             required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
           >
         </div>
         
         <div>
-          <label for="content" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="content" class="t-label block mb-1">
             Content (Markdown supported)
-            <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="text-xs text-primary-600 dark:text-primary-400 hover:underline ml-2">
+            <a href="https://www.markdownguide.org/basic-syntax/" target="_blank" class="t-link text-xs ml-2">
               Markdown Guide ↗
             </a>
           </label>
@@ -214,54 +214,54 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             required 
             rows="15"
             placeholder="# Heading&#10;&#10;## Subheading&#10;&#10;- Bullet point 1&#10;- Bullet point 2&#10;&#10;**Bold text** and *italic text*"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 font-mono text-sm"
+            class="t-input w-full px-4 py-2 font-mono text-sm"
           ></textarea>
           <div class="flex justify-between items-center mt-2">
-            <p class="text-xs text-gray-500 dark:text-gray-400">Supports headings, lists, bold, italic, links, and more</p>
-            <button type="button" id="togglePreview" class="text-sm text-primary-600 dark:text-primary-400 hover:underline">
+            <p class="t-faint text-xs">Supports headings, lists, bold, italic, links, and more</p>
+            <button type="button" id="togglePreview" class="t-link text-sm">
               Toggle Preview
             </button>
           </div>
-          <div id="markdownPreview" class="hidden mt-4 p-4 border border-gray-300 dark:border-gray-600 rounded-lg prose dark:prose-invert max-w-none dark:bg-gray-800"></div>
+          <div id="markdownPreview" class="t-prose hidden mt-4 p-4 t-inset rounded-lg max-w-none"></div>
         </div>
 
         <div>
-          <label for="location" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Location (optional)</label>
+          <label for="location" class="t-label block mb-1">Location (optional)</label>
           <select 
             id="location" 
             name="location"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
           >
             <option value="">-- None --</option>
             {locations.map(location => (
               <option value={location.id}>{location.name}</option>
             ))}
           </select>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Where was this information found?</p>
+          <p class="t-faint text-xs mt-1">Where was this information found?</p>
         </div>
         
         <div>
-          <label for="tags" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tags (comma-separated)</label>
+          <label for="tags" class="t-label block mb-1">Tags (comma-separated)</label>
           <input 
             type="text" 
             id="tags" 
             name="tags" 
             placeholder="lore, history, magic, artifact"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
           >
         </div>
         
         <div class="flex gap-4 pt-4">
           <button 
             type="submit" 
-            class="flex-1 bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            class="t-btn-primary flex-1 px-6 py-2"
           >
             Save Entry
           </button>
           <button 
             type="button" 
             id="cancelLibraryModal"
-            class="flex-1 bg-gray-300 dark:bg-gray-600 text-gray-700 dark:text-gray-200 px-6 py-2 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-700 transition"
+            class="t-btn-secondary flex-1 px-6 py-2"
           >
             Cancel
           </button>
@@ -316,11 +316,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         // Update button styles
         tagFilters.forEach(b => {
           if (b.getAttribute('data-tag') === currentFilter) {
-            b.classList.remove('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.remove('active-tag');
             b.classList.add('bg-primary-600', 'text-white');
           } else {
             b.classList.remove('bg-primary-600', 'text-white');
-            b.classList.add('bg-gray-200', 'dark:bg-gray-700', 'text-gray-700', 'dark:text-gray-300');
+            b.classList.add('active-tag');
           }
         });
         

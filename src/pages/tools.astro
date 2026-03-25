@@ -20,34 +20,34 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 ---
 
 <Layout title="Tools">
-  <PageHero 
-    title="Tools" 
+  <PageHero
+    title="Tools"
     heroImageUrl={heroImageUrl}
     pageName="tools"
     canEditHero={canEdit}
   />
 
   <div class="mb-8">
-    <p class="text-gray-600 dark:text-gray-400">Game master utilities and player tools</p>
+    <p class="t-muted">Game master utilities and player tools</p>
   </div>
 
   <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
     <!-- Calendar Card -->
-    <a 
+    <a
       href="/calendar"
-      class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
+      class="t-panel p-6 t-tool-card block"
     >
       <div class="flex items-start gap-4">
-        <div class="p-3 bg-secondary-100 dark:bg-secondary-900 rounded-lg group-hover:bg-secondary-200 dark:group-hover:bg-secondary-800 transition">
-          <svg class="w-6 h-6 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="t-inset p-3 w-fit rounded-lg mb-0">
+          <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
           </svg>
         </div>
         <div class="flex-1">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+          <h2 class="t-section-h text-lg mb-1">
             Calendar
           </h2>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">
+          <p class="t-muted text-sm">
             Schedule and manage events for your D&D sessions. Set dates, times, and assign hosts.
           </p>
         </div>
@@ -55,21 +55,21 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </a>
 
     <!-- Dice Roller Card -->
-    <a 
+    <a
       href="/tools/dice-roller"
-      class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
+      class="t-panel p-6 t-tool-card block"
     >
       <div class="flex items-start gap-4">
-        <div class="p-3 bg-secondary-100 dark:bg-secondary-900 rounded-lg group-hover:bg-secondary-200 dark:group-hover:bg-secondary-800 transition">
-          <svg class="w-6 h-6 text-secondary-600 dark:text-secondary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="t-inset p-3 w-fit rounded-lg mb-0">
+          <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
           </svg>
         </div>
         <div class="flex-1">
-          <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+          <h2 class="t-section-h text-lg mb-1">
             Dice Roller
           </h2>
-          <p class="text-gray-600 dark:text-gray-400 text-sm">
+          <p class="t-muted text-sm">
             Roll dice for attacks, saves, and skill checks. Supports all standard D&D dice with animations.
           </p>
         </div>
@@ -77,21 +77,21 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </a>
 
     <!-- Initiative Tracker Card -->
-    <a 
+    <a
         href="/tools/initiative"
-        class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
+        class="t-panel p-6 t-tool-card block"
       >
         <div class="flex items-start gap-4">
-          <div class="p-3 bg-primary-100 dark:bg-primary-900 rounded-lg group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition">
-            <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="t-inset p-3 w-fit rounded-lg mb-0">
+            <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
             </svg>
           </div>
           <div class="flex-1">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+            <h2 class="t-section-h text-lg mb-1">
               Initiative Tracker
             </h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
+            <p class="t-muted text-sm">
               Track combat initiative order for characters, NPCs, and monsters.
               {canEdit ? 'You can edit the tracker.' : 'View-only access.'}
             </p>
@@ -101,24 +101,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
     <!-- DM Screen Card (DM/Admin Only) -->
     {canEdit && (
-      <a 
+      <a
         href="/tools/dm-screen"
-        class="block bg-white dark:bg-black rounded-lg shadow-md dark:border dark:border-gray-900 p-6 hover:shadow-lg transition group"
+        class="t-panel p-6 t-tool-card block"
       >
         <div class="flex items-start gap-4">
-          <div class="p-3 bg-primary-100 dark:bg-primary-900 rounded-lg group-hover:bg-primary-200 dark:group-hover:bg-primary-800 transition">
-            <svg class="w-6 h-6 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="t-inset p-3 w-fit rounded-lg mb-0">
+            <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
             </svg>
           </div>
           <div class="flex-1">
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition">
+            <h2 class="t-section-h text-lg mb-1">
               DM Screen
-              <span class="ml-2 text-xs font-normal text-primary-600 dark:text-primary-400 bg-primary-100 dark:bg-primary-900 px-2 py-1 rounded">
-                DM Only
-              </span>
+              <span class="t-badge t-badge-accent ml-2">DM Only</span>
             </h2>
-            <p class="text-gray-600 dark:text-gray-400 text-sm">
+            <p class="t-muted text-sm">
               Control what your players see on their display screen. Manage locations, NPCs, and combat tracking.
             </p>
           </div>

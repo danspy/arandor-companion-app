@@ -17,34 +17,34 @@ const roleDisplay = {
 
 <Layout title="My Profile">
   <div class="max-w-2xl mx-auto" data-user-role={user.role}>
-    <h1 class="text-4xl font-bold text-primary-700 dark:text-primary-400 mb-8">My Profile</h1>
+    <h1 class="font-display italic font-semibold text-4xl mb-8" style="color:var(--gold);">My Profile</h1>
 
     <!-- Success/Error Messages -->
     <div id="messageContainer" class="hidden mb-6"></div>
 
     <!-- Profile Information -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Account Information</h2>
+    <div class="t-panel p-6 mb-6">
+      <h2 class="t-section-h text-xl mb-4">Account Information</h2>
       
       <div class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="t-label block mb-1">
             Username
           </label>
-          <p class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-900 dark:text-gray-100">
+          <p class="t-inset px-4 py-2 rounded-lg t-body-text w-full">
             {user.username}
           </p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="t-label block mb-1">
             Role
           </label>
-          <p class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg">
+          <p class="t-inset px-4 py-2 rounded-lg w-full">
             <span class={`px-2 py-1 rounded-full text-xs font-medium ${
-              user.role === 'admin' ? 'bg-red-100 dark:bg-red-900/20 text-red-700 dark:text-red-400' :
-              user.role === 'dungeonmaster' ? 'bg-purple-100 dark:bg-purple-900/20 text-purple-700 dark:text-purple-400' :
-              'bg-blue-100 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400'
+              user.role === 'admin' ? 't-badge t-badge-red' :
+              user.role === 'dungeonmaster' ? 't-badge t-badge-accent' :
+              't-badge t-badge-blue'
             }`}>
               {roleDisplay}
             </span>
@@ -52,10 +52,10 @@ const roleDisplay = {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label class="t-label block mb-1">
             Member Since
           </label>
-          <p class="w-full px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-900 dark:text-gray-100">
+          <p class="t-inset px-4 py-2 rounded-lg t-body-text w-full">
             {new Date(user.createdAt).toLocaleDateString()}
           </p>
         </div>
@@ -63,12 +63,12 @@ const roleDisplay = {
     </div>
 
     <!-- Editable Profile Information -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 mb-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Profile Information</h2>
+    <div class="t-panel p-6 mb-6">
+      <h2 class="t-section-h text-xl mb-4">Profile Information</h2>
       
       <form id="profileForm" class="space-y-4">
         <div>
-          <label for="firstName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="firstName" class="t-label block mb-1">
             First Name
           </label>
           <input 
@@ -76,39 +76,39 @@ const roleDisplay = {
             id="firstName" 
             name="firstName" 
             value={user.firstName || ''}
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
             placeholder="Enter your first name"
           >
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">This will be displayed in the player field for your characters</p>
+          <p class="t-faint text-xs mt-1">This will be displayed in the player field for your characters</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Image</label>
+          <label class="t-label block mb-1">Profile Image</label>
           <div class="space-y-2">
             <div>
-              <label for="profileImageFile" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Upload Image (max 5MB)</label>
+              <label for="profileImageFile" class="t-faint text-xs block mb-1">Upload Image (max 5MB)</label>
               <input 
                 type="file" 
                 id="profileImageFile" 
                 name="profileImageFile" 
                 accept="image/*"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2 w-full"
               >
             </div>
             <div class="flex items-center gap-2">
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
-              <span class="text-xs text-gray-500 dark:text-gray-400">OR</span>
-              <div class="flex-1 h-px bg-gray-300 dark:bg-gray-600"></div>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
+              <span class="t-faint text-xs">OR</span>
+              <div class="flex-1 h-px" style="background:var(--border);"></div>
             </div>
             <div>
-              <label for="profileImageUrl" class="block text-xs text-gray-600 dark:text-gray-400 mb-1">Image URL</label>
+              <label for="profileImageUrl" class="t-faint text-xs block mb-1">Image URL</label>
               <input 
                 type="text" 
                 id="profileImageUrl" 
                 name="profileImageUrl" 
                 value={user.profileImageUrl || ''}
                 placeholder="https://example.com/image.jpg or /uploads/image.jpg"
-                class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+                class="t-input px-4 py-2"
               >
             </div>
           </div>
@@ -118,7 +118,7 @@ const roleDisplay = {
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="t-label block mb-1">
             My Characters
           </label>
           <div class="space-y-3">
@@ -129,24 +129,24 @@ const roleDisplay = {
             <div class="flex gap-2">
               <select 
                 id="characterSelect"
-                class="flex-1 min-w-0 truncate px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input flex-1 min-w-0 truncate px-4 py-2"
               >
                 <option value="">-- Select Character --</option>
               </select>
               <button 
                 type="button"
                 id="addCharacterBtn"
-                class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition whitespace-nowrap"
+                class="t-btn-primary px-4 py-2 whitespace-nowrap"
               >
                 Add
               </button>
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select the characters you play</p>
+          <p class="t-faint text-xs mt-1">Select the characters you play</p>
         </div>
 
         <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+          <label class="t-label block mb-1">
             Favorite Pages (PWA Quick Access)
           </label>
           <div class="space-y-3">
@@ -157,28 +157,28 @@ const roleDisplay = {
             <div class="flex gap-2">
               <select 
                 id="favoritePageSelect"
-                class="flex-1 min-w-0 truncate px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 dark:bg-gray-700 dark:text-white"
+                class="t-input flex-1 min-w-0 truncate px-4 py-2"
               >
                 <option value="">-- Select Page --</option>
               </select>
               <button 
                 type="button"
                 id="addFavoritePageBtn"
-                class="bg-primary-600 text-white px-4 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition whitespace-nowrap"
+                class="t-btn-primary px-4 py-2 whitespace-nowrap"
               >
                 Add
               </button>
             </div>
           </div>
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Select up to 4 pages for quick access in PWA mode. Drag to reorder.</p>
+          <p class="t-faint text-xs mt-1">Select up to 4 pages for quick access in PWA mode. Drag to reorder.</p>
         </div>
 
-        <div id="profileFormError" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
+        <div id="profileFormError" class="hidden text-sm" style="color:var(--danger);"></div>
 
         <div class="pt-4">
           <button 
             type="submit" 
-            class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            class="t-btn-primary w-full px-6 py-2"
           >
             Update Profile
           </button>
@@ -187,12 +187,12 @@ const roleDisplay = {
     </div>
 
     <!-- Change Password Form -->
-    <div class="bg-white dark:bg-black rounded-lg shadow-md p-6 dark:border dark:border-gray-900">
-      <h2 class="text-2xl font-bold text-primary-700 dark:text-primary-400 mb-4">Change Password</h2>
+    <div class="t-panel p-6">
+      <h2 class="t-section-h text-xl mb-4">Change Password</h2>
       
       <form id="changePasswordForm" class="space-y-4">
         <div>
-          <label for="currentPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="currentPassword" class="t-label block mb-1">
             Current Password
           </label>
           <input 
@@ -200,13 +200,13 @@ const roleDisplay = {
             id="currentPassword" 
             name="currentPassword" 
             required 
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
             placeholder="Enter current password"
           >
         </div>
 
         <div>
-          <label for="newPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="newPassword" class="t-label block mb-1">
             New Password
           </label>
           <input 
@@ -215,14 +215,14 @@ const roleDisplay = {
             name="newPassword" 
             required 
             minlength="6"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
             placeholder="Enter new password (min 6 characters)"
           >
-          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Minimum 6 characters</p>
+          <p class="t-faint text-xs mt-1">Minimum 6 characters</p>
         </div>
 
         <div>
-          <label for="confirmPassword" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label for="confirmPassword" class="t-label block mb-1">
             Confirm New Password
           </label>
           <input 
@@ -231,17 +231,17 @@ const roleDisplay = {
             name="confirmPassword" 
             required 
             minlength="6"
-            class="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+            class="t-input px-4 py-2"
             placeholder="Confirm new password"
           >
         </div>
 
-        <div id="formErrorMessage" class="hidden text-red-600 dark:text-red-400 text-sm"></div>
+        <div id="formErrorMessage" class="hidden text-sm" style="color:var(--danger);"></div>
 
         <div class="pt-4">
           <button 
             type="submit" 
-            class="w-full bg-primary-600 text-white px-6 py-2 rounded-lg hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-600 transition"
+            class="t-btn-primary w-full px-6 py-2"
           >
             Update Password
           </button>
@@ -250,9 +250,9 @@ const roleDisplay = {
     </div>
 
     <!-- Info Box -->
-    <div class="mt-8 bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-6">
-      <h2 class="text-lg font-semibold text-blue-900 dark:text-blue-300 mb-2">ℹ️ About Your Account</h2>
-      <div class="text-sm text-blue-800 dark:text-blue-400 space-y-2">
+    <div class="t-callout mt-8 p-6">
+      <h2 class="t-callout-title text-lg mb-2">ℹ️ About Your Account</h2>
+      <div class="t-faint text-sm space-y-2">
         <p>Your username and role cannot be changed from this page. Contact an administrator if you need to update these settings.</p>
       </div>
     </div>
@@ -261,7 +261,7 @@ const roleDisplay = {
     <div class="mt-6 text-center">
       <a 
         href="/changelog" 
-        class="inline-flex items-center gap-2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 transition"
+        class="t-link inline-flex items-center gap-2"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
@@ -281,10 +281,10 @@ const roleDisplay = {
   function showMessage(message: string, type: 'success' | 'error') {
     if (!messageContainer) return;
     
-    const bgColor = type === 'success' ? 'bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800' : 'bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800';
-    const textColor = type === 'success' ? 'text-green-800 dark:text-green-400' : 'text-red-800 dark:text-red-400';
     
-    messageContainer.className = `${bgColor} border rounded-lg p-4 ${textColor} mb-6`;
+    
+    
+    messageContainer.className = type === 'success' ? 't-toast t-toast-success mb-6' : 't-toast t-toast-error mb-6';
     messageContainer.textContent = message;
     messageContainer.classList.remove('hidden');
 
@@ -456,7 +456,7 @@ const roleDisplay = {
     selFavoritePagesDiv.innerHTML = '';
     
     if (selectedFavoritePages.length === 0) {
-      selFavoritePagesDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No favorite pages selected</p>';
+      selFavoritePagesDiv.innerHTML = '<p class="t-faint text-sm italic">No favorite pages selected</p>';
       return;
     }
     
@@ -465,7 +465,7 @@ const roleDisplay = {
       if (!page) return;
       
       const pageDiv = document.createElement('div');
-      pageDiv.className = 'flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3 cursor-move';
+      pageDiv.className = 't-row p-3 flex items-center justify-between cursor-move';
       pageDiv.draggable = true;
       pageDiv.setAttribute('data-page-id', pageId);
       pageDiv.setAttribute('data-index', index.toString());
@@ -481,7 +481,7 @@ const roleDisplay = {
       
       // Drag handle icon
       const dragHandle = document.createElement('div');
-      dragHandle.className = 'text-gray-400 dark:text-gray-600 touch-drag-handle cursor-move';
+      dragHandle.className = 't-faint touch-drag-handle cursor-move';
       dragHandle.innerHTML = '<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M7 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 2zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 7 14zm6-8a2 2 0 1 0-.001-4.001A2 2 0 0 0 13 6zm0 2a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 8zm0 6a2 2 0 1 0 .001 4.001A2 2 0 0 0 13 14z"></path></svg>';
       contentDiv.appendChild(dragHandle);
       
@@ -491,13 +491,13 @@ const roleDisplay = {
       contentDiv.addEventListener('touchend', handleTouchEnd);
       
       const namePara = document.createElement('p');
-      namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
+      namePara.className = 't-body-text font-semibold';
       namePara.textContent = page.name;
       contentDiv.appendChild(namePara);
       
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
-      removeBtn.className = 'remove-favorite-page text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition';
+      removeBtn.className = 'remove-favorite-page t-icon-btn t-icon-btn-danger';
       removeBtn.setAttribute('data-page-id', pageId);
       removeBtn.title = 'Remove favorite page';
       
@@ -701,7 +701,7 @@ const roleDisplay = {
     selCharactersDiv.innerHTML = '';
     
     if (selectedCharacterIds.length === 0) {
-      selCharactersDiv.innerHTML = '<p class="text-sm text-gray-500 dark:text-gray-400 italic">No characters selected</p>';
+      selCharactersDiv.innerHTML = '<p class="t-faint text-sm italic">No characters selected</p>';
       return;
     }
 
@@ -710,7 +710,7 @@ const roleDisplay = {
       if (!character) return;
 
       const charDiv = document.createElement('div');
-      charDiv.className = 'flex items-center justify-between bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3';
+      charDiv.className = 't-row p-3 flex items-center justify-between';
       
       // Create character display section
       const contentDiv = document.createElement('div');
@@ -721,11 +721,11 @@ const roleDisplay = {
         const img = document.createElement('img');
         img.src = character.avatarUrl;
         img.alt = character.name;
-        img.className = 'w-10 h-10 rounded-full object-cover border-2 border-primary-300 dark:border-primary-700';
+        img.className = 'w-10 h-10 rounded-full object-cover' ; img.style.border='2px solid var(--border-gold)';
         contentDiv.appendChild(img);
       } else {
         const avatarDiv = document.createElement('div');
-        avatarDiv.className = 'w-10 h-10 rounded-full bg-primary-200 dark:bg-primary-800 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold';
+        avatarDiv.className = 'w-10 h-10 rounded-full flex items-center justify-center font-bold' ; avatarDiv.style.cssText='background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:Cormorant Garamond,serif;';
         avatarDiv.textContent = character.name.charAt(0);
         contentDiv.appendChild(avatarDiv);
       }
@@ -734,11 +734,11 @@ const roleDisplay = {
       const infoDiv = document.createElement('div');
       
       const namePara = document.createElement('p');
-      namePara.className = 'font-semibold text-gray-900 dark:text-gray-100';
+      namePara.className = 't-body-text font-semibold';
       namePara.textContent = character.name;
       
       const detailsPara = document.createElement('p');
-      detailsPara.className = 'text-xs text-gray-600 dark:text-gray-400';
+      detailsPara.className = 't-faint text-xs';
       detailsPara.textContent = `${character.race} ${character.class} (Level ${character.level})`;
       
       infoDiv.appendChild(namePara);
@@ -748,7 +748,7 @@ const roleDisplay = {
       // Create remove button
       const removeBtn = document.createElement('button');
       removeBtn.type = 'button';
-      removeBtn.className = 'remove-character text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 transition';
+      removeBtn.className = 'remove-character t-icon-btn t-icon-btn-danger';
       removeBtn.setAttribute('data-character-id', charId);
       removeBtn.title = 'Remove character';
       
