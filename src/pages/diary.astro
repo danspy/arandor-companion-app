@@ -341,6 +341,23 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </div>
 
         <div>
+          <label class="t-label block mb-1">Session Gallery</label>
+          <div>
+            <label for="galleryFiles" class="t-label block mb-1">Upload Images / Videos (max 5MB each)</label>
+            <input
+              type="file"
+              id="galleryFiles"
+              name="galleryFiles"
+              accept="image/*,video/*"
+              multiple
+              class="t-input px-3 py-2"
+            >
+            <p class="text-xs t-faint mt-1">Select one or more files to add impressions of the session</p>
+          </div>
+          <div id="galleryPreview" class="mt-3 grid grid-cols-3 sm:grid-cols-4 gap-2 hidden"></div>
+        </div>
+
+        <div>
           <label for="tags" class="t-label block mb-1">Tags (comma-separated)</label>
           <input
             type="text"
@@ -440,8 +457,69 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 </Layout>
 
 <script>
+  import { isVideoUrl } from '../utils/video';
+
   // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Shared state for the session gallery (existing URLs + newly-selected files)
+  let galleryExistingUrls: string[] = [];
+  let pendingGalleryFiles: File[] = [];
+
+  // Render gallery thumbnails (existing + pending) into the modal preview grid
+  function renderGalleryPreview() {
+    const container = document.getElementById('galleryPreview');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    const items: Array<{ src: string; isVideo: boolean; kind: 'existing' | 'pending'; index: number }> = [];
+    galleryExistingUrls.forEach((url, index) => {
+      items.push({ src: url, isVideo: isVideoUrl(url), kind: 'existing', index });
+    });
+    pendingGalleryFiles.forEach((file, index) => {
+      items.push({ src: URL.createObjectURL(file), isVideo: file.type.startsWith('video/'), kind: 'pending', index });
+    });
+
+    if (items.length === 0) {
+      container.classList.add('hidden');
+      return;
+    }
+    container.classList.remove('hidden');
+
+    items.forEach(item => {
+      const wrap = document.createElement('div');
+      wrap.className = 'relative';
+
+      const media = item.isVideo
+        ? document.createElement('video')
+        : document.createElement('img');
+      media.src = item.src;
+      media.className = 'w-full h-20 object-cover rounded-sm';
+      if (item.isVideo) {
+        (media as HTMLVideoElement).muted = true;
+      }
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.textContent = '×';
+      btn.title = 'Remove';
+      btn.setAttribute('aria-label', 'Remove image');
+      btn.className = 'absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/70 text-white text-sm leading-none hover:bg-red-600';
+      btn.addEventListener('click', () => {
+        if (item.kind === 'existing') {
+          galleryExistingUrls.splice(item.index, 1);
+        } else {
+          pendingGalleryFiles.splice(item.index, 1);
+        }
+        renderGalleryPreview();
+      });
+
+      wrap.appendChild(media);
+      wrap.appendChild(btn);
+      container.appendChild(wrap);
+    });
+  }
 
   // Initialize diary modal and form functionality
   function initializeDiaryModal() {
@@ -543,6 +621,23 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     }
   });
 
+  // Handle gallery multi-file selection
+  const galleryFilesInput = document.getElementById('galleryFiles') as HTMLInputElement;
+  galleryFilesInput?.addEventListener('change', (e) => {
+    const files = Array.from((e.target as HTMLInputElement).files || []);
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    for (const file of files) {
+      if (file.size > maxSize) {
+        alert(`"${file.name}" is too large. Maximum size is 5MB.`);
+        continue;
+      }
+      pendingGalleryFiles.push(file);
+    }
+    // Clear so the same file can be re-selected later
+    (e.target as HTMLInputElement).value = '';
+    renderGalleryPreview();
+  });
+
   // Open modal for new entry
   addButton?.addEventListener('click', () => {
     editingId = null;
@@ -551,6 +646,9 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     if (modalTitle) modalTitle.textContent = 'New Diary Entry';
     imagePreview?.classList.add('hidden');
     videoPreview?.classList.add('hidden');
+    galleryExistingUrls = [];
+    pendingGalleryFiles = [];
+    renderGalleryPreview();
 
     // Set default date to today
     const today = new Date().toISOString().split('T')[0];
@@ -647,6 +745,35 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       }
     }
 
+    // Upload any newly-selected gallery files
+    const uploadedGalleryUrls: string[] = [];
+    for (const file of pendingGalleryFiles) {
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('file', file);
+
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+        });
+
+        if (uploadResponse.ok) {
+          const uploadData = await uploadResponse.json();
+          uploadedGalleryUrls.push(uploadData.url);
+        } else {
+          const error = await uploadResponse.json();
+          alert(`Failed to upload gallery file: ${error.error || 'Unknown error'}`);
+          return;
+        }
+      } catch (error) {
+        console.error('Upload error:', error);
+        alert('Failed to upload gallery file. Please try again.');
+        return;
+      }
+    }
+
+    const galleryUrls = [...galleryExistingUrls, ...uploadedGalleryUrls];
+
     const data = {
       title: formData.get('title'),
       date: formData.get('date'),
@@ -655,6 +782,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       tags,
       coverImageUrl,
       coverVideoUrl,
+      galleryUrls,
       npcIds,
       locationIds,
       characterIds,
@@ -772,6 +900,13 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         // Clear file inputs
         if (fileInput) fileInput.value = '';
         if (videoFileInput) videoFileInput.value = '';
+
+        // Seed the session gallery from the existing entry
+        galleryExistingUrls = Array.isArray(entry.galleryUrls) ? [...entry.galleryUrls] : [];
+        pendingGalleryFiles = [];
+        const galleryFilesEl = document.getElementById('galleryFiles') as HTMLInputElement;
+        if (galleryFilesEl) galleryFilesEl.value = '';
+        renderGalleryPreview();
 
         // Set selected values for multi-select fields
         const npcsSelect = document.getElementById('npcs') as HTMLSelectElement;
