@@ -26,6 +26,24 @@ export function getVideoMimeType(url: string): string {
 }
 
 /**
+ * Determine whether a media URL points to a video based on its file extension.
+ * Reuses the same extension set as getVideoMimeType.
+ * @param url - The media URL
+ * @returns true if the URL has a known video extension
+ */
+export function isVideoUrl(url: string): boolean {
+  if (!url) {
+    return false;
+  }
+
+  const cleanUrl = url.split('?')[0].split('#')[0];
+  const extension = cleanUrl.split('.').pop()?.toLowerCase();
+
+  const videoExtensions = ['mp4', 'webm', 'ogg', 'ogv', 'mov', 'avi', 'm4v'];
+  return videoExtensions.includes(extension || '');
+}
+
+/**
  * Initialize video autoplay for all videos on the page
  * This is needed for Astro View Transitions to ensure videos with the autoplay attribute play after navigation
  * Note: Only reloads videos that aren't already loaded to avoid unnecessary resource reloading
