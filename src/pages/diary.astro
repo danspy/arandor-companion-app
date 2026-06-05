@@ -108,11 +108,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     </div>
   </div>
 
-  <div id="entriesList" class="grid md:grid-cols-2 gap-6">
+  <div id="entriesList" class="grid grid-cols-1 md:grid-cols-2 gap-6">
     {sortedEntries.map(entry => {
       const tags = Array.isArray(entry.tags) ? entry.tags : [];
       return (
-      <article class="diary-entry t-panel p-6 hover:shadow-lg transition" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
+      <article class="diary-entry t-panel p-6 hover:shadow-lg transition min-w-0" data-entry-id={entry.id} data-tags={JSON.stringify(tags)} data-search={`${entry.title} ${entry.content} ${tags.join(' ')}`.toLowerCase()}>
         {entry.coverVideoUrl ? (
           <div class="-mx-6 -mt-6 mb-5 overflow-hidden" style="border-bottom:1px solid var(--border-gold);">
             <video
@@ -139,7 +139,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         )}
         <div class="mb-4">
           <div class="flex items-start justify-between gap-2 mb-1">
-            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold t-gold hover:opacity-80 transition">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold t-gold hover:opacity-80 transition min-w-0 break-words">
               {entry.title}
             </a>
             {isLoggedIn && (
@@ -181,7 +181,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </div>
 
         <div class="prose max-w-none mb-4">
-          <p class="t-body-text line-clamp-3">{entry.content}</p>
+          <p class="t-body-text line-clamp-3 break-words">{entry.content}</p>
         </div>
 
         <div class="flex gap-2 flex-wrap mb-4">
