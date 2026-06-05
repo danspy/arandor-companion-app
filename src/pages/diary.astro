@@ -121,7 +121,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               playsinline
               preload="auto"
               disablePictureInPicture
-              class="w-full h-52 object-cover block"
+              class="w-full aspect-video object-cover block"
               aria-label={`Video for ${entry.title}`}
             >
               <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
@@ -133,7 +133,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <img
               src={entry.coverImageUrl}
               alt={entry.title}
-              class="w-full h-52 object-cover block"
+              class="w-full aspect-video object-cover block"
             />
           </div>
         )}

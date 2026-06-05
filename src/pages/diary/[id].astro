@@ -122,7 +122,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
             loop
             preload="auto"
             disablePictureInPicture
-            class="w-full h-80 sm:h-96 object-cover block"
+            class="w-full aspect-video object-cover block"
             aria-label={`Cover video for ${entry.title}`}
           >
             <source src={entry.coverVideoUrl} type={getVideoMimeType(entry.coverVideoUrl)} />
@@ -134,7 +134,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
           <img
             src={entry.coverImageUrl}
             alt={entry.title}
-            class="w-full h-80 sm:h-96 object-cover block"
+            class="w-full aspect-video object-cover block"
           />
         </div>
       )}
@@ -307,7 +307,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
                         muted
                         playsinline
                         preload="metadata"
-                        class="w-full h-28 sm:h-32 object-cover block pointer-events-none"
+                        class="w-full aspect-video object-cover block pointer-events-none"
                       ></video>
                       <span class="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                         <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
@@ -320,7 +320,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
                       src={url}
                       alt="Session impression"
                       loading="lazy"
-                      class="w-full h-28 sm:h-32 object-cover block pointer-events-none"
+                      class="w-full aspect-video object-cover block pointer-events-none"
                     />
                   )}
                 </button>
