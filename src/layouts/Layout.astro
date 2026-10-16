@@ -34,7 +34,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" class="dark" style="color-scheme: dark;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -47,8 +47,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <link rel="manifest" href="/manifest.webmanifest" />
     
     <!-- Theme Colors -->
-    <meta name="theme-color" content="#1e1408" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#080603" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#080603" />
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
@@ -62,57 +61,26 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Arandor" />
     
-    <!-- iOS Splash Screens (Light Mode) -->
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphone5.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphone6.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphone6plus.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphonex.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphonexsmax.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphonexr.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphone12.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-iphone12promax.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-ipadmini.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-ipadair.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-ipadpro10.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: light)" href="/splash/apple-splash-ipadpro12.png" />
     
     <!-- iOS Splash Screens (Dark Mode) -->
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphone5-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphone6-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphone6plus-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphonex-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphonexsmax-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphonexr-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphone12-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-iphone12promax-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-ipadmini-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-ipadair-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-ipadpro10-dark.png" />
-    <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait) and (prefers-color-scheme: dark)" href="/splash/apple-splash-ipadpro12-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-iphone5-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-iphone6-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/apple-splash-iphone6plus-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/apple-splash-iphonex-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/apple-splash-iphonexsmax-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-iphonexr-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 390px) and (device-height: 844px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/apple-splash-iphone12-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 428px) and (device-height: 926px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash/apple-splash-iphone12promax-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-ipadmini-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1112px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-ipadair-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-ipadpro10-dark.png" />
+    <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash/apple-splash-ipadpro12-dark.png" />
     
     <!-- Android/Chrome -->
     <meta name="mobile-web-app-capable" content="yes" />
     
     <title>{title} - Arandor Companion</title>
     <ClientRouter />
-    <script is:inline>
-      // Initialize dark mode before page renders to avoid flash
-      const getThemePreference = () => {
-        try {
-          const stored = localStorage.getItem('theme');
-          if (stored) return stored;
-        } catch (e) {
-          // localStorage might not be available in private browsing mode
-          console.warn('localStorage not available:', e);
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      };
-      
-      const theme = getThemePreference();
-      if (theme === 'dark') {
-        document.documentElement.classList.add('dark');
-      }
-    </script>
   </head>
   <body>
     <!-- PWA Status Bar Gradient Overlay -->
@@ -184,21 +152,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
 
             <span class="w-px h-4 mx-2 shrink-0" style="background: rgba(201,144,50,0.18);"></span>
 
-            <!-- Theme toggle -->
-            <button
-              id="themeToggle"
-              class="p-2 rounded-md transition-colors"
-              style="color: rgba(242,232,213,0.75);"
-              aria-label="Toggle dark mode"
-              data-testid="theme-toggle"
-            >
-              <svg id="sunIcon" class="w-4 h-4 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-              </svg>
-              <svg id="moonIcon" class="w-4 h-4 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-              </svg>
-            </button>
 
             <!-- User dropdown -->
             <div class="relative">
@@ -273,22 +226,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <div class="my-2" style="border-top: 1px solid rgba(201,144,50,0.10);"></div>
 
             <button
-              id="themeToggleMobile"
-              class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors text-left"
-              style="color: rgba(242,232,213,0.75);"
-              aria-label="Toggle dark mode"
-            >
-              <svg id="sunIconMobile" class="w-4 h-4 hidden dark:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-              </svg>
-              <svg id="moonIconMobile" class="w-4 h-4 block dark:hidden shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/>
-              </svg>
-              <span id="themeTextMobile" class="dark:hidden">Dark Mode</span>
-              <span id="themeTextMobile2" class="hidden dark:block">Light Mode</span>
-            </button>
-
-            <button
               id="userMenuBtnMobile"
               class="flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors text-left"
               style="color: rgba(242,232,213,0.75);"
@@ -350,50 +287,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <DiceFab />
     
     <script>
-      // Function to get theme preference from localStorage
-      const getThemePreference = () => {
-        try {
-          const stored = localStorage.getItem('theme');
-          if (stored) return stored;
-        } catch (e) {
-          console.warn('localStorage not available:', e);
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      };
-      
-      // Function to apply theme
-      const applyTheme = () => {
-        const theme = getThemePreference();
-        const html = document.documentElement;
-        if (theme === 'dark') {
-          html.classList.add('dark');
-        } else {
-          html.classList.remove('dark');
-        }
-      };
-      
-      // Dark mode toggle functionality
-      const toggleTheme = () => {
-        const html = document.documentElement;
-        const isDark = html.classList.contains('dark');
-        
-        if (isDark) {
-          html.classList.remove('dark');
-          try {
-            localStorage.setItem('theme', 'light');
-          } catch (e) {
-            console.warn('Failed to save theme preference:', e);
-          }
-        } else {
-          html.classList.add('dark');
-          try {
-            localStorage.setItem('theme', 'dark');
-          } catch (e) {
-            console.warn('Failed to save theme preference:', e);
-          }
-        }
-      };
-      
       // Function to close mobile menu
       const closeMobileMenu = () => {
         const mobileMenu = document.getElementById('mobileMenu');
@@ -440,11 +333,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
           return;
         }
         
-        const themeToggle = document.getElementById('themeToggle');
-        const themeToggleMobile = document.getElementById('themeToggleMobile');
         
-        themeToggle?.addEventListener('click', toggleTheme);
-        themeToggleMobile?.addEventListener('click', toggleTheme);
         
         // Desktop user menu dropdown
         const userMenuBtn = document.getElementById('userMenuBtn');
@@ -586,9 +475,6 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
         
         // Update last path
         lastPath = window.location.pathname;
-        
-        // Reapply theme after page swap
-        applyTheme();
         
         // Update navigation active states after page swap
         updateNavigation();

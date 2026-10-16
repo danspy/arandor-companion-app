@@ -10,26 +10,11 @@ const COMBAT_STATE_ID = 'current-combat';
 ---
 
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en" class="dark" style="color-scheme: dark;">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Player Display - Arandor</title>
-    <script is:inline>
-      // Initialize dark mode
-      const getThemePreference = () => {
-        try {
-          const stored = localStorage.getItem('theme');
-          if (stored) return stored;
-        } catch (e) {
-          console.error('Error accessing localStorage:', e);
-        }
-        return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      };
-      
-      const theme = getThemePreference();
-      document.documentElement.classList.toggle('dark', theme === 'dark');
-    </script>
   </head>
   <body class="bg-gray-900 text-white min-h-screen md:overflow-hidden">
     <div id="displayContainer" class="w-full h-screen flex items-center justify-center">
