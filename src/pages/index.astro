@@ -340,7 +340,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           <a href={`/diary/${entry.id}`} class="t-row flex items-center justify-between p-3 block">
             <div class="flex-1 min-w-0">
               <h3 class="t-gold font-semibold text-sm truncate">{entry.title}</h3>
-              <p class="t-muted text-xs line-clamp-2 mt-0.5">{entry.content}</p>
+              <p class="t-muted text-xs line-clamp-2 mt-0.5">{markdownExcerpt(entry.summary || entry.content, 140)}</p>
             </div>
             <div class="shrink-0 ml-2">
               <span class="t-badge">S{entry.session}</span>
@@ -359,7 +359,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           <a href={`/library/${entry.id}`} class="t-row flex items-start p-3 block">
             <div class="flex-1 min-w-0">
               <h3 class="t-gold font-semibold text-sm truncate">{entry.title}</h3>
-              <p class="t-muted text-xs line-clamp-2 mt-0.5">{entry.content.substring(0, 80)}{entry.content.length > 80 ? '...' : ''}</p>
+              <p class="t-muted text-xs line-clamp-2 mt-0.5">{markdownExcerpt(entry.content, 80)}</p>
             </div>
           </a>
         ))}
@@ -374,7 +374,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         {activeQuests.map(quest => (
           <div class="t-inset p-3" style="border-left:3px solid var(--accent);">
             <h3 class="t-strong-text font-semibold text-sm">{quest.title}</h3>
-            <p class="t-muted text-xs mt-0.5 line-clamp-2">{quest.description.substring(0, 80)}{quest.description.length > 80 ? '...' : ''}</p>
+            <p class="t-muted text-xs mt-0.5 line-clamp-2">{markdownExcerpt(quest.description, 80)}</p>
             <span class={`inline-block mt-2 ${
               quest.priority === 'high' ? 't-badge-red' :
               quest.priority === 'medium' ? 't-badge-gold' :

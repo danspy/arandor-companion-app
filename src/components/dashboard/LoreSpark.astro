@@ -57,7 +57,7 @@ const { items } = Astro.props;
     transition: transform 0.4s ease, background 0.15s ease;
   }
   .lore-next:hover { background: var(--accent-dim); transform: rotate(180deg); }
-  .lore-item { display: flex; flex-direction: column; align-items: center; text-align: center; flex: 1; }
+  .lore-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding-bottom: 1.5rem; }
   .lore-item[hidden] { display: none; }
   .lore-item.enter { animation: lore-in 0.4s ease-out both; }
   @keyframes lore-in {

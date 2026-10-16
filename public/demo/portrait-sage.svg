@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400">
+  <!-- Demo portrait for the seeded dev database. -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#22304a"/><stop offset="1" stop-color="#090c14"/></linearGradient>
+    <radialGradient id="rim" cx="0.5" cy="0.35" r="0.6"><stop offset="0" stop-color="#d9c7ff" stop-opacity="0.45"/><stop offset="1" stop-color="#d9c7ff" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="400" height="400" fill="url(#bg)"/>
+  <circle cx="200" cy="150" r="170" fill="url(#rim)"/>
+  <path d="M60 400 Q70 260 200 245 Q330 260 340 400Z" fill="#0b0a0e"/>
+  <path d="M120 400 Q130 300 200 290 Q270 300 280 400" fill="none" stroke="#d9c7ff" stroke-width="3" opacity="0.5"/>
+  <ellipse cx="200" cy="145" rx="62" ry="78" fill="#0b0a0e"/>
+  <path d="M120 230 Q110 70 200 55 Q290 70 280 230 Q260 140 200 135 Q140 140 120 230Z" fill="#0b0a0e"/><path d="M150 120 Q200 60 250 120" fill="none" stroke="#d9c7ff" stroke-width="3" opacity="0.7"/>
+  <circle cx="178" cy="140" r="4" fill="#d9c7ff" opacity="0.9"/><circle cx="222" cy="140" r="4" fill="#d9c7ff" opacity="0.9"/>
+</svg>
