@@ -249,17 +249,11 @@ The repository includes a GitHub Actions workflow (`.github/workflows/deploy-pro
 
 ### How the Workflow Works
 
-1. Checks out the repository
-2. Syncs the complete repository to the server (excluding build artifacts and database)
-3. Builds the application in a temporary directory to avoid touching the production database
-   - Creates a temporary build directory (`/tmp/arandor-build-*`)
-   - Copies source files to the temp directory
-   - Runs `npm install` and `npm run build` in the temp directory with `ASTRO_DATABASE_FILE=/tmp/astro-build.db`
-   - Copies only the `dist/` folder and `node_modules/` back to production
-   - Deletes the temporary build directory
-4. Ensures database directory exists (but never touches the database itself)
-5. Restarts the systemd service
-6. Verifies the deployment with a smoke test
+1. Builds `dist/` on the GitHub runner against a scratch database (`./data/content.db`), so the production database is never touched by a build
+2. Syncs `dist/`, `package.json` and `package-lock.json` to `/srv/arandor` on the server
+3. Runs `npm ci --omit=dev` in `/srv/arandor`. The standalone server build imports its runtime dependencies (astro, @astrojs/db, marked, ...) from `/srv/arandor/node_modules`, so they must match the lockfile that produced `dist/`
+4. Restarts the systemd service via the sudo wrapper scripts
+5. Verifies the deployment with a smoke test (the workflow fails if the site does not answer)
 
 ### Database Safety During Deployment
 

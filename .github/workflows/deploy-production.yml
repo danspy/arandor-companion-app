@@ -51,6 +51,9 @@ jobs:
       # optional secret: set DEPLOY_DOMAIN in repo secrets to override default
       DEPLOY_DOMAIN: ${{ secrets.DEPLOY_DOMAIN }}
     steps:
+      - name: Checkout (for package manifests)
+        uses: actions/checkout@v4
+
       - name: Download dist artifact
         uses: actions/download-artifact@v4
         with:
@@ -66,18 +69,20 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" 'mkdir -p /srv/arandor/dist /srv/arandor/uploads || true'
 
-      - name: Sync dist to server
+      - name: Sync dist and package manifests to server
         run: |
           rsync -avz --delete -e "ssh -o StrictHostKeyChecking=no" ./dist/ "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/dist/"
+          rsync -avz -e "ssh -o StrictHostKeyChecking=no" ./package.json ./package-lock.json "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}:/srv/arandor/"
 
       - name: Install server deps and restart service on remote
         run: |
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" '
             set -e
-            if [ -d /srv/arandor/dist/server ] && [ -f /srv/arandor/dist/server/package.json ]; then
-              cd /srv/arandor/dist/server
-              npm ci --production || true
-            fi
+            # The standalone server build imports its runtime dependencies (astro,
+            # @astrojs/db, marked, ...) from /srv/arandor/node_modules, so they must
+            # match the package-lock.json that produced dist/.
+            cd /srv/arandor
+            npm ci --omit=dev --no-audit --no-fund
 
             # Use the root-owned wrapper scripts exposed via sudoers (must be NOPASSWD for CI)
             sudo -n /usr/local/sbin/arandor-deploy-restart
@@ -95,5 +100,5 @@ jobs:
           # show remote service status (non-interactive)
           ssh -o StrictHostKeyChecking=no "${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }}" "sudo -n /usr/local/sbin/arandor-deploy-status | sed -n '1,10p'"
 
-          # request the public HTTPS URL
-          curl -I --max-time 10 "https://${DEPLOY_DOMAIN}"
+          # request the public HTTPS URL; fail the workflow if the site does not answer 2xx/3xx
+          curl -fsSI --retry 5 --retry-delay 5 --retry-all-errors --max-time 10 "https://${DEPLOY_DOMAIN}" | head -1
