@@ -56,6 +56,7 @@ None are needed for `npm run dev`. A production run needs `SESSION_SECRET`.
 | `DATABASE_FILE` | SQLite file the app opens | `./data/dev.db` in dev, `./data/content.db` in production |
 | `SESSION_SECRET` | Signs login cookies; at least 32 characters | Dev: a random temporary secret (you are logged out on restart). Production: **required**, otherwise nobody can log in |
 | `UPLOAD_DIR` | Where uploaded images/videos are stored in production | `/srv/arandor/uploads`. In dev, uploads go to `public/uploads/` |
+| `CAMPAIGN_TIME_ZONE` | Time zone in which calendar event times are entered | `Europe/Berlin` |
 | `NODE_ENV` | `production` marks the login cookie `secure` | unset |
 | `HOST`, `PORT` | Address of the production server (`@astrojs/node`) | `localhost:4321` |
 | `DEV_PUBLIC_HOST` | Only for the dev server behind Caddy (dev.arandor.app): plain HTTP, live reload over `wss` | unset |

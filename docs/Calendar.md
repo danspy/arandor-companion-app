@@ -37,12 +37,17 @@ The feed is public: anyone with the URL can see event titles, times, description
 
 ## Time zones
 
-Times are entered without a time zone and the feed converts them using the **server's** time
-zone, which is UTC. See [Known issues](Known-Issues.md#calendar-feed-shows-sessions-at-the-wrong-time).
+Enter times in the group's local time. They are read in the campaign's time zone,
+`Europe/Berlin` by default (summer and winter time included), and published to calendar apps
+in UTC, so everyone's calendar shows the right local time. The zone can be changed with the
+`CAMPAIGN_TIME_ZONE` environment variable (e.g. `Europe/London`).
 
 ## For developers
 
 - Page: `src/pages/calendar.astro`; feed: `src/pages/api/calendar/ics.ics.ts`;
   iCal generation (RFC 5545): `src/utils/ical.ts`.
+- Turning a stored date and time into an instant: `campaignDateTime()` in
+  `src/utils/campaignTime.ts`. Use it on the server instead of ``new Date(`${date}T${time}`)``,
+  which would read the time as UTC.
 - Each event's UID is `<event id>@arandor-companion-app`, so calendar apps update instead of
   duplicating events.

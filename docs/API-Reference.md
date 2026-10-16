@@ -30,6 +30,7 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 | Endpoint | Read | Write (POST, PUT, DELETE) |
 |---|---|---|
 | `/api/diary`, `/api/diary/[id]` | public | player+ |
+| `/api/diary/[id]/summary` (DELETE only: remove an entry's summary) | – | DM |
 | `/api/diary-notes/[diaryEntryId]` | login, own note only | login, own note only |
 | `/api/npcs`, `/api/npcs/[id]` | public | player+ |
 | `/api/locations`, `/api/locations/[id]` (incl. map pin `mapX`, `mapY`, `visibleOnMap`) | public | player+ |
