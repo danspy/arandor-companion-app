@@ -9,6 +9,8 @@ dotenv.config();
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
+  // Astro 7 defaults to JSX-style whitespace stripping; keep the HTML-aware behaviour of Astro 6.
+  compressHTML: true,
   adapter: node({
     mode: 'standalone'
   }),
