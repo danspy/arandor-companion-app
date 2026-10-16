@@ -41,6 +41,7 @@ export default async function seed() {
       locationIds: ['2'],
       characterIds: ['1', '2'],
       questIds: ['1'],
+      coverImageUrl: '/demo/campfire.svg',
       createdAt: new Date('2025-10-22'),
       updatedAt: new Date('2025-10-22'),
     }

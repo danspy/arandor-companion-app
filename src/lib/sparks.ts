@@ -14,6 +14,7 @@ interface Particle {
   maxLife: number;
   seed: number;
   flicker: number;
+  spin: number; // rad/s: sparks curl instead of flying straight
   kind: 'ember' | 'spark';
 }
 
@@ -94,15 +95,19 @@ export function startSparks(canvas: HTMLCanvasElement): () => void {
 
   const spawn = (kind: Particle['kind'], x = rand(0, width), y = height + rand(0, 30)) => {
     const ember = kind === 'ember';
-    const life = ember ? rand(4, 9) : rand(0.6, 1.8);
+    const life = ember ? rand(4, 9) : rand(0.5, 1.6);
+    // Sparks fly out in a wide fan (±75° from straight up) at very different speeds.
+    const angle = -Math.PI / 2 + rand(-1.3, 1.3);
+    const speed = rand(60, 280) * (Math.random() < 0.2 ? 1.6 : 1);
     particles.push({
       x,
       y,
       px: x,
       py: y,
-      vx: ember ? rand(-12, 12) : rand(-140, 140),
-      vy: ember ? rand(-60, -25) : rand(-320, -160),
-      size: ember ? rand(0.8, 3.2) : rand(0.6, 1.6),
+      vx: ember ? rand(-12, 12) : Math.cos(angle) * speed,
+      vy: ember ? rand(-60, -25) : Math.sin(angle) * speed,
+      size: ember ? rand(0.8, 3.2) : rand(0.5, 1.5),
+      spin: ember ? 0 : rand(-4, 4),
       life: 0,
       maxLife: life,
       seed: rand(0, 1000),
@@ -114,8 +119,8 @@ export function startSparks(canvas: HTMLCanvasElement): () => void {
   const burst = () => {
     const x = rand(width * 0.1, width * 0.9);
     const y = height - rand(0, height * 0.15);
-    const n = Math.round(rand(8, 22));
-    for (let i = 0; i < n; i++) spawn('spark', x + rand(-10, 10), y);
+    const n = Math.round(rand(6, 18));
+    for (let i = 0; i < n; i++) spawn('spark', x + rand(-14, 14), y + rand(-8, 8));
     for (let i = 0; i < 3; i++) spawn('ember', x + rand(-20, 20), y);
   };
 
@@ -165,7 +170,15 @@ export function startSparks(canvas: HTMLCanvasElement): () => void {
       const drag = p.kind === 'spark' ? 1.6 : 0.9;
       p.vx += (turbX + gust - p.vx * drag) * dt;
       p.vy += (turbY - (p.kind === 'ember' ? 22 : 40) - p.vy * drag * 0.35) * dt;
-      if (p.kind === 'spark') p.vy += 90 * dt * t; // sparks lose lift and arc over
+      if (p.kind === 'spark') {
+        // Curl: rotate the velocity a little every frame, with a wobble, so each spark
+        // traces its own bent, jittery path; they also lose lift and arc over.
+        const a = (p.spin + Math.sin(time * 9 + s) * 2.5) * dt;
+        const cos = Math.cos(a);
+        const sin = Math.sin(a);
+        [p.vx, p.vy] = [p.vx * cos - p.vy * sin, p.vx * sin + p.vy * cos];
+        p.vy += 120 * dt * t;
+      }
 
       p.px = p.x;
       p.py = p.y;
@@ -183,7 +196,7 @@ export function startSparks(canvas: HTMLCanvasElement): () => void {
         ctx.lineWidth = p.size;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(p.px - (p.x - p.px) * 2, p.py - (p.y - p.py) * 2);
+        ctx.moveTo(p.px - (p.x - p.px) * 0.6, p.py - (p.y - p.py) * 0.6);
         ctx.lineTo(p.x, p.y);
         ctx.stroke();
       } else {

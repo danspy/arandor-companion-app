@@ -16,6 +16,8 @@ export default defineConfig({
   output: 'server',
   // Astro 7 defaults to JSX-style whitespace stripping; keep the HTML-aware behaviour of Astro 6.
   compressHTML: true,
+  // The dev toolbar is for local development; on dev.arandor.app it only covers the page.
+  devToolbar: { enabled: !devPublicHost },
   adapter: node({
     mode: 'standalone'
   }),

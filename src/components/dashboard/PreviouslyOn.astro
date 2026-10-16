@@ -55,15 +55,18 @@ const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', d
     align-items: flex-end;
     position: relative;
     overflow: hidden;
-    min-height: 16rem;
-    height: 100%;
+    /* 16:9 so a cover image shows whole; grows taller only if the text needs it. */
+    aspect-ratio: 16 / 9;
     background: var(--recap-bg);
   }
+  /* Always a full 16:9 picture at the top; if the text makes the card taller (phones),
+     the image keeps its shape and the shade fades it into the card. */
   .recap-img {
     position: absolute;
-    inset: 0;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
+    aspect-ratio: 16 / 9;
     object-fit: cover;
     transform: scale(1.02);
     transition: transform 6s ease-out;
@@ -96,9 +99,23 @@ const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', d
     color: var(--recap-meta);
     margin-top: 0.35rem;
   }
-  .recap-text { margin-top: 0.75rem; font-size: 0.9rem; line-height: 1.55; color: var(--recap-text); }
+  .recap-text {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--recap-text);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
   .recap-link { display: inline-block; margin-top: 0.9rem; font-size: 0.8rem; font-weight: 600; color: var(--recap-link); }
   .recap:hover .recap-link { text-decoration: underline; }
+  @media (max-width: 640px) {
+    .recap-body { padding: 1rem; }
+    .recap-text { -webkit-line-clamp: 2; font-size: 0.85rem; margin-top: 0.5rem; }
+    .recap-link { margin-top: 0.5rem; }
+  }
   @media (prefers-reduced-motion: reduce) {
     .recap-img, .recap:hover .recap-img { transition: none; transform: none; }
   }

@@ -15,11 +15,13 @@ const { imageUrl, canEdit, level, progress } = Astro.props;
 <div class="hero-ambient" style={`background-image:url("${imageUrl}")`} aria-hidden="true"></div>
 
 <section class="dash-hero" data-dash-hero>
-  <div class="dash-hero-media" data-hero-parallax>
-    <img src={imageUrl} alt="" fetchpriority="high" />
+  <div class="dash-hero-bg">
+    <div class="dash-hero-media" data-hero-parallax>
+      <img src={imageUrl} alt="" fetchpriority="high" />
+    </div>
+    <div class="dash-hero-shade"></div>
+    <canvas class="dash-hero-sparks" data-hero-sparks aria-hidden="true"></canvas>
   </div>
-  <div class="dash-hero-shade"></div>
-  <canvas class="dash-hero-sparks" data-hero-sparks aria-hidden="true"></canvas>
 
   {canEdit && (
     <button class="edit-hero-image-btn dash-hero-edit" title="Edit hero image">
@@ -75,6 +77,17 @@ const { imageUrl, canEdit, level, progress } = Astro.props;
     align-items: flex-end;
     isolation: isolate;
   }
+  /* Image, shade and sparks fade out at the bottom so the hero melts into whatever is
+     behind it (page colour + blurred ambient copy) without a visible edge. The wrapper
+     doesn't move with the parallax, so the fade stays put while scrolling. */
+  .dash-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+  }
   @media (display-mode: standalone) and (max-width: 1024px) {
     /* PWA: no nav; extend under the status bar instead. */
     .dash-hero { --hero-pull: calc(2rem + var(--safe-top)); }
@@ -99,7 +112,7 @@ const { imageUrl, canEdit, level, progress } = Astro.props;
     background:
       linear-gradient(to bottom, rgba(8, 6, 3, 0.55) 0%, transparent 22%),
       radial-gradient(ellipse 120% 80% at 30% 100%, rgba(8, 6, 3, 0.55), transparent 70%),
-      linear-gradient(to top, var(--bg-page) 0%, color-mix(in srgb, var(--bg-page) 70%, transparent) 12%, rgba(8, 6, 3, 0.35) 45%, transparent 75%);
+      linear-gradient(to top, rgba(8, 6, 3, 0.45) 0%, rgba(8, 6, 3, 0.3) 45%, transparent 75%);
   }
   .dash-hero-sparks { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
 
