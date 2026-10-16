@@ -201,6 +201,7 @@ export default async function seed() {
       id: '1',
       currentLevel: 5,
       progressPercent: 50, // 50% progress to next level
+      heroImageUrl: '/demo/hero.svg',
       createdAt: new Date(),
       updatedAt: new Date(),
     }

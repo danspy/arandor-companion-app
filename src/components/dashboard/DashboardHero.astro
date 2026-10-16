@@ -1,0 +1,395 @@
+---
+// Full-bleed dashboard hero, used when a campaign hero image is set. It slides under the
+// (temporarily transparent) nav, fades into the page and tints the page background.
+interface Props {
+  imageUrl: string;
+  canEdit: boolean;
+  isLoggedIn: boolean;
+  level: number;
+  progress: number; // 0-100
+  sessionsPlayed: number;
+  nextSessionStart: string | null; // YYYY-MM-DDTHH:MM, viewer's local time
+  party: Array<{ id: string; name: string; avatarUrl: string | null }>;
+}
+
+const { imageUrl, canEdit, isLoggedIn, level, progress, sessionsPlayed, nextSessionStart, party } = Astro.props;
+const shownParty = party.slice(0, 6);
+const embers = Array.from({ length: 14 }, (_, i) => ({
+  left: `${2 + i * 7.1}%`,
+  size: `${2 + ((i * 3) % 4)}px`,
+  duration: `${7 + ((i * 7) % 6)}s`,
+  delay: `${-1.37 * i}s`,
+}));
+---
+
+<div class="hero-ambient" style={`background-image:url("${imageUrl}")`} aria-hidden="true"></div>
+
+<section class="dash-hero" data-dash-hero>
+  <div class="dash-hero-media" data-hero-parallax>
+    <img src={imageUrl} alt="" fetchpriority="high" />
+  </div>
+  <div class="dash-hero-shade"></div>
+  <div class="dash-hero-embers" aria-hidden="true">
+    {embers.map((e) => (
+      <span style={`left:${e.left};width:${e.size};animation-duration:${e.duration};animation-delay:${e.delay}`}></span>
+    ))}
+  </div>
+
+  {canEdit && (
+    <button class="edit-hero-image-btn dash-hero-edit" title="Edit hero image">
+      <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      Edit
+    </button>
+  )}
+
+  <div class="dash-hero-content container mx-auto px-4 sm:px-6">
+    <p class="dash-hero-kicker">{isLoggedIn ? 'Welcome back, adventurer' : 'Welcome, traveller'}</p>
+    <h1 class="dash-hero-title">Arandor</h1>
+
+    <div class="dash-hero-chips">
+      {nextSessionStart && (
+        <a href="#next-session" class="dash-chip dash-chip-hot" data-hero-next={nextSessionStart}>
+          <span class="dash-chip-dot"></span>
+          <span data-hero-next-label>Next session soon</span>
+        </a>
+      )}
+      <span class="dash-chip"><strong>{sessionsPlayed}</strong> sessions played</span>
+      <span class="dash-chip">Party level <strong>{level}</strong></span>
+    </div>
+
+    <div class="dash-hero-progress" title={`${progress}% to level ${level + 1}`}>
+      <div class="dash-hero-progress-track">
+        <div class="dash-hero-progress-fill" style={`width:${progress}%`}></div>
+      </div>
+      <span>Lv {level} → {level + 1} · {progress}%</span>
+    </div>
+
+    {shownParty.length > 0 && (
+      <a href="#party" class="dash-hero-party" aria-label="The party">
+        {shownParty.map((c, i) => (
+          <span class="dash-hero-avatar" style={`--n:${i}`} title={c.name}>
+            {c.avatarUrl ? <img src={c.avatarUrl} alt="" /> : c.name.charAt(0)}
+          </span>
+        ))}
+        <span class="dash-hero-party-label">Meet the party</span>
+      </a>
+    )}
+  </div>
+
+  <a href="#dashboard-content" class="dash-hero-scroll" aria-label="Scroll to dashboard">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+  </a>
+</section>
+
+<!-- Pulls the first dashboard cards up over the hero's fade. -->
+<div id="dashboard-content" class="dash-after-hero"></div>
+
+<style>
+  /* Pull the hero up under the sticky nav (60px) and main's top padding (2rem). */
+  .dash-hero {
+    --hero-pull: calc(2rem + 60px);
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: calc(-1 * var(--hero-pull));
+    height: clamp(30rem, 82svh, 50rem);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    isolation: isolate;
+  }
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    /* PWA: no nav; extend under the status bar instead. */
+    .dash-hero { --hero-pull: calc(2rem + var(--safe-top)); }
+  }
+  @media (max-width: 640px) {
+    .dash-hero { height: clamp(28rem, 78svh, 44rem); }
+  }
+
+  .dash-hero-media { position: absolute; inset: -6% 0 0 0; z-index: -2; will-change: transform; }
+  .dash-hero-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ken-burns 28s ease-in-out infinite alternate;
+  }
+  @keyframes ken-burns {
+    from { transform: scale(1.04) translate(0, 0); }
+    to   { transform: scale(1.14) translate(-1.5%, -1%); }
+  }
+
+  .dash-hero-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      linear-gradient(to bottom, rgba(8, 6, 3, 0.55) 0%, transparent 22%),
+      radial-gradient(ellipse 120% 80% at 30% 100%, rgba(8, 6, 3, 0.55), transparent 70%),
+      linear-gradient(to top, var(--bg-page) 0%, color-mix(in srgb, var(--bg-page) 70%, transparent) 14%, rgba(8, 6, 3, 0.35) 48%, transparent 75%);
+  }
+
+  /* Rising embers */
+  .dash-hero-embers { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+  .dash-hero-embers span {
+    position: absolute;
+    bottom: -10px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: #ffcf7a;
+    box-shadow: 0 0 8px 2px rgba(255, 170, 70, 0.7);
+    opacity: 0;
+    animation-name: ember;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+  @keyframes ember {
+    0%   { transform: translate(0, 0); opacity: 0; }
+    10%  { opacity: 0.9; }
+    50%  { transform: translate(24px, -45vh); }
+    80%  { opacity: 0.5; }
+    100% { transform: translate(-10px, -85vh); opacity: 0; }
+  }
+
+  .dash-hero-edit {
+    position: absolute;
+    top: calc(var(--hero-pull) + 0.25rem);
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 2px;
+    background: rgba(8, 6, 3, 0.55);
+    border: 1px solid rgba(201, 144, 50, 0.3);
+    color: rgba(242, 232, 213, 0.8);
+    backdrop-filter: blur(8px);
+  }
+
+  .dash-hero-content { position: relative; padding-bottom: 5.5rem; }
+  .dash-hero-content > * { animation: rise 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  .dash-hero-content > :nth-child(2) { animation-delay: 0.08s; }
+  .dash-hero-content > :nth-child(3) { animation-delay: 0.16s; }
+  .dash-hero-content > :nth-child(4) { animation-delay: 0.24s; }
+  .dash-hero-content > :nth-child(5) { animation-delay: 0.32s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .dash-hero-kicker {
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: #e8c37a;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  }
+  .dash-hero-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: clamp(3.5rem, 15vw, 8rem);
+    line-height: 0.95;
+    margin: 0.1em 0 0.25em;
+    background: linear-gradient(100deg, #f2e8d5 20%, #ffd98a 40%, #f2e8d5 60%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7));
+    animation: rise 0.8s 0.08s cubic-bezier(0.2, 0.9, 0.3, 1) both, shimmer 7s 1s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { background-position: 100% 0; }
+    50%      { background-position: 0 0; }
+  }
+
+  .dash-hero-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .dash-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    color: rgba(242, 232, 213, 0.9);
+    background: rgba(8, 6, 3, 0.45);
+    border: 1px solid rgba(201, 144, 50, 0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dash-chip strong { color: #ffd98a; font-weight: 700; }
+  .dash-chip-hot { border-color: rgba(255, 190, 90, 0.7); box-shadow: 0 0 18px rgba(201, 144, 50, 0.35); font-weight: 600; }
+  .dash-chip-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #ffb347;
+    box-shadow: 0 0 0 0 rgba(255, 179, 71, 0.7);
+    animation: ping 1.6s ease-out infinite;
+  }
+  @keyframes ping { to { box-shadow: 0 0 0 10px rgba(255, 179, 71, 0); } }
+
+  .dash-hero-progress { display: flex; align-items: center; gap: 0.75rem; margin-top: 1rem; max-width: 26rem; }
+  .dash-hero-progress-track {
+    flex: 1;
+    height: 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+  }
+  .dash-hero-progress-fill {
+    height: 100%;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #c99032, #ffd98a);
+    box-shadow: 0 0 12px rgba(255, 200, 100, 0.8);
+    animation: fill 1.6s 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+  @keyframes fill { from { width: 0; } }
+  .dash-hero-progress span { font-size: 0.75rem; color: rgba(242, 232, 213, 0.75); white-space: nowrap; }
+
+  .dash-hero-party { display: inline-flex; align-items: center; margin-top: 1.1rem; }
+  .dash-hero-avatar {
+    width: 2.6rem;
+    height: 2.6rem;
+    margin-left: -0.6rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: #ffd98a;
+    background: #1a1410;
+    border: 2px solid #c99032;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    transition: transform 0.25s ease, margin 0.25s ease;
+  }
+  .dash-hero-avatar:first-child { margin-left: 0; }
+  .dash-hero-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .dash-hero-party:hover .dash-hero-avatar { margin-left: 0.15rem; }
+  .dash-hero-party:hover .dash-hero-avatar:first-child { margin-left: 0; }
+  .dash-hero-party:hover .dash-hero-avatar:nth-child(odd) { transform: translateY(-3px); }
+  .dash-hero-party-label { margin-left: 0.75rem; font-size: 0.8rem; font-weight: 600; color: #e8c37a; text-shadow: 0 1px 6px #000; }
+
+  .dash-hero-scroll {
+    position: absolute;
+    bottom: 1.75rem;
+    left: 50%;
+    translate: -50% 0;
+    color: rgba(242, 232, 213, 0.6);
+    animation: bob 2.2s ease-in-out infinite;
+  }
+  @keyframes bob { 50% { transform: translateY(6px); } }
+
+  @media (max-width: 640px) {
+    .dash-hero-content { padding-bottom: 4.5rem; }
+    .dash-hero-kicker { font-size: 0.65rem; letter-spacing: 0.22em; }
+    .dash-chip { font-size: 0.72rem; padding: 0.3rem 0.65rem; }
+    .dash-hero-avatar { width: 2.2rem; height: 2.2rem; }
+    .dash-hero-scroll { display: none; }
+  }
+
+  .dash-after-hero { margin-top: -3.5rem; scroll-margin-top: 5rem; }
+  @media (max-width: 640px) { .dash-after-hero { margin-top: -2.5rem; } }
+
+  /* Blurred copy of the hero tinting the whole dashboard background. */
+  .hero-ambient {
+    position: fixed;
+    inset: -10%;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    filter: blur(56px) saturate(1.3);
+    opacity: 0.16;
+    pointer-events: none;
+  }
+  :global(html:not(.dark)) .hero-ambient { opacity: 0.1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dash-hero-media img, .dash-hero-embers span, .dash-hero-title, .dash-hero-content > *,
+    .dash-hero-progress-fill, .dash-chip-dot, .dash-hero-scroll { animation: none !important; }
+    .dash-hero-embers { display: none; }
+  }
+</style>
+
+<style is:global>
+  /* While the hero is behind it, the nav turns into a soft gradient over the image. */
+  html.hero-nav .app-nav {
+    background: linear-gradient(to bottom, rgba(8, 6, 3, 0.6), rgba(8, 6, 3, 0));
+    border-bottom-color: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  html.hero-nav .app-nav::after { opacity: 0; }
+  html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg); }
+  .app-nav { transition: background 0.35s ease, border-color 0.35s ease; }
+</style>
+
+<script>
+  let cleanup: (() => void) | null = null;
+
+  function initHero() {
+    cleanup?.();
+    cleanup = null;
+    const hero = document.querySelector<HTMLElement>('[data-dash-hero]');
+    const root = document.documentElement;
+    if (!hero) {
+      root.classList.remove('hero-nav');
+      return;
+    }
+
+    const media = hero.querySelector<HTMLElement>('[data-hero-parallax]');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const y = window.scrollY;
+        root.classList.toggle('hero-nav', y < hero.offsetHeight - 120);
+        if (media && !reduce && y < hero.offsetHeight) media.style.transform = `translate3d(0, ${y * 0.35}px, 0)`;
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    // "Next session in 2d 4h" chip
+    const chip = hero.querySelector<HTMLElement>('[data-hero-next]');
+    const label = chip?.querySelector<HTMLElement>('[data-hero-next-label]');
+    let timer: ReturnType<typeof setInterval> | null = null;
+    if (chip && label) {
+      const start = new Date(chip.dataset.heroNext!).getTime();
+      const update = () => {
+        const diff = start - Date.now();
+        if (diff <= 0) {
+          label.textContent = 'Session time!';
+          return;
+        }
+        const d = Math.floor(diff / 86_400_000);
+        const h = Math.floor(diff / 3_600_000) % 24;
+        const m = Math.floor(diff / 60_000) % 60;
+        label.textContent = `Next session in ${d > 0 ? `${d}d ${h}h` : h > 0 ? `${h}h ${m}m` : `${m}m`}`;
+      };
+      update();
+      timer = setInterval(update, 30_000);
+    }
+
+    cleanup = () => {
+      window.removeEventListener('scroll', onScroll);
+      if (timer) clearInterval(timer);
+      root.classList.remove('hero-nav');
+    };
+  }
+
+  document.addEventListener('astro:page-load', initHero);
+  document.addEventListener('astro:before-swap', () => {
+    cleanup?.();
+    cleanup = null;
+  });
+</script>
