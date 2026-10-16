@@ -207,7 +207,7 @@ const mapData = {
     <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 bg-black/50 z-30" style="display: none;"></div>
   </div>
 
-  <script type="application/json" id="mapData" set:html={JSON.stringify(mapData)}></script>
+  <script type="application/json" id="mapData" set:html={JSON.stringify(mapData).replace(/</g, '\\u003c')}></script>
 </Layout>
 
 <script>

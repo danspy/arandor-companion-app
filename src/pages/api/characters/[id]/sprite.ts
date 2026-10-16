@@ -1,6 +1,5 @@
 import type { APIRoute } from 'astro';
 import { db, Character, eq } from 'astro:db';
-import sharp from 'sharp';
 import { readFile } from 'node:fs/promises';
 import { join, resolve } from 'node:path';
 import { findFaceCrop } from '../../../../lib/face/detect';
@@ -34,8 +33,15 @@ async function loadAvatar(url: string): Promise<Buffer | null> {
   } catch { return null; } finally { clearTimeout(t); }
 }
 
+/** sharp is a native module; load it lazily so a server without it still serves the map (generated heads). */
+async function loadSharp() {
+  try { return (await import('sharp')).default; } catch (err) { console.warn('[sprite] sharp unavailable, portrait heads disabled:', (err as Error).message); return null; }
+}
+
 async function pixelHead(src: Buffer): Promise<Buffer> {
-  const crop = await findFaceCrop(src);
+  const sharp = await loadSharp();
+  if (!sharp) throw new Error('sharp unavailable');
+  const crop = await findFaceCrop(sharp, src);
   return sharp(src, { failOn: 'none' })
     .rotate()
     .extract({ left: crop.left, top: crop.top, width: crop.size, height: crop.size })

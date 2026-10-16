@@ -3,7 +3,7 @@
  * (in source pixels). Uses the pico.js cascade; falls back to a
  * top-centre crop when nothing is detected.
  */
-import sharp from 'sharp';
+import type Sharp from 'sharp';
 import pico from './pico';
 import { FACEFINDER_B64 } from './facefinder';
 
@@ -15,7 +15,7 @@ function cascade() {
 
 export interface Crop { left: number; top: number; size: number; detected: boolean }
 
-export async function findFaceCrop(src: Buffer): Promise<Crop> {
+export async function findFaceCrop(sharp: typeof Sharp, src: Buffer): Promise<Crop> {
   const img = sharp(src, { failOn: 'none' }).rotate();
   const { width: W = 0, height: H = 0 } = await img.metadata();
   if (!W || !H) throw new Error('no image');
