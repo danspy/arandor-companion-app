@@ -1,5 +1,6 @@
 ---
 import { db, Location, NPC, InitiativeTracker, CombatState, eq } from '@/db';
+import '../styles/global.css';
 
 // Player display is public - no authentication required
 // This page will be displayed on a second screen for players
@@ -14,7 +15,6 @@ const COMBAT_STATE_ID = 'current-combat';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Player Display - Arandor</title>
-    <link rel="stylesheet" href="/src/styles/global.css" />
     <script is:inline>
       // Initialize dark mode
       const getThemePreference = () => {
