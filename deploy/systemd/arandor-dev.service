@@ -12,6 +12,8 @@ Environment=HOME=/srv/arandor-dev
 Environment=DEV_PUBLIC_HOST=dev.arandor.app
 Environment=DATABASE_FILE=/srv/arandor-dev/data/dev.db
 Environment=ASTRO_TELEMETRY_DISABLED=1
+# SESSION_SECRET (signs login cookies). Root-only file, created on the server, never in git.
+EnvironmentFile=/etc/arandor/dev.env
 ExecStart=/usr/bin/node /srv/arandor-dev/repo/node_modules/astro/bin/astro.mjs dev --host 127.0.0.1 --port 4323
 Restart=always
 RestartSec=5
