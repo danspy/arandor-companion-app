@@ -106,18 +106,15 @@ const isLoggedIn = !!userRole;
 const latestEntry = latestEntries[0] ?? null;
 const earlierEntries = latestEntries.slice(1);
 
-// Pictures for sessions without a cover: a linked place's image, else the campaign hero.
-const locationImage = new Map(locations.filter(l => l.imageUrl).map(l => [l.id, l.imageUrl!]));
-const sessionImage = (e: typeof diaryEntries[number]) =>
-  e.coverImageUrl || (e.locationIds ?? []).map((id: string) => locationImage.get(id)).find(Boolean) || campaignProgress.heroImageUrl || null;
-const recapEntry = latestEntry ? { ...latestEntry, coverImageUrl: sessionImage(latestEntry) } : null;
+// Only a session's own cover image is shown; sessions without one get no picture.
+const recapEntry = latestEntry ? { ...latestEntry, coverImageUrl: latestEntry.coverImageUrl || null } : null;
 const chronicle = earlierEntries.map(e => ({
   id: e.id,
   session: e.session,
   title: e.title,
   date: e.date,
   excerpt: markdownExcerpt(e.summary || e.content, 160),
-  imageUrl: sessionImage(e),
+  imageUrl: e.coverImageUrl || null,
 }));
 const activeCharacters = characters.filter(c => c.isActive !== false);
 const daysSinceLastSession = latestEntry
