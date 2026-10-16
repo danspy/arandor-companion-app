@@ -5,9 +5,8 @@
  * Everything lives inside the `#mapViewport` element; DB-derived data is
  * handed over as a plain object (see map.astro).
  */
-import {
-  LOCATION_SPRITES, TILE, characterSprites, characterSpritesWithHead, lookFor, rasterize,
-} from './sprites';
+import { LOCATION_SPRITES, TILE, rasterize } from './sprites';
+import { HERO_H, heroLook, heroSprites } from './heroes';
 import {
   WORLD_H, WORLD_W, findRoute, pctToWorld, renderOceanSwatch, renderTerrain, segmentOverWater, world, worldToPct,
 } from './world';
@@ -19,7 +18,10 @@ export interface MapLocation {
 }
 export interface MapCharacter {
   id: string; name: string; class: string; race: string; isActive: boolean;
+  level?: number | null; player?: string | null; gender?: string | null;
   hair?: string | null; skin?: string | null; avatarUrl?: string | null;
+  hp?: number | null; maxHp?: number | null; stats?: Record<string, number> | null;
+  background?: string | null; alignment?: string | null; dndbeyondUrl?: string | null;
 }
 export interface MapEntry {
   id: string; session: number; date: string; title: string; excerpt: string;
@@ -38,10 +40,13 @@ export interface Step {
   location: MapLocation;
   members: string[];      // character ids present from this step on
   newMembers: string[];   // characters joining at this step
+  leftMembers: string[];  // characters who parted ways before this step
 }
 
+export interface CharacterJourney { firstSession: number | null; lastSession: number | null; stops: number; present: boolean }
 export interface EngineHooks {
   onSelectLocation(loc: MapLocation): void;
+  onSelectCharacter(ch: MapCharacter, journey: CharacterJourney): void;
   onStepChange(step: Step | null, steps: Step[]): void;
   onLocationMoved(loc: MapLocation): Promise<boolean>;
   onReady(): void;
@@ -105,8 +110,18 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
         .filter((c) => first.has(c.id) && first.get(c.id)! <= i && (c.isActive || last.get(c.id)! >= i))
         .map((c) => c.id);
       const newMembers = members.filter((cid) => first.get(cid) === i && chars.has(cid));
-      return { index: i, entry: r.entry, location: r.location, members, newMembers };
+      const leftMembers = data.characters.filter((c) => !c.isActive && last.has(c.id) && last.get(c.id)! === i - 1).map((c) => c.id);
+      return { index: i, entry: r.entry, location: r.location, members, newMembers, leftMembers };
     });
+  }
+  function journeyOf(ch: MapCharacter): CharacterJourney {
+    const mine = steps.filter((st) => st.entry.characterIds.includes(ch.id));
+    return {
+      firstSession: mine.length ? mine[0].entry.session : null,
+      lastSession: mine.length ? mine[mine.length - 1].entry.session : null,
+      stops: new Set(mine.map((st) => st.location.id)).size,
+      present: stepIdx >= 0 && !!steps[stepIdx]?.members.includes(ch.id),
+    };
   }
 
   /* ── DOM: location markers ─────────────────────────────────────── */
@@ -122,7 +137,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
 
   function buildMarkers() {
     spriteLayer.querySelectorAll('.wm-loc').forEach((e) => e.remove());
-    labelLayer.querySelectorAll('.wm-label').forEach((e) => e.remove());
+    labelLayer.querySelectorAll('.wm-label:not(.wm-label-hero)').forEach((e) => e.remove());
     locEls.clear(); labelEls.clear();
     for (const loc of located()) {
       const p = locWorld(loc);
@@ -159,7 +174,11 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
   }
 
   /* ── DOM: party ────────────────────────────────────────────────── */
-  interface Member { id: string; el: HTMLElement; frames: HTMLCanvasElement[]; name: string }
+  interface Member { id: string; el: HTMLElement; frames: HTMLCanvasElement[]; name: string; x: number; y: number }
+  let hoveredMember: string | null = null;
+  const memberLabel = document.createElement('div');
+  memberLabel.className = 'wm-label wm-label-hero';
+  labelLayer.appendChild(memberLabel);
   const members = new Map<string, Member>();
   const party = { pos: { x: 0, y: 0 } as Pt, facing: 1, frame: 0, frameAt: 0 };
   let moving: { route: Pt[]; lengths: number[]; total: number; start: number; dur: number; target: number } | null = null;
@@ -186,47 +205,25 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     if (routeQueue.length) routeTimer = window.setTimeout(drainRoutes, 16);
   }
 
-  const headCache = new Map<string, Promise<HTMLImageElement | null>>();
-  function loadHead(ch: MapCharacter): Promise<HTMLImageElement | null> {
-    if (!ch.avatarUrl) return Promise.resolve(null);
-    let p = headCache.get(ch.id);
-    if (!p) {
-      p = new Promise((res) => {
-        const img = new Image();
-        img.onload = () => res(img);
-        img.onerror = () => res(null);
-        img.src = `/api/characters/${encodeURIComponent(ch.id)}/sprite`;
-      });
-      headCache.set(ch.id, p);
-    }
-    return p;
-  }
-
   function memberFor(ch: MapCharacter, idx: number): Member {
     let m = members.get(ch.id);
     if (m) return m;
-    const look = lookFor(ch, idx);
-    const frames = characterSprites(look).map((s) => rasterize(s));
+    const frames = heroSprites(heroLook(ch, idx));
     const el = document.createElement('div');
     el.className = 'wm-char';
-    el.title = ch.name;
     el.appendChild(frames[0]);
+    el.addEventListener('pointerenter', () => { hoveredMember = ch.id; markDirty(); });
+    el.addEventListener('pointerleave', () => { if (hoveredMember === ch.id) hoveredMember = null; markDirty(); });
+    el.addEventListener('pointerdown', (ev) => { ev.stopPropagation(); ev.preventDefault(); hooks.onSelectCharacter(ch, journeyOf(ch)); });
     spriteLayer.appendChild(el);
-    m = { id: ch.id, el, frames, name: ch.name };
+    m = { id: ch.id, el, frames, name: ch.name, x: 0, y: 0 };
     members.set(ch.id, m);
-    // swap in the portrait head once the pixelated avatar arrives
-    loadHead(ch).then((head) => {
-      const cur = members.get(ch.id);
-      if (!head || !cur || cur !== m) return;
-      cur.frames = characterSpritesWithHead(look, head);
-      markDirty();
-    });
     return m;
   }
 
   function syncMembers(step: Step | null) {
     const wanted = new Set(step ? step.members : []);
-    for (const [id, m] of members) if (!wanted.has(id)) { m.el.remove(); members.delete(id); }
+    for (const [id, m] of members) if (!wanted.has(id)) { m.el.remove(); members.delete(id); if (hoveredMember === id) hoveredMember = null; }
     if (step) step.members.forEach((cid, i) => {
       const ch = data.characters.find((c) => c.id === cid); if (!ch) return;
       const m = memberFor(ch, i);
@@ -323,11 +320,13 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
   function showBubble(step: Step) {
     if (!bubblesEnabled) { hideBubble(); return; }
     const names = step.newMembers.map((id) => data.characters.find((c) => c.id === id)?.name).filter(Boolean);
+    const gone = step.leftMembers.map((id) => data.characters.find((c) => c.id === id)?.name).filter(Boolean);
     bubble.innerHTML = `
       <div class="wm-bubble-head">Session ${step.entry.session} · ${esc(step.location.name)}</div>
       <div class="wm-bubble-title">${esc(step.entry.title)}</div>
       ${step.entry.excerpt ? `<p class="wm-bubble-text">${esc(step.entry.excerpt)}</p>` : ''}
       ${names.length ? `<div class="wm-bubble-join">✦ ${esc(names.join(', '))} ${names.length > 1 ? 'join' : 'joins'} the party</div>` : ''}
+      ${gone.length ? `<div class="wm-bubble-leave">✧ ${esc(gone.join(', '))} ${gone.length > 1 ? 'have' : 'has'} parted ways</div>` : ''}
       <a class="wm-bubble-link" href="/diary/${esc(step.entry.id)}">Read entry →</a>
       <button type="button" class="wm-bubble-close" title="Hide" aria-label="Hide speech bubble">×</button>`;
     bubble.querySelector('.wm-bubble-close')?.addEventListener('click', () => hideBubble());
@@ -549,6 +548,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     }
   }
   function placeMember(m: Member, x: number, y: number, walking: boolean, i: number) {
+    m.x = x; m.y = y;
     m.el.style.left = `${x}px`; m.el.style.top = `${y}px`;
     m.el.style.zIndex = String(1000 + Math.round(y));
     const frame = walking ? m.frames[party.frame] : m.frames[0];
@@ -584,8 +584,16 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
         r.el.style.opacity = String(Math.max(0.25, Math.min(0.9, 1.2 - cam.s * 0.3)));
       }
     }
+    const hm = hoveredMember ? members.get(hoveredMember) : null;
+    if (hm) {
+      const kk = Math.max(1, 1 / cam.s);
+      const sx = (hm.x - cam.x) * cam.s, sy = (hm.y - cam.y) * cam.s - HERO_H * kk * cam.s - 4;
+      memberLabel.textContent = hm.name;
+      memberLabel.style.display = 'block';
+      memberLabel.style.transform = `translate(${Math.round(sx)}px, ${Math.round(sy)}px) translate(-50%, -100%)`;
+    } else memberLabel.style.display = 'none';
     if (bubbleVisible) {
-      const sx = (party.pos.x - cam.x) * cam.s, sy = (party.pos.y - cam.y) * cam.s - 18 * Math.max(1, 1 / cam.s) * cam.s;
+      const sx = (party.pos.x - cam.x) * cam.s, sy = (party.pos.y - cam.y) * cam.s - (HERO_H + 2) * Math.max(1, 1 / cam.s) * cam.s;
       const bw = bubble.offsetWidth || 240;
       const left = Math.max(8, Math.min(vw - bw - 8, sx - bw / 2));
       bubble.style.left = `${Math.round(left)}px`;
@@ -692,6 +700,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     setBubbles: (on: boolean) => { bubblesEnabled = on; if (on && stepIdx >= 0 && !moving) showBubble(steps[stepIdx]); else hideBubble(); },
     setEditMode: (on: boolean) => { editMode = on; viewport.classList.toggle('wm-editing', on); },
     select: (loc: MapLocation) => selectLocation(loc),
+    journeyOf,
     locationsChanged: afterLocationsChanged,
     destroy: () => { destroyed = true; ac.abort(); clearTimeout(dwellTimer); clearTimeout(routeTimer); if (raf) cancelAnimationFrame(raf); },
   };

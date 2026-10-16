@@ -27,7 +27,6 @@
     "astro": "^5.15.1",
     "dotenv": "^17.2.3",
     "marked": "^14.1.3",
-    "sharp": "^0.34.5",
     "typescript": "^5.9.3"
   },
   "devDependencies": {
@@ -36,6 +35,7 @@
     "@tailwindcss/typography": "^0.5.19",
     "@vitejs/plugin-basic-ssl": "^2.2.0",
     "playwright": "^1.57.0",
+    "sharp": "^0.34.5",
     "tailwindcss": "^3.4.18"
   }
 }

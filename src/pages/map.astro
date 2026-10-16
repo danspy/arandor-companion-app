@@ -45,7 +45,8 @@ const mapData = {
   })),
   characters: characters.map((c) => ({
     id: c.id, name: c.name, class: c.class, race: c.race, isActive: c.isActive !== false,
-    hair: c.hair, skin: c.skin, avatarUrl: c.avatarUrl,
+    level: c.level, player: c.player, gender: c.gender, hair: c.hair, skin: c.skin, avatarUrl: c.avatarUrl,
+    hp: c.hp, maxHp: c.maxHp, stats: c.stats, background: c.background, alignment: c.alignment, dndbeyondUrl: c.dndbeyondUrl,
   })),
   entries: diaryEntries.map((e) => ({
     id: e.id, session: e.session, date: e.date, title: e.title, excerpt: excerptFor(e),
@@ -211,7 +212,8 @@ const mapData = {
 </Layout>
 
 <script>
-  import { initWorldMap, type MapLocation, type Step, type WorldMapApi } from '../lib/worldmap/engine';
+  import { initWorldMap, type MapCharacter, type MapLocation, type Step, type WorldMapApi } from '../lib/worldmap/engine';
+  import { heroLook, heroSprites } from '../lib/worldmap/heroes';
   import { LOCATION_SPRITES, rasterize } from '../lib/worldmap/sprites';
   import { renderMarkdown } from '../utils/markdown';
 
@@ -234,12 +236,13 @@ const mapData = {
     const tlRange = $<HTMLInputElement>('tlRange')!, tlLabel = $('tlLabel')!;
     const tlPlayIcon = $('tlPlayIcon')!, tlPauseIcon = $('tlPauseIcon')!;
     let sidebarOpen = false, selected: MapLocation | null = null, editMode = false;
+    let sidebarKind: 'location' | 'character' = 'location';
 
     /* ── sidebar ────────────────────────────────────────────────── */
     function openSidebar(view: 'journey' | 'details') {
       journeyView.classList.toggle('hidden', view !== 'journey');
       detailsView.classList.toggle('hidden', view !== 'details');
-      sidebarTitle.innerHTML = view === 'journey' ? 'Journey' : (selected ? `<a href="/locations/${esc(selected.id)}" class="hover:underline">${esc(selected.name)}</a>` : 'Location');
+      sidebarTitle.innerHTML = view === 'journey' ? 'Journey' : sidebarKind === 'character' ? detailsContent.dataset.title || 'Character' : (selected ? `<a href="/locations/${esc(selected.id)}" class="hover:underline">${esc(selected.name)}</a>` : 'Location');
       if (!sidebarOpen) {
         sidebarOpen = true;
         sidebar.classList.remove('translate-x-full');
@@ -255,7 +258,51 @@ const mapData = {
     backdrop.addEventListener('click', closeSidebar);
     $('toggleJourney')?.addEventListener('click', () => (sidebarOpen && !journeyView.classList.contains('hidden')) ? closeSidebar() : openSidebar('journey'));
 
+    function renderCharacter(ch: MapCharacter, j: { firstSession: number | null; lastSession: number | null; stops: number; present: boolean }) {
+      sidebarKind = 'character';
+      detailsContent.dataset.title = `<a href="/characters/${esc(ch.id)}" class="hover:underline">${esc(ch.name)}</a>`;
+      const stats = ch.stats || {};
+      const abilities = [['strength', 'STR'], ['dexterity', 'DEX'], ['constitution', 'CON'], ['intelligence', 'INT'], ['wisdom', 'WIS'], ['charisma', 'CHA']].filter(([k]) => typeof stats[k] === 'number');
+      const mod = (v: number) => { const m = Math.floor((v - 10) / 2); return m >= 0 ? `+${m}` : String(m); };
+      const sprite = heroSprites(heroLook(ch))[0];
+      const hpPct = ch.hp != null && ch.maxHp ? Math.max(0, Math.min(100, Math.round((ch.hp / ch.maxHp) * 100))) : null;
+      detailsContent.innerHTML = `<div class="space-y-4">
+        ${ch.avatarUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(ch.avatarUrl)}" alt="${esc(ch.name)}" class="w-full h-full object-cover object-top" /><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div></div>` : ''}
+        <div class="flex items-center gap-3">
+          <div class="wm-sheet-sprite" data-sprite></div>
+          <div class="min-w-0">
+            <div class="flex flex-wrap items-center gap-2">
+              <span class="t-badge t-badge-gold">${esc(ch.class)}</span>
+              ${ch.level != null ? `<span class="t-badge">Level ${esc(String(ch.level))}</span>` : ''}
+              <span class="t-badge">${esc(ch.race)}</span>
+              ${ch.isActive ? '' : '<span class="t-badge t-badge-red">Inactive</span>'}
+            </div>
+            ${ch.player ? `<div class="t-muted text-sm mt-1">Played by ${esc(ch.player)}</div>` : ''}
+          </div>
+        </div>
+        ${hpPct != null ? `<div><div class="flex justify-between text-xs t-muted mb-1"><span>Hit points</span><span>${esc(String(ch.hp))} / ${esc(String(ch.maxHp))}</span></div><div class="h-2 rounded-sm" style="background:var(--accent-dim);"><div class="h-2 rounded-sm" style="width:${hpPct}%; background:${hpPct > 50 ? '#3f9a5a' : hpPct > 25 ? '#d98a3a' : '#c23b3b'};"></div></div></div>` : ''}
+        ${abilities.length ? `<div class="grid grid-cols-6 gap-1 text-center">${abilities.map(([k, l]) => `<div class="t-inset py-1"><div class="t-faint text-[10px] tracking-wide">${l}</div><div class="t-body-text font-semibold">${esc(String(stats[k]))}</div><div class="t-muted text-xs">${mod(stats[k])}</div></div>`).join('')}</div>` : ''}
+        ${ch.alignment || ch.background ? `<div class="t-muted text-sm">${[ch.alignment, ch.background].filter(Boolean).map((v) => esc(String(v))).join(' · ')}</div>` : ''}
+        <div class="pt-4" style="border-top:1px solid var(--border);">
+          <h3 class="t-body-text font-semibold mb-2">On the journey</h3>
+          <div class="t-muted text-sm space-y-1">
+            ${j.firstSession != null ? `<div>Joined in session ${esc(String(j.firstSession))}${!ch.isActive && j.lastSession != null ? `, parted ways after session ${esc(String(j.lastSession))}` : ''}</div>` : '<div>Not yet part of the journey</div>'}
+            ${j.stops ? `<div>${esc(String(j.stops))} place${j.stops === 1 ? '' : 's'} visited</div>` : ''}
+            <div>${j.present ? 'Currently with the party' : 'Not with the party at this stop'}</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 pt-2">
+          <a href="/characters/${esc(ch.id)}" class="t-btn-primary">Open character sheet</a>
+          ${ch.dndbeyondUrl ? `<a href="${esc(ch.dndbeyondUrl)}" target="_blank" rel="noopener" class="t-btn-secondary">D&amp;D Beyond ↗</a>` : ''}
+        </div>
+      </div>`;
+      const holder = detailsContent.querySelector('[data-sprite]');
+      if (holder) { sprite.style.width = '48px'; sprite.style.height = '72px'; holder.appendChild(sprite); }
+      coordinateEditor?.classList.add('hidden');
+    }
+
     function renderDetails(loc: MapLocation) {
+      sidebarKind = 'location';
       const npcs = data.npcsByLocation[loc.id] || [], entries = data.entriesByLocation[loc.id] || [], lib = data.libraryByLocation[loc.id] || [];
       let html = `<div class="space-y-4">
         ${loc.imageUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(loc.imageUrl)}" alt="${esc(loc.name)}" class="w-full h-full object-cover" /><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div></div>` : ''}
@@ -291,6 +338,7 @@ const mapData = {
         return `${head}<li><button data-step="${s.index}" class="t-row w-full text-left p-3 block ${active ? 'wm-step-active' : ''}">
           <div class="flex items-center gap-2"><span class="wm-step-dot"></span><div class="min-w-0"><div class="t-link font-medium truncate">${esc(s.location.name)}</div><div class="t-muted text-xs truncate">${esc(s.entry.title)}</div></div></div>
           ${s.newMembers.length ? `<div class="text-xs mt-1" style="color:var(--gold);">✦ ${esc(s.newMembers.map((id) => data.characters.find((c: any) => c.id === id)?.name).filter(Boolean).join(', '))} joined</div>` : ''}
+          ${s.leftMembers.length ? `<div class="text-xs mt-1 t-muted">✧ ${esc(s.leftMembers.map((id) => data.characters.find((c: any) => c.id === id)?.name).filter(Boolean).join(', '))} parted ways</div>` : ''}
         </button></li>`;
       }).join('');
       journeyList.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => b.addEventListener('click', () => {
@@ -304,6 +352,7 @@ const mapData = {
     /* ── engine ─────────────────────────────────────────────────── */
     const api: WorldMapApi = initWorldMap(viewport, data, {
       onSelectLocation(loc) { selected = loc; renderDetails(loc); openSidebar('details'); },
+      onSelectCharacter(ch, journey) { renderCharacter(ch, journey); openSidebar('details'); },
       onStepChange(step, steps) {
         tlRange.max = String(Math.max(0, steps.length - 1));
         tlRange.value = String(step ? step.index : 0);
@@ -420,7 +469,7 @@ const mapData = {
   .wm-loc canvas { display: block; width: 16px; height: 16px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)); }
   .wm-loc-unvisited canvas { opacity: 0.72; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)) saturate(0.55); }
   .wm-loc-selected canvas, .wm-loc:hover canvas { filter: drop-shadow(0 0 2px #ffd36a) drop-shadow(0 1px 0 rgba(0,0,0,0.35)); opacity: 1; }
-  .wm-char { position: absolute; transform-origin: 50% 100%; pointer-events: none; }
+  .wm-char { position: absolute; transform-origin: 50% 100%; pointer-events: auto; cursor: pointer; }
   .wm-char canvas { display: block; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.4)); animation: wm-idle 0.9s steps(2) infinite; }
   .wm-char-join canvas { animation: wm-join 0.9s ease-out; }
   @keyframes wm-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
@@ -433,6 +482,8 @@ const mapData = {
     color: #f7efdd; background: rgba(12,9,6,0.72); border: 1px solid rgba(201,144,50,0.35); border-radius: 2px;
   }
   .wm-label-active { color: #ffd36a; background: rgba(12,9,6,0.9); border-color: #c99032; }
+  .wm-label-hero { color: #ffd36a; background: rgba(12,9,6,0.92); border-color: #c99032; z-index: 3; }
+  .wm-sheet-sprite canvas { image-rendering: pixelated; filter: drop-shadow(0 2px 0 rgba(0,0,0,0.35)); }
   .wm-region {
     position: absolute; left: 0; top: 0; z-index: 1; white-space: nowrap; display: none; pointer-events: none;
     font-family: 'Pixelify Sans', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
@@ -463,6 +514,7 @@ const mapData = {
   .wm-bubble-title { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 700; font-size: 17px; line-height: 1.15; margin-bottom: 4px; }
   .wm-bubble-text { font-size: 12.5px; line-height: 1.4; color: #3d2e1a; margin: 0; }
   .wm-bubble-join { font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 11px; color: #9a3412; margin-top: 6px; }
+  .wm-bubble-leave { font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 11px; color: #6e4514; margin-top: 4px; }
   .wm-bubble-link { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: #8d5a18; text-decoration: underline; }
   .wm-bubble-close {
     position: absolute; top: 2px; right: 4px; width: 20px; height: 20px; line-height: 18px; text-align: center;
