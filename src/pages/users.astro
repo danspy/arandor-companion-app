@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
 import { getUserRole } from '../lib/auth';
 
@@ -22,9 +23,8 @@ const users = await db.select({
 ---
 
 <Layout title="User Management">
-  <div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="font-display italic font-semibold text-4xl" style="color:var(--gold);">User Management</h1>
+  <PageHero title="User Management" pageName="users" canEditHero={false} compact subtitle="Who can log in, and what they may change.">
+    <Fragment slot="actions">
       <Button 
         variant="primary"
         size="md"
@@ -32,9 +32,11 @@ const users = await db.select({
         id="addUserBtn"
         title="Add new Add User"
       >
-        Add User
+        Add user
       </Button>
-    </div>
+    </Fragment>
+  </PageHero>
+  <div class="max-w-4xl mx-auto">
 
     <!-- Success/Error Messages -->
     <div id="messageContainer" class="hidden mb-6"></div>
@@ -51,7 +53,7 @@ const users = await db.select({
                 <h3 class="t-body-text text-xl font-bold">
                   {user.username}
                 </h3>
-                <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+                <span class={`px-3 py-1 rounded-xs text-xs font-medium ${
                   user.role === 'admin' ? 't-badge t-badge-red' :
                   user.role === 'dungeonmaster' ? 't-badge t-badge-accent' :
                   't-badge t-badge-blue'
@@ -112,7 +114,7 @@ const users = await db.select({
   <div id="addUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Add New User</h2>
+        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Add user</h2>
         <button id="closeModalBtn" class="t-icon-btn">
           <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -191,7 +193,7 @@ const users = await db.select({
             type="submit" 
             class="t-btn-primary flex-1 px-6 py-2"
           >
-            Create User
+            Create user
           </button>
           <button 
             type="button" 
@@ -209,7 +211,7 @@ const users = await db.select({
   <div id="editUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Edit User</h2>
+        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Edit user</h2>
         <button id="closeEditModalBtn" class="t-icon-btn">
           <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -281,7 +283,7 @@ const users = await db.select({
             type="submit" 
             class="t-btn-primary flex-1 px-6 py-2"
           >
-            Update User
+            Update user
           </button>
           <button 
             type="button" 
@@ -299,7 +301,7 @@ const users = await db.select({
   <div id="deleteUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
-        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--danger);">Delete User</h2>
+        <h2 class="font-display italic font-semibold text-2xl" style="color:var(--danger);">Delete user</h2>
         <button id="closeDeleteModalBtn" class="t-icon-btn">
           <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -325,7 +327,7 @@ const users = await db.select({
           id="confirmDeleteBtn"
           class="t-btn-danger flex-1 px-6 py-2"
         >
-          Delete User
+          Delete user
         </button>
         <button 
           id="cancelDeleteModalBtn"
@@ -543,7 +545,7 @@ const users = await db.select({
                     <h3 class="t-body-text text-xl font-bold">
                       ${escapedUsername}
                     </h3>
-                    <span class="px-3 py-1 rounded-full text-xs font-medium ${roleBadgeClass}">
+                    <span class="px-3 py-1 rounded-xs text-xs font-medium ${roleBadgeClass}">
                       ${escapedRole}
                     </span>
                   </div>

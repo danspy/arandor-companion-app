@@ -32,12 +32,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     heroImageUrl={heroImageUrl}
     pageName="dm-screen"
     canEditHero={canEdit}
+    compact
+    subtitle="Choose what your players see on the display screen."
   />
 
   <div class="mb-6">
-    <p class="t-muted mb-4">
-      Control what your players see on their display screen. Select locations, NPCs in spotlight, and manage the combat tracker.
-    </p>
     
     <!-- Player Display Link -->
     <div class="t-callout p-4 mb-6">
@@ -261,7 +260,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
         <a href="/tools/initiative" class="inline-block">
           <Button variant="secondary" size="sm">
-            Manage Initiative
+            Manage initiative
           </Button>
         </a>
       </div>
@@ -352,7 +351,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                 id="toggleScreenBtn"
                 class="t-btn-primary text-sm"
               >
-                Hide Screen
+                Hide screen
               </button>
             </div>
           </div>
@@ -386,7 +385,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                 />
               </label>
               <Button variant="secondary" size="sm" id="savePlaceholderBtn" class="w-full col-span-1">
-                <span class="hidden lg:inline">Save Wallpaper</span>
+                <span class="hidden lg:inline">Save wallpaper</span>
                 <span class="lg:hidden">Save</span>
               </Button>
               <Button variant="secondary" size="sm" id="clearPlaceholderBtn" class="w-full col-span-1">
@@ -402,7 +401,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         <!-- Clear All -->
         <div class="pt-3" style="border-top:1px solid var(--border);">
           <Button variant="danger" size="sm" id="clearAllBtn" class="w-full">
-            Clear Player Display
+            Clear player display
           </Button>
           
           <p class="t-faint text-xs mt-2">
@@ -528,13 +527,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       
       if (isVisible) {
         if (toggleBtn) {
-          toggleBtn.textContent = 'Hide Screen';
+          toggleBtn.textContent = 'Hide screen';
           toggleBtn.className = 't-btn-primary text-sm';
         }
         if (statusText) statusText.textContent = 'Visible';
       } else {
         if (toggleBtn) {
-          toggleBtn.textContent = 'Show Screen';
+          toggleBtn.textContent = 'Show screen';
           toggleBtn.className = 't-btn-gold text-sm';
         }
         if (statusText) statusText.textContent = 'Hidden';
@@ -996,7 +995,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Stop combat
       const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
       const stopCombatHandler = async () => {
-        if (!confirm('Stop combat? This will reset the turn order.')) return;
+        if (!(await window.arandorConfirm('Stop combat?', { detail: 'The turn order is reset.', confirmLabel: 'Stop combat', danger: true }))) return;
         
         await updateCombatState({
           status: 'stopped',
@@ -1054,7 +1053,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Clear all
       const clearAllBtn = document.getElementById('clearAllBtn');
       const clearAllHandler = async () => {
-        if (!confirm('Clear the entire player display? This will remove the location, NPCs, and hide the initiative tracker.')) {
+        if (!(await window.arandorConfirm('Clear the player display?', { detail: 'Removes the location and NPCs and hides the initiative tracker.', confirmLabel: 'Clear display', danger: true }))) {
           return;
         }
 
@@ -1107,7 +1106,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Clear placeholder image
       const clearPlaceholderBtn = document.getElementById('clearPlaceholderBtn');
       const clearPlaceholderHandler = async () => {
-        if (!confirm('Remove the placeholder wallpaper?')) return;
+        if (!(await window.arandorConfirm('Remove the wallpaper?', { confirmLabel: 'Remove', danger: true }))) return;
         
         const success = await updateState({ placeholderImageUrl: null });
         if (success) {

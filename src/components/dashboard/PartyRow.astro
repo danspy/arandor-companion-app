@@ -1,0 +1,272 @@
+---
+// Party portrait cards: front shows portrait, level and HP; hover (or tap) flips to stats.
+interface Props {
+  characters: Array<{
+    id: string;
+    name: string;
+    class: string;
+    race: string;
+    level: number;
+    player: string;
+    avatarUrl: string | null;
+    stats: unknown;
+    hp: number | null;
+    maxHp: number | null;
+    tempHp: number | null;
+    deathSaveSuccesses: number;
+    deathSaveFailures: number;
+    isStable: boolean;
+  }>;
+  myCharacterIds?: string[];
+}
+
+const { characters, myCharacterIds = [] } = Astro.props;
+
+const ABILITIES = [
+  ['strength', 'STR'],
+  ['dexterity', 'DEX'],
+  ['constitution', 'CON'],
+  ['intelligence', 'INT'],
+  ['wisdom', 'WIS'],
+  ['charisma', 'CHA'],
+] as const;
+
+const mod = (score: number) => {
+  const m = Math.floor((score - 10) / 2);
+  return m >= 0 ? `+${m}` : `${m}`;
+};
+
+const hpInfo = (hp: number | null, maxHp: number | null) => {
+  if (hp == null || !maxHp) return null;
+  const pct = Math.max(0, Math.min(100, (hp / maxHp) * 100));
+  const tone = hp <= 0 ? 'down' : pct > 50 ? 'good' : pct > 25 ? 'hurt' : 'bad';
+  return { pct, tone };
+};
+---
+
+{characters.length > 0 && (
+  <section id="party" class="t-panel p-5 mb-6" style="scroll-margin-top: 5rem;">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="t-section-h text-xl">The Party</h2>
+      <a href="/characters" class="t-link">All characters →</a>
+    </div>
+    <div class="party-row">
+      {characters.map((c) => {
+        const hp = hpInfo(c.hp, c.maxHp);
+        const stats = (c.stats ?? null) as Record<string, number> | null;
+        return (
+          <div class:list={['party-card', { 'is-mine': myCharacterIds.includes(c.id) }]} tabindex="0" role="button" aria-label={`${c.name}: show stats`} data-party-card>
+            <div class="party-inner">
+              <div class="party-face party-front">
+                {c.avatarUrl ? (
+                  <img src={c.avatarUrl} alt="" loading="lazy" />
+                ) : (
+                  <div class="party-initial">{c.name.charAt(0)}</div>
+                )}
+                <div class="party-shade"></div>
+                <span class="party-level" title={`Level ${c.level}`}>{c.level}</span>
+                {myCharacterIds.includes(c.id) && <span class="party-you">That's you</span>}
+                <div class="party-info">
+                  <h3 class="party-name">{c.name}</h3>
+                  <p class="party-sub">{c.race} {c.class}</p>
+                  {hp && (
+                    <div class="party-hp" title={`HP ${c.hp}/${c.maxHp}${c.tempHp ? ` (+${c.tempHp} temp)` : ''}`}>
+                      <div class={`party-hp-fill tone-${hp.tone}`} style={`width:${hp.pct}%`}></div>
+                      <span>{hp.tone === 'down' ? (c.isStable ? 'Stable' : 'Down!') : `${c.hp}/${c.maxHp}`}{c.tempHp ? ` +${c.tempHp}` : ''}</span>
+                    </div>
+                  )}
+                  {hp?.tone === 'down' && !c.isStable && (
+                    <div class="party-saves" title={`Death saves: ${c.deathSaveSuccesses} successes, ${c.deathSaveFailures} failures`}>
+                      {[0, 1, 2].map((i) => <i class:list={['pip', 'pip-ok', { on: i < c.deathSaveSuccesses }]}></i>)}
+                      <span class="pip-gap"></span>
+                      {[0, 1, 2].map((i) => <i class:list={['pip', 'pip-fail', { on: i < c.deathSaveFailures }]}></i>)}
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div class="party-face party-back">
+                <h3 class="party-name-back">{c.name}</h3>
+                <p class="t-faint text-xs mb-2">Lv {c.level} {c.class} · {c.player}</p>
+                {stats ? (
+                  <div class="party-stats">
+                    {ABILITIES.map(([key, label]) => (
+                      <div>
+                        <span class="t-label-sm">{label}</span>
+                        <strong>{stats[key] ?? '–'}</strong>
+                        {typeof stats[key] === 'number' && <em>{mod(stats[key])}</em>}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p class="t-muted text-xs my-auto">No stats yet</p>
+                )}
+                <a href={`/characters/${c.id}`} class="t-link text-xs mt-2">Character sheet →</a>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </section>
+)}
+
+<style>
+  .party-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+    gap: 0.9rem;
+  }
+  @media (max-width: 640px) {
+    .party-row { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
+    .party-card { height: 13rem; }
+  }
+  .party-card { perspective: 900px; height: 15rem; cursor: pointer; outline: none; }
+  .party-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 0.6s cubic-bezier(0.3, 1.3, 0.5, 1);
+  }
+  @media (hover: hover) {
+    .party-card:hover .party-inner { transform: rotateY(180deg); }
+  }
+  .party-card.is-flipped .party-inner,
+  .party-card:focus-visible .party-inner { transform: rotateY(180deg); }
+  .party-card:focus-visible .party-face { box-shadow: 0 0 0 2px var(--gold); }
+
+  .party-face {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    border-radius: 2px;
+    border: 1px solid var(--border-gold);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .party-front img { width: 100%; height: 100%; object-fit: cover; }
+  .party-initial {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 4rem;
+    font-weight: 700;
+    color: var(--gold);
+    background: radial-gradient(circle at 50% 35%, rgba(201, 144, 50, 0.3), #120d07 75%);
+  }
+  .party-shade { position: absolute; inset: 0; background: linear-gradient(to top, rgba(8, 6, 3, 0.92) 0%, rgba(8, 6, 3, 0.2) 55%, transparent 100%); }
+  .party-level {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: #1e1408;
+    background: radial-gradient(circle at 35% 30%, #f5d58a, #c99032 60%, #8d5a18);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+  }
+  .party-card.is-mine .party-face { border-color: #ffd98a; box-shadow: 0 0 0 1px #ffd98a, 0 0 22px rgba(255, 200, 100, 0.35); }
+  .party-you {
+    position: absolute;
+    top: 0.55rem;
+    left: 0.5rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 2px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1e1408;
+    background: #ffd98a;
+  }
+  .party-saves { display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.35rem; }
+  .pip { width: 0.55rem; height: 0.55rem; border-radius: 2px; border: 1px solid rgba(255, 255, 255, 0.5); }
+  .pip-ok.on { background: #22c55e; border-color: #22c55e; }
+  .pip-fail.on { background: #ef4444; border-color: #ef4444; }
+  .pip-gap { width: 0.35rem; }
+  .party-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6rem; }
+  .party-name { font-weight: 700; font-size: 0.95rem; color: #fff; line-height: 1.15; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
+  .party-sub { font-size: 0.7rem; color: rgba(255, 255, 255, 0.75); }
+  .party-hp {
+    position: relative;
+    margin-top: 0.4rem;
+    height: 0.95rem;
+    border-radius: 2px;
+    background: rgba(0, 0, 0, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    overflow: hidden;
+  }
+  .party-hp-fill { height: 100%; border-radius: 2px; animation: hp-fill 1s ease-out both; }
+  .party-hp span {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px #000;
+  }
+  .tone-good { background: linear-gradient(90deg, #15803d, #22c55e); }
+  .tone-hurt { background: linear-gradient(90deg, #b45309, #f59e0b); }
+  .tone-bad  { background: linear-gradient(90deg, #991b1b, #ef4444); animation: hp-fill 1s ease-out both, hp-pulse 1.2s 1s ease-in-out infinite; }
+  .tone-down { background: #7f1d1d; }
+  @keyframes hp-fill { from { width: 0; } }
+  @keyframes hp-pulse { 50% { opacity: 0.55; } }
+
+  .party-back {
+    transform: rotateY(180deg);
+    background: var(--bg-raised);
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .party-name-back { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.15rem; font-weight: 700; color: var(--text-strong); line-height: 1.1; }
+  .party-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.35rem; width: 100%; }
+  .party-stats div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.2rem 0;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+  }
+  .party-stats .t-label-sm { font-size: 0.55rem; }
+  .party-stats strong { font-size: 0.95rem; color: var(--text-strong); line-height: 1.1; }
+  .party-stats em { font-style: normal; font-size: 0.65rem; color: var(--gold); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .party-inner { transition: none; }
+    .party-hp-fill { animation: none; }
+  }
+</style>
+
+<script>
+  // Touch devices have no hover: tap flips the card (links on the back still work).
+  document.addEventListener('astro:page-load', () => {
+    for (const card of document.querySelectorAll<HTMLElement>('[data-party-card]')) {
+      card.addEventListener('click', (e) => {
+        if ((e.target as HTMLElement).closest('a') || window.matchMedia('(hover: hover)').matches) return;
+        card.classList.toggle('is-flipped');
+      });
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !(e.target as HTMLElement).closest('a')) {
+          window.location.href = card.querySelector('a')!.href;
+        }
+      });
+    }
+  });
+</script>

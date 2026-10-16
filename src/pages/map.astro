@@ -1,12 +1,14 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, Location, NPC, DiaryEntry, LibraryEntry, Character } from '@/db';
+import PageHero from '../components/PageHero.astro';
+import { db, Location, NPC, DiaryEntry, LibraryEntry, Character, PageSettings, eq } from '@/db';
 import { getUserRole } from '../lib/auth';
 
 // Map page is viewable by everyone, editable by dungeonmaster and admin
 const userRole = await getUserRole(Astro.cookies);
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+const mapHeroImage = (await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'map')))[0]?.heroImageUrl ?? null;
 
 const [locations, npcs, diaryEntries, libraryEntries, characters] = await Promise.all([
   db.select().from(Location),
@@ -65,11 +67,14 @@ const mapData = {
 ---
 
 <Layout title="World Map">
-  <div class="mb-6">
-    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-      <h1 class="font-display italic font-semibold text-4xl" style="color:var(--gold);">Map of Arandor</h1>
-
-      <div class="flex flex-wrap gap-2">
+  <PageHero
+    title="Map of Arandor"
+    heroImageUrl={mapHeroImage}
+    pageName="map"
+    canEditHero={canEdit}
+    compact
+  >
+    <Fragment slot="actions">
         <Button variant="primary" size="sm" id="toggleJourney" title="Journey log" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
@@ -80,19 +85,19 @@ const mapData = {
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path>
           </svg>
-          <span class="hidden sm:inline" id="heroPathToggleText">Hide Path</span>
+          <span class="hidden sm:inline" id="heroPathToggleText">Hide path</span>
         </Button>
         <Button variant="secondary" size="sm" id="toggleBubbles" title="Show or hide the story bubbles" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
           </svg>
-          <span class="hidden sm:inline" id="bubblesToggleText">Hide Story</span>
+          <span class="hidden sm:inline" id="bubblesToggleText">Hide story</span>
         </Button>
         <Button variant="secondary" size="sm" id="toggleLegend" title="Toggle legend" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
           </svg>
-          <span class="hidden sm:inline" id="legendToggleText">Show Legend</span>
+          <span class="hidden sm:inline" id="legendToggleText">Show legend</span>
         </Button>
         {canEdit && (
           <Button variant="primary" size="sm" id="toggleEditMode" class="flex items-center gap-2">
@@ -102,8 +107,9 @@ const mapData = {
             <span class="hidden sm:inline" id="editModeText">Edit Mode</span>
           </Button>
         )}
-      </div>
-    </div>
+      </Fragment>
+  </PageHero>
+  <div class="mb-6">
   </div>
 
   <div id="mapPageContainer" class="t-panel overflow-hidden">
@@ -198,7 +204,7 @@ const mapData = {
                   <input type="number" id="coordY" min="0" max="100" step="0.1" class="t-input w-full px-4 py-2" />
                 </div>
               </div>
-              <Button variant="primary" size="md" id="saveCoordinates" class="w-full">Save Coordinates</Button>
+              <Button variant="primary" size="md" id="saveCoordinates" class="w-full">Save coordinates</Button>
             </div>
           )}
         </div>
@@ -219,7 +225,7 @@ const mapData = {
 
   const esc = (s: string) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
   const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
-  const typeBadge = (type: string) => ({ city: 'bg-blue-500 text-white', dungeon: 'bg-purple-600 text-white', wilderness: 'bg-green-600 text-white', building: 'bg-amber-500 text-white' }[type] || 'bg-gray-500 text-white');
+  const typeBadge = (type: string) => `place-tag place-tag-${['city', 'dungeon', 'wilderness', 'building'].includes(type) ? type : 'other'}`;
 
   function initializeMap() {
     const viewport = document.getElementById('mapViewport');
@@ -317,7 +323,7 @@ const mapData = {
       let html = `<div class="space-y-4">
         ${loc.imageUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(loc.imageUrl)}" alt="${esc(loc.name)}" class="w-full h-full object-cover" /><div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div></div>` : ''}
         <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-xs ${typeBadge(loc.type)}">${esc(cap(loc.type))}</span>
+          <span class="inline-block px-3 py-1 rounded-xs text-sm font-semibold shadow-xs ${typeBadge(loc.type)}">${esc(cap(loc.type))}</span>
           ${loc.region ? `<span class="t-muted text-sm">📍 ${esc(loc.region)}</span>` : ''}
           ${loc.visited ? `<span class="t-badge t-badge-green">✓ Visited</span>` : ''}
         </div>
@@ -407,18 +413,18 @@ const mapData = {
       if (ev.key === ' ') { ev.preventDefault(); api.togglePlay(); }
       else if (ev.key === 'ArrowRight') { api.pause(); api.next(); }
       else if (ev.key === 'ArrowLeft') { api.pause(); api.prev(); }
-      else if (ev.key === 'b' || ev.key === 'B') { api.setBubbles(!api.bubblesEnabled); if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story'; }
+      else if (ev.key === 'b' || ev.key === 'B') { api.setBubbles(!api.bubblesEnabled); if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide story' : 'Show story'; }
     }, { signal: pageSignal() });
 
     const bubblesText = $('bubblesToggleText');
     $('toggleBubbles')?.addEventListener('click', () => {
       api.setBubbles(!api.bubblesEnabled);
-      if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story';
+      if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide story' : 'Show story';
     });
     const heroPathText = $('heroPathToggleText');
     $('toggleHeroPath')?.addEventListener('click', () => {
       api.setTrail(!api.trailVisible);
-      if (heroPathText) heroPathText.textContent = api.trailVisible ? 'Hide Path' : 'Show Path';
+      if (heroPathText) heroPathText.textContent = api.trailVisible ? 'Hide path' : 'Show path';
     });
 
     const legend = $('mapLegend')!, legendText = $('legendToggleText');
@@ -430,7 +436,7 @@ const mapData = {
       legendVisible = !legendVisible;
       legend.style.opacity = legendVisible ? '1' : '0';
       legend.style.pointerEvents = legendVisible ? 'auto' : 'none';
-      if (legendText) legendText.textContent = legendVisible ? 'Hide Legend' : 'Show Legend';
+      if (legendText) legendText.textContent = legendVisible ? 'Hide legend' : 'Show legend';
     });
 
     const editText = $('editModeText');

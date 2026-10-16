@@ -53,6 +53,18 @@ layer(base);
   --color-accent: #475569;
   --color-accent-dark: #1e293b;
 
+  /* Corners: everything is square-cut (2px) like the panels; only avatars are round
+     (rounded-full). Every rounded-* size maps to the same radius on purpose. */
+  --radius: 2px;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-sans: Outfit, system-ui, sans-serif;
 }
@@ -96,15 +108,20 @@ layer(base);
   --bg-raised:  #faf6ee;
   --text-strong: #1e1408;
   --text-body:   #3d2e1a;
-  --text-muted:  #7a6340;
-  --text-faint:  #a08a60;
+  /* Text tokens meet WCAG AA (4.5:1) on page, surface and raised backgrounds. */
+  --text-muted:  #6b5434;
+  --text-faint:  #7a6440;
   --border:      rgba(110, 69, 20, 0.14);
   --border-gold: rgba(201, 144, 50, 0.28);
   --accent-rgb:  201, 144, 50;
-  --accent:      #c99032;
+  /* Light mode uses a deeper gold so gold text and links stay readable on cream. */
+  --accent:      #875a14;
   --accent-dim:  rgba(201, 144, 50, 0.10);
   --accent-glow: rgba(201, 144, 50, 0.22);
-  --gold:        #c99032;
+  --gold:        #875a14;
+  --on-gold:     #ffffff;   /* text on a gold background */
+  --danger:      #a8352b;   /* red and green text, readable on light surfaces */
+  --success:     #2e6930;
   --gold-dim:    rgba(201, 144, 50, 0.12);
   --nav-bg:      rgba(30, 20, 8, 0.93);
   --nav-border:  rgba(201, 144, 50, 0.18);
@@ -117,8 +134,13 @@ layer(base);
   --bg-raised:  #1a1410;
   --text-strong: #f2e8d5;
   --text-body:   #d0c4aa;
-  --text-muted:  #8c7c60;
-  --text-faint:  #5c5040;
+  --text-muted:  #a08f70;
+  --text-faint:  #908062;
+  --accent:      #c99032;
+  --gold:        #c99032;
+  --on-gold:     #1e1408;
+  --danger:      #f87171;
+  --success:     #4ade80;
   --border:      rgba(201, 144, 50, 0.10);
   --border-gold: rgba(201, 144, 50, 0.22);
   --accent-dim:  rgba(201, 144, 50, 0.12);
@@ -193,7 +215,7 @@ main {
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
 /* ── Navigation ─────────────────────────────────────────────────── */
@@ -206,6 +228,24 @@ main {
   position: relative;
   z-index: 50;
 }
+
+/* While a page's scene header is behind it, the nav becomes a soft gradient over the image
+   (html.hero-nav is toggled in Layout.astro). */
+.app-nav { transition: background 0.35s ease, border-color 0.35s ease; }
+/* The nav is dark in both themes, so it always uses the bright gold. */
+.app-nav { --gold: #c99032; --accent: #c99032; --on-gold: #1e1408; }
+html.hero-nav .app-nav {
+  background: linear-gradient(to bottom, rgba(8, 6, 3, 0.85), rgba(8, 6, 3, 0.35) 70%, rgba(8, 6, 3, 0));
+  border-bottom-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html.hero-nav .app-nav::after { opacity: 0; }
+/* Keep links legible on any image behind the nav. */
+html.hero-nav .app-nav a,
+html.hero-nav .app-nav button { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85); }
+html.hero-nav .app-nav svg { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8)); }
+html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg); }
 
 /* Ember glow strip at the very bottom of nav */
 .app-nav::after {
@@ -288,10 +328,10 @@ main {
 /* ── Nav link states ────────────────────────────────────────────── */
 
 .nav-link-inactive {
-  color: rgba(242, 232, 213, 0.45);
+  color: rgba(242, 232, 213, 0.82);
 }
 .nav-link-inactive:hover {
-  color: rgba(242, 232, 213, 0.85);
+  color: #f2e8d5;
   background: rgba(201, 144, 50, 0.06);
 }
 .nav-link-active {
@@ -595,35 +635,58 @@ a.t-row:hover { text-decoration: none; }
 .t-badge-red {
   background: rgba(220, 38, 38, 0.10);
   border-color: rgba(220, 38, 38, 0.25);
-  color: #f87171;
+  color: var(--danger);
 }
 .t-badge-green {
   background: rgba(22, 163, 74, 0.10);
   border-color: rgba(22, 163, 74, 0.25);
-  color: #4ade80;
+  color: var(--success);
 }
 .t-badge-blue {
-  background: rgba(59, 130, 246, 0.10);
-  border-color: rgba(59, 130, 246, 0.25);
-  color: #60a5fa;
+  /* Kept for markup that still uses it (player role); themed instead of blue. */
+  background: rgba(150, 120, 80, 0.12);
+  border-color: rgba(150, 120, 80, 0.3);
+  color: #c9a877;
 }
 
 /* ── Progress bar ────────────────────────────────────────────────── */
 
 .t-progress-track {
   background: var(--bg-page);
-  border-radius: 999px;
+  border-radius: 2px;
   overflow: hidden;
 }
 .t-progress-fill {
   background: linear-gradient(to right, var(--gold), #d4a43e);
-  border-radius: 999px;
+  border-radius: 2px;
   height: 100%;
   transition: width 0.4s ease;
   display: flex;
   align-items: center;
   justify-content: center;
 }
+
+/* ── Place types and NPC relationships ───────────────────────────
+   Earthy colours that sit with the gold palette (used for card
+   placeholders and small tags on lists, the map and detail pages). */
+.place-bg-city       { background: radial-gradient(circle at 70% 25%, rgba(201,144,50,.45), transparent 60%), #2a1d0c; }
+.place-bg-dungeon    { background: radial-gradient(circle at 70% 25%, rgba(160,48,40,.45), transparent 60%), #1c0c0b; }
+.place-bg-wilderness { background: radial-gradient(circle at 70% 25%, rgba(110,140,70,.45), transparent 60%), #121a0c; }
+.place-bg-building   { background: radial-gradient(circle at 70% 25%, rgba(150,100,55,.45), transparent 60%), #1e140b; }
+.place-bg-other      { background: radial-gradient(circle at 70% 25%, rgba(120,105,140,.45), transparent 60%), #15121a; }
+.place-tag { color: #fff7e6; }
+.place-tag-city       { background: rgba(141, 90, 24, .92); }
+.place-tag-dungeon    { background: rgba(122, 32, 28, .92); }
+.place-tag-wilderness { background: rgba(70, 95, 42, .92); }
+.place-tag-building   { background: rgba(110, 72, 38, .92); }
+.place-tag-other      { background: rgba(85, 72, 102, .92); }
+.rel-bg-ally    { background: radial-gradient(circle at 70% 25%, rgba(110,140,70,.45), transparent 60%), #121a0c; }
+.rel-bg-enemy   { background: radial-gradient(circle at 70% 25%, rgba(160,48,40,.45), transparent 60%), #1c0c0b; }
+.rel-bg-neutral { background: radial-gradient(circle at 70% 25%, rgba(150,100,55,.45), transparent 60%), #1e140b; }
+.rel-tag { color: #fff7e6; }
+.rel-tag-ally    { background: rgba(70, 95, 42, .92); }
+.rel-tag-enemy   { background: rgba(122, 32, 28, .92); }
+.rel-tag-neutral { background: rgba(110, 72, 38, .92); }
 
 /* ── Primary button ──────────────────────────────────────────────── */
 
@@ -632,7 +695,7 @@ a.t-row:hover { text-decoration: none; }
   align-items: center;
   gap: 0.4rem;
   background: var(--gold);
-  color: #fff;
+  color: var(--on-gold);
   border: none;
   border-radius: 2px;
   padding: 0.5rem 1.125rem;
@@ -644,7 +707,7 @@ a.t-row:hover { text-decoration: none; }
   box-shadow: 0 0 16px rgba(201, 144, 50, 0.15);
 }
 .t-btn-primary:hover {
-  background: #b5822d;
+  background: color-mix(in srgb, var(--gold) 88%, #000);
   box-shadow: 0 0 24px rgba(201, 144, 50, 0.25);
 }
 
@@ -692,10 +755,8 @@ main h1 {
   align-items: center;
   gap: 0.4rem;
   color: var(--text-muted);
-  font-size: 0.72rem;
+  font-size: 0.85rem;
   font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
   transition: color 0.15s ease;
 }
 .t-back-link:hover { color: var(--gold); }
@@ -745,7 +806,7 @@ main h1 {
 }
 .t-icon-btn-danger:hover {
   border-color: rgba(220,38,38,0.30);
-  color: #f87171;
+  color: var(--danger);
   background: rgba(220,38,38,0.08);
 }
 
@@ -840,7 +901,7 @@ main h1 {
   align-items: center;
   gap: 0.4rem;
   background: rgba(220,38,38,0.10);
-  color: #f87171;
+  color: var(--danger);
   border: 1px solid rgba(220,38,38,0.25);
   border-radius: 2px;
   padding: 0.5rem 1.125rem;
@@ -985,8 +1046,8 @@ main h1 {
   z-index: 9999;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
-.t-toast-success { border-color: rgba(22,163,74,0.35); color: #4ade80; }
-.t-toast-error   { border-color: rgba(220,38,38,0.35); color: #f87171; }
+.t-toast-success { border-color: rgba(22,163,74,0.35); color: var(--success); }
+.t-toast-error   { border-color: rgba(220,38,38,0.35); color: var(--danger); }
 
 /* ── Detail field (label + value pair) ───────────────────────────── */
 .t-field-label {

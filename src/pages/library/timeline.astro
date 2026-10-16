@@ -105,21 +105,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="timeline"
     canEditHero={canEditHero}
-  />
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addTimelineEntry"
+      title="Add new Timeline Entry"
+    >
+      Add entry
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
-  {isLoggedIn && (
-    <div class="flex justify-end mb-6">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addTimelineEntry"
-        title="Add new Timeline Entry"
-      >
-        Add Entry
-      </Button>
-    </div>
-  )}
 
   {timelineEntries.length === 0 && (
     <div class="t-panel text-center py-16">
@@ -145,7 +146,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               {/* Year marker with line connector */}
               <div class="text-center mb-4 relative" style="min-height: 80px;">
                 <div class={`absolute top-8 left-1/2 w-1 h-8 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`} style="background:var(--border-gold);"></div>
-                <div class={`inline-block text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
+                <div class={`inline-block text-(--on-gold) ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 `} style="background:var(--gold);border:3px solid var(--bg-surface);">
                   <div class={isCenturyMarker ? 'text-2xl font-bold' : 'text-sm font-semibold'}>{year}</div>
                 </div>
               </div>
@@ -271,7 +272,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
             <div class="flex items-center mb-4" style="min-height: 60px;">
-              <div class={`shrink-0 text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
+              <div class={`shrink-0 text-(--on-gold) ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 `} style="background:var(--gold);border:3px solid var(--bg-surface);">
                 <div class={isCenturyMarker ? 'text-lg font-bold' : 'text-sm font-semibold'}>{year}</div>
               </div>
             </div>
@@ -677,7 +678,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             type="submit" 
             class="t-btn-primary flex-1 px-6 py-2"
           >
-            Save Entry
+            Save entry
           </button>
           <button 
             type="button" 
@@ -1205,7 +1206,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         const id = button.getAttribute('data-id');
         if (!id) return;
         
-        if (confirm('Are you sure you want to delete this timeline entry?')) {
+        if ((await window.arandorConfirm('Delete this timeline entry?', { detail: 'This can\u2019t be undone.', confirmLabel: 'Delete', danger: true }))) {
           try {
             const response = await fetch(`/api/timeline/${id}`, {
               method: 'DELETE',
@@ -1257,7 +1258,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     
     .overflow-x-auto::-webkit-scrollbar-thumb {
       background: #cbd5e1;
-      border-radius: 4px;
+      border-radius: 2px;
     }
     
     .dark .overflow-x-auto::-webkit-scrollbar-thumb {

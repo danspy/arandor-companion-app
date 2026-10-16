@@ -1,0 +1,86 @@
+---
+// Latest library entries as book spines on a shelf, drawn in the app's own style:
+// dark spines with gold bands, a thin coloured top edge, a gold rule as the shelf.
+interface Props {
+  entries: Array<{ id: string; title: string; tags: string[] }>;
+}
+
+const { entries } = Astro.props;
+
+// Stable per-title accent and height so the shelf looks varied but never reshuffles.
+const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+const accents = ['#c99032', '#8d5a18', '#7a2f28', '#5f7a3f', '#6b5a7a', '#9a6a3a'];
+const books = entries.map((e) => {
+  const h = hash(e.title);
+  return { ...e, accent: accents[h % accents.length], height: 10 + (h % 4) * 0.8, width: 2.6 + ((h >> 3) % 3) * 0.35 };
+});
+---
+
+<section class="t-panel p-5 h-full shelf-panel">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="t-section-h text-xl">From the Library</h2>
+    <a href="/library" class="t-link">Library →</a>
+  </div>
+  {books.length > 0 ? (
+    <div class="shelf">
+      <div class="shelf-books">
+        {books.map((b) => (
+          <a href={`/library/${b.id}`} class="book" style={`--accent-book:${b.accent};height:${b.height}rem;width:${b.width}rem`} title={b.title}>
+            <span class="book-band"></span>
+            <span class="book-title">{b.title}</span>
+            <span class="book-band"></span>
+          </a>
+        ))}
+      </div>
+      <div class="shelf-rule"></div>
+    </div>
+  ) : (
+    <p class="t-muted text-sm italic">The library shelves are still empty.</p>
+  )}
+</section>
+
+<style>
+  .shelf-panel { display: flex; flex-direction: column; }
+  .shelf { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 15rem; }
+  .shelf-books {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.3rem;
+    padding: 1.2rem 0.25rem 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .book {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-gold);
+    border-top: 3px solid var(--accent-book);
+    border-radius: 2px;
+    color: var(--text-strong);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .book:hover { transform: translateY(-0.6rem); border-color: var(--gold); border-top-color: var(--accent-book); color: var(--gold); }
+  .book-band { width: 60%; height: 4px; border-top: 1px solid var(--border-gold); border-bottom: 1px solid var(--border-gold); }
+  .book-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600;
+    font-size: 0.9rem;
+    line-height: 1.1;
+    max-height: 78%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .shelf-rule { height: 1px; background: linear-gradient(90deg, transparent, var(--gold) 15%, var(--gold) 85%, transparent); opacity: 0.7; }
+  @media (prefers-reduced-motion: reduce) {
+    .book { transition: none; }
+  }
+</style>

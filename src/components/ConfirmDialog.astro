@@ -1,0 +1,121 @@
+---
+// Themed replacements for the browser's grey popups:
+// - window.arandorConfirm(): confirmation dialog, e.g.
+//     if (!(await window.arandorConfirm('Delete this NPC?', { confirmLabel: 'Delete', danger: true }))) return;
+// - window.alert() is routed to a themed message at the bottom of the screen (non-blocking).
+---
+
+<dialog id="arandor-confirm" class="arandor-confirm t-modal-panel" aria-labelledby="arandor-confirm-msg">
+  <form method="dialog" class="arandor-confirm-body">
+    <p id="arandor-confirm-msg" class="arandor-confirm-msg"></p>
+    <p class="arandor-confirm-detail" hidden></p>
+    <div class="arandor-confirm-actions">
+      <button value="cancel" class="t-btn-secondary" data-cancel>Cancel</button>
+      <button value="confirm" class="t-btn-primary" data-confirm>OK</button>
+    </div>
+  </form>
+</dialog>
+
+<div id="arandor-toasts" class="arandor-toasts" role="status" aria-live="polite"></div>
+
+<style is:global>
+  .arandor-confirm {
+    margin: auto;
+    width: min(26rem, calc(100vw - 2rem));
+    padding: 0;
+    color: var(--text-body);
+  }
+  .arandor-confirm::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+  .arandor-confirm[open] { animation: arandor-confirm-in 0.2s ease-out both; }
+  @keyframes arandor-confirm-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .arandor-confirm-body { padding: 1.5rem; }
+  .arandor-confirm-msg {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .arandor-confirm-detail { margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted); white-space: pre-line; }
+  .arandor-confirm-actions { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 1.5rem; }
+  .arandor-confirm .is-danger { background: var(--danger); color: #fff; }
+  .dark .arandor-confirm .is-danger { color: #1e0806; }
+  .arandor-toasts {
+    position: fixed;
+    left: 50%;
+    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    transform: translateX(-50%);
+    z-index: 10010;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    width: min(32rem, calc(100vw - 2rem));
+    pointer-events: none;
+  }
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    .arandor-toasts { bottom: calc(1.25rem + 56px + 12px + env(safe-area-inset-bottom, 0px)); }
+  }
+  .arandor-toast {
+    position: static;
+    pointer-events: auto;
+    cursor: pointer;
+    width: 100%;
+    white-space: pre-line;
+    border-left-width: 3px;
+    animation: arandor-confirm-in 0.2s ease-out both;
+  }
+  .arandor-toast.t-toast-info { border-left-color: var(--gold); }
+  .arandor-toast.t-toast-error { color: var(--text-body); border-left-color: var(--danger); }
+  @media (prefers-reduced-motion: reduce) {
+    .arandor-confirm[open], .arandor-toast { animation: none; }
+  }
+</style>
+
+<script>
+  declare global {
+    interface Window {
+      arandorConfirm: (message: string, options?: { detail?: string; confirmLabel?: string; danger?: boolean }) => Promise<boolean>;
+    }
+  }
+
+  // ── Messages (replaces window.alert) ──
+  const ERROR_WORDS = /fail|error|could not|couldn't|unable|invalid|please|required|not allowed|denied|wrong/i;
+  window.alert = (message?: unknown) => {
+    const box = document.getElementById('arandor-toasts');
+    const text = String(message ?? '');
+    if (!box) return console.warn(text);
+    const toast = document.createElement('div');
+    toast.className = `t-toast arandor-toast ${ERROR_WORDS.test(text) ? 't-toast-error' : 't-toast-info'}`;
+    toast.textContent = text;
+    const close = () => toast.remove();
+    toast.addEventListener('click', close);
+    box.append(toast);
+    setTimeout(close, Math.min(9000, 3500 + text.length * 40));
+  };
+
+  window.arandorConfirm = (message, options = {}) =>
+    new Promise((resolve) => {
+      const dialog = document.getElementById('arandor-confirm') as HTMLDialogElement | null;
+      // Fallback if the dialog is missing (e.g. a page without the main layout).
+      if (!dialog || typeof dialog.showModal !== 'function') {
+        resolve(window.confirm(options.detail ? `${message}\n\n${options.detail}` : message));
+        return;
+      }
+      (dialog.querySelector('#arandor-confirm-msg') as HTMLElement).textContent = message;
+      const detail = dialog.querySelector('.arandor-confirm-detail') as HTMLElement;
+      detail.textContent = options.detail ?? '';
+      detail.hidden = !options.detail;
+      const ok = dialog.querySelector('[data-confirm]') as HTMLButtonElement;
+      ok.textContent = options.confirmLabel ?? 'OK';
+      ok.classList.toggle('is-danger', !!options.danger);
+
+      dialog.addEventListener('close', () => resolve(dialog.returnValue === 'confirm'), { once: true });
+      dialog.returnValue = '';
+      dialog.showModal();
+      (dialog.querySelector('[data-cancel]') as HTMLButtonElement).focus();
+    });
+</script>

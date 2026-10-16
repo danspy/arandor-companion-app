@@ -1,0 +1,319 @@
+---
+// Full-bleed dashboard hero, used when a campaign hero image is set. It slides under the
+// (temporarily transparent) nav, fades into the page and tints the page background.
+// The "next-session" slot holds the compact next-session card.
+interface Props {
+  imageUrl: string;
+  canEdit: boolean;
+  level: number;
+  progress: number; // 0-100
+  lastSession: { number: number; daysAgo: number } | null;
+}
+
+const { imageUrl, canEdit, level, progress, lastSession } = Astro.props;
+const lastPlayed = lastSession
+  ? lastSession.daysAgo === 0 ? 'played today' : lastSession.daysAgo === 1 ? 'last played yesterday' : `last played ${lastSession.daysAgo} days ago`
+  : null;
+---
+
+<div class="hero-ambient" style={`background-image:url("${imageUrl}")`} aria-hidden="true"></div>
+
+<section class="dash-hero" data-dash-hero data-immersive-hero>
+  <div class="dash-hero-bg">
+    <div class="dash-hero-media" data-hero-parallax>
+      <img src={imageUrl} alt="" fetchpriority="high" />
+    </div>
+    <div class="dash-hero-shade"></div>
+    <canvas class="dash-hero-sparks" data-hero-sparks aria-hidden="true"></canvas>
+  </div>
+
+  {canEdit && (
+    <button class="edit-hero-image-btn dash-hero-edit" title="Edit hero image">
+      <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+      </svg>
+      Edit
+    </button>
+  )}
+
+  <div class="dash-hero-content container mx-auto px-4 sm:px-6">
+    <div class="dash-hero-main">
+      <p class="dash-hero-kicker">Welcome back, Adventurers of</p>
+      <h1 class="dash-hero-title">Ex Arena</h1>
+      {lastSession && <p class="dash-hero-last">Session {lastSession.number} · {lastPlayed}</p>}
+      <div class="dash-hero-progress">
+        <span class="dash-hero-level" title={`Party level ${level}`}>{level}</span>
+        <div class="dash-hero-progress-body">
+          <div class="dash-hero-progress-text">
+            <span>Party level {level}</span>
+            <span>{progress}% to {level + 1}</span>
+          </div>
+          <div class="dash-hero-progress-track">
+            <div class="dash-hero-progress-fill" style={`width:${progress}%`}></div>
+          </div>
+        </div>
+        {canEdit && (
+          <button id="editProgressBtn" type="button" class="dash-hero-progress-edit" title="Edit campaign progress" aria-label="Edit campaign progress">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+          </button>
+        )}
+      </div>
+    </div>
+    <div class="dash-hero-side">
+      <slot name="next-session" />
+    </div>
+  </div>
+</section>
+
+<!-- Pulls the first dashboard cards up over the hero's fade. -->
+<div id="dashboard-content" class="dash-after-hero"></div>
+
+<style>
+  /* Pull the hero up under the sticky nav (60px) and main's top padding (2rem). */
+  .dash-hero {
+    --hero-pull: calc(2rem + 60px);
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: calc(-1 * var(--hero-pull));
+    min-height: clamp(30rem, 80svh, 48rem);
+    overflow: hidden;
+    display: flex;
+    align-items: flex-end;
+    isolation: isolate;
+  }
+  /* Image, shade and sparks fade out at the bottom so the hero melts into whatever is
+     behind it (page colour + blurred ambient copy) without a visible edge. The wrapper
+     doesn't move with the parallax, so the fade stays put while scrolling. */
+  .dash-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 0%, #000 62%, transparent 100%);
+  }
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    /* PWA: no nav; extend under the status bar instead. */
+    .dash-hero { --hero-pull: calc(2rem + var(--safe-top)); }
+  }
+
+  .dash-hero-media { position: absolute; inset: -6% 0 0 0; z-index: -3; will-change: transform; }
+  .dash-hero-media img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    animation: ken-burns 28s ease-in-out infinite alternate;
+  }
+  @keyframes ken-burns {
+    from { transform: scale(1.04) translate(0, 0); }
+    to   { transform: scale(1.14) translate(-1.5%, -1%); }
+  }
+
+  .dash-hero-shade {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+      linear-gradient(to bottom, rgba(8, 6, 3, 0.55) 0%, transparent 22%),
+      radial-gradient(ellipse 120% 80% at 30% 100%, rgba(8, 6, 3, 0.55), transparent 70%),
+      linear-gradient(to top, rgba(8, 6, 3, 0.45) 0%, rgba(8, 6, 3, 0.3) 45%, transparent 75%);
+  }
+  .dash-hero-sparks { position: absolute; inset: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+
+  .dash-hero-edit {
+    position: absolute;
+    top: calc(var(--hero-pull) + 0.25rem);
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 2px;
+    background: rgba(8, 6, 3, 0.55);
+    border: 1px solid rgba(201, 144, 50, 0.3);
+    color: rgba(242, 232, 213, 0.8);
+    backdrop-filter: blur(8px);
+  }
+
+  .dash-hero-content {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1.5rem 2rem;
+    padding-top: calc(var(--hero-pull) + 3rem);
+    padding-bottom: 5.5rem;
+  }
+  .dash-hero-main { min-width: 0; flex: 1; }
+  .dash-hero-main > *, .dash-hero-side { animation: rise 0.8s cubic-bezier(0.2, 0.9, 0.3, 1) both; }
+  .dash-hero-main > :nth-child(3) { animation-delay: 0.14s; }
+  .dash-hero-main > :nth-child(4) { animation-delay: 0.2s; }
+  .dash-hero-side { animation-delay: 0.3s; }
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .dash-hero-kicker {
+    font-size: 0.75rem;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: #e8c37a;
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  }
+  .dash-hero-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-weight: 700;
+    font-size: clamp(3.5rem, 15vw, 8rem);
+    line-height: 0.95;
+    margin: 0.1em 0 0.15em;
+    background: linear-gradient(100deg, #f2e8d5 20%, #ffd98a 40%, #f2e8d5 60%);
+    background-size: 250% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.7));
+    animation: rise 0.8s 0.08s cubic-bezier(0.2, 0.9, 0.3, 1) both, shimmer 7s 1s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0%, 100% { background-position: 100% 0; }
+    50%      { background-position: 0 0; }
+  }
+
+  .dash-hero-last {
+    font-size: 0.85rem;
+    color: rgba(242, 232, 213, 0.8);
+    text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
+    margin-bottom: 1.1rem;
+  }
+  /* Glass backing so the level row stays readable where the image fades into a light page. */
+  .dash-hero-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 26rem;
+    padding: 0.45rem 0.75rem 0.45rem 0.45rem;
+    border-radius: 2px;
+    background: rgba(8, 6, 3, 0.5);
+    border: 1px solid rgba(201, 144, 50, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .dash-hero-level {
+    flex-shrink: 0;
+    width: 2.6rem;
+    height: 2.6rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 1.4rem;
+    color: #1e1408;
+    background: radial-gradient(circle at 35% 30%, #fff0c2, #c99032 60%, #8d5a18);
+    clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
+    filter: drop-shadow(0 0 10px rgba(255, 200, 100, 0.6));
+  }
+  .dash-hero-progress-body { flex: 1; min-width: 0; }
+  .dash-hero-progress-text {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: rgba(242, 232, 213, 0.8);
+    text-shadow: 0 1px 4px #000;
+    margin-bottom: 0.3rem;
+  }
+  .dash-hero-progress-track { height: 6px; border-radius: 2px; background: rgba(255, 255, 255, 0.15); overflow: hidden; }
+  .dash-hero-progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, #c99032, #ffd98a);
+    box-shadow: 0 0 12px rgba(255, 200, 100, 0.8);
+    animation: fill 1.6s 0.4s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  }
+  @keyframes fill { from { width: 0; } }
+  .dash-hero-progress-edit {
+    flex-shrink: 0;
+    padding: 0.35rem;
+    border-radius: 2px;
+    color: rgba(242, 232, 213, 0.75);
+    border: 1px solid rgba(201, 144, 50, 0.35);
+    background: rgba(8, 6, 3, 0.4);
+  }
+  .dash-hero-progress-edit:hover { color: #ffd98a; border-color: #ffd98a; }
+
+  .dash-hero-side { flex-shrink: 0; }
+
+  @media (max-width: 640px) {
+    .dash-hero-content { flex-direction: column; align-items: stretch; padding-bottom: 4rem; }
+    .dash-hero-kicker { font-size: 0.62rem; letter-spacing: 0.18em; }
+  }
+
+  .dash-after-hero { margin-top: -3.5rem; scroll-margin-top: 5rem; }
+  @media (max-width: 640px) { .dash-after-hero { margin-top: -2.5rem; } }
+
+  /* Blurred copy of the hero tinting the whole dashboard background. */
+  .hero-ambient {
+    position: fixed;
+    inset: -10%;
+    z-index: -1;
+    background-size: cover;
+    background-position: center;
+    filter: blur(56px) saturate(1.3);
+    opacity: 0.16;
+    pointer-events: none;
+  }
+  :global(html:not(.dark)) .hero-ambient { opacity: 0.1; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dash-hero-media img, .dash-hero-title, .dash-hero-main > *, .dash-hero-side,
+    .dash-hero-progress-fill { animation: none !important; }
+    .dash-hero-sparks { display: none; }
+  }
+</style>
+
+
+<script>
+  import { startSparks } from '../../lib/sparks';
+
+  let cleanup: (() => void) | null = null;
+
+  function initHero() {
+    cleanup?.();
+    cleanup = null;
+    const hero = document.querySelector<HTMLElement>('[data-dash-hero]');
+    if (!hero) return;
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const media = hero.querySelector<HTMLElement>('[data-hero-parallax]');
+    let frame = 0;
+    const onScroll = () => {
+      if (frame) return;
+      frame = requestAnimationFrame(() => {
+        frame = 0;
+        const y = window.scrollY;
+        if (media && !reduce && y < hero.offsetHeight) media.style.transform = `translate3d(0, ${y * 0.35}px, 0)`;
+      });
+    };
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    const canvas = hero.querySelector<HTMLCanvasElement>('[data-hero-sparks]');
+    const stopSparks = canvas && !reduce ? startSparks(canvas) : null;
+
+    cleanup = () => {
+      window.removeEventListener('scroll', onScroll);
+      stopSparks?.();
+    };
+  }
+
+  document.addEventListener('astro:page-load', initHero);
+  document.addEventListener('astro:before-swap', () => {
+    cleanup?.();
+    cleanup = null;
+  });
+</script>

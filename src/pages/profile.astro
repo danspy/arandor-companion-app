@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
 import { getCurrentUser } from '../lib/auth';
 
 // Check if user is authenticated
@@ -16,8 +17,8 @@ const roleDisplay = {
 ---
 
 <Layout title="My Profile">
+  <PageHero title="My Profile" pageName="profile" canEditHero={false} compact subtitle="Your name, picture, characters and password." />
   <div class="max-w-2xl mx-auto" data-user-role={user.role}>
-    <h1 class="font-display italic font-semibold text-4xl mb-8" style="color:var(--gold);">My Profile</h1>
 
     <!-- Success/Error Messages -->
     <div id="messageContainer" class="hidden mb-6"></div>
@@ -41,7 +42,7 @@ const roleDisplay = {
             Role
           </label>
           <p class="t-inset px-4 py-2 rounded-xs w-full">
-            <span class={`px-2 py-1 rounded-full text-xs font-medium ${
+            <span class={`px-2 py-1 rounded-xs text-xs font-medium ${
               user.role === 'admin' ? 't-badge t-badge-red' :
               user.role === 'dungeonmaster' ? 't-badge t-badge-accent' :
               't-badge t-badge-blue'
@@ -180,7 +181,7 @@ const roleDisplay = {
             type="submit" 
             class="t-btn-primary w-full px-6 py-2"
           >
-            Update Profile
+            Update profile
           </button>
         </div>
       </form>
@@ -243,7 +244,7 @@ const roleDisplay = {
             type="submit" 
             class="t-btn-primary w-full px-6 py-2"
           >
-            Update Password
+            Update password
           </button>
         </div>
       </form>

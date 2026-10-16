@@ -1,0 +1,122 @@
+---
+import { markdownExcerpt } from '../../utils/markdown';
+
+interface Props {
+  entry: {
+    id: string;
+    title: string;
+    date: string;
+    session: number;
+    summary: string | null;
+    content: string;
+    coverImageUrl: string | null;
+  };
+}
+
+const { entry } = Astro.props;
+const recap = markdownExcerpt(entry.summary || entry.content, 260);
+const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+---
+
+<a href={`/diary/${entry.id}`} class="recap t-panel group">
+  {entry.coverImageUrl && <img src={entry.coverImageUrl} alt="" class="recap-img" loading="lazy" />}
+  <div class="recap-shade"></div>
+  <div class="recap-body">
+    <p class="recap-kicker">Previously on Arandor…</p>
+    <h2 class="recap-title">{entry.title}</h2>
+    <p class="recap-meta">Session {entry.session} · {date}</p>
+    {recap && <p class="recap-text">{recap}</p>}
+    <span class="recap-link">Read the full entry →</span>
+  </div>
+</a>
+
+<style>
+  /* Light mode: parchment card with dark ink; dark mode: night card with light text. */
+  .recap {
+    --recap-bg: radial-gradient(ellipse at top right, rgba(201, 144, 50, 0.2), transparent 60%), var(--bg-raised);
+    --recap-shade: linear-gradient(to top, var(--bg-raised) 0%, color-mix(in srgb, var(--bg-raised) 88%, transparent) 38%, color-mix(in srgb, var(--bg-raised) 25%, transparent) 72%, transparent 100%);
+    --recap-kicker: #8d5a18;
+    --recap-title: var(--text-strong);
+    --recap-meta: var(--text-muted);
+    --recap-text: var(--text-body);
+    --recap-link: #8d5a18;
+  }
+  :global(.dark) .recap {
+    --recap-bg: radial-gradient(ellipse at top right, rgba(201, 144, 50, 0.22), transparent 60%), #120d07;
+    --recap-shade: linear-gradient(to top, rgba(8, 6, 3, 0.95) 0%, rgba(8, 6, 3, 0.7) 45%, rgba(8, 6, 3, 0.15) 100%);
+    --recap-kicker: #d9af60;
+    --recap-title: #f2e8d5;
+    --recap-meta: rgba(242, 232, 213, 0.55);
+    --recap-text: rgba(242, 232, 213, 0.85);
+    --recap-link: #d9af60;
+  }
+  .recap {
+    display: flex;
+    align-items: flex-end;
+    position: relative;
+    overflow: hidden;
+    /* 16:9 so a cover image shows whole; grows taller only if the text needs it. */
+    aspect-ratio: 16 / 9;
+    background: var(--recap-bg);
+  }
+  /* Always a full 16:9 picture at the top; if the text makes the card taller (phones),
+     the image keeps its shape and the shade fades it into the card. */
+  .recap-img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    transform: scale(1.02);
+    transition: transform 6s ease-out;
+  }
+  .recap:hover .recap-img { transform: scale(1.1); }
+  .recap-shade {
+    position: absolute;
+    inset: 0;
+    background: var(--recap-shade);
+  }
+  .recap-body { position: relative; padding: 1.5rem; max-width: 42rem; }
+  .recap-kicker {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--recap-kicker);
+    margin-bottom: 0.15rem;
+  }
+  .recap-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: clamp(1.6rem, 4vw, 2.25rem);
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--recap-title);
+  }
+  .recap-meta {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--recap-meta);
+    margin-top: 0.35rem;
+  }
+  .recap-text {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    line-height: 1.55;
+    color: var(--recap-text);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .recap-link { display: inline-block; margin-top: 0.9rem; font-size: 0.8rem; font-weight: 600; color: var(--recap-link); }
+  .recap:hover .recap-link { text-decoration: underline; }
+  @media (max-width: 640px) {
+    .recap-body { padding: 1rem; }
+    .recap-text { -webkit-line-clamp: 2; font-size: 0.85rem; margin-top: 0.5rem; }
+    .recap-link { margin-top: 0.5rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .recap-img, .recap:hover .recap-img { transition: none; transform: none; }
+  }
+</style>

@@ -87,41 +87,22 @@ const getOwnershipText = (character: typeof characters[0]) => {
     heroImageUrl={heroImageUrl}
     pageName="characters"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addCharacter"
-        title="Add new character"
-      >
-        Add Character
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length}</div>
-      <div class="text-xs md:text-base t-muted">Total Characters</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.filter(c => c.isActive !== false).length}</div>
-      <div class="text-xs md:text-base t-muted">Active Players</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{allClasses.length}</div>
-      <div class="text-xs md:text-base t-muted">Unique Classes</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
-      <div class="text-xs md:text-base t-muted">Average Level</div>
-    </div>
-  </div>
+    subtitle={`${characters.filter(c => c.isActive !== false).length} adventurers in the party, ${characters.length} characters in total`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addCharacter"
+      title="Add new character"
+    >
+      Add character
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-5 mb-6">
@@ -299,7 +280,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
             href={`/characters/${character.id}`}
             class="block mt-4 text-center t-btn-secondary text-sm"
           >
-            View Details →
+            View details →
           </a>
 
           {character.dndbeyondUrl && (
@@ -644,7 +625,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
             type="submit"
             class="flex-1 t-btn-primary px-4 py-2"
           >
-            Save Character
+            Save character
           </button>
           <button
             type="button"
@@ -958,7 +939,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
           (document.getElementById('skin')).value = character.skin || '';
           (document.getElementById('hair')).value = character.hair || '';
           
-          modalTitle.textContent = 'Edit Character';
+          modalTitle.textContent = 'Edit character';
           // Hide "Assign to me" checkbox when editing
           const assignToMeContainer = document.getElementById('assignToMeContainer');
           if (assignToMeContainer) {
@@ -1025,7 +1006,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
         (document.getElementById('skin')).value = character.skin || '';
         (document.getElementById('hair')).value = character.hair || '';
         
-        if (modalTitle) modalTitle.textContent = 'Edit Character';
+        if (modalTitle) modalTitle.textContent = 'Edit character';
         // Hide "Assign to me" checkbox when editing
         const assignToMeContainer = document.getElementById('assignToMeContainer');
         if (assignToMeContainer) {
@@ -1044,7 +1025,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
       const id = target.getAttribute('data-id');
       if (!id) return;
       
-      if (confirm('Are you sure you want to delete this character?')) {
+      if ((await window.arandorConfirm('Delete this character?', { detail: 'This can\u2019t be undone.', confirmLabel: 'Delete', danger: true }))) {
         try {
           const response = await fetch(`/api/characters/${id}`, {
             method: 'DELETE',

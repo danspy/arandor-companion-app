@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice">
+  <!-- Demo hero image for the seeded dev database (db/seed.ts). -->
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0a1f"/>
+      <stop offset="0.45" stop-color="#2a1a3d"/>
+      <stop offset="0.72" stop-color="#7a3b2e"/>
+      <stop offset="0.9" stop-color="#d98a3a"/>
+    </linearGradient>
+    <radialGradient id="moonGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff3d1" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#fff3d1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e8a55a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#e8a55a" stop-opacity="0.35"/>
+    </linearGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#4a2c45"/>
+      <stop offset="1" stop-color="#2b1a2c"/>
+    </linearGradient>
+    <linearGradient id="mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#24162a"/>
+      <stop offset="1" stop-color="#160e19"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#sky)"/>
+
+  <g fill="#fff8e6">
+    <circle cx="120" cy="80" r="1.6"/><circle cx="260" cy="150" r="1.1"/><circle cx="410" cy="60" r="1.4"/>
+    <circle cx="530" cy="190" r="1"/><circle cx="700" cy="110" r="1.7"/><circle cx="820" cy="40" r="1.1"/>
+    <circle cx="960" cy="140" r="1.3"/><circle cx="1500" cy="70" r="1.5"/><circle cx="1380" cy="180" r="1"/>
+    <circle cx="60" cy="230" r="1.2"/><circle cx="340" cy="250" r="0.9"/><circle cx="1050" cy="230" r="1"/>
+    <circle cx="1560" cy="260" r="1.2"/><circle cx="640" cy="280" r="0.9"/><circle cx="180" cy="320" r="0.8"/>
+  </g>
+
+  <circle cx="1180" cy="190" r="190" fill="url(#moonGlow)"/>
+  <circle cx="1180" cy="190" r="62" fill="#fbe9c0"/>
+  <circle cx="1160" cy="175" r="11" fill="#ead39f" opacity="0.6"/>
+  <circle cx="1198" cy="214" r="7" fill="#ead39f" opacity="0.5"/>
+
+  <path d="M0 560 L120 470 L210 520 L340 400 L470 500 L560 450 L700 540 L820 430 L930 510 L1060 420 L1180 500 L1300 440 L1440 520 L1600 460 L1600 900 L0 900Z" fill="url(#far)"/>
+  <rect y="460" width="1600" height="200" fill="url(#mist)"/>
+
+  <!-- Castle on the cliff -->
+  <g fill="#120b14">
+    <path d="M300 900 L300 600 L380 560 L460 580 L520 540 L600 620 L640 900Z"/>
+    <rect x="410" y="440" width="34" height="130"/>
+    <path d="M405 440 L427 395 L449 440Z"/>
+    <rect x="455" y="470" width="60" height="100"/>
+    <rect x="452" y="460" width="10" height="12"/><rect x="470" y="460" width="10" height="12"/>
+    <rect x="488" y="460" width="10" height="12"/><rect x="506" y="460" width="10" height="12"/>
+    <rect x="520" y="410" width="28" height="160"/>
+    <path d="M516 410 L534 360 L552 410Z"/>
+    <rect x="380" y="500" width="30" height="70"/>
+  </g>
+  <g fill="#f5b85a">
+    <rect x="424" y="470" width="6" height="10"/><rect x="530" y="440" width="6" height="10"/>
+    <rect x="480" y="500" width="6" height="9"/><rect x="391" y="520" width="5" height="8"/>
+  </g>
+
+  <path d="M0 700 L160 610 L300 680 L640 640 L780 700 L960 620 L1120 690 L1280 610 L1460 680 L1600 640 L1600 900 L0 900Z" fill="url(#mid)"/>
+  <path d="M0 800 L200 740 L420 790 L700 750 L980 800 L1240 740 L1600 790 L1600 900 L0 900Z" fill="#0c0806"/>
+
+  <!-- Distant birds -->
+  <g fill="none" stroke="#1a1018" stroke-width="2" stroke-linecap="round">
+    <path d="M860 300 q8 -7 16 0 q8 -7 16 0"/>
+    <path d="M900 330 q6 -5 12 0 q6 -5 12 0"/>
+    <path d="M830 340 q5 -4 10 0 q5 -4 10 0"/>
+  </g>
+</svg>

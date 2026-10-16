@@ -1,0 +1,97 @@
+---
+// Open quests as notices on the board, drawn in the app's own style: dark inset cards,
+// a gold pin line on top, priority as a coloured marker.
+import { markdownExcerpt } from '../../utils/markdown';
+
+interface Props {
+  quests: Array<{ id: string; title: string; description: string; priority: string }>;
+  completed: number;
+  failed: number;
+}
+
+const { quests, completed, failed } = Astro.props;
+const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const sorted = quests.slice().sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3)).slice(0, 6);
+const PRIORITY: Record<string, string> = { high: 'Urgent', medium: 'Soon', low: 'Whenever' };
+---
+
+<section class="t-panel quest-board-panel p-5 h-full">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="t-section-h text-xl">Quest Board</h2>
+    <a href="/quests" class="t-link">All quests →</a>
+  </div>
+
+  {sorted.length > 0 ? (
+    <div class="quest-board">
+      {sorted.map((q) => (
+        <a href="/quests" class={`quest-note prio-${q.priority}`}>
+          <span class="quest-prio">{PRIORITY[q.priority] ?? q.priority}</span>
+          <h3 class="quest-title">{q.title}</h3>
+          <p class="quest-text">{markdownExcerpt(q.description, 140)}</p>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p class="t-muted text-sm italic">No open quests. The party is free.</p>
+  )}
+
+  <p class="quest-tally">
+    <span><strong>{quests.length}</strong> open</span>
+    <span><strong>{completed}</strong> completed</span>
+    {failed > 0 && <span><strong>{failed}</strong> failed</span>}
+  </p>
+</section>
+
+<style>
+  .quest-board-panel { display: flex; flex-direction: column; }
+  .quest-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.75rem; }
+
+  .quest-note {
+    --prio: var(--gold);
+    position: relative;
+    display: block;
+    padding: 1rem 1rem 1.1rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--prio);
+    border-radius: 2px;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  /* The "pin": a small square in the priority colour on the top edge. */
+  .quest-note::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 1rem;
+    width: 8px;
+    height: 8px;
+    background: var(--prio);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--prio) 60%, transparent);
+  }
+  .quest-note:hover { transform: translateY(-2px); border-color: var(--border-gold); border-top-color: var(--prio); }
+  .prio-high { --prio: #a8352b; }
+  :global(.dark) .prio-high { --prio: #e0675a; }
+  .prio-medium { --prio: var(--gold); }
+  .prio-low { --prio: #6f8f4a; }
+
+  .quest-prio { font-size: 0.7rem; font-weight: 600; color: var(--prio); }
+  .quest-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; font-weight: 700; line-height: 1.15; color: var(--text-strong); margin-top: 0.15rem; }
+  .quest-note:hover .quest-title { color: var(--gold); }
+  .quest-text {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-body);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .quest-tally { display: flex; gap: 1rem; margin-top: auto; padding-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); }
+  .quest-tally strong { color: var(--gold); font-size: 0.95rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quest-note { transition: none; }
+  }
+</style>

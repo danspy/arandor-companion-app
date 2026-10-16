@@ -85,6 +85,20 @@ A third copy runs `astro dev` from a full git checkout, so work in progress can 
 - `astro.config.mjs` switches to plain HTTP with live reload through Caddy when
   `DEV_PUBLIC_HOST` is set (only the dev unit sets it).
 
+## Session secrets
+
+Login cookies are signed with `SESSION_SECRET`. Each environment has its own, in a root-only
+file that systemd loads (`EnvironmentFile=`); they are never in git:
+
+```bash
+sudo install -d -m 0700 /etc/arandor
+printf 'SESSION_SECRET=%s\n' "$(openssl rand -hex 32)" | sudo tee /etc/arandor/live.env >/dev/null
+sudo chmod 0600 /etc/arandor/live.env        # same for preview.env and dev.env
+```
+
+Without a secret (or with one shorter than 32 characters) nobody can log in, by design.
+Changing a secret logs everyone in that environment out.
+
 ## Commands on the server
 
 ```bash

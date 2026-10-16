@@ -16,11 +16,16 @@ export default defineConfig({
   output: 'server',
   // Astro 7 defaults to JSX-style whitespace stripping; keep the HTML-aware behaviour of Astro 6.
   compressHTML: true,
+  // The dev toolbar is for local development; on dev.arandor.app it only covers the page.
+  devToolbar: { enabled: !devPublicHost },
   adapter: node({
     mode: 'standalone'
   }),
   vite: {
     plugins: [...(devPublicHost ? [] : [basicSsl()]), tailwindcss()],
+    // Pre-bundle the 3D dice library at dev-server start; discovering it on first use
+    // made the browser request a stale bundle (504 "Outdated Optimize Dep").
+    optimizeDeps: { include: ['@3d-dice/dice-box'] },
     server: devPublicHost
       ? { allowedHosts: [devPublicHost], ws: { protocol: 'wss', host: devPublicHost, clientPort: 443 } }
       : { https: true },
