@@ -167,6 +167,23 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
   let speed = 1;
   let dwellTimer = 0;
   const routeCache = new Map<string, Pt[]>();
+  let routeQueue: [MapLocation, MapLocation][] = [];
+  let routeTimer = 0;
+  function queueRoutes() {
+    routeQueue = [];
+    for (let i = 1; i < steps.length; i++) {
+      const a = steps[i - 1].location, b = steps[i].location;
+      if (a.id !== b.id && !routeCache.has(`${a.id}>${b.id}`)) routeQueue.push([a, b]);
+    }
+    if (!routeTimer && routeQueue.length) routeTimer = window.setTimeout(drainRoutes, 0);
+  }
+  function drainRoutes() {
+    routeTimer = 0;
+    const started = performance.now();
+    while (routeQueue.length && performance.now() - started < 12) { const [a, b] = routeQueue.shift()!; routeBetween(a, b); }
+    markDirty();
+    if (routeQueue.length) routeTimer = window.setTimeout(drainRoutes, 16);
+  }
 
   function memberFor(ch: MapCharacter, idx: number): Member {
     let m = members.get(ch.id);
@@ -451,7 +468,8 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       if (a.id === b.id) continue;
       const key = `${a.id}>${b.id}`;
       if (seen.has(key)) continue; seen.add(key);
-      const route = routeBetween(a, b);
+      const route = routeCache.get(key);
+      if (!route) continue; // still being computed in the background
       const future = i > stepIdx;
       const partial = moving && moving.target === i;
       const { lengths, total } = polyLengths(route);
@@ -587,6 +605,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
   function afterLocationsChanged() {
     routeCache.clear();
     buildSteps();
+    queueRoutes();
     buildMarkers();
     if (stepIdx >= 0 && steps.length) { stepIdx = Math.min(stepIdx, steps.length - 1); party.pos = standAt(steps[stepIdx].location); hooks.onStepChange(steps[stepIdx], steps); }
     markDirty();
@@ -604,6 +623,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     if (destroyed) return;
     terrain = renderTerrain();
     oceanPattern = ctx.createPattern(renderOceanSwatch(), 'repeat');
+    queueRoutes();
     if (steps.length) {
       stepIdx = steps.length - 1;
       party.pos = standAt(steps[stepIdx].location);
@@ -642,7 +662,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     setEditMode: (on: boolean) => { editMode = on; viewport.classList.toggle('wm-editing', on); },
     select: (loc: MapLocation) => selectLocation(loc),
     locationsChanged: afterLocationsChanged,
-    destroy: () => { destroyed = true; ac.abort(); clearTimeout(dwellTimer); if (raf) cancelAnimationFrame(raf); },
+    destroy: () => { destroyed = true; ac.abort(); clearTimeout(dwellTimer); clearTimeout(routeTimer); if (raf) cancelAnimationFrame(raf); },
   };
   return api;
 }
