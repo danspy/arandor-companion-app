@@ -6,6 +6,11 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Set by the arandor-dev service: `astro dev` runs behind Caddy on https://dev.arandor.app
+// (see deploy/README.md). Caddy terminates TLS, so the dev server speaks plain HTTP and the
+// browser's live-reload connection goes back through Caddy on port 443.
+const devPublicHost = process.env.DEV_PUBLIC_HOST;
+
 // https://astro.build/config
 export default defineConfig({
   output: 'server',
@@ -15,8 +20,10 @@ export default defineConfig({
     mode: 'standalone'
   }),
   vite: {
-    plugins: [basicSsl(), tailwindcss()],
-    server: { https: true },
+    plugins: [...(devPublicHost ? [] : [basicSsl()]), tailwindcss()],
+    server: devPublicHost
+      ? { allowedHosts: [devPublicHost], ws: { protocol: 'wss', host: devPublicHost, clientPort: 443 } }
+      : { https: true },
   },
   security: {
     checkOrigin: false,
@@ -26,6 +33,7 @@ export default defineConfig({
       { hostname: 'arandor.app', protocol: 'https' },
       { hostname: 'www.arandor.app', protocol: 'https' },
       { hostname: 'future.arandor.app', protocol: 'https' },
+      { hostname: 'dev.arandor.app', protocol: 'https' },
     ],
   },
   experimental: {

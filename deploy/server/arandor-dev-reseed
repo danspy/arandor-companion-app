@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# Rebuild the dev database (/srv/arandor-dev/data/dev.db) from the demo seed (db/seed.ts).
+# The previous dev database is moved to /srv/arandor-dev/data/archive/, never deleted.
+# Usage: sudo arandor-dev-reseed
+set -euo pipefail
+
+DEV=/srv/arandor-dev
+DB=$DEV/data/dev.db
+
+[[ $EUID -eq 0 ]] || { echo "run as root (sudo)" >&2; exit 1; }
+
+# Build a fresh database in a temp dir (drizzle-kit refuses anything under /srv/).
+tmp=$(mktemp -d /tmp/arandor-dev-reseed.XXXXXX)
+trap 'rm -rf "$tmp"' EXIT
+chown arandor-dev:arandor-dev "$tmp"
+(cd "$DEV/repo" && sudo -u arandor-dev env HOME="$DEV" DATABASE_FILE="$tmp/dev.db" npm run --silent db:dev)
+
+systemctl stop arandor-dev
+if [[ -f $DB ]]; then
+  install -d -o arandor-dev -g arandor-dev -m 0750 "$DEV/data/archive"
+  mv "$DB" "$DEV/data/archive/dev.$(date -u +%Y%m%d_%H%M%SZ).db"
+fi
+install -o arandor-dev -g arandor-dev -m 0640 "$tmp/dev.db" "$DB"
+systemctl start arandor-dev
+echo "dev database reseeded"

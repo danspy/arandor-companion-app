@@ -1,0 +1,31 @@
+[Unit]
+Description=Arandor Companion App (dev server, dev.arandor.app)
+After=network.target
+
+[Service]
+Type=simple
+User=arandor-dev
+Group=arandor-dev
+# Full git checkout running `astro dev`; edits show up live on dev.arandor.app.
+WorkingDirectory=/srv/arandor-dev/repo
+Environment=HOME=/srv/arandor-dev
+Environment=DEV_PUBLIC_HOST=dev.arandor.app
+Environment=DATABASE_FILE=/srv/arandor-dev/data/dev.db
+Environment=ASTRO_TELEMETRY_DISABLED=1
+# SESSION_SECRET (signs login cookies). Root-only file, created on the server, never in git.
+EnvironmentFile=/etc/arandor/dev.env
+ExecStart=/usr/bin/node /srv/arandor-dev/repo/node_modules/astro/bin/astro.mjs dev --host 127.0.0.1 --port 4323
+Restart=always
+RestartSec=5
+SyslogIdentifier=arandor-dev
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/arandor-dev
+# Dev only ever uses seeded demo data: it must never see live/preview data or backups.
+InaccessiblePaths=/srv/arandor/data /srv/arandor/uploads /srv/arandor-preview/data /srv/arandor-preview/uploads /var/backups/arandor
+
+[Install]
+WantedBy=multi-user.target

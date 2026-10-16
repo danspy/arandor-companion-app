@@ -12,7 +12,7 @@
     "generate-splash": "node scripts/generate-splash-screens.mjs",
     "generate-screenshots": "node scripts/generate-screenshots.mjs",
     "generate-all-assets": "npm run generate-icons && npm run generate-splash && npm run generate-screenshots",
-    "db:dev": "drizzle-kit push --force && tsx db/seed.ts"
+    "db:dev": "drizzle-kit push --force && DATABASE_FILE=${DATABASE_FILE:-./data/dev.db} tsx db/seed.ts"
   },
   "keywords": [
     "dnd",
