@@ -23,9 +23,9 @@ export default defineConfig({
   }),
   vite: {
     plugins: [...(devPublicHost ? [] : [basicSsl()]), tailwindcss()],
-    // Pre-bundle the 3D dice library at dev-server start; discovering it on first use
+    // Pre-bundle client libraries at dev-server start; discovering them on first use
     // made the browser request a stale bundle (504 "Outdated Optimize Dep").
-    optimizeDeps: { include: ['@3d-dice/dice-box'] },
+    optimizeDeps: { include: ['@3d-dice/dice-box', 'marked'] },
     server: devPublicHost
       ? { allowedHosts: [devPublicHost], ws: { protocol: 'wss', host: devPublicHost, clientPort: 443 } }
       : { https: true },
