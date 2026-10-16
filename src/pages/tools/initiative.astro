@@ -310,7 +310,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     <h3 class="t-body-text text-base sm:text-lg font-semibold truncate">
                       {entry.name}
                     </h3>
-                    <span class:list={["inline-block px-1.5 py-0.5 text-xs font-semibold rounded-full whitespace-nowrap", getTypeBadgeColor(entry.type)]}>
+                    <span class:list={["inline-block px-1.5 py-0.5 text-xs font-semibold rounded-xs whitespace-nowrap", getTypeBadgeColor(entry.type)]}>
                       {entry.type}
                     </span>
                   </div>
@@ -343,7 +343,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                         return status.text === '-' ? (
                           <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
                         ) : (
-                          <span class={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`} data-hp-display>
+                          <span class={`inline-block px-2 py-0.5 rounded-xs text-xs font-semibold ${status.classes}`} data-hp-display>
                             {status.text}
                           </span>
                         );
@@ -424,7 +424,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                         <span class="text-xs font-medium" style="color:#4ade80;">Successes:</span>
                         <div class="flex gap-1">
                           {[1, 2, 3].map(i => (
-                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveSuccesses || 0) >= i ? 'bg-green-500 border-green-500' : 'border-gray-500'}`} data-death-save-success={i}></span>
+                            <span class={`w-4 h-4 rounded-xs border-2 ${(entry.deathSaveSuccesses || 0) >= i ? 'bg-green-500 border-green-500' : 'border-gray-500'}`} data-death-save-success={i}></span>
                           ))}
                         </div>
                       </div>
@@ -432,7 +432,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                         <span class="text-xs font-medium" style="color:var(--danger);">Failures:</span>
                         <div class="flex gap-1">
                           {[1, 2, 3].map(i => (
-                            <span class={`w-4 h-4 rounded-full border-2 ${(entry.deathSaveFailures || 0) >= i ? 'bg-red-500 border-red-500' : 'border-gray-500'}`} data-death-save-failure={i}></span>
+                            <span class={`w-4 h-4 rounded-xs border-2 ${(entry.deathSaveFailures || 0) >= i ? 'bg-red-500 border-red-500' : 'border-gray-500'}`} data-death-save-failure={i}></span>
                           ))}
                         </div>
                       </div>
@@ -1790,7 +1790,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   };
                   const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                   hpElement.textContent = status.text;
-                  hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${status.classes}`;
+                  hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-xs text-xs font-semibold ${status.classes}`;
                 }
               }
               
@@ -1810,17 +1810,17 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                           <div class="flex items-center gap-1.5">
                             <span class="text-xs font-medium" style="color:#4ade80;">Successes:</span>
                             <div class="flex gap-1">
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="1"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="2"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-success="3"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-success="1"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-success="2"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-success="3"></span>
                             </div>
                           </div>
                           <div class="flex items-center gap-1.5">
                             <span class="text-xs font-medium" style="color:var(--danger);">Failures:</span>
                             <div class="flex gap-1">
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="1"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="2"></span>
-                              <span class="w-4 h-4 rounded-full border-2 border-gray-500" data-death-save-failure="3"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-failure="1"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-failure="2"></span>
+                              <span class="w-4 h-4 rounded-xs border-2 border-gray-500" data-death-save-failure="3"></span>
                             </div>
                           </div>
                         </div>
@@ -1840,17 +1840,17 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 
                 successDots.forEach((dot, idx) => {
                   if (successes > idx) {
-                    dot.className = 'w-4 h-4 rounded-full border-2 bg-green-500 border-green-500';
+                    dot.className = 'w-4 h-4 rounded-xs border-2 bg-green-500 border-green-500';
                   } else {
-                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-500';
+                    dot.className = 'w-4 h-4 rounded-xs border-2 border-gray-500';
                   }
                 });
                 
                 failureDots.forEach((dot, idx) => {
                   if (failures > idx) {
-                    dot.className = 'w-4 h-4 rounded-full border-2 bg-red-500 border-red-500';
+                    dot.className = 'w-4 h-4 rounded-xs border-2 bg-red-500 border-red-500';
                   } else {
-                    dot.className = 'w-4 h-4 rounded-full border-2 border-gray-500';
+                    dot.className = 'w-4 h-4 rounded-xs border-2 border-gray-500';
                   }
                 });
                 

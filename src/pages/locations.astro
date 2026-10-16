@@ -115,7 +115,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             )}
 
             <!-- Type badge -->
-            <div class={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full shadow-lg place-tag place-tag-${['city','dungeon','wilderness','building'].includes(location.type) ? location.type : 'other'}`}>
+            <div class={`absolute top-3 right-3 text-xs px-3 py-1 rounded-xs shadow-lg place-tag place-tag-${['city','dungeon','wilderness','building'].includes(location.type) ? location.type : 'other'}`}>
               {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
             </div>
           </div>

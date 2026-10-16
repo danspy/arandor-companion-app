@@ -53,7 +53,7 @@ const users = await db.select({
                 <h3 class="t-body-text text-xl font-bold">
                   {user.username}
                 </h3>
-                <span class={`px-3 py-1 rounded-full text-xs font-medium ${
+                <span class={`px-3 py-1 rounded-xs text-xs font-medium ${
                   user.role === 'admin' ? 't-badge t-badge-red' :
                   user.role === 'dungeonmaster' ? 't-badge t-badge-accent' :
                   't-badge t-badge-blue'
@@ -545,7 +545,7 @@ const users = await db.select({
                     <h3 class="t-body-text text-xl font-bold">
                       ${escapedUsername}
                     </h3>
-                    <span class="px-3 py-1 rounded-full text-xs font-medium ${roleBadgeClass}">
+                    <span class="px-3 py-1 rounded-xs text-xs font-medium ${roleBadgeClass}">
                       ${escapedRole}
                     </span>
                   </div>

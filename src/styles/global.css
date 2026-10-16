@@ -53,6 +53,18 @@ layer(base);
   --color-accent: #475569;
   --color-accent-dark: #1e293b;
 
+  /* Corners: everything is square-cut (2px) like the panels; only avatars are round
+     (rounded-full). Every rounded-* size maps to the same radius on purpose. */
+  --radius: 2px;
+  --radius-xs: 2px;
+  --radius-sm: 2px;
+  --radius-md: 2px;
+  --radius-lg: 2px;
+  --radius-xl: 2px;
+  --radius-2xl: 2px;
+  --radius-3xl: 2px;
+  --radius-4xl: 2px;
+
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-sans: Outfit, system-ui, sans-serif;
 }
@@ -193,7 +205,7 @@ main {
 /* Custom scrollbar */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 3px; }
+::-webkit-scrollbar-thumb { background: var(--text-faint); border-radius: 2px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--gold); }
 
 /* ── Navigation ─────────────────────────────────────────────────── */
@@ -625,12 +637,12 @@ a.t-row:hover { text-decoration: none; }
 
 .t-progress-track {
   background: var(--bg-page);
-  border-radius: 999px;
+  border-radius: 2px;
   overflow: hidden;
 }
 .t-progress-fill {
   background: linear-gradient(to right, var(--gold), #d4a43e);
-  border-radius: 999px;
+  border-radius: 2px;
   height: 100%;
   transition: width 0.4s ease;
   display: flex;

@@ -240,7 +240,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     <div id="activeCombatIndicator" class="combat-banner mb-6" style="display: none;">
       <a href="/tools/initiative" class="flex items-center justify-between p-4 rounded-xs transition-all hover:opacity-90" style="background:linear-gradient(to right, #dc2626, #c99032); box-shadow: 0 0 30px rgba(201,144,50,0.35);">
         <div class="flex items-center gap-3">
-          <div class="rounded-full p-2" style="background:rgba(255,255,255,0.15);">
+          <div class="rounded-xs p-2" style="background:rgba(255,255,255,0.15);">
             <svg class="w-6 h-6 text-white animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
             </svg>
@@ -270,14 +270,14 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         {nextEvent.description && <p class="t-muted text-sm mb-3">{nextEvent.description}</p>}
         <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div class="t-inset flex items-center gap-3 p-3">
-            <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style="background:rgba(201,144,50,0.12);">
+            <div class="shrink-0 w-9 h-9 rounded-xs flex items-center justify-center" style="background:rgba(201,144,50,0.12);">
               <svg class="w-4 h-4 t-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
             </div>
             <div><div class="t-faint text-xs">Date</div><div class="t-strong-text font-semibold text-sm">{formatDate(nextEvent.date)}</div></div>
           </div>
           {nextEvent.time && (
             <div class="t-inset flex items-center gap-3 p-3">
-              <div class="shrink-0 w-9 h-9 rounded-full flex items-center justify-center" style="background:rgba(201,144,50,0.10);">
+              <div class="shrink-0 w-9 h-9 rounded-xs flex items-center justify-center" style="background:rgba(201,144,50,0.10);">
                 <svg class="w-4 h-4 t-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
               </div>
               <div><div class="t-faint text-xs">Time &amp; Duration</div><div class="t-strong-text font-semibold text-sm">{nextEvent.time}{nextEvent.duration ? ` (${formatDuration(nextEvent.duration)})` : ''}</div></div>

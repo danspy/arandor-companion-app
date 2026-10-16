@@ -139,7 +139,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
     position: absolute;
     inset: 0;
     overflow: hidden;
-    border-radius: 3px;
+    border-radius: 2px;
     border: 1px solid var(--border-gold);
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
@@ -180,7 +180,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
     top: 0.55rem;
     left: 0.5rem;
     padding: 0.1rem 0.45rem;
-    border-radius: 999px;
+    border-radius: 2px;
     font-size: 0.6rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -189,7 +189,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
     background: #ffd98a;
   }
   .party-saves { display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.35rem; }
-  .pip { width: 0.55rem; height: 0.55rem; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.5); }
+  .pip { width: 0.55rem; height: 0.55rem; border-radius: 2px; border: 1px solid rgba(255, 255, 255, 0.5); }
   .pip-ok.on { background: #22c55e; border-color: #22c55e; }
   .pip-fail.on { background: #ef4444; border-color: #ef4444; }
   .pip-gap { width: 0.35rem; }
@@ -200,12 +200,12 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
     position: relative;
     margin-top: 0.4rem;
     height: 0.95rem;
-    border-radius: 999px;
+    border-radius: 2px;
     background: rgba(0, 0, 0, 0.55);
     border: 1px solid rgba(255, 255, 255, 0.15);
     overflow: hidden;
   }
-  .party-hp-fill { height: 100%; border-radius: 999px; animation: hp-fill 1s ease-out both; }
+  .party-hp-fill { height: 100%; border-radius: 2px; animation: hp-fill 1s ease-out both; }
   .party-hp span {
     position: absolute;
     inset: 0;

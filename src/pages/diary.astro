@@ -498,7 +498,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       btn.textContent = '×';
       btn.title = 'Remove';
       btn.setAttribute('aria-label', 'Remove image');
-      btn.className = 'absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-full bg-black/70 text-white text-sm leading-none hover:bg-red-600';
+      btn.className = 'absolute top-1 right-1 w-5 h-5 flex items-center justify-center rounded-xs bg-black/70 text-white text-sm leading-none hover:bg-red-600';
       btn.addEventListener('click', () => {
         if (item.kind === 'existing') {
           galleryExistingUrls.splice(item.index, 1);
