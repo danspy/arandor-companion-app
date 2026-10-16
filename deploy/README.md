@@ -72,12 +72,14 @@ A third copy runs `astro dev` from a full git checkout, so work in progress can 
 | URL | https://dev.arandor.app (same login as preview, `noindex`) |
 | systemd unit | `arandor-dev` (runs as `arandor-dev`, port 4323, localhost only) |
 | Checkout | `/srv/arandor-dev/repo` (any branch; edits appear immediately) |
-| Database | `/srv/arandor-dev/data/dev.db`, demo data from `db/seed.ts` |
+| Database | `/srv/arandor-dev/data/dev.db`: demo data (`db/seed.ts`) or a copy of the newest live backup |
 | Uploads | `/srv/arandor-dev/repo/public/uploads` (dev mode) |
 
 - The unit cannot see live or preview data or backups (`InaccessiblePaths=`).
 - `sudo arandor-dev-reseed` rebuilds the demo database; the old one is moved to
   `/srv/arandor-dev/data/archive/`.
+- `sudo arandor-dev-refresh` switches dev to a copy of the real data (newest live backup:
+  database + uploads), like preview. Same archive rule; uploads are only added.
 - After `package.json` changes: `sudo -u arandor-dev env HOME=/srv/arandor-dev npm ci` in the
   checkout, then `sudo systemctl restart arandor-dev`.
 - `astro.config.mjs` switches to plain HTTP with live reload through Caddy when
@@ -91,6 +93,7 @@ sudo arandor-backup manual                    # backup now (live DB + uploads)
 sudo arandor-backup-verify                    # restore test of the newest backup
 sudo arandor-preview-refresh                  # reset preview data from the newest live backup
 sudo arandor-dev-reseed                       # reset dev demo data from db/seed.ts
+sudo arandor-dev-refresh                      # dev gets a copy of the newest live backup
 journalctl -u arandor-dev -f                  # dev server log
 sudo arandor-activate live <release-id>       # roll live back to an older release
 ls /srv/arandor/app/releases                  # available releases
