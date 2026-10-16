@@ -1,17 +1,11 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
-import Button from '../../components/Button.astro';
-import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { getUserRole } from '../../lib/auth';
 import { db, PageSettings, eq } from '@/db';
 
-// Dice roller is only accessible to logged-in users
-const isLoggedIn = isAuthenticated(Astro.cookies);
+// Dice roller is public; only editing the hero image needs a role
 const userRole = await getUserRole(Astro.cookies);
-
-if (!isLoggedIn) {
-  return Astro.redirect('/login');
-}
 
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
@@ -48,7 +42,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d4</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -60,7 +54,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d6</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -72,7 +66,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d8</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -84,7 +78,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d10</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -96,7 +90,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d12</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -108,7 +102,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d20</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -120,7 +114,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d100</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-accent-600 text-white rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-accent-600 text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
       </div>
@@ -163,6 +157,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           Clear Selection
         </button>
       </div>
+      <div class="flex flex-wrap gap-4 mt-4">
+        <button id="advantageButton" type="button" class="t-btn-secondary flex-1 font-bold py-3 px-6" title="Roll 2d20 + modifier, keep the highest">
+          d20 with Advantage
+        </button>
+        <button id="disadvantageButton" type="button" class="t-btn-secondary flex-1 font-bold py-3 px-6" title="Roll 2d20 + modifier, keep the lowest">
+          d20 with Disadvantage
+        </button>
+      </div>
 
       <!-- Current Selection Display -->
       <div id="currentSelection" class="mt-4 t-inset p-4 rounded-xs hidden">
@@ -177,16 +179,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         <h2 class="t-section-h text-xl mb-4">Result</h2>
       </div>
 
-      <!-- 3D Canvas Tray -->
-      <div id="dice-canvas-wrap" class="relative w-full" style="height:480px;background:var(--bg-page);">
-        <div id="dice-canvas" class="absolute inset-0"></div>
-        <div id="dice-loading" class="absolute inset-0 flex items-center justify-center bg-gray-900/80">
-          <span class="text-gray-400 text-sm animate-pulse">Loading dice...</span>
-        </div>
-      </div>
-
-      <!-- Result panel (hidden until roll settles) -->
-      <div id="result-panel" class="p-8 hidden">
+      <!-- Result panel (dice roll over the whole page, the result lands here) -->
+      <div id="result-panel" class="px-8 pb-8 hidden">
         <div class="text-center">
           <div id="resultBreakdown" class="t-muted mb-2"></div>
           <div id="totalResult" class="text-6xl font-bold mb-1" style="color:var(--gold);">—</div>
@@ -255,348 +249,173 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     flex-direction: column;
     align-items: center;
     padding: .375rem .75rem;
-    border-radius: .5rem;
+    border-radius: 2px;
     font-size: .875rem;
     border-width: 1px;
   }
 
-  /* Make DiceBox's generated canvas fill its container.
-     Must use :global() — DiceBox creates this element at runtime
-     so Astro's scoped attribute is never added to it. */
-  :global(#dice-canvas canvas),
-  :global(#dice-canvas .dice-box-canvas) {
-    width: 100% !important;
-    height: 100% !important;
-    display: block;
-  }
-
-  @media (max-width: 640px) {
-    #dice-canvas-wrap { height: 300px; }
-  }
 </style>
 
 <script>
-  // Dice selection state
-  const diceSelection: Record<string, number> = {
-    d4: 0,
-    d6: 0,
-    d8: 0,
-    d10: 0,
-    d12: 0,
-    d20: 0,
-    d100: 0,
-  };
+  import {
+    DIE_TYPES,
+    ROLL_EVENT,
+    HISTORY_CLEARED_EVENT,
+    roll,
+    warmUp,
+    getHistory,
+    clearHistory,
+    formatSelection,
+    diceCount,
+    type DieType,
+    type DiceSelection,
+    type RollMode,
+    type RollRecord,
+  } from '../../lib/dice';
 
-  // Roll history
-  let rollHistory: Array<{
-    formula: string;
-    rolls: number[];
-    modifier: number;
-    total: number;
-    timestamp: Date;
-  }> = [];
+  // Runs on every visit (the script is bundled once, so wire up per page load).
+  function initDiceRollerPage() {
+    const rollButton = document.getElementById('rollButton') as HTMLButtonElement | null;
+    if (!rollButton) return;
 
-  // DOM elements
-  const diceSelectors = document.querySelectorAll('.dice-selector');
-  const rollButton = document.getElementById('rollButton') as HTMLButtonElement;
-  const clearButton = document.getElementById('clearButton') as HTMLButtonElement;
-  const currentSelection = document.getElementById('currentSelection') as HTMLDivElement;
-  const selectionText = document.getElementById('selectionText') as HTMLParagraphElement;
-  const rollResult = document.getElementById('rollResult') as HTMLDivElement;
-  const totalResult = document.getElementById('totalResult') as HTMLDivElement;
-  const resultBreakdown = document.getElementById('resultBreakdown') as HTMLDivElement;
-  const resultPanel = document.getElementById('result-panel') as HTMLDivElement;
-  const critBadge = document.getElementById('critBadge') as HTMLDivElement;
-  const diceChips = document.getElementById('diceChips') as HTMLDivElement;
-  const rollHistoryEl = document.getElementById('rollHistory') as HTMLDivElement;
-  const clearHistoryButton = document.getElementById('clearHistoryButton') as HTMLButtonElement;
-  const modifierInput = document.getElementById('modifier') as HTMLInputElement;
+    const diceSelection: DiceSelection = {};
 
-  // ── Lazy dice-box singleton ──────────────────────────────────────────────
-  let diceBox: any = null;
-  let diceBoxReady = false;
-  let diceBoxFailed = false;
-  let initPromise: Promise<void> | null = null;
+    const clearButton = document.getElementById('clearButton') as HTMLButtonElement;
+    const advantageButton = document.getElementById('advantageButton') as HTMLButtonElement;
+    const disadvantageButton = document.getElementById('disadvantageButton') as HTMLButtonElement;
+    const currentSelection = document.getElementById('currentSelection') as HTMLDivElement;
+    const selectionText = document.getElementById('selectionText') as HTMLParagraphElement;
+    const rollResult = document.getElementById('rollResult') as HTMLDivElement;
+    const totalResult = document.getElementById('totalResult') as HTMLDivElement;
+    const resultBreakdown = document.getElementById('resultBreakdown') as HTMLDivElement;
+    const resultPanel = document.getElementById('result-panel') as HTMLDivElement;
+    const critBadge = document.getElementById('critBadge') as HTMLDivElement;
+    const diceChips = document.getElementById('diceChips') as HTMLDivElement;
+    const rollHistoryEl = document.getElementById('rollHistory') as HTMLDivElement;
+    const clearHistoryButton = document.getElementById('clearHistoryButton') as HTMLButtonElement;
+    const modifierInput = document.getElementById('modifier') as HTMLInputElement;
 
-  async function getDiceBox(): Promise<any> {
-    if (diceBoxReady) return diceBox;
-    if (diceBoxFailed) return null;
-    if (initPromise) { await initPromise; return diceBoxReady ? diceBox : null; }
+    const modifier = () => parseInt(modifierInput.value || '0') || 0;
 
-    initPromise = (async () => {
-      try {
-        const { default: DiceBox } = await import('@3d-dice/dice-box');
-        diceBox = new DiceBox('#dice-canvas', {
-          assetPath: '/assets/dice-box/',
-          theme: 'default',
-          throwForce: 6,
-          startingHeight: 8,
-          spinForce: 4,
-          lightIntensity: 0.9,
-          gravity: 3,
-          scale: 8,
-        });
-        await diceBox.init();
-        // Re-measure after CSS has sized the canvas to fill the container
-        diceBox.resizeWorld();
-        diceBoxReady = true;
-        document.getElementById('dice-loading')?.classList.add('hidden');
-      } catch (e) {
-        console.warn('DiceBox init failed, falling back to Math.random()', e);
-        diceBoxFailed = true;
-        document.getElementById('dice-loading')?.classList.add('hidden');
+    warmUp();
+
+    function updateSelectionDisplay() {
+      for (const die of DIE_TYPES) {
+        const countEl = document.querySelector(`[data-dice="${die}"] .dice-count`) as HTMLDivElement | null;
+        if (!countEl) continue;
+        const count = diceSelection[die] ?? 0;
+        countEl.textContent = String(count);
+        countEl.classList.toggle('hidden', count === 0);
       }
-    })();
-
-    await initPromise;
-    return diceBoxReady ? diceBox : null;
-  }
-
-  // Reset on Astro view transitions (canvas replaced in DOM)
-  document.addEventListener('astro:after-swap', () => {
-    diceBox = null;
-    diceBoxReady = false;
-    diceBoxFailed = false;
-    initPromise = null;
-  });
-
-  // ── Update dice count display ────────────────────────────────────────────
-  function updateDiceCount(dice: string, count: number) {
-    const selector = document.querySelector(`[data-dice="${dice}"]`);
-    if (selector) {
-      const countEl = selector.querySelector('.dice-count') as HTMLDivElement;
-      if (count > 0) {
-        countEl.textContent = count.toString();
-        countEl.classList.remove('hidden');
-      } else {
-        countEl.classList.add('hidden');
-      }
+      const hasDice = diceCount(diceSelection) > 0;
+      currentSelection.classList.toggle('hidden', !hasDice);
+      selectionText.textContent = formatSelection(diceSelection, modifier());
+      rollButton!.disabled = !hasDice;
     }
-  }
 
-  // ── Update selection display ─────────────────────────────────────────────
-  function updateSelectionDisplay() {
-    const parts: string[] = [];
-    let totalDice = 0;
-
-    Object.entries(diceSelection).forEach(([dice, count]) => {
-      if (count > 0) {
-        parts.push(`${count}${dice}`);
-        totalDice += count;
-      }
+    document.querySelectorAll<HTMLButtonElement>('.dice-selector').forEach((selector) => {
+      const die = selector.dataset.dice as DieType;
+      selector.addEventListener('click', () => {
+        diceSelection[die] = (diceSelection[die] ?? 0) + 1;
+        updateSelectionDisplay();
+      });
+      selector.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+        diceSelection[die] = Math.max(0, (diceSelection[die] ?? 0) - 1);
+        updateSelectionDisplay();
+      });
     });
 
-    const modifier = parseInt(modifierInput.value || '0');
-    if (modifier !== 0) {
-      parts.push(modifier > 0 ? `+${modifier}` : `${modifier}`);
-    }
-
-    if (totalDice > 0) {
-      currentSelection.classList.remove('hidden');
-      selectionText.textContent = parts.join(' ');
-      rollButton.disabled = false;
-    } else {
-      currentSelection.classList.add('hidden');
-      rollButton.disabled = true;
-    }
-  }
-
-  // ── Handle dice selection ────────────────────────────────────────────────
-  diceSelectors.forEach((selector) => {
-    selector.addEventListener('click', () => {
-      const dice = selector.getAttribute('data-dice') as string;
-      diceSelection[dice]++;
-      updateDiceCount(dice, diceSelection[dice]);
+    clearButton.addEventListener('click', () => {
+      for (const die of DIE_TYPES) delete diceSelection[die];
       updateSelectionDisplay();
     });
 
-    selector.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      const dice = selector.getAttribute('data-dice') as string;
-      if (diceSelection[dice] > 0) {
-        diceSelection[dice]--;
-        updateDiceCount(dice, diceSelection[dice]);
-        updateSelectionDisplay();
-      }
-    });
-  });
+    function showResults(r: RollRecord) {
+      resultBreakdown.textContent =
+        r.dice.map((d) => `d${d.sides}: ${d.value}${d.dropped ? ' (dropped)' : ''}`).join(', ') +
+        (r.modifier !== 0 ? ` ${r.modifier > 0 ? '+' : ''}${r.modifier}` : '');
 
-  // ── Clear selection ──────────────────────────────────────────────────────
-  clearButton.addEventListener('click', () => {
-    Object.keys(diceSelection).forEach((dice) => {
-      diceSelection[dice] = 0;
-      updateDiceCount(dice, 0);
-    });
-    updateSelectionDisplay();
-  });
-
-  // ── Fallback roll generator ──────────────────────────────────────────────
-  function generateFallback(): Array<{ sides: number; value: number }> {
-    const results: Array<{ sides: number; value: number }> = [];
-    Object.entries(diceSelection).forEach(([die, count]) => {
-      const sides = parseInt(die.slice(1));
-      for (let i = 0; i < count; i++) {
-        results.push({ sides, value: Math.floor(Math.random() * sides) + 1 });
-      }
-    });
-    return results;
-  }
-
-  // ── showResults helper ───────────────────────────────────────────────────
-  function showResults(results: Array<{ sides: number; value: number }>, modifier: number, total: number) {
-    resultBreakdown.textContent =
-      results.map((r) => `d${r.sides}: ${r.value}`).join(', ') +
-      (modifier !== 0 ? ` ${modifier > 0 ? '+' : ''}${modifier}` : '');
-
-    totalResult.textContent = total.toString();
-    totalResult.className = 'text-6xl font-bold mb-1'; totalResult.style.color = 'var(--gold)';
-
-    // Critical (single d20 only)
-    critBadge.classList.add('hidden');
-    if (results.length === 1 && results[0].sides === 20) {
-      if (results[0].value === 20) {
+      totalResult.textContent = String(r.total);
+      totalResult.className = 'text-6xl font-bold mb-1';
+      critBadge.classList.add('hidden');
+      if (r.crit === 'success') {
         totalResult.classList.add('critical-success');
         critBadge.textContent = 'Natural 20!';
-        critBadge.className =
-          't-badge t-badge-green text-sm font-bold';
-        critBadge.classList.remove('hidden');
-      } else if (results[0].value === 1) {
+        critBadge.className = 't-badge t-badge-green text-sm font-bold';
+      } else if (r.crit === 'fail') {
         totalResult.classList.add('critical-fail');
         critBadge.textContent = 'Critical Fail';
-        critBadge.className =
-          't-badge t-badge-red text-sm font-bold';
-        critBadge.classList.remove('hidden');
+        critBadge.className = 't-badge t-badge-red text-sm font-bold';
+      }
+
+      diceChips.innerHTML = '';
+      for (const d of r.dice) {
+        const chip = document.createElement('div');
+        chip.className = `dice-chip t-badge text-sm ${d.sides === 20 ? 't-badge-accent' : d.sides === 100 ? 't-badge-gold' : ''}`;
+        if (d.dropped) chip.style.opacity = '0.4';
+        chip.innerHTML = `<span class="text-xs opacity-60">d${d.sides}</span><span class="text-xl font-bold">${d.value}</span>`;
+        diceChips.append(chip);
+      }
+
+      rollResult.classList.remove('hidden');
+      resultPanel.classList.remove('hidden');
+    }
+
+    async function doRoll(selection: DiceSelection, mode: RollMode = 'normal') {
+      const buttons = [rollButton!, advantageButton, disadvantageButton];
+      buttons.forEach((b) => (b.disabled = true));
+      try {
+        const record = await roll(selection, modifier(), mode);
+        if (record) {
+          showResults(record);
+          rollResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      } finally {
+        advantageButton.disabled = false;
+        disadvantageButton.disabled = false;
+        updateSelectionDisplay();
       }
     }
 
-    // Die chips
-    diceChips.innerHTML = results
-      .map((r) => {
-        const cls =
-          r.sides === 20
-            ? 't-badge t-badge-accent text-sm'
-            : r.sides === 100
-            ? 't-badge t-badge-gold text-sm'
-            : 't-badge text-sm';
-        return `<div class="dice-chip ${cls}">
-          <span class="text-xs opacity-60">d${r.sides}</span>
-          <span class="text-xl font-bold">${r.value}</span>
-        </div>`;
-      })
-      .join('');
+    rollButton.addEventListener('click', () => doRoll({ ...diceSelection }));
+    advantageButton.addEventListener('click', () => doRoll({ d20: 1 }, 'advantage'));
+    disadvantageButton.addEventListener('click', () => doRoll({ d20: 1 }, 'disadvantage'));
 
-    resultPanel.classList.remove('hidden');
-  }
-
-  // ── Die colour map (matches button colours from tailwind.config.mjs) ────
-  const DICE_COLORS: Record<string, string> = {
-    d4:   '#8b4545', // primary-600  (burgundy)
-    d6:   '#8b4545',
-    d8:   '#8b4545',
-    d10:  '#8b4545',
-    d12:  '#8b4545',
-    d20:  '#d97706', // secondary-600 (amber)
-    d100: '#475569', // accent-600    (slate)
-  };
-
-  // ── Roll button handler ──────────────────────────────────────────────────
-  rollButton.addEventListener('click', async () => {
-    const parts: string[] = [];
-    Object.entries(diceSelection).forEach(([die, count]) => {
-      if (count > 0) parts.push(`${count}${die}`);
-    });
-    const modifier = parseInt(modifierInput.value || '0');
-    if (!parts.length) return;
-
-    rollResult.classList.remove('hidden');
-    resultPanel.classList.add('hidden');
-    critBadge.classList.add('hidden');
-    rollButton.disabled = true;
-    rollResult.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    // Show loading spinner while dice-box initialises
-    const loadingEl = document.getElementById('dice-loading');
-    if (loadingEl) loadingEl.classList.remove('hidden');
-
-    const box = await getDiceBox();
-    let results: Array<{ sides: number; value: number }>;
-
-    if (box) {
-      if (loadingEl) loadingEl.classList.add('hidden');
-      box.resizeWorld();
-      await box.clear();
-
-      // Build array-of-objects notation so each die group gets its own colour
-      const notation = Object.entries(diceSelection)
-        .filter(([, count]) => count > 0)
-        .map(([die, count]) => ({
-          qty: count,
-          sides: die === 'd100' ? 'd100' : parseInt(die.slice(1)),
-          themeColor: DICE_COLORS[die],
-        }));
-
-      const timeout = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('timeout')), 10000)
-      );
-      results = await Promise.race([box.roll(notation), timeout]).catch(() => {
-        console.warn('DiceBox roll timed out, using fallback');
-        return generateFallback();
-      });
-    } else {
-      if (loadingEl) loadingEl.classList.add('hidden');
-      results = generateFallback();
-    }
-
-    const total = results.reduce((s: number, r: { sides: number; value: number }) => s + r.value, 0) + modifier;
-    const formula = [
-      ...parts,
-      ...(modifier !== 0 ? [modifier > 0 ? `+${modifier}` : `${modifier}`] : []),
-    ].join(' ');
-
-    rollHistory.unshift({ formula, rolls: results.map((r: { sides: number; value: number }) => r.value), modifier, total, timestamp: new Date() });
-    if (rollHistory.length > 10) rollHistory.pop();
-
-    showResults(results, modifier, total);
-    updateHistoryDisplay();
-    rollButton.disabled = false;
-    // (scroll already happened on click — no need to scroll again here)
-  });
-
-  // ── Update history display ───────────────────────────────────────────────
-  function updateHistoryDisplay() {
-    if (rollHistory.length === 0) {
-      rollHistoryEl.innerHTML =
-        '<p class="t-faint text-center py-4">No rolls yet</p>';
-      return;
-    }
-
-    rollHistoryEl.innerHTML = rollHistory
-      .slice(0, 10)
-      .map((roll) => {
-        const time = roll.timestamp.toLocaleTimeString();
-        return `
-          <div class="t-row p-3 flex justify-between items-center">
-            <div class="flex-1">
-              <span class="t-body-text font-medium">${roll.formula}</span>
-              <span class="t-faint text-sm ml-2">${time}</span>
-            </div>
-            <div class="text-right">
-              <div class="text-2xl font-bold" style="color:var(--gold);">${roll.total}</div>
-            </div>
+    function updateHistoryDisplay() {
+      const history = getHistory().slice(0, 10);
+      if (history.length === 0) {
+        rollHistoryEl.innerHTML = '<p class="t-faint text-center py-4">No rolls yet</p>';
+        return;
+      }
+      rollHistoryEl.innerHTML = '';
+      for (const r of history) {
+        const row = document.createElement('div');
+        row.className = 't-row p-3 flex justify-between items-center';
+        row.innerHTML = `
+          <div class="flex-1">
+            <span class="t-body-text font-medium"></span>
+            <span class="t-faint text-sm ml-2">${new Date(r.timestamp).toLocaleTimeString()}</span>
           </div>
-        `;
-      })
-      .join('');
+          <div class="text-right"><div class="text-2xl font-bold" style="color:var(--gold);">${r.total}</div></div>`;
+        (row.querySelector('.t-body-text') as HTMLSpanElement).textContent = r.formula;
+        rollHistoryEl.append(row);
+      }
+    }
+
+    clearHistoryButton.addEventListener('click', () => {
+      if (confirm('Are you sure you want to clear the roll history?')) clearHistory();
+    });
+
+    const controller = new AbortController();
+    window.addEventListener(ROLL_EVENT, updateHistoryDisplay, { signal: controller.signal });
+    window.addEventListener(HISTORY_CLEARED_EVENT, updateHistoryDisplay, { signal: controller.signal });
+    document.addEventListener('astro:before-swap', () => controller.abort(), { once: true });
+
+    modifierInput.addEventListener('input', updateSelectionDisplay);
+    updateSelectionDisplay();
+    updateHistoryDisplay();
   }
 
-  // ── Clear history ────────────────────────────────────────────────────────
-  clearHistoryButton.addEventListener('click', () => {
-    if (confirm('Are you sure you want to clear the roll history?')) {
-      rollHistory = [];
-      updateHistoryDisplay();
-    }
-  });
-
-  // ── Update display when modifier changes ─────────────────────────────────
-  modifierInput.addEventListener('input', updateSelectionDisplay);
+  document.addEventListener('astro:page-load', initDiceRollerPage);
 </script>

@@ -4,6 +4,7 @@ import { isAuthenticated, getUserRole } from '../lib/auth';
 import { ClientRouter } from 'astro:transitions';
 import PWAFloatingMenu from '../components/PWAFloatingMenu.astro';
 import PWAQuickAccess from '../components/PWAQuickAccess.astro';
+import DiceFab from '../components/DiceFab.astro';
 
 interface Props {
   title: string;
@@ -342,6 +343,9 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     
     <!-- PWA Quick Access Buttons (only shown in standalone mode for logged-in users) -->
     {isLoggedIn && <PWAQuickAccess />}
+
+    <!-- Floating dice roller (everyone, every page) -->
+    <DiceFab />
     
     <script>
       // Function to get theme preference from localStorage
