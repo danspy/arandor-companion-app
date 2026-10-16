@@ -125,6 +125,7 @@ const duration = event.duration
   .ns-more:hover { color: #fff; }
 
   .ns-dialog {
+    margin: auto; /* Tailwind's reset removes the browser's centring margin */
     width: min(30rem, calc(100vw - 2rem));
     max-height: calc(100dvh - 2rem);
     padding: 0;
