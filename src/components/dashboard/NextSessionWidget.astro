@@ -1,0 +1,237 @@
+---
+// Compact "next session" card for the dashboard hero, with a details overlay.
+import SessionCountdown from './SessionCountdown.astro';
+
+interface Props {
+  event: {
+    title: string;
+    description: string | null;
+    date: string;
+    time: string | null;
+    duration: number | null;
+  };
+  host: { name: string; imageUrl: string | null };
+  isLoggedIn: boolean;
+}
+
+const { event, host, isLoggedIn } = Astro.props;
+const start = `${event.date}T${event.time || '00:00'}`;
+const day = new Date(event.date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric', month: 'short' });
+const longDay = new Date(event.date).toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const duration = event.duration
+  ? [Math.floor(event.duration / 60) && `${Math.floor(event.duration / 60)}h`, event.duration % 60 && `${event.duration % 60}m`].filter(Boolean).join(' ')
+  : null;
+---
+
+<div class="ns-card" data-ns-start={start}>
+  <div class="ns-head">
+    <span class="ns-dot"></span>
+    <span class="ns-label" data-ns-status>Next session</span>
+  </div>
+  <p class="ns-title">{event.title}</p>
+  <p class="ns-when">{day}{event.time && ` · ${event.time}`}</p>
+  <p class="ns-count" data-ns-count aria-live="off">–</p>
+  <button type="button" class="ns-more" data-ns-open>
+    Details
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6" /></svg>
+  </button>
+</div>
+
+<dialog class="ns-dialog t-modal-panel" data-ns-dialog aria-labelledby="ns-dialog-title">
+  <div class="ns-dialog-inner">
+    <button type="button" class="ns-close" data-ns-close aria-label="Close">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+    <p class="t-label-sm">Next session</p>
+    <h2 id="ns-dialog-title" class="ns-dialog-title">{event.title}</h2>
+    {event.description && <p class="t-muted text-sm mb-4">{event.description}</p>}
+
+    <SessionCountdown date={event.date} time={event.time} duration={event.duration} />
+
+    <dl class="ns-facts">
+      <div>
+        <dt class="t-faint text-xs">Date</dt>
+        <dd>{longDay}</dd>
+      </div>
+      {event.time && (
+        <div>
+          <dt class="t-faint text-xs">Time</dt>
+          <dd>{event.time}{duration && <span class="t-faint"> · {duration}</span>}</dd>
+        </div>
+      )}
+      <div>
+        <dt class="t-faint text-xs">Host</dt>
+        <dd class="ns-host">
+          <span class="ns-host-img">
+            {host.imageUrl ? <img src={host.imageUrl} alt="" /> : host.name.charAt(0)}
+          </span>
+          {host.name}
+        </dd>
+      </div>
+    </dl>
+
+    <div class="ns-actions">
+      <a href="/api/calendar/ics.ics" class="t-btn-secondary">Add to my calendar</a>
+      {isLoggedIn && <a href="/calendar" class="t-btn-primary">Open calendar</a>}
+    </div>
+  </div>
+</dialog>
+
+<style>
+  .ns-card {
+    width: min(100%, 17rem);
+    padding: 0.9rem 1rem;
+    border-radius: 6px;
+    background: rgba(12, 9, 6, 0.55);
+    border: 1px solid rgba(255, 200, 110, 0.35);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 24px rgba(201, 144, 50, 0.18);
+    backdrop-filter: blur(14px) saturate(1.3);
+    -webkit-backdrop-filter: blur(14px) saturate(1.3);
+    color: #f2e8d5;
+  }
+  .ns-head { display: flex; align-items: center; gap: 0.45rem; }
+  .ns-dot {
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 50%;
+    background: #ffb347;
+    animation: ns-ping 1.6s ease-out infinite;
+  }
+  @keyframes ns-ping {
+    from { box-shadow: 0 0 0 0 rgba(255, 179, 71, 0.7); }
+    to   { box-shadow: 0 0 0 10px rgba(255, 179, 71, 0); }
+  }
+  .ns-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #ffcf7a; }
+  .ns-title { margin-top: 0.35rem; font-weight: 600; font-size: 0.95rem; line-height: 1.25; }
+  .ns-when { font-size: 0.75rem; color: rgba(242, 232, 213, 0.7); }
+  .ns-count {
+    margin-top: 0.4rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.7rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffd98a;
+    font-variant-numeric: tabular-nums;
+  }
+  .ns-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.6rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #ffcf7a;
+  }
+  .ns-more:hover { color: #fff; }
+
+  .ns-dialog {
+    width: min(30rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    color: var(--text-body);
+    overflow: auto;
+  }
+  .ns-dialog::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+  .ns-dialog[open] { animation: ns-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2) both; }
+  @keyframes ns-in {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: none; }
+  }
+  .ns-dialog-inner { position: relative; padding: 1.5rem; }
+  .ns-close { position: absolute; top: 0.9rem; right: 0.9rem; color: var(--text-muted); }
+  .ns-close:hover { color: var(--gold); }
+  .ns-dialog-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.75rem;
+    font-weight: 700;
+    line-height: 1.15;
+    color: var(--text-strong);
+    margin: 0.2rem 2rem 0.5rem 0;
+  }
+  .ns-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 0.75rem; margin: 0.25rem 0 1.25rem; }
+  .ns-facts dd { font-weight: 600; font-size: 0.9rem; color: var(--text-strong); }
+  .ns-host { display: flex; align-items: center; gap: 0.5rem; }
+  .ns-host-img {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gold-dim);
+    color: var(--gold);
+    font-size: 0.8rem;
+  }
+  .ns-host-img img { width: 100%; height: 100%; object-fit: cover; }
+  .ns-actions { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .ns-actions a { flex: 1; justify-content: center; text-align: center; }
+
+  /* Phones: the overlay becomes a bottom sheet. */
+  @media (max-width: 640px) {
+    .ns-card { width: 100%; display: grid; grid-template-columns: 1fr auto; column-gap: 0.75rem; align-items: end; }
+    .ns-head, .ns-title, .ns-when { grid-column: 1; }
+    .ns-count { grid-column: 2; grid-row: 1 / span 3; align-self: center; font-size: 1.5rem; margin: 0; }
+    .ns-more { grid-column: 1 / -1; }
+    .ns-dialog {
+      width: 100vw;
+      max-width: 100vw;
+      margin: auto 0 0;
+      border-radius: 14px 14px 0 0;
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+    }
+    .ns-dialog[open] { animation-name: ns-sheet; }
+    @keyframes ns-sheet { from { transform: translateY(100%); } to { transform: none; } }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ns-dot, .ns-dialog[open] { animation: none; }
+  }
+</style>
+
+<script>
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  document.addEventListener('astro:page-load', () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+    const card = document.querySelector<HTMLElement>('[data-ns-start]');
+    const dialog = document.querySelector<HTMLDialogElement>('[data-ns-dialog]');
+    if (!card || !dialog) return;
+
+    card.querySelector('[data-ns-open]')?.addEventListener('click', () => dialog.showModal());
+    dialog.querySelector('[data-ns-close]')?.addEventListener('click', () => dialog.close());
+    // Tap outside the panel closes it.
+    dialog.addEventListener('click', (e) => {
+      if (e.target === dialog) dialog.close();
+    });
+
+    const count = card.querySelector<HTMLElement>('[data-ns-count]')!;
+    const status = card.querySelector<HTMLElement>('[data-ns-status]')!;
+    const start = new Date(card.dataset.nsStart!).getTime();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const update = () => {
+      const diff = start - Date.now();
+      if (diff <= 0) {
+        count.textContent = "It's on!";
+        status.textContent = 'Session time';
+        return;
+      }
+      const d = Math.floor(diff / 86_400_000);
+      const h = Math.floor(diff / 3_600_000) % 24;
+      const m = Math.floor(diff / 60_000) % 60;
+      const s = Math.floor(diff / 1000) % 60;
+      count.textContent = d > 0 ? `${d}d ${pad(h)}:${pad(m)}:${pad(s)}` : `${pad(h)}:${pad(m)}:${pad(s)}`;
+      if (new Date(start).toDateString() === new Date().toDateString()) {
+        status.textContent = new Date(start).getHours() >= 17 ? 'Tonight!' : 'Today!';
+      }
+    };
+    update();
+    timer = setInterval(update, 1000);
+  });
+
+  document.addEventListener('astro:before-swap', () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+  });
+</script>
