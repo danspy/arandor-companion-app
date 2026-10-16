@@ -1,5 +1,6 @@
 ---
-// Active quests as parchment notes pinned to a board, sealed by priority.
+// Open quests as notices on the board, drawn in the app's own style: dark inset cards,
+// a gold pin line on top, priority as a coloured marker.
 import { markdownExcerpt } from '../../utils/markdown';
 
 interface Props {
@@ -11,8 +12,7 @@ interface Props {
 const { quests, completed, failed } = Astro.props;
 const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
 const sorted = quests.slice().sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3)).slice(0, 6);
-// Fixed, varied tilts so the board looks hand-pinned but doesn't jump around.
-const tilts = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7];
+const PRIORITY: Record<string, string> = { high: 'Urgent', medium: 'Soon', low: 'Whenever' };
 ---
 
 <section class="t-panel quest-board-panel p-5 h-full">
@@ -23,14 +23,11 @@ const tilts = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7];
 
   {sorted.length > 0 ? (
     <div class="quest-board">
-      {sorted.map((q, i) => (
-        <a href="/quests" class="quest-note" style={`--tilt:${tilts[i % tilts.length]}deg`}>
-          <span class="quest-pin" aria-hidden="true"></span>
+      {sorted.map((q) => (
+        <a href="/quests" class={`quest-note prio-${q.priority}`}>
+          <span class="quest-prio">{PRIORITY[q.priority] ?? q.priority}</span>
           <h3 class="quest-title">{q.title}</h3>
           <p class="quest-text">{markdownExcerpt(q.description, 140)}</p>
-          <span class={`quest-seal seal-${q.priority}`} title={`${q.priority} priority`}>
-            {q.priority === 'high' ? '!' : q.priority === 'medium' ? '◆' : '·'}
-          </span>
         </a>
       ))}
     </div>
@@ -47,66 +44,48 @@ const tilts = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7];
 
 <style>
   .quest-board-panel { display: flex; flex-direction: column; }
-  .quest-board {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
-    gap: 1.1rem 1rem;
-    padding: 0.5rem 0.25rem;
-  }
+  .quest-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.75rem; }
+
   .quest-note {
+    --prio: var(--gold);
     position: relative;
     display: block;
-    padding: 1.1rem 1rem 1.6rem;
-    color: #3d2e1a;
-    background:
-      radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.35), transparent 40%),
-      linear-gradient(160deg, #f1dfb5, #e2c88f);
+    padding: 1rem 1rem 1.1rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--prio);
     border-radius: 2px;
-    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35), inset 0 0 30px rgba(140, 90, 30, 0.25);
-    transform: rotate(var(--tilt));
-    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    transition: border-color 0.2s ease, transform 0.2s ease;
   }
-  .quest-note:hover { transform: rotate(0deg) translateY(-4px) scale(1.02); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(140, 90, 30, 0.25); }
-  .quest-pin {
+  /* The "pin": a small square in the priority colour on the top edge. */
+  .quest-note::before {
+    content: '';
     position: absolute;
-    top: -6px;
-    left: 50%;
-    width: 14px;
-    height: 14px;
-    margin-left: -7px;
-    border-radius: 2px;
-    background: radial-gradient(circle at 35% 35%, #ffb3a0, #b3261e 60%, #5a0f0b);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    top: -5px;
+    left: 1rem;
+    width: 8px;
+    height: 8px;
+    background: var(--prio);
+    box-shadow: 0 0 10px color-mix(in srgb, var(--prio) 60%, transparent);
   }
-  .quest-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.15rem; font-weight: 700; line-height: 1.15; color: #2a1d0c; }
+  .quest-note:hover { transform: translateY(-2px); border-color: var(--border-gold); border-top-color: var(--prio); }
+  .prio-high { --prio: #c0453a; }
+  .prio-medium { --prio: var(--gold); }
+  .prio-low { --prio: #6f8f4a; }
+
+  .quest-prio { font-size: 0.7rem; font-weight: 600; color: var(--prio); }
+  .quest-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; font-weight: 700; line-height: 1.15; color: var(--text-strong); margin-top: 0.15rem; }
+  .quest-note:hover .quest-title { color: var(--gold); }
   .quest-text {
-    margin-top: 0.35rem;
-    font-size: 0.78rem;
-    line-height: 1.45;
-    color: #5a4426;
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--text-body);
     display: -webkit-box;
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
     overflow: hidden;
   }
-  .quest-seal {
-    position: absolute;
-    right: 0.6rem;
-    bottom: -0.7rem;
-    width: 2rem;
-    height: 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 2px;
-    font-weight: 800;
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.9);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
-  }
-  .seal-high { background: radial-gradient(circle at 35% 30%, #e0584a, #8f1a12); }
-  .seal-medium { background: radial-gradient(circle at 35% 30%, #e7b45a, #8d5a18); }
-  .seal-low { background: radial-gradient(circle at 35% 30%, #6fbf73, #24602a); }
 
   .quest-tally { display: flex; gap: 1rem; margin-top: auto; padding-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); }
   .quest-tally strong { color: var(--gold); font-size: 0.95rem; }
