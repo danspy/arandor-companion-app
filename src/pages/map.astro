@@ -266,19 +266,29 @@ const mapData = {
       const mod = (v: number) => { const m = Math.floor((v - 10) / 2); return m >= 0 ? `+${m}` : String(m); };
       const sprite = heroSprites(heroLook(ch))[0];
       const hpPct = ch.hp != null && ch.maxHp ? Math.max(0, Math.min(100, Math.round((ch.hp / ch.maxHp) * 100))) : null;
+      // same treatment as the character page: blurred backdrop + round avatar, the pixel hero beside it
+      const backdrop = ch.avatarUrl
+        ? `<img src="${esc(ch.avatarUrl)}" alt="" class="absolute inset-0 w-full h-full object-cover" style="filter:blur(18px) brightness(0.55) saturate(0.7); transform:scale(1.08);" /><div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,6,3,0.2),rgba(8,6,3,0.75));"></div>`
+        : `<div class="absolute inset-0 ${ch.isActive ? 'bg-gradient-to-br from-orange-900 via-amber-900 to-stone-900' : 'bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900'}"></div>`;
+      const avatar = ch.avatarUrl
+        ? `<img src="${esc(ch.avatarUrl)}" alt="${esc(ch.name)}" class="w-28 h-28 rounded-full object-cover shrink-0 shadow-2xl" style="border:3px solid var(--border-gold);" />`
+        : `<div class="w-28 h-28 rounded-full shrink-0 flex items-center justify-center shadow-2xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:700;color:var(--gold);">${esc(ch.name.charAt(0))}</div>`;
       detailsContent.innerHTML = `<div class="space-y-4">
-        ${ch.avatarUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(ch.avatarUrl)}" alt="${esc(ch.name)}" class="w-full h-full object-cover object-top" /><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div></div>` : ''}
-        <div class="flex items-center gap-3">
-          <div class="wm-sheet-sprite" data-sprite></div>
-          <div class="min-w-0">
-            <div class="flex flex-wrap items-center gap-2">
-              <span class="t-badge t-badge-gold">${esc(ch.class)}</span>
-              ${ch.level != null ? `<span class="t-badge">Level ${esc(String(ch.level))}</span>` : ''}
-              <span class="t-badge">${esc(ch.race)}</span>
-              ${ch.isActive ? '' : '<span class="t-badge t-badge-red">Inactive</span>'}
-            </div>
-            ${ch.player ? `<div class="t-muted text-sm mt-1">Played by ${esc(ch.player)}</div>` : ''}
+        <div class="relative -mx-4 -mt-4 mb-4 overflow-hidden" style="min-height:190px;">
+          ${backdrop}
+          <div class="relative flex items-end gap-4 px-4 pt-6 pb-4" style="min-height:190px;">
+            ${avatar}
+            <div class="wm-sheet-sprite pb-1" data-sprite title="${esc(ch.name)} on the map"></div>
           </div>
+        </div>
+        <div class="min-w-0">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="t-badge t-badge-gold">${esc(ch.class)}</span>
+            ${ch.level != null ? `<span class="t-badge">Level ${esc(String(ch.level))}</span>` : ''}
+            <span class="t-badge">${esc(ch.race)}</span>
+            ${ch.isActive ? '' : '<span class="t-badge t-badge-red">Inactive</span>'}
+          </div>
+          ${ch.player ? `<div class="t-muted text-sm mt-1">Played by ${esc(ch.player)}</div>` : ''}
         </div>
         ${hpPct != null ? `<div><div class="flex justify-between text-xs t-muted mb-1"><span>Hit points</span><span>${esc(String(ch.hp))} / ${esc(String(ch.maxHp))}</span></div><div class="h-2 rounded-sm" style="background:var(--accent-dim);"><div class="h-2 rounded-sm" style="width:${hpPct}%; background:${hpPct > 50 ? '#3f9a5a' : hpPct > 25 ? '#d98a3a' : '#c23b3b'};"></div></div></div>` : ''}
         ${abilities.length ? `<div class="grid grid-cols-6 gap-1 text-center">${abilities.map(([k, l]) => `<div class="t-inset py-1"><div class="t-faint text-[10px] tracking-wide">${l}</div><div class="t-body-text font-semibold">${esc(String(stats[k]))}</div><div class="t-muted text-xs">${mod(stats[k])}</div></div>`).join('')}</div>` : ''}
@@ -297,7 +307,7 @@ const mapData = {
         </div>
       </div>`;
       const holder = detailsContent.querySelector('[data-sprite]');
-      if (holder) { sprite.style.width = '48px'; sprite.style.height = '72px'; holder.appendChild(sprite); }
+      if (holder) { sprite.style.width = '64px'; sprite.style.height = '96px'; holder.appendChild(sprite); }
       coordinateEditor?.classList.add('hidden');
     }
 
