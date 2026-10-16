@@ -1,0 +1,29 @@
+[Unit]
+Description=Arandor Companion App (preview, future.arandor.app)
+After=network.target
+
+[Service]
+Type=simple
+User=arandor-preview
+Group=arandor-preview
+# The build opens the database as ./data/content.db relative to this directory.
+WorkingDirectory=/srv/arandor-preview
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4322
+Environment=UPLOAD_DIR=/srv/arandor-preview/uploads
+ExecStart=/usr/bin/node /srv/arandor-preview/app/current/dist/server/entry.mjs
+Restart=always
+RestartSec=5
+SyslogIdentifier=arandor-preview
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/arandor-preview/data /srv/arandor-preview/uploads
+# Preview must never see live data or backups, whatever its code does.
+InaccessiblePaths=/srv/arandor/data /srv/arandor/uploads /var/backups/arandor
+
+[Install]
+WantedBy=multi-user.target

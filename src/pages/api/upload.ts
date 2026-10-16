@@ -48,11 +48,11 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     
     // Ensure upload directory exists
     // In development, save to public/uploads
-    // In production, save to persistent uploads directory outside dist/
+    // In production, save to the persistent uploads directory (UPLOAD_DIR, set per environment by systemd)
     const isDev = import.meta.env.DEV;
     const uploadDir = isDev 
       ? join(process.cwd(), 'public', 'uploads')
-      : '/srv/arandor/uploads';
+      : process.env.UPLOAD_DIR || '/srv/arandor/uploads';
     await mkdir(uploadDir, { recursive: true });
     
     // Save to uploads directory

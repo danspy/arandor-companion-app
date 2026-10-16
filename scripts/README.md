@@ -47,7 +47,7 @@ ASTRO_DATABASE_FILE=/custom/path/db.db node scripts/add-user.mjs jane mypassword
 - Works with the database specified in ASTRO_DATABASE_FILE environment variable
 
 **Notes:**
-- The database must exist before adding users (run `npm run build` first if needed)
+- The database must already exist. Never run `npm run build` on the server: it recreates the database file
 - Users can also be added through the web interface at `/users` page (admin only)
 
 ### update-user-role.mjs

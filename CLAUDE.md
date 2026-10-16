@@ -38,5 +38,6 @@ ASTRO_DATABASE_FILE=./data/content.db astro build
 
 ## Notes
 
-- The DB storage path in `astro.config.mjs` points to `/srv/arandor/data/content.db` (production path). Use `ASTRO_DATABASE_FILE` env var for local builds.
+- The DB storage path defaults to `./data/dev.db`; `astro.config.mjs` refuses any path under `/srv/`. **Never run `astro build`, `astro dev` or `astro db` on the server** — they recreate the database file.
+- Deployment (live + preview environments, backups, promote) is described in `deploy/README.md`.
 - HTTPS config should follow project memory: `server: { https: true }` for dev server.

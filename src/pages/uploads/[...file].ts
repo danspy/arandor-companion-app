@@ -47,11 +47,11 @@ export const GET: APIRoute = async ({ params, request }) => {
     }
 
     // In development, serve from public/uploads
-    // In production, serve from persistent uploads directory
+    // In production, serve from the persistent uploads directory (UPLOAD_DIR, set per environment by systemd)
     const isDev = import.meta.env.DEV;
     const uploadDir = isDev 
       ? join(process.cwd(), 'public', 'uploads')
-      : '/srv/arandor/uploads';
+      : process.env.UPLOAD_DIR || '/srv/arandor/uploads';
     
     // Resolve the full path and ensure it's within the uploads directory
     const filepath = resolve(uploadDir, file);

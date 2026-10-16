@@ -1,0 +1,3 @@
+# /etc/sudoers.d/arandor-deploy (root:root 0440) - lets the CI deploy user
+# activate uploaded releases and read service status, nothing else.
+deploy ALL=(root) NOPASSWD: /usr/local/sbin/arandor-activate, /usr/local/sbin/arandor-deploy-status
