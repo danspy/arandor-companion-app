@@ -39,7 +39,7 @@ sudo systemctl status arandor.service
 
 - A Linux server with systemd (Ubuntu 20.04+, Debian 11+, etc.)
 - SSH access to your server with sudo privileges
-- Node.js 22.12 or higher (required by Astro 6)
+- Node.js 20.x or higher
 - SQLite3
 
 ## Deployment Steps

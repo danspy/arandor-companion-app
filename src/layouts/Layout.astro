@@ -117,7 +117,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <div class="pwa-status-bar-gradient" aria-hidden="true"></div>
     
     <!-- Loading indicator for page transitions -->
-    <div id="loading-indicator" class="hidden fixed inset-0 bg-black/20 dark:bg-black/40 z-9999 flex items-center justify-center backdrop-blur-xs">
+    <div id="loading-indicator" class="hidden fixed inset-0 bg-black/20 dark:bg-black/40 z-[9999] flex items-center justify-center backdrop-blur-sm">
       <div class="loading-spinner"></div>
     </div>
     
@@ -137,7 +137,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
           <!-- Mobile toggle -->
           <button
             id="mobileMenuBtn"
-            class="lg:hidden p-2 -mr-1 rounded-sm transition-colors"
+            class="lg:hidden p-2 -mr-1 rounded transition-colors"
             style="color: rgba(242,232,213,0.5);"
             aria-label="Toggle menu"
             data-testid="mobile-menu-btn"
@@ -217,17 +217,17 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
                 style="background: var(--bg-raised); border-color: var(--border-gold);"
               >
                 {!isLoggedIn ? (
-                  <a href="/login" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Login</a>
+                  <a href="/login" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Login</a>
                 ) : (
                   <>
-                    <a href="/profile" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Profile</a>
+                    <a href="/profile" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Profile</a>
                     {canAccessUsers && (
-                      <a href="/users" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Users</a>
+                      <a href="/users" class="block px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]" style="color: var(--text-body);">Users</a>
                     )}
                     <div class="my-1" style="border-top: 1px solid var(--border);"></div>
                     <button
                       id="logoutBtn"
-                      class="w-full text-left px-4 py-2.5 text-sm transition-colors hover:text-(--accent)"
+                      class="w-full text-left px-4 py-2.5 text-sm transition-colors hover:text-[var(--accent)]"
                       style="color: var(--text-muted);"
                     >Logout</button>
                   </>
@@ -305,14 +305,14 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
 
             <div id="userAccordionMobile" class="hidden pl-3 space-y-0.5">
               {!isLoggedIn ? (
-                <a href="/login" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Login</a>
+                <a href="/login" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Login</a>
               ) : (
                 <>
-                  <a href="/profile" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Profile</a>
+                  <a href="/profile" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Profile</a>
                   {canAccessUsers && (
-                    <a href="/users" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Users</a>
+                    <a href="/users" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Users</a>
                   )}
-                  <button id="logoutBtnMobile" class="w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Logout</button>
+                  <button id="logoutBtnMobile" class="w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors hover:text-[var(--accent)]" style="color: var(--text-muted);">Logout</button>
                 </>
               )}
             </div>

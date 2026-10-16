@@ -2,16 +2,16 @@
 
 ## Project Overview
 
-A D&D companion app built with **Astro 6 + Astro DB + TailwindCSS v4 + Node adapter**.
+A D&D companion app built with **Astro 5 + Astro DB + TailwindCSS v3 + Node adapter**.
 
 Tracks adventures, characters, NPCs, locations, quests, factions, and more. The world map is rendered in the browser as a pixel-art tile world (see `src/lib/worldmap/` and `scripts/trace-world.mjs`). There is no AI integration.
 
 ## Tech Stack
 
-- **Framework**: Astro 6 (SSR, server output)
+- **Framework**: Astro 5 (SSR, server output)
 - **Adapter**: `@astrojs/node` (standalone mode)
 - **Database**: `@astrojs/db` (SQLite via libSQL)
-- **Styling**: TailwindCSS v4 (via `@tailwindcss/vite`; theme tokens live in `src/styles/global.css`) + `@tailwindcss/typography`
+- **Styling**: TailwindCSS v3 + `@tailwindcss/typography`
 - **Testing**: Playwright
 
 ## CRITICAL: Git Workflow

@@ -138,7 +138,7 @@ const mapData = {
       </div>
 
       <!-- Legend -->
-      <div id="mapLegend" class="absolute left-4 z-20 max-w-[calc(100%-2rem)] rounded-xs p-3 transition-opacity duration-300 opacity-0 pointer-events-none" style="bottom: 84px; background:rgba(12,9,6,0.92); border:1px solid var(--border-gold); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+      <div id="mapLegend" class="absolute left-4 z-20 max-w-[calc(100%-2rem)] rounded-sm p-3 transition-opacity duration-300 opacity-0 pointer-events-none" style="bottom: 84px; background:rgba(12,9,6,0.92); border:1px solid var(--border-gold); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
         <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs" style="color:#d0c4aa;">
           <div class="flex items-center gap-2"><canvas data-legend="city" width="16" height="16"></canvas><span>City</span></div>
           <div class="flex items-center gap-2"><canvas data-legend="building" width="16" height="16"></canvas><span>Building</span></div>
@@ -269,7 +269,7 @@ const mapData = {
       // same treatment as the character page: blurred backdrop + round avatar, the pixel hero beside it
       const backdrop = ch.avatarUrl
         ? `<img src="${esc(ch.avatarUrl)}" alt="" class="absolute inset-0 w-full h-full object-cover" style="filter:blur(18px) brightness(0.55) saturate(0.7); transform:scale(1.08);" /><div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,6,3,0.2),rgba(8,6,3,0.75));"></div>`
-        : `<div class="absolute inset-0 ${ch.isActive ? 'bg-linear-to-br from-orange-900 via-amber-900 to-stone-900' : 'bg-linear-to-br from-stone-900 via-stone-800 to-stone-900'}"></div>`;
+        : `<div class="absolute inset-0 ${ch.isActive ? 'bg-gradient-to-br from-orange-900 via-amber-900 to-stone-900' : 'bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900'}"></div>`;
       const avatar = ch.avatarUrl
         ? `<img src="${esc(ch.avatarUrl)}" alt="${esc(ch.name)}" class="w-28 h-28 rounded-full object-cover shrink-0 shadow-2xl" style="border:3px solid var(--border-gold);" />`
         : `<div class="w-28 h-28 rounded-full shrink-0 flex items-center justify-center shadow-2xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);font-family:'Cormorant Garamond',serif;font-size:3.5rem;font-weight:700;color:var(--gold);">${esc(ch.name.charAt(0))}</div>`;
@@ -290,7 +290,7 @@ const mapData = {
           </div>
           ${ch.player ? `<div class="t-muted text-sm mt-1">Played by ${esc(ch.player)}</div>` : ''}
         </div>
-        ${hpPct != null ? `<div><div class="flex justify-between text-xs t-muted mb-1"><span>Hit points</span><span>${esc(String(ch.hp))} / ${esc(String(ch.maxHp))}</span></div><div class="h-2 rounded-xs" style="background:var(--accent-dim);"><div class="h-2 rounded-xs" style="width:${hpPct}%; background:${hpPct > 50 ? '#3f9a5a' : hpPct > 25 ? '#d98a3a' : '#c23b3b'};"></div></div></div>` : ''}
+        ${hpPct != null ? `<div><div class="flex justify-between text-xs t-muted mb-1"><span>Hit points</span><span>${esc(String(ch.hp))} / ${esc(String(ch.maxHp))}</span></div><div class="h-2 rounded-sm" style="background:var(--accent-dim);"><div class="h-2 rounded-sm" style="width:${hpPct}%; background:${hpPct > 50 ? '#3f9a5a' : hpPct > 25 ? '#d98a3a' : '#c23b3b'};"></div></div></div>` : ''}
         ${abilities.length ? `<div class="grid grid-cols-6 gap-1 text-center">${abilities.map(([k, l]) => `<div class="t-inset py-1"><div class="t-faint text-[10px] tracking-wide">${l}</div><div class="t-body-text font-semibold">${esc(String(stats[k]))}</div><div class="t-muted text-xs">${mod(stats[k])}</div></div>`).join('')}</div>` : ''}
         ${ch.alignment || ch.background ? `<div class="t-muted text-sm">${[ch.alignment, ch.background].filter(Boolean).map((v) => esc(String(v))).join(' · ')}</div>` : ''}
         <div class="pt-4" style="border-top:1px solid var(--border);">
@@ -315,9 +315,9 @@ const mapData = {
       sidebarKind = 'location';
       const npcs = data.npcsByLocation[loc.id] || [], entries = data.entriesByLocation[loc.id] || [], lib = data.libraryByLocation[loc.id] || [];
       let html = `<div class="space-y-4">
-        ${loc.imageUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(loc.imageUrl)}" alt="${esc(loc.name)}" class="w-full h-full object-cover" /><div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div></div>` : ''}
+        ${loc.imageUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(loc.imageUrl)}" alt="${esc(loc.name)}" class="w-full h-full object-cover" /><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div></div>` : ''}
         <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-xs ${typeBadge(loc.type)}">${esc(cap(loc.type))}</span>
+          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${typeBadge(loc.type)}">${esc(cap(loc.type))}</span>
           ${loc.region ? `<span class="t-muted text-sm">📍 ${esc(loc.region)}</span>` : ''}
           ${loc.visited ? `<span class="t-badge t-badge-green">✓ Visited</span>` : ''}
         </div>

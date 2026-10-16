@@ -174,7 +174,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       <div class="flex flex-col gap-2 sm:gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div class="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
           {sortedInitiatives.length > 0 && (
-            <div class="t-inset flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xs w-fit">
+            <div class="t-inset flex items-center gap-1.5 sm:gap-2 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-sm w-fit">
               <span class="t-body-text text-xs font-medium">Round:</span>
               <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold" style="color:var(--gold);">{combatState.currentRound}</span>
             </div>
@@ -300,7 +300,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 <!-- Compact layout: Single line on mobile and desktop -->
                 <div class="flex items-center gap-2 sm:gap-3">
                   <!-- Initiative number -->
-                  <div class="shrink-0 text-3xl sm:text-4xl font-bold min-w-12 sm:min-w-16" style="color:var(--gold);">
+                  <div class="flex-shrink-0 text-3xl sm:text-4xl font-bold min-w-12 sm:min-w-16" style="color:var(--gold);">
                     {entry.initiative}
                   </div>
                   
@@ -315,7 +315,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   </div>
                   
                   <!-- HP display (inline for all) -->
-                  <div class="shrink-0 flex items-center gap-1">
+                  <div class="flex-shrink-0 flex items-center gap-1">
                     {canViewActualHP(entry) ? (
                       <div class="t-body-text text-xs sm:text-sm font-semibold">
                         {entry.hp !== null && entry.maxHp !== null ? (
@@ -376,7 +376,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   
                   <!-- Action buttons (icon buttons for all screens) -->
                   {canEdit && (
-                    <div class="flex gap-1 sm:gap-2 shrink-0">
+                    <div class="flex gap-1 sm:gap-2 flex-shrink-0">
                       <button 
                         class="edit-initiative-btn t-icon-btn"
                         data-id={entry.id}
@@ -473,7 +473,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
 
   <!-- Add/Edit Initiative Modal -->
   {canEdit && (
-    <div id="initiativeModal" class="fixed inset-0 bg-black/70 backdrop-blur-xs hidden items-center justify-center z-50 p-4 modal-overlay-safe">
+    <div id="initiativeModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-overlay-safe">
       <div class="t-modal-panel max-w-2xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
         <div class="p-6">
           <div class="flex justify-between items-center mb-6">
@@ -661,7 +661,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 type="checkbox" 
                 id="isActive" 
                 checked
-                class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
+                class="w-4 h-4 rounded" style="accent-color:var(--accent);"
               />
               <label for="isActive" class="ml-2 t-body-text text-sm">
                 Active in combat
@@ -691,7 +691,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
   )}
 
   <!-- HP Edit Modal for Players -->
-  <div id="hpEditModal" class="fixed inset-0 bg-black/70 backdrop-blur-xs hidden items-center justify-center z-50 p-4 modal-overlay-safe">
+  <div id="hpEditModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full modal-content-safe">
       <div class="p-6">
         <div class="flex justify-between items-center mb-6">
@@ -752,7 +752,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           
           <!-- Death Saves (shown when HP = 0) -->
           <div id="deathSavesContainer" class="hidden">
-            <div class="t-inset p-4 rounded-xs" style="border:1px solid var(--danger);">
+            <div class="t-inset p-4 rounded-sm" style="border:1px solid var(--danger);">
               <h3 class="text-sm font-semibold mb-3" style="color:var(--danger);">Death Saves</h3>
               
               <div class="space-y-3">
@@ -788,7 +788,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   <input 
                     type="checkbox" 
                     id="hpIsStable"
-                    class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
+                    class="w-4 h-4 rounded" style="accent-color:var(--accent);"
                   />
                   <label for="hpIsStable" class="ml-2 t-body-text text-xs">
                     Character is stabilized

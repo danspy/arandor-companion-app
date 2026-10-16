@@ -277,8 +277,8 @@ function getHostName(hostId: string | null): string {
                   <p class="t-muted mb-3">{event.description}</p>
                 )}
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-                  <div class="t-inset flex items-center gap-3 rounded-xs p-3">
-                    <div class="shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
+                    <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
                       <svg class="w-5 h-5" style="color:var(--gold);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                       </svg>
@@ -288,8 +288,8 @@ function getHostName(hostId: string | null): string {
                       <div class="t-body-text font-semibold">{formatDate(event.date)}</div>
                     </div>
                   </div>
-                  <div class="t-inset flex items-center gap-3 rounded-xs p-3">
-                    <div class="shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
+                    <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center">
                       <svg class="w-5 h-5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
                       </svg>
@@ -299,8 +299,8 @@ function getHostName(hostId: string | null): string {
                       <div class="t-body-text font-semibold">{event.time}{event.duration ? ` (${formatDuration(event.duration)})` : ''}</div>
                     </div>
                   </div>
-                  <div class="t-inset flex items-center gap-3 rounded-xs p-3">
-                    <div class="shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center overflow-hidden">
+                  <div class="t-inset flex items-center gap-3 rounded-sm p-3">
+                    <div class="flex-shrink-0 w-10 h-10 t-inset rounded-full flex items-center justify-center overflow-hidden">
                       {getHostInfo(event.hostId).imageUrl ? (
                         <img 
                           src={getHostInfo(event.hostId).imageUrl} 
@@ -329,7 +329,7 @@ function getHostName(hostId: string | null): string {
 
   <!-- Event Modal (Add/Edit) -->
   {canEdit && (
-    <div id="eventModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
+    <div id="eventModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay-safe">
       <div class="t-modal-panel max-w-lg w-full p-6 modal-content-safe max-h-[90vh] overflow-y-auto">
         <div class="flex justify-between items-center mb-6">
           <h3 id="eventModalTitle" class="font-display italic font-semibold text-xl" style="color:var(--gold);">Add Event</h3>
@@ -450,7 +450,7 @@ function getHostName(hostId: string | null): string {
   )}
 
   <!-- Instructions Modal -->
-  <div id="instructionsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
+  <div id="instructionsModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-2xl w-full p-6 modal-content-safe max-h-[90vh] overflow-y-auto">
       <div class="flex justify-between items-center mb-6">
         <h3 class="font-display italic font-semibold text-xl" style="color:var(--gold);">Calendar Subscription Instructions</h3>
@@ -553,9 +553,9 @@ function getHostName(hostId: string | null): string {
 
         <!-- Note about updates -->
         <div class="pt-4" style="border-top:1px solid var(--border);">
-          <div class="t-callout p-4 rounded-xs">
+          <div class="t-callout p-4 rounded-sm">
             <div class="flex gap-3">
-              <svg class="w-5 h-5 shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5 flex-shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
               <div class="t-body-text text-sm">

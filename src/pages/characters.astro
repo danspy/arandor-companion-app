@@ -191,7 +191,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
                 <div class="absolute inset-0 bg-black/30"></div>
               </>
             ) : (
-              <div class={`absolute inset-0 bg-linear-to-br ${character.isActive ? 'from-orange-800 to-amber-900' : 'from-stone-800 to-stone-700'}`}></div>
+              <div class={`absolute inset-0 bg-gradient-to-br ${character.isActive ? 'from-orange-800 to-amber-900' : 'from-stone-800 to-stone-700'}`}></div>
             )}
             
             <!-- Circular avatar on top -->
@@ -224,7 +224,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
               <h2 class="text-2xl font-bold t-body-text">{character.name}</h2>
             </a>
             {canEditCharacter(character) && (
-              <div class="flex gap-2 items-center shrink-0">
+              <div class="flex gap-2 items-center flex-shrink-0">
                 <Button
                   variant="icon"
                   size="sm"
@@ -365,7 +365,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
             id="isActive" 
             name="isActive" 
             checked
-            class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
+            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
           >
           <label for="isActive" class="t-label">Active Player</label>
         </div>
@@ -376,7 +376,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
             id="assignToMe" 
             name="assignToMe" 
             checked
-            class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
+            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
           >
           <label for="assignToMe" class="t-label">
             Assign this character to my account
@@ -449,7 +449,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
               </div>
             </div>
             <div id="avatarPreview" class="hidden mt-2">
-              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-xs">
+              <img id="avatarPreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
             </div>
           </div>
           
@@ -475,7 +475,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
           </div>
         </div>
         
-        <div id="fetchStatus" class="hidden p-3 rounded-xs mb-2"></div>
+        <div id="fetchStatus" class="hidden p-3 rounded-sm mb-2"></div>
         
         <div>
           <h3 class="font-semibold mb-2 t-body-text">Ability Scores</h3>
@@ -852,7 +852,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
       // Show loading status
       if (fetchStatus) {
         fetchStatus.textContent = 'Fetching character data from D&D Beyond...';
-        fetchStatus.className = 'p-3 rounded-xs mb-2 bg-blue-100 text-blue-800';
+        fetchStatus.className = 'p-3 rounded-sm mb-2 bg-blue-100 text-blue-800';
         fetchStatus.classList.remove('hidden');
       }
       
@@ -896,20 +896,20 @@ const getOwnershipText = (character: typeof characters[0]) => {
           // Show success status
           if (fetchStatus) {
             fetchStatus.textContent = '✓ Character data fetched successfully!';
-            fetchStatus.className = 'p-3 rounded-xs mb-2 bg-green-100 text-green-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-green-100 text-green-800';
           }
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
           if (fetchStatus) {
             fetchStatus.textContent = `Failed to fetch: ${error.error || 'Unknown error'}`;
-            fetchStatus.className = 'p-3 rounded-xs mb-2 bg-red-100 text-red-800';
+            fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
           }
         }
       } catch (error) {
         console.error('Fetch error:', error);
         if (fetchStatus) {
           fetchStatus.textContent = 'An error occurred. Please check the URL and try again.';
-          fetchStatus.className = 'p-3 rounded-xs mb-2 bg-red-100 text-red-800';
+          fetchStatus.className = 'p-3 rounded-sm mb-2 bg-red-100 text-red-800';
         }
       }
     });

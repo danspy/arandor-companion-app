@@ -45,7 +45,7 @@ The built app uses `/tmp/astro-build.db` (or whatever path was set during build)
 ```
 ├── astro.config.mjs      # Astro configuration (integrations, adapter)
 ├── package.json          # Dependencies and scripts
-├── src/styles/global.css # Tailwind v4 theme + global styles
+├── tailwind.config.mjs   # Tailwind CSS configuration
 ├── tsconfig.json         # TypeScript configuration
 ├── db/
 │   ├── config.ts         # Database schema definitions
@@ -256,7 +256,7 @@ db/                       # Database schema and seed
 public/                   # Static assets
 astro.config.mjs          # Configuration
 package.json              # Dependencies
-src/styles/global.css     # Styles (Tailwind v4 theme)
+tailwind.config.mjs       # Styles
 tsconfig.json             # TypeScript
 ```
 

@@ -208,7 +208,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
               return (
                 <button
                   type="button"
-                  class="gallery-thumb relative block w-full overflow-hidden rounded-xs focus:outline-hidden"
+                  class="gallery-thumb relative block w-full overflow-hidden rounded-sm focus:outline-none"
                   style="border:1px solid var(--border-gold);"
                   data-gallery-src={url}
                   data-gallery-type={video ? 'video' : 'image'}
@@ -373,9 +373,9 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
               {relatedNPCs.map(npc => (
                 <a href={`/npcs/${npc.id}`} class="t-row p-3 flex items-center gap-3">
                   {npc.avatarUrl ? (
-                    <img src={npc.avatarUrl} alt={npc.name} class="w-10 h-10 rounded-full object-cover shrink-0" style="border:2px solid var(--border-gold);" />
+                    <img src={npc.avatarUrl} alt={npc.name} class="w-10 h-10 rounded-full object-cover flex-shrink-0" style="border:2px solid var(--border-gold);" />
                   ) : (
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">{npc.name.charAt(0)}</div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">{npc.name.charAt(0)}</div>
                   )}
                   <div class="flex-1 min-w-0">
                     <div class="t-link font-medium truncate">{npc.name}</div>
@@ -401,9 +401,9 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
               {relatedLocations.map(location => (
                 <a href={`/locations/${location.id}`} class="t-row p-3 flex items-center gap-3">
                   {location.imageUrl ? (
-                    <img src={location.imageUrl} alt={location.name} class="w-10 h-10 rounded-sm object-cover shrink-0" style="border:2px solid var(--border-gold);" />
+                    <img src={location.imageUrl} alt={location.name} class="w-10 h-10 rounded object-cover flex-shrink-0" style="border:2px solid var(--border-gold);" />
                   ) : (
-                    <div class="w-10 h-10 rounded-sm flex items-center justify-center text-lg font-bold shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);">📍</div>
+                    <div class="w-10 h-10 rounded flex items-center justify-center text-lg font-bold flex-shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);">📍</div>
                   )}
                   <div class="flex-1 min-w-0">
                     <div class="t-link font-medium truncate">{location.name}</div>
@@ -428,9 +428,9 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
               {relatedCharacters.map(character => (
                 <a href={`/characters/${character.id}`} class="t-row p-3 flex items-center gap-3">
                   {character.avatarUrl ? (
-                    <img src={character.avatarUrl} alt={character.name} class="w-10 h-10 rounded-full object-cover shrink-0" style="border:2px solid var(--border-gold);" />
+                    <img src={character.avatarUrl} alt={character.name} class="w-10 h-10 rounded-full object-cover flex-shrink-0" style="border:2px solid var(--border-gold);" />
                   ) : (
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">{character.name.charAt(0)}</div>
+                    <div class="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0" style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">{character.name.charAt(0)}</div>
                   )}
                   <div class="flex-1 min-w-0">
                     <div class="t-link font-medium truncate">{character.name}</div>
@@ -468,7 +468,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
   </div>
 
   <!-- Gallery Lightbox -->
-  <div id="galleryLightbox" class="hidden fixed inset-0 bg-black/80 backdrop-blur-xs flex items-center justify-center z-50 p-4">
+  <div id="galleryLightbox" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
     <button
       id="galleryLightboxClose"
       type="button"
@@ -677,13 +677,13 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
         video.controls = true;
         video.autoplay = true;
         video.playsInline = true;
-        video.className = 'max-w-full max-h-[90vh] rounded-xs';
+        video.className = 'max-w-full max-h-[90vh] rounded-sm';
         content.appendChild(video);
       } else {
         const img = document.createElement('img');
         img.src = item.src;
         img.alt = 'Session impression';
-        img.className = 'max-w-full max-h-[90vh] object-contain rounded-xs';
+        img.className = 'max-w-full max-h-[90vh] object-contain rounded-sm';
         content.appendChild(img);
       }
       if (counter) counter.textContent = `${currentIndex + 1} / ${items.length}`;

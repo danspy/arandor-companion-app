@@ -121,7 +121,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 {entry.title}
               </a>
               {isLoggedIn && (
-                <div class="flex gap-2 items-center shrink-0">
+                <div class="flex gap-2 items-center flex-shrink-0">
                   <Button
                     variant="icon"
                     size="sm"
@@ -184,7 +184,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   )}
 
   <!-- Modal for Add/Edit Entry -->
-  <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 modal-overlay-safe">
+  <div id="libraryEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="t-modal-panel p-4 sm:p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
       <h2 id="libraryModalTitle" class="font-display italic font-semibold text-xl sm:text-2xl mb-4 sm:mb-6" style="color:var(--gold);">New Docs Entry</h2>
       <form id="libraryEntryForm" class="space-y-4">
@@ -222,7 +222,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               Toggle Preview
             </button>
           </div>
-          <div id="markdownPreview" class="t-prose hidden mt-4 p-4 t-inset rounded-xs max-w-none"></div>
+          <div id="markdownPreview" class="t-prose hidden mt-4 p-4 t-inset rounded-sm max-w-none"></div>
         </div>
 
         <div>

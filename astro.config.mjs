@@ -1,5 +1,5 @@
 import { defineConfig } from 'astro/config';
-import tailwindcss from '@tailwindcss/vite';
+import tailwind from '@astrojs/tailwind';
 import db from '@astrojs/db';
 import node from '@astrojs/node';
 import basicSsl from '@vitejs/plugin-basic-ssl';
@@ -10,6 +10,7 @@ dotenv.config();
 // https://astro.build/config
 export default defineConfig({
   integrations: [
+    tailwind(),
     db({
       storage: process.env.ASTRO_DATABASE_FILE || '/srv/arandor/data/content.db',
     })
@@ -19,7 +20,7 @@ export default defineConfig({
     mode: 'standalone'
   }),
   vite: {
-    plugins: [basicSsl(), tailwindcss()],
+    plugins: [basicSsl()],
     server: { https: true },
   },
   security: {
