@@ -65,7 +65,7 @@ To change the schema:
 ## Dev server (dev.arandor.app)
 
 A third copy runs `astro dev` from a full git checkout, so work in progress can be watched live
-(hot reload) before it becomes a PR. It only ever uses seeded demo data.
+(hot reload) before it becomes a PR. It uses demo data or a copy of a live backup, never live data.
 
 | | Dev |
 |---|---|
