@@ -22,7 +22,7 @@ export default defineConfig({
   vite: {
     plugins: [...(devPublicHost ? [] : [basicSsl()]), tailwindcss()],
     server: devPublicHost
-      ? { allowedHosts: [devPublicHost], hmr: { protocol: 'wss', host: devPublicHost, clientPort: 443 } }
+      ? { allowedHosts: [devPublicHost], ws: { protocol: 'wss', host: devPublicHost, clientPort: 443 } }
       : { https: true },
   },
   security: {
