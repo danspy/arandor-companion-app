@@ -97,22 +97,6 @@ function isActiveLink(href: string): boolean {
       <!-- Divider -->
       <div class="pwa-menu-divider"></div>
 
-      <!-- Theme Toggle -->
-      <button
-        id="pwaThemeToggle"
-        class="pwa-menu-item"
-        aria-label="Toggle dark mode"
-      >
-        <svg id="pwaSunIcon" class="w-5 h-5 hidden dark:block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-        </svg>
-        <svg id="pwaMoonIcon" class="w-5 h-5 block dark:hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-        </svg>
-        <span id="pwaThemeText" class="dark:hidden">Dark Mode</span>
-        <span id="pwaThemeText2" class="hidden dark:block">Light Mode</span>
-      </button>
-
       <!-- User Menu -->
       {!isLoggedIn ? (
         <a href="/login" class="pwa-menu-item">
@@ -163,7 +147,6 @@ function isActiveLink(href: string): boolean {
     const menuOverlay = document.getElementById('pwaMenuOverlay');
     const menuIcon = document.getElementById('pwaMenuIcon');
     const closeIcon = document.getElementById('pwaCloseIcon');
-    const themeToggle = document.getElementById('pwaThemeToggle');
     const logoutBtn = document.getElementById('pwaLogoutBtn');
 
     if (!menuBtn || !menuPanel || !menuOverlay) return;
@@ -224,30 +207,6 @@ function isActiveLink(href: string): boolean {
         closeMenu();
       });
     });
-
-    // Theme toggle
-    if (themeToggle) {
-      themeToggle.addEventListener('click', () => {
-        const html = document.documentElement;
-        const isDark = html.classList.contains('dark');
-
-        if (isDark) {
-          html.classList.remove('dark');
-          try {
-            localStorage.setItem('theme', 'light');
-          } catch (e) {
-            console.warn('Failed to save theme preference:', e);
-          }
-        } else {
-          html.classList.add('dark');
-          try {
-            localStorage.setItem('theme', 'dark');
-          } catch (e) {
-            console.warn('Failed to save theme preference:', e);
-          }
-        }
-      });
-    }
 
     // Logout handler
     if (logoutBtn) {

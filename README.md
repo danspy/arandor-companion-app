@@ -81,7 +81,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 
 - **Authentication** - Login system to protect editing functionality
   - Role-based permissions (admin, dungeonmaster, player)
-- **Dark Mode** - Toggle between light and dark themes
+- **Dark theme** - One dark look everywhere (light mode was removed)
 - **Image Uploads** - Upload cover images for diary entries
 - **Markdown Support** - Rich text formatting in diary and library entries
 - **Mobile Responsive** - Optimized for all screen sizes
@@ -383,7 +383,7 @@ Each color includes a complete range of shades (50-950) following Tailwind's col
 - [x] Interactive map with location pins
 - [x] Session notes with markdown support
 - [x] Mobile-responsive design
-- [x] Dark mode theme toggle
+- [x] Dark theme (light mode removed)
 - [x] Tag-based filtering (Library)
 - [x] Faction tracking system
 - [x] Campaign level progress tracking
