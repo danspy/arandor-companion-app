@@ -29,6 +29,22 @@ future.arandor.app {
 	}
 }
 
+dev.arandor.app {
+	# Same login as preview. astro dev with live reload (arandor-dev service).
+	basicauth {
+		arandor PREVIEW_PASSWORD_HASH
+	}
+	reverse_proxy 127.0.0.1:4323
+	log {
+		output file /var/log/caddy/access-dev.log
+		level INFO
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Robots-Tag "noindex, nofollow"
+	}
+}
+
 preview.arandor.app {
 	redir https://future.arandor.app{uri}
 }
