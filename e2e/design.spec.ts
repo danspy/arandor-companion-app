@@ -21,11 +21,6 @@ test.describe('Navigation', () => {
     }
   });
 
-  test('theme toggle button is present', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'Desktop-only: theme toggle in desktop nav');
-    await expect(page.getByTestId('theme-toggle')).toBeVisible();
-  });
-
   test('user menu button is present', async ({ page, isMobile }) => {
     test.skip(isMobile, 'Desktop-only: user menu in desktop nav');
     await expect(page.getByTestId('user-menu-btn')).toBeVisible();
@@ -80,38 +75,16 @@ test.describe('Mobile navigation', () => {
   });
 });
 
-// ── Dark mode toggle ─────────────────────────────────────────────
+// ── Dark only ────────────────────────────────────────────────────
 
-test.describe('Theme toggle', () => {
-  test.beforeEach(async ({ page }) => {
-    // Force light mode start
+test.describe('Dark theme', () => {
+  test.use({ colorScheme: 'light' });
+
+  test('page is dark even for a light system setting and an old saved choice', async ({ page }) => {
     await page.addInitScript(() => localStorage.setItem('theme', 'light'));
     await page.goto('/login');
-  });
-
-  test('dark mode class applied when toggled', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
-    const html = page.locator('html');
-    await expect(html).not.toHaveClass(/dark/);
-    await page.getByTestId('theme-toggle').click();
-    await expect(html).toHaveClass(/dark/);
-  });
-
-  test('theme preference persisted in localStorage', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
-    await page.getByTestId('theme-toggle').click();
-    const stored = await page.evaluate(() => localStorage.getItem('theme'));
-    expect(stored).toBe('dark');
-  });
-
-  test('toggling twice returns to light mode', async ({ page, isMobile }) => {
-    test.skip(isMobile, 'Theme toggle is in desktop nav; mobile uses hamburger menu');
-    const toggle = page.getByTestId('theme-toggle');
-    const html = page.locator('html');
-    await toggle.click();
-    await expect(html).toHaveClass(/dark/);
-    await toggle.click();
-    await expect(html).not.toHaveClass(/dark/);
+    await expect(page.locator('html')).toHaveClass(/dark/);
+    await expect(page.getByTestId('theme-toggle')).toHaveCount(0);
   });
 });
 
@@ -119,7 +92,6 @@ test.describe('Theme toggle', () => {
 
 test.describe('Design tokens', () => {
   test.beforeEach(async ({ page }) => {
-    await page.addInitScript(() => localStorage.setItem('theme', 'dark'));
     await page.goto('/login');
   });
 

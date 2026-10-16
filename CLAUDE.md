@@ -42,4 +42,7 @@ npm run build   # does not touch any database
 - The app opens `./data/content.db` relative to its working directory in production and `./data/dev.db` in `astro dev`; `DATABASE_FILE` overrides both. Create the dev DB with `npm run db:dev`.
 - Changing `src/db/schema.ts` does not change any database. Live schema changes are reviewed SQL migrations applied to preview first (see `deploy/README.md`). `drizzle.config.ts` refuses any database under `/srv/`.
 - Deployment (live + preview environments, backups, promote) is described in `deploy/README.md`.
-- HTTPS config should follow project memory: `server: { https: true }` for dev server.
+- The local dev server uses HTTPS (`basicSsl`, `server: { https: true }`); on dev.arandor.app (`DEV_PUBLIC_HOST` set) it speaks plain HTTP behind Caddy.
+- Production runs need `SESSION_SECRET` (≥ 32 chars); dev falls back to a temporary secret.
+- The app is dark-only (`<html class="dark">`); use the colour tokens in `src/styles/global.css`.
+- Project documentation lives in `docs/` (start at `docs/Home.md`); update it when behaviour changes. `docs/archive/` is historical.
