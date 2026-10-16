@@ -1,0 +1,52 @@
+#!/bin/bash
+# arandor-backup [reason]
+#
+# Backs up the LIVE Arandor database and uploads to /var/backups/arandor.
+# The live files are only ever READ: the database is opened read-only and copied
+# with SQLite's online backup API, uploads are copied with rsync into a new
+# hard-linked snapshot directory. Backups are never pruned.
+#
+# Installed at /usr/local/sbin/arandor-backup (root:root 0755), run by
+# arandor-backup.timer (nightly) and by arandor-activate before every live deploy.
+
+set -euo pipefail
+umask 077
+
+LIVE_DB=/srv/arandor/data/content.db
+LIVE_UPLOADS=/srv/arandor/uploads
+ROOT=/var/backups/arandor
+REASON="${1:-manual}"
+TS="$(date -u +%Y%m%d_%H%M%SZ)"
+
+[[ "$REASON" =~ ^[a-z0-9-]{1,40}$ ]] || { echo "invalid reason: $REASON" >&2; exit 2; }
+
+mkdir -p "$ROOT/db" "$ROOT/uploads"
+exec 9>"$ROOT/.lock"
+flock -w 600 9
+
+# --- database -----------------------------------------------------------------
+DST="$ROOT/db/content.$TS.$REASON.db"
+sqlite3 -readonly "$LIVE_DB" ".timeout 30000" ".backup '$DST.partial'"
+CHECK="$(sqlite3 -readonly "$DST.partial" 'pragma integrity_check;')"
+if [ "$CHECK" != "ok" ]; then
+  echo "integrity_check failed on backup copy: $CHECK" >&2
+  mv "$DST.partial" "$DST.FAILED"
+  exit 1
+fi
+mv "$DST.partial" "$DST"
+chmod 0400 "$DST"
+( cd "$ROOT/db" && sha256sum "$(basename "$DST")" >> SHA256SUMS )
+ln -sfn "$(basename "$DST")" "$ROOT/db/latest.db"
+
+# --- uploads (unchanged files are hard links to the previous snapshot) --------
+SNAP="$ROOT/uploads/$TS"
+PREV="$(readlink -f "$ROOT/uploads/latest" 2>/dev/null || true)"
+if [ -n "$PREV" ] && [ -d "$PREV" ]; then
+  rsync -a --link-dest="$PREV" "$LIVE_UPLOADS/" "$SNAP.partial/"
+else
+  rsync -a "$LIVE_UPLOADS/" "$SNAP.partial/"
+fi
+mv "$SNAP.partial" "$SNAP"
+ln -sfn "$TS" "$ROOT/uploads/latest"
+
+echo "backup ok: $DST ($(stat -c %s "$DST") bytes), uploads snapshot $SNAP ($(find "$SNAP" -type f | wc -l) files)"

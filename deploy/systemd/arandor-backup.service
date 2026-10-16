@@ -1,0 +1,9 @@
+[Unit]
+Description=Arandor nightly backup (live DB + uploads) and restore test
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/arandor-backup nightly
+ExecStartPost=/usr/local/sbin/arandor-backup-verify
+Nice=10
+IOSchedulingClass=idle

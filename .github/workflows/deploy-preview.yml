@@ -1,0 +1,116 @@
+name: Build and deploy to preview
+
+# Pull requests: build only.
+# Push to main: build, then deploy to preview (future.arandor.app).
+# Live is only ever updated by the "Promote preview to live" workflow.
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.event_name == 'pull_request' && format('build-{0}', github.ref) || 'deploy-preview' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build release
+    runs-on: ubuntu-latest
+    outputs:
+      release: ${{ steps.release.outputs.id }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build against a scratch database on the runner
+        run: |
+          mkdir -p ./data
+          touch ./data/content.db
+          npm run build
+
+      - name: Check the build opens ./data/content.db relative to its working directory
+        run: |
+          grep -rqF '"./data/content.db"' dist/server/chunks
+          if grep -rqE '"/srv/[^"]*\.db"' dist/server; then
+            echo "::error::build contains an absolute /srv database path"
+            exit 1
+          fi
+
+      - name: Package release
+        id: release
+        run: |
+          ID="$(date -u +%Y%m%d_%H%M%SZ)-${GITHUB_SHA::7}"
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+          mkdir release
+          cp -r dist package.json package-lock.json release/
+
+      - name: Upload release artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release
+          path: release
+          retention-days: 30
+
+  deploy-preview:
+    name: Deploy to preview
+    if: github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: preview
+      url: https://future.arandor.app
+    env:
+      RELEASE: ${{ needs.build.outputs.release }}
+    steps:
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: release
+          path: ./release
+
+      - name: Configure SSH (pinned host key)
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+          printf 'Host arandor\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  StrictHostKeyChecking yes\n' "$HOST" "$USER" > ~/.ssh/config
+
+      - name: Upload release to the server
+        run: rsync -a ./release/ "arandor:/srv/arandor-preview/app/releases/$RELEASE/"
+
+      - name: Install runtime dependencies and activate
+        run: |
+          ssh arandor "set -e
+            cd /srv/arandor-preview/app/releases/$RELEASE
+            npm ci --omit=dev --no-audit --no-fund
+            sudo -n /usr/local/sbin/arandor-activate preview $RELEASE"
+
+      - name: Smoke test https://future.arandor.app
+        env:
+          PREVIEW_AUTH: ${{ secrets.PREVIEW_BASIC_AUTH }}
+        run: |
+          curl -fsS -o /dev/null -w '%{http_code}\n' -u "$PREVIEW_AUTH" \
+            --retry 5 --retry-delay 5 --retry-all-errors --max-time 10 https://future.arandor.app/
+          echo "Preview runs $RELEASE. Promote it with the 'Promote preview to live' workflow." >> "$GITHUB_STEP_SUMMARY"

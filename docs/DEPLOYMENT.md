@@ -1,5 +1,9 @@
 # Deployment Instructions
 
+> **Deployment has changed.** The server now runs a live and a preview environment, deployed by
+> GitHub Actions with automatic backups and rollback. See [`deploy/README.md`](../deploy/README.md).
+> Sections below about the old single-directory setup and the old workflow are outdated.
+
 This guide explains how to deploy the Arandor Companion App on a production server using systemd.
 
 ## 🔒 Database Safety First

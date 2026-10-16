@@ -1,0 +1,34 @@
+# /etc/caddy/Caddyfile
+# PREVIEW_PASSWORD_HASH is set on the server only (caddy hash-password).
+
+arandor.app, www.arandor.app {
+	reverse_proxy 127.0.0.1:4321
+	encode gzip zstd
+	log {
+		output file /var/log/caddy/access.log
+		level INFO
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+	}
+}
+
+future.arandor.app {
+	basicauth {
+		arandor PREVIEW_PASSWORD_HASH
+	}
+	reverse_proxy 127.0.0.1:4322
+	encode gzip zstd
+	log {
+		output file /var/log/caddy/access-preview.log
+		level INFO
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Robots-Tag "noindex, nofollow"
+	}
+}
+
+preview.arandor.app {
+	redir https://future.arandor.app{uri}
+}

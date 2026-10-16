@@ -1,0 +1,55 @@
+name: Promote preview to live
+
+# Copies the exact release currently running on preview to live.
+# On the server this takes a database backup first and rolls back
+# automatically if the new release does not answer.
+
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: "Release id to promote (leave empty for the one preview runs now)"
+        required: false
+        default: ""
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-live
+  cancel-in-progress: false
+
+jobs:
+  promote:
+    name: Promote to live
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://arandor.app
+    steps:
+      - name: Configure SSH (pinned host key)
+        env:
+          SSH_KEY: ${{ secrets.SERVER_SSH_PRIVATE_KEY }}
+          KNOWN_HOSTS: ${{ secrets.SERVER_KNOWN_HOSTS }}
+          HOST: ${{ secrets.SERVER_HOST }}
+          USER: ${{ secrets.SERVER_USER }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/id_deploy
+          printf '%s\n' "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/id_deploy ~/.ssh/known_hosts
+          printf 'Host arandor\n  HostName %s\n  User %s\n  IdentityFile ~/.ssh/id_deploy\n  StrictHostKeyChecking yes\n' "$HOST" "$USER" > ~/.ssh/config
+
+      - name: Promote
+        env:
+          RELEASE: ${{ inputs.release }}
+        run: |
+          if [ -n "$RELEASE" ] && ! [[ "$RELEASE" =~ ^[0-9]{8}_[0-9]{6}Z-[0-9a-f]{7,40}$ ]]; then
+            echo "::error::invalid release id"; exit 1
+          fi
+          ssh arandor "/usr/local/sbin/arandor-promote $RELEASE"
+
+      - name: Smoke test https://arandor.app
+        run: |
+          curl -fsS -o /dev/null -w '%{http_code}\n' \
+            --retry 5 --retry-delay 5 --retry-all-errors --max-time 10 https://arandor.app/

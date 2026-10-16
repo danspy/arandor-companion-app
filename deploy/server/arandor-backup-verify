@@ -1,0 +1,43 @@
+#!/bin/bash
+# arandor-backup-verify
+#
+# Restore test: copies the newest database backup into a scratch directory,
+# runs integrity_check on the copy and compares per-table row counts with the
+# live database (opened read-only). Also checks the newest uploads snapshot
+# contains every file the live uploads directory has. Exits non-zero on failure.
+#
+# Installed at /usr/local/sbin/arandor-backup-verify (root:root 0755).
+
+set -euo pipefail
+umask 077
+
+LIVE_DB=/srv/arandor/data/content.db
+LIVE_UPLOADS=/srv/arandor/uploads
+ROOT=/var/backups/arandor
+
+LATEST="$(readlink -f "$ROOT/db/latest.db")"
+WORK="$(mktemp -d)"
+trap 'rm -rf "$WORK"' EXIT
+
+cp "$LATEST" "$WORK/restore.db"
+CHECK="$(sqlite3 "$WORK/restore.db" 'pragma integrity_check;')"
+[ "$CHECK" = "ok" ] || { echo "FAIL: restored copy integrity_check: $CHECK" >&2; exit 1; }
+
+echo "restore test of $(basename "$LATEST"): integrity ok"
+printf '%-20s %10s %10s\n' table backup live
+FAIL=0
+for T in $(sqlite3 "$WORK/restore.db" "select name from sqlite_master where type='table' and name not like 'sqlite_%' order by name;"); do
+  B="$(sqlite3 "$WORK/restore.db" "select count(*) from \"$T\";")"
+  L="$(sqlite3 -readonly "$LIVE_DB" ".timeout 30000" "select count(*) from \"$T\";" 2>/dev/null || echo missing)"
+  printf '%-20s %10s %10s\n' "$T" "$B" "$L"
+  # Rows written after the backup are fine; a backup with MORE rows than live is not.
+  if [ "$L" = "missing" ] || [ "$B" -gt "$L" ]; then FAIL=1; fi
+done
+
+SNAP="$(readlink -f "$ROOT/uploads/latest")"
+# Every live upload older than the backup run must be in the snapshot.
+MISSING="$(cd "$LIVE_UPLOADS" && find . -type f ! -newer "$LATEST" | while read -r f; do [ -e "$SNAP/$f" ] || echo "$f"; done)"
+if [ -n "$MISSING" ]; then echo "FAIL: files missing from uploads snapshot:" >&2; echo "$MISSING" >&2; FAIL=1; fi
+echo "uploads snapshot $(basename "$SNAP"): $(find "$SNAP" -type f | wc -l) files"
+
+[ "$FAIL" = 0 ] && echo "VERIFY OK" || { echo "VERIFY FAILED" >&2; exit 1; }

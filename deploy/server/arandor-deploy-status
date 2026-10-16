@@ -1,0 +1,9 @@
+#!/bin/sh
+# arandor-deploy-status
+# Shows both Arandor services and the release each one runs.
+# Installed at /usr/local/sbin/arandor-deploy-status (root:root 0755), allowed via sudo.
+for E in arandor:/srv/arandor arandor-preview:/srv/arandor-preview; do
+  SVC="${E%%:*}"; BASE="${E#*:}"
+  echo "== $SVC  release: $(readlink "$BASE/app/current" 2>/dev/null || echo none)"
+  /usr/bin/systemctl status "$SVC.service" --no-pager -n 5 || true
+done

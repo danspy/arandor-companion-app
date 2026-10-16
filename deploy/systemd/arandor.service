@@ -1,0 +1,27 @@
+[Unit]
+Description=Arandor Companion App (live, arandor.app)
+After=network.target
+
+[Service]
+Type=simple
+User=arandor
+Group=arandor
+# The build opens the database as ./data/content.db relative to this directory.
+WorkingDirectory=/srv/arandor
+Environment=NODE_ENV=production
+Environment=HOST=127.0.0.1
+Environment=PORT=4321
+Environment=UPLOAD_DIR=/srv/arandor/uploads
+ExecStart=/usr/bin/node /srv/arandor/app/current/dist/server/entry.mjs
+Restart=always
+RestartSec=5
+SyslogIdentifier=arandor
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectHome=yes
+ProtectSystem=strict
+ReadWritePaths=/srv/arandor/data /srv/arandor/uploads
+
+[Install]
+WantedBy=multi-user.target

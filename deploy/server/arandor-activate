@@ -1,0 +1,83 @@
+#!/bin/bash
+# arandor-activate <live|preview> <release-id>
+#
+# Switches an environment to an already-uploaded release and restarts it.
+# For live, a backup is taken first. If the app does not answer on localhost
+# within 60 seconds, the previous release is switched back in.
+#
+# Installed at /usr/local/sbin/arandor-activate (root:root 0755); the deploy user
+# may run it via sudo (see deploy/sudoers/arandor-deploy).
+
+set -euo pipefail
+
+ENV="${1:-}"
+ID="${2:-}"
+case "$ENV" in
+  live)    BASE=/srv/arandor;         SVC=arandor;         PORT=4321 ;;
+  preview) BASE=/srv/arandor-preview; SVC=arandor-preview; PORT=4322 ;;
+  *) echo "usage: arandor-activate <live|preview> <release-id>" >&2; exit 2 ;;
+esac
+[[ "$ID" =~ ^[0-9]{8}_[0-9]{6}Z-[0-9a-f]{7,40}$ ]] || { echo "invalid release id: $ID" >&2; exit 2; }
+
+APP="$BASE/app"
+REL="$APP/releases/$ID"
+# Root writes the log outside the deploy-owned tree.
+log() { echo "$(date -u +%FT%TZ) $ENV $*" | tee -a /var/log/arandor-deploy.log; }
+
+[ -f "$REL/dist/server/entry.mjs" ] || { echo "missing $REL/dist/server/entry.mjs" >&2; exit 1; }
+[ -d "$REL/node_modules/astro" ]    || { echo "missing $REL/node_modules (run npm ci first)" >&2; exit 1; }
+
+# The build must open the database relative to the service's WorkingDirectory
+# (./data/content.db) and must not contain an absolute database path.
+if ! grep -rqF '"./data/content.db"' "$REL/dist/server/chunks"; then
+  echo "release does not use ./data/content.db - refusing" >&2; exit 1
+fi
+if grep -rqE '"/srv/[^"]*\.db"' "$REL/dist/server"; then
+  echo "release contains an absolute /srv database path - refusing" >&2; exit 1
+fi
+
+if [ "$ENV" = live ]; then
+  /usr/local/sbin/arandor-backup pre-deploy
+fi
+
+PREV="$(readlink "$APP/current" 2>/dev/null || true)"
+
+switch_to() {
+  ln -sfn "$1" "$APP/current.new"
+  mv -T "$APP/current.new" "$APP/current"
+  systemctl restart "$SVC"
+}
+
+healthy() {
+  for _ in $(seq 1 30); do
+    CODE="$(curl -s -o /dev/null -w '%{http_code}' --max-time 5 "http://127.0.0.1:$PORT/" || true)"
+    if [[ "$CODE" =~ ^[23][0-9][0-9]$ ]]; then return 0; fi
+    sleep 2
+  done
+  return 1
+}
+
+log "activating $ID (previous: ${PREV:-none})"
+switch_to "releases/$ID"
+if healthy; then
+  log "OK $ID answers HTTP $CODE"
+else
+  log "FAILED $ID did not answer (last HTTP ${CODE:-none})"
+  journalctl -u "$SVC" -n 30 --no-pager || true
+  if [ -n "$PREV" ]; then
+    switch_to "$PREV"
+    if healthy; then log "rolled back to $PREV"; else log "rollback to $PREV ALSO FAILED"; fi
+  fi
+  exit 1
+fi
+
+# Keep the newest 5 releases. Releases contain only code (dist + node_modules),
+# never data; the current and previous release are always kept.
+[ -d "$APP/releases" ] && [ ! -L "$APP/releases" ] || exit 0
+cd "$APP/releases"
+ls -1d [0-9]*_[0-9]*Z-* 2>/dev/null | sort | head -n -5 | while read -r OLD; do
+  if [ "releases/$OLD" != "$(readlink "$APP/current")" ] && [ "releases/$OLD" != "$PREV" ]; then
+    rm -rf --one-file-system -- "$APP/releases/$OLD"
+    log "pruned old release $OLD"
+  fi
+done

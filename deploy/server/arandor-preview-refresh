@@ -1,0 +1,35 @@
+#!/bin/bash
+# arandor-preview-refresh
+#
+# Replaces the preview database and uploads with the newest LIVE BACKUP.
+# The live files themselves are never read by this script; only
+# /var/backups/arandor is. The previous preview database is archived first.
+#
+# Installed at /usr/local/sbin/arandor-preview-refresh (root:root 0755). Run as root.
+
+set -euo pipefail
+umask 027
+
+BACKUPS=/var/backups/arandor
+PDATA=/srv/arandor-preview/data
+PUPLOADS=/srv/arandor-preview/uploads
+TS="$(date -u +%Y%m%d_%H%M%SZ)"
+
+SRC_DB="$(readlink -f "$BACKUPS/db/latest.db")"
+SRC_UP="$(readlink -f "$BACKUPS/uploads/latest")"
+[ -f "$SRC_DB" ] && [ -d "$SRC_UP" ] || { echo "no backup found - run arandor-backup first" >&2; exit 1; }
+
+systemctl stop arandor-preview || true
+
+if [ -f "$PDATA/content.db" ]; then
+  mkdir -p "$BACKUPS/preview-db"
+  cp -a "$PDATA/content.db" "$BACKUPS/preview-db/content.$TS.before-refresh.db"
+fi
+
+install -o arandor-preview -g arandor-preview -m 0750 -d "$PDATA" "$PUPLOADS"
+install -o arandor-preview -g arandor-preview -m 0600 "$SRC_DB" "$PDATA/content.db.new"
+mv "$PDATA/content.db.new" "$PDATA/content.db"
+rsync -a --chown=arandor-preview:arandor-preview "$SRC_UP/" "$PUPLOADS/"
+
+systemctl start arandor-preview
+echo "preview refreshed from $(basename "$SRC_DB") and uploads snapshot $(basename "$SRC_UP")"

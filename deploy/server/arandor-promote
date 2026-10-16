@@ -1,0 +1,25 @@
+#!/bin/bash
+# arandor-promote [release-id]
+#
+# Promotes the release currently running on preview (or the given one) to live:
+# the exact files tested on preview are hard-link copied into the live releases
+# directory, then activated with arandor-activate (backup first, rollback on failure).
+#
+# Installed at /usr/local/sbin/arandor-promote (root:root 0755); run by the deploy user.
+
+set -euo pipefail
+
+ID="${1:-$(basename "$(readlink /srv/arandor-preview/app/current)")}"
+[[ "$ID" =~ ^[0-9]{8}_[0-9]{6}Z-[0-9a-f]{7,40}$ ]] || { echo "invalid release id: $ID" >&2; exit 2; }
+
+SRC="/srv/arandor-preview/app/releases/$ID"
+DST="/srv/arandor/app/releases/$ID"
+[ -d "$SRC" ] || { echo "no such preview release: $SRC" >&2; exit 1; }
+
+if [ ! -d "$DST" ]; then
+  cp -al "$SRC" "$DST.partial"
+  mv "$DST.partial" "$DST"
+fi
+
+echo "promoting $ID to live"
+sudo -n /usr/local/sbin/arandor-activate live "$ID"
