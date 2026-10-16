@@ -18,7 +18,7 @@ const recap = markdownExcerpt(entry.summary || entry.content, 260);
 const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 ---
 
-<a href={`/diary/${entry.id}`} class="recap t-panel group">
+<a href={`/diary/${entry.id}`} class:list={["recap t-panel group", !entry.coverImageUrl && "recap-noimg"]}>
   {entry.coverImageUrl && <img src={entry.coverImageUrl} alt="" class="recap-img" loading="lazy" />}
   <div class="recap-shade"></div>
   <div class="recap-body">
@@ -59,6 +59,8 @@ const date = new Date(entry.date).toLocaleDateString('en-US', { month: 'long', d
     aspect-ratio: 16 / 9;
     background: var(--recap-bg);
   }
+  /* No cover image: no 16:9 picture area; the card matches its neighbour ("Do you remember…?"). */
+  .recap-noimg { aspect-ratio: auto; height: 100%; }
   /* Always a full 16:9 picture at the top; if the text makes the card taller (phones),
      the image keeps its shape and the shade fades it into the card. */
   .recap-img {
