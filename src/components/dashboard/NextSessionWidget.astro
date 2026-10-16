@@ -30,6 +30,12 @@ const duration = event.duration
   </div>
   <p class="ns-title">{event.title}</p>
   <p class="ns-when">{day}{event.time && ` · ${event.time}`}</p>
+  <p class="ns-host-line">
+    <span class="ns-host-img ns-host-img-sm">
+      {host.imageUrl ? <img src={host.imageUrl} alt="" /> : host.name.charAt(0)}
+    </span>
+    at {host.name}'s
+  </p>
   <p class="ns-count" data-ns-count aria-live="off">–</p>
   <button type="button" class="ns-more" data-ns-open>
     Details
@@ -104,6 +110,8 @@ const duration = event.duration
   .ns-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: #ffcf7a; }
   .ns-title { margin-top: 0.35rem; font-weight: 600; font-size: 0.95rem; line-height: 1.25; }
   .ns-when { font-size: 0.75rem; color: rgba(242, 232, 213, 0.7); }
+  .ns-host-line { display: flex; align-items: center; gap: 0.4rem; margin-top: 0.35rem; font-size: 0.75rem; color: rgba(242, 232, 213, 0.85); }
+  .ns-host-img-sm { width: 1.3rem !important; height: 1.3rem !important; font-size: 0.65rem !important; border: 1px solid rgba(255, 200, 110, 0.5); }
   .ns-count {
     margin-top: 0.4rem;
     font-family: 'Cormorant Garamond', Georgia, serif;
@@ -171,8 +179,8 @@ const duration = event.duration
   /* Phones: the overlay becomes a bottom sheet. */
   @media (max-width: 640px) {
     .ns-card { width: 100%; display: grid; grid-template-columns: 1fr auto; column-gap: 0.75rem; align-items: end; }
-    .ns-head, .ns-title, .ns-when { grid-column: 1; }
-    .ns-count { grid-column: 2; grid-row: 1 / span 3; align-self: center; font-size: 1.5rem; margin: 0; }
+    .ns-head, .ns-title, .ns-when, .ns-host-line { grid-column: 1; }
+    .ns-count { grid-column: 2; grid-row: 1 / span 4; align-self: center; font-size: 1.5rem; margin: 0; }
     .ns-more { grid-column: 1 / -1; }
     .ns-dialog {
       width: 100vw;

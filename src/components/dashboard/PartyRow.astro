@@ -13,10 +13,14 @@ interface Props {
     hp: number | null;
     maxHp: number | null;
     tempHp: number | null;
+    deathSaveSuccesses: number;
+    deathSaveFailures: number;
+    isStable: boolean;
   }>;
+  myCharacterIds?: string[];
 }
 
-const { characters } = Astro.props;
+const { characters, myCharacterIds = [] } = Astro.props;
 
 const ABILITIES = [
   ['strength', 'STR'],
@@ -51,7 +55,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
         const hp = hpInfo(c.hp, c.maxHp);
         const stats = (c.stats ?? null) as Record<string, number> | null;
         return (
-          <div class="party-card" tabindex="0" role="button" aria-label={`${c.name}: show stats`} data-party-card>
+          <div class:list={['party-card', { 'is-mine': myCharacterIds.includes(c.id) }]} tabindex="0" role="button" aria-label={`${c.name}: show stats`} data-party-card>
             <div class="party-inner">
               <div class="party-face party-front">
                 {c.avatarUrl ? (
@@ -61,13 +65,21 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
                 )}
                 <div class="party-shade"></div>
                 <span class="party-level" title={`Level ${c.level}`}>{c.level}</span>
+                {myCharacterIds.includes(c.id) && <span class="party-you">That's you</span>}
                 <div class="party-info">
                   <h3 class="party-name">{c.name}</h3>
                   <p class="party-sub">{c.race} {c.class}</p>
                   {hp && (
                     <div class="party-hp" title={`HP ${c.hp}/${c.maxHp}${c.tempHp ? ` (+${c.tempHp} temp)` : ''}`}>
                       <div class={`party-hp-fill tone-${hp.tone}`} style={`width:${hp.pct}%`}></div>
-                      <span>{hp.tone === 'down' ? 'Down!' : `${c.hp}/${c.maxHp}`}{c.tempHp ? ` +${c.tempHp}` : ''}</span>
+                      <span>{hp.tone === 'down' ? (c.isStable ? 'Stable' : 'Down!') : `${c.hp}/${c.maxHp}`}{c.tempHp ? ` +${c.tempHp}` : ''}</span>
+                    </div>
+                  )}
+                  {hp?.tone === 'down' && !c.isStable && (
+                    <div class="party-saves" title={`Death saves: ${c.deathSaveSuccesses} successes, ${c.deathSaveFailures} failures`}>
+                      {[0, 1, 2].map((i) => <i class:list={['pip', 'pip-ok', { on: i < c.deathSaveSuccesses }]}></i>)}
+                      <span class="pip-gap"></span>
+                      {[0, 1, 2].map((i) => <i class:list={['pip', 'pip-fail', { on: i < c.deathSaveFailures }]}></i>)}
                     </div>
                   )}
                 </div>
@@ -162,6 +174,25 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
     background: radial-gradient(circle at 35% 30%, #f5d58a, #c99032 60%, #8d5a18);
     clip-path: polygon(50% 0, 100% 25%, 100% 75%, 50% 100%, 0 75%, 0 25%);
   }
+  .party-card.is-mine .party-face { border-color: #ffd98a; box-shadow: 0 0 0 1px #ffd98a, 0 0 22px rgba(255, 200, 100, 0.35); }
+  .party-you {
+    position: absolute;
+    top: 0.55rem;
+    left: 0.5rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #1e1408;
+    background: #ffd98a;
+  }
+  .party-saves { display: flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.35rem; }
+  .pip { width: 0.55rem; height: 0.55rem; border-radius: 50%; border: 1px solid rgba(255, 255, 255, 0.5); }
+  .pip-ok.on { background: #22c55e; border-color: #22c55e; }
+  .pip-fail.on { background: #ef4444; border-color: #ef4444; }
+  .pip-gap { width: 0.35rem; }
   .party-info { position: absolute; left: 0; right: 0; bottom: 0; padding: 0.6rem; }
   .party-name { font-weight: 700; font-size: 0.95rem; color: #fff; line-height: 1.15; text-shadow: 0 1px 4px rgba(0, 0, 0, 0.8); }
   .party-sub { font-size: 0.7rem; color: rgba(255, 255, 255, 0.75); }
