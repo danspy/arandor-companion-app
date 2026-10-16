@@ -81,6 +81,12 @@ const mapData = {
           </svg>
           <span class="hidden sm:inline" id="heroPathToggleText">Hide Path</span>
         </Button>
+        <Button variant="secondary" size="sm" id="toggleBubbles" title="Show or hide the story bubbles" class="flex items-center gap-2">
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
+          </svg>
+          <span class="hidden sm:inline" id="bubblesToggleText">Hide Story</span>
+        </Button>
         <Button variant="secondary" size="sm" id="toggleLegend" title="Toggle legend" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
@@ -342,8 +348,14 @@ const mapData = {
       if (ev.key === ' ') { ev.preventDefault(); api.togglePlay(); }
       else if (ev.key === 'ArrowRight') { api.pause(); api.next(); }
       else if (ev.key === 'ArrowLeft') { api.pause(); api.prev(); }
+      else if (ev.key === 'b' || ev.key === 'B') { api.setBubbles(!api.bubblesEnabled); if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story'; }
     }, { signal: pageSignal() });
 
+    const bubblesText = $('bubblesToggleText');
+    $('toggleBubbles')?.addEventListener('click', () => {
+      api.setBubbles(!api.bubblesEnabled);
+      if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story';
+    });
     const heroPathText = $('heroPathToggleText');
     $('toggleHeroPath')?.addEventListener('click', () => {
       api.setTrail(!api.trailVisible);
@@ -408,8 +420,8 @@ const mapData = {
   .wm-loc canvas { display: block; width: 16px; height: 16px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)); }
   .wm-loc-unvisited canvas { opacity: 0.72; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)) saturate(0.55); }
   .wm-loc-selected canvas, .wm-loc:hover canvas { filter: drop-shadow(0 0 2px #ffd36a) drop-shadow(0 1px 0 rgba(0,0,0,0.35)); opacity: 1; }
-  .wm-char { position: absolute; width: 12px; height: 16px; transform-origin: 50% 100%; pointer-events: none; }
-  .wm-char canvas { display: block; width: 12px; height: 16px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.4)); animation: wm-idle 0.9s steps(2) infinite; }
+  .wm-char { position: absolute; transform-origin: 50% 100%; pointer-events: none; }
+  .wm-char canvas { display: block; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.4)); animation: wm-idle 0.9s steps(2) infinite; }
   .wm-char-join canvas { animation: wm-join 0.9s ease-out; }
   @keyframes wm-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
   @keyframes wm-join { 0% { transform: translateY(-14px) scale(0.2); opacity: 0; } 60% { transform: translateY(2px) scale(1.1); opacity: 1; } 100% { transform: translateY(0) scale(1); } }
@@ -452,6 +464,11 @@ const mapData = {
   .wm-bubble-text { font-size: 12.5px; line-height: 1.4; color: #3d2e1a; margin: 0; }
   .wm-bubble-join { font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 11px; color: #9a3412; margin-top: 6px; }
   .wm-bubble-link { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: #8d5a18; text-decoration: underline; }
+  .wm-bubble-close {
+    position: absolute; top: 2px; right: 4px; width: 20px; height: 20px; line-height: 18px; text-align: center;
+    font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 16px; color: #8d5a18; background: transparent; border: 0; cursor: pointer;
+  }
+  .wm-bubble-close:hover { color: #1a1410; }
 
   /* controls */
   .map-ctrl-btn {

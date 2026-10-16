@@ -569,3 +569,34 @@ export function treeSprite(kind: RegionStyle['tree']): Sprite {
 }
 
 export const TERRAIN = { HILL, MOUNTAIN, SNOWPEAK };
+
+/* ── Portrait heads ──────────────────────────────────────────────── */
+export const HEAD_ROWS = 6; // rows of the body template taken up by hair + face
+
+/**
+ * Builds walking frames whose head is a 12×12 pixel portrait (from the
+ * character's avatar) instead of the generated hair/face. The result is
+ * 12×22: the portrait on top of the template's body and legs.
+ */
+export function characterSpritesWithHead(look: CharacterLook, head: HTMLImageElement | HTMLCanvasElement): HTMLCanvasElement[] {
+  const frames = characterSprites({ ...look, hat: 'none' });
+  const size = 16, bodyW = 12, ox = (size - bodyW) / 2;
+  return frames.map((frame) => {
+    const bodyRows = frame.rows.slice(HEAD_ROWS);
+    const c = document.createElement('canvas');
+    c.width = size; c.height = size + bodyRows.length - 1;
+    const ctx = c.getContext('2d')!;
+    ctx.imageSmoothingEnabled = false;
+    // body + legs, tucked one row under the head
+    const body = rasterize({ rows: bodyRows, palette: frame.palette });
+    ctx.drawImage(body, ox, size - 1);
+    // head: portrait with rounded corners and a dark outline
+    ctx.drawImage(head, 0, 0, size, size);
+    const corners: [number, number][] = [[0, 0], [1, 0], [0, 1], [size - 1, 0], [size - 2, 0], [size - 1, 1], [0, size - 1], [0, size - 2], [1, size - 1], [size - 1, size - 1], [size - 2, size - 1], [size - 1, size - 2]];
+    for (const [x, y] of corners) ctx.clearRect(x, y, 1, 1);
+    ctx.fillStyle = C.black;
+    for (let i = 2; i < size - 2; i++) { ctx.fillRect(i, 0, 1, 1); ctx.fillRect(i, size - 1, 1, 1); ctx.fillRect(0, i, 1, 1); ctx.fillRect(size - 1, i, 1, 1); }
+    ctx.fillRect(1, 1, 1, 1); ctx.fillRect(size - 2, 1, 1, 1); ctx.fillRect(1, size - 2, 1, 1); ctx.fillRect(size - 2, size - 2, 1, 1);
+    return c;
+  });
+}

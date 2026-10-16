@@ -6,7 +6,7 @@
  * handed over as a plain object (see map.astro).
  */
 import {
-  LOCATION_SPRITES, TILE, characterSprites, lookFor, rasterize,
+  LOCATION_SPRITES, TILE, characterSprites, characterSpritesWithHead, lookFor, rasterize,
 } from './sprites';
 import {
   WORLD_H, WORLD_W, findRoute, pctToWorld, renderOceanSwatch, renderTerrain, segmentOverWater, world, worldToPct,
@@ -51,7 +51,8 @@ type Pt = { x: number; y: number };
 
 const BUBBLE_DWELL_MS = 4200;
 const WALK_PX_PER_SEC = 110;
-const FORMATION: [number, number][] = [[0, 0], [-10, 5], [10, 5], [-5, -8], [6, -8], [0, 12], [-15, -1], [15, -1], [-8, 13], [9, 13]];
+// idle formation (world px): two rows so the 16×25 portrait sprites don't overlap
+const FORMATION: [number, number][] = [[0, 0], [-21, 4], [21, 4], [-11, -27], [11, -27], [0, 29], [-33, -25], [33, -25], [-23, 31], [23, 31]];
 
 function esc(s: string) { return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!)); }
 
@@ -185,10 +186,27 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     if (routeQueue.length) routeTimer = window.setTimeout(drainRoutes, 16);
   }
 
+  const headCache = new Map<string, Promise<HTMLImageElement | null>>();
+  function loadHead(ch: MapCharacter): Promise<HTMLImageElement | null> {
+    if (!ch.avatarUrl) return Promise.resolve(null);
+    let p = headCache.get(ch.id);
+    if (!p) {
+      p = new Promise((res) => {
+        const img = new Image();
+        img.onload = () => res(img);
+        img.onerror = () => res(null);
+        img.src = `/api/characters/${encodeURIComponent(ch.id)}/sprite`;
+      });
+      headCache.set(ch.id, p);
+    }
+    return p;
+  }
+
   function memberFor(ch: MapCharacter, idx: number): Member {
     let m = members.get(ch.id);
     if (m) return m;
-    const frames = characterSprites(lookFor(ch, idx)).map((s) => rasterize(s));
+    const look = lookFor(ch, idx);
+    const frames = characterSprites(look).map((s) => rasterize(s));
     const el = document.createElement('div');
     el.className = 'wm-char';
     el.title = ch.name;
@@ -196,6 +214,13 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     spriteLayer.appendChild(el);
     m = { id: ch.id, el, frames, name: ch.name };
     members.set(ch.id, m);
+    // swap in the portrait head once the pixelated avatar arrives
+    loadHead(ch).then((head) => {
+      const cur = members.get(ch.id);
+      if (!head || !cur || cur !== m) return;
+      cur.frames = characterSpritesWithHead(look, head);
+      markDirty();
+    });
     return m;
   }
 
@@ -294,19 +319,23 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
 
   /* ── speech bubble ─────────────────────────────────────────────── */
   let bubbleVisible = false;
+  let bubblesEnabled = true;
   function showBubble(step: Step) {
+    if (!bubblesEnabled) { hideBubble(); return; }
     const names = step.newMembers.map((id) => data.characters.find((c) => c.id === id)?.name).filter(Boolean);
     bubble.innerHTML = `
       <div class="wm-bubble-head">Session ${step.entry.session} · ${esc(step.location.name)}</div>
       <div class="wm-bubble-title">${esc(step.entry.title)}</div>
       ${step.entry.excerpt ? `<p class="wm-bubble-text">${esc(step.entry.excerpt)}</p>` : ''}
       ${names.length ? `<div class="wm-bubble-join">✦ ${esc(names.join(', '))} ${names.length > 1 ? 'join' : 'joins'} the party</div>` : ''}
-      <a class="wm-bubble-link" href="/diary/${esc(step.entry.id)}">Read entry →</a>`;
+      <a class="wm-bubble-link" href="/diary/${esc(step.entry.id)}">Read entry →</a>
+      <button type="button" class="wm-bubble-close" title="Hide" aria-label="Hide speech bubble">×</button>`;
+    bubble.querySelector('.wm-bubble-close')?.addEventListener('click', () => hideBubble());
     bubble.classList.add('wm-bubble-visible');
     bubbleVisible = true;
     markDirty();
   }
-  function hideBubble() { bubble.classList.remove('wm-bubble-visible'); bubbleVisible = false; }
+  function hideBubble() { bubble.classList.remove('wm-bubble-visible'); bubbleVisible = false; markDirty(); }
 
   /* ── camera ────────────────────────────────────────────────────── */
   let camAnim: { fx: number; fy: number; fs: number; tx: number; ty: number; ts: number; start: number; dur: number } | null = null;
@@ -505,7 +534,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       }
       let i = 0;
       for (const m of members.values()) {
-        const q = pointAt(moving.route, moving.lengths, Math.max(0, d - i * 10));
+        const q = pointAt(moving.route, moving.lengths, Math.max(0, d - i * 17));
         placeMember(m, q.x, q.y, true, i);
         i++;
       }
@@ -659,6 +688,8 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     centerOnParty: () => centerOn(party.pos, true, Math.max(cam.s, 2)),
     centerOnLocation: (loc: MapLocation) => centerOn(locWorld(loc), true),
     setTrail: (on: boolean) => { showTrail = on; markDirty(); },
+    get bubblesEnabled() { return bubblesEnabled; },
+    setBubbles: (on: boolean) => { bubblesEnabled = on; if (on && stepIdx >= 0 && !moving) showBubble(steps[stepIdx]); else hideBubble(); },
     setEditMode: (on: boolean) => { editMode = on; viewport.classList.toggle('wm-editing', on); },
     select: (loc: MapLocation) => selectLocation(loc),
     locationsChanged: afterLocationsChanged,
