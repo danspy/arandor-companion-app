@@ -15,6 +15,7 @@ import FactionCrests from '../components/dashboard/FactionCrests.astro';
 import { markdownExcerpt } from '../utils/markdown';
 import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User, NPC, Location } from '@/db';
 import { getUserRole, getCurrentUser } from '../lib/auth';
+import { campaignDateTime } from '../utils/campaignTime';
 
 // Dashboard is viewable by everyone, editable by dungeonmaster and admin
 const userRole = await getUserRole(Astro.cookies);
@@ -39,12 +40,8 @@ const combatState = combatStateData.length > 0 ? combatStateData[0] : null;
 // Find next upcoming event
 const now = new Date();
 const upcomingEvents = events
-  .filter(e => new Date(`${e.date}T${e.time}`) >= now)
-  .sort((a, b) => {
-    const dateTimeA = new Date(`${a.date}T${a.time}`).getTime();
-    const dateTimeB = new Date(`${b.date}T${b.time}`).getTime();
-    return dateTimeA - dateTimeB;
-  });
+  .filter(e => campaignDateTime(e.date, e.time) >= now)
+  .sort((a, b) => campaignDateTime(a.date, a.time).getTime() - campaignDateTime(b.date, b.time).getTime());
 const nextEvent = upcomingEvents.length > 0 ? upcomingEvents[0] : null;
 
 // Helper to get host name

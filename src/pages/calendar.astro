@@ -4,6 +4,7 @@ import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
 import { db, Event, User, PageSettings, eq } from '@/db';
 import { isAuthenticated, getUserRole } from '../lib/auth';
+import { campaignDateTime } from '../utils/campaignTime';
 
 // Calendar page is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -24,15 +25,13 @@ const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
 const nonAdminUsers = users.filter(u => u.role !== 'admin');
 
 // Sort events by date and time (upcoming first)
-const sortedEvents = [...events].sort((a, b) => {
-  const dateTimeA = new Date(`${a.date}T${a.time}`).getTime();
-  const dateTimeB = new Date(`${b.date}T${b.time}`).getTime();
-  return dateTimeA - dateTimeB;
-});
+const sortedEvents = [...events].sort((a, b) =>
+  campaignDateTime(a.date, a.time).getTime() - campaignDateTime(b.date, b.time).getTime()
+);
 
 // Calculate upcoming and past events counts
 const now = new Date();
-const upcomingEventsCount = sortedEvents.filter(e => new Date(`${e.date}T${e.time}`) >= now).length;
+const upcomingEventsCount = sortedEvents.filter(e => campaignDateTime(e.date, e.time) >= now).length;
 const pastEventsCount = sortedEvents.length - upcomingEventsCount;
 
 // Get page settings for hero image
@@ -214,7 +213,7 @@ function getHostName(hostId: string | null): string {
       </div>
     ) : (
       sortedEvents.map(event => {
-        const eventDateTime = new Date(`${event.date}T${event.time}`);
+        const eventDateTime = campaignDateTime(event.date, event.time);
         const isPast = eventDateTime < new Date();
         const filterStatus = isPast ? 'past' : 'upcoming';
         
