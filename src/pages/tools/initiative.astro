@@ -252,7 +252,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 id="addInitiativeBtn"
                 title="Add initiative entry"
               >
-                Add Entry
+                Add entry
               </Button>
             <Button
                 variant="secondary"
@@ -459,14 +459,14 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             id="resetCombatBtn"
             title="Reset combat: Keep all player characters (initiative set to 10), remove NPCs/monsters/others, and reset round to 1"
           >
-            Reset Combat
+            Reset combat
           </Button>
         <Button
             variant="danger"
             size="sm"
             id="clearAllBtn"
           >
-            Clear All
+            Clear all
           </Button>
       </div>
     )}
@@ -1045,7 +1045,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         
         // Create new handler
         const handler = async () => {
-          if (!id || !confirm(`Delete "${name}" from initiative?`)) return;
+          if (!id || !(await window.arandorConfirm(`Remove ${name} from initiative?`, { confirmLabel: 'Remove', danger: true }))) return;
 
           try {
             const response = await fetch(`/api/initiative/${id}`, {
@@ -1073,7 +1073,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         }
         
         clearAllHandler = async () => {
-          if (!confirm('Clear all initiative entries? This cannot be undone.')) return;
+          if (!(await window.arandorConfirm('Clear all initiative entries?', { detail: 'This can\u2019t be undone.', confirmLabel: 'Clear all', danger: true }))) return;
 
           try {
             const response = await fetch('/api/initiative');
@@ -1102,7 +1102,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         }
         
         resetCombatHandler = async () => {
-          if (!confirm('Reset combat?\n\nThis will:\n- Keep all player characters (initiative reset to 10)\n- Remove all NPCs, monsters, and others\n- Reset round counter to 1\n\nThis cannot be undone.')) return;
+          if (!(await window.arandorConfirm('Reset combat?', { detail: 'Player characters stay (initiative back to 10). NPCs, monsters and others are removed and the round restarts.', confirmLabel: 'Reset combat', danger: true }))) return;
 
           try {
             const response = await fetch('/api/initiative/reset-combat', {
@@ -1499,8 +1499,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       // Create and store new handlers
       const startHandler = () => updateCombatStatus('active');
       const pauseHandler = () => updateCombatStatus('paused');
-      const stopHandler = () => {
-        if (confirm('Stop combat? This will disable real-time tracking.')) {
+      const stopHandler = async () => {
+        if ((await window.arandorConfirm('Stop combat?', { detail: 'Live tracking stops for everyone.', confirmLabel: 'Stop combat', danger: true }))) {
           updateCombatStatus('stopped');
         }
       };

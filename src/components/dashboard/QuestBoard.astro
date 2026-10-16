@@ -69,7 +69,8 @@ const PRIORITY: Record<string, string> = { high: 'Urgent', medium: 'Soon', low: 
     box-shadow: 0 0 10px color-mix(in srgb, var(--prio) 60%, transparent);
   }
   .quest-note:hover { transform: translateY(-2px); border-color: var(--border-gold); border-top-color: var(--prio); }
-  .prio-high { --prio: #c0453a; }
+  .prio-high { --prio: #a8352b; }
+  :global(.dark) .prio-high { --prio: #e0675a; }
   .prio-medium { --prio: var(--gold); }
   .prio-low { --prio: #6f8f4a; }
 

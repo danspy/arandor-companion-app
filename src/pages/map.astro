@@ -85,19 +85,19 @@ const mapData = {
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path>
           </svg>
-          <span class="hidden sm:inline" id="heroPathToggleText">Hide Path</span>
+          <span class="hidden sm:inline" id="heroPathToggleText">Hide path</span>
         </Button>
         <Button variant="secondary" size="sm" id="toggleBubbles" title="Show or hide the story bubbles" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path>
           </svg>
-          <span class="hidden sm:inline" id="bubblesToggleText">Hide Story</span>
+          <span class="hidden sm:inline" id="bubblesToggleText">Hide story</span>
         </Button>
         <Button variant="secondary" size="sm" id="toggleLegend" title="Toggle legend" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
           </svg>
-          <span class="hidden sm:inline" id="legendToggleText">Show Legend</span>
+          <span class="hidden sm:inline" id="legendToggleText">Show legend</span>
         </Button>
         {canEdit && (
           <Button variant="primary" size="sm" id="toggleEditMode" class="flex items-center gap-2">
@@ -204,7 +204,7 @@ const mapData = {
                   <input type="number" id="coordY" min="0" max="100" step="0.1" class="t-input w-full px-4 py-2" />
                 </div>
               </div>
-              <Button variant="primary" size="md" id="saveCoordinates" class="w-full">Save Coordinates</Button>
+              <Button variant="primary" size="md" id="saveCoordinates" class="w-full">Save coordinates</Button>
             </div>
           )}
         </div>
@@ -413,18 +413,18 @@ const mapData = {
       if (ev.key === ' ') { ev.preventDefault(); api.togglePlay(); }
       else if (ev.key === 'ArrowRight') { api.pause(); api.next(); }
       else if (ev.key === 'ArrowLeft') { api.pause(); api.prev(); }
-      else if (ev.key === 'b' || ev.key === 'B') { api.setBubbles(!api.bubblesEnabled); if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story'; }
+      else if (ev.key === 'b' || ev.key === 'B') { api.setBubbles(!api.bubblesEnabled); if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide story' : 'Show story'; }
     }, { signal: pageSignal() });
 
     const bubblesText = $('bubblesToggleText');
     $('toggleBubbles')?.addEventListener('click', () => {
       api.setBubbles(!api.bubblesEnabled);
-      if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide Story' : 'Show Story';
+      if (bubblesText) bubblesText.textContent = api.bubblesEnabled ? 'Hide story' : 'Show story';
     });
     const heroPathText = $('heroPathToggleText');
     $('toggleHeroPath')?.addEventListener('click', () => {
       api.setTrail(!api.trailVisible);
-      if (heroPathText) heroPathText.textContent = api.trailVisible ? 'Hide Path' : 'Show Path';
+      if (heroPathText) heroPathText.textContent = api.trailVisible ? 'Hide path' : 'Show path';
     });
 
     const legend = $('mapLegend')!, legendText = $('legendToggleText');
@@ -436,7 +436,7 @@ const mapData = {
       legendVisible = !legendVisible;
       legend.style.opacity = legendVisible ? '1' : '0';
       legend.style.pointerEvents = legendVisible ? 'auto' : 'none';
-      if (legendText) legendText.textContent = legendVisible ? 'Hide Legend' : 'Show Legend';
+      if (legendText) legendText.textContent = legendVisible ? 'Hide legend' : 'Show legend';
     });
 
     const editText = $('editModeText');

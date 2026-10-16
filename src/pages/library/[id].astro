@@ -128,7 +128,7 @@ const renderedContent = renderMarkdown(entry.content);
     });
     
     deleteBtn?.addEventListener('click', async () => {
-      if (confirm('Are you sure you want to delete this entry? This action cannot be undone.')) {
+      if ((await window.arandorConfirm('Delete this document?', { detail: 'This can\u2019t be undone.', confirmLabel: 'Delete', danger: true }))) {
         const entryId = deleteBtn.getAttribute('data-id');
         if (!entryId) return;
         

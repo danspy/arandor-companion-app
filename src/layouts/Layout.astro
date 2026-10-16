@@ -4,6 +4,7 @@ import { isAuthenticated, getUserRole } from '../lib/auth';
 import { ClientRouter } from 'astro:transitions';
 import PWAFloatingMenu from '../components/PWAFloatingMenu.astro';
 import PWAQuickAccess from '../components/PWAQuickAccess.astro';
+import ConfirmDialog from '../components/ConfirmDialog.astro';
 
 interface Props {
   title: string;
@@ -138,7 +139,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
           <button
             id="mobileMenuBtn"
             class="lg:hidden p-2 -mr-1 rounded-sm transition-colors"
-            style="color: rgba(242,232,213,0.5);"
+            style="color: rgba(242,232,213,0.75);"
             aria-label="Toggle menu"
             data-testid="mobile-menu-btn"
           >
@@ -186,7 +187,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <button
               id="themeToggle"
               class="p-2 rounded-md transition-colors"
-              style="color: rgba(242,232,213,0.4);"
+              style="color: rgba(242,232,213,0.75);"
               aria-label="Toggle dark mode"
               data-testid="theme-toggle"
             >
@@ -203,7 +204,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               <button
                 id="userMenuBtn"
                 class="p-2 rounded-md transition-colors"
-                style="color: rgba(242,232,213,0.4);"
+                style="color: rgba(242,232,213,0.75);"
                 aria-label="User menu"
                 data-testid="user-menu-btn"
               >
@@ -217,7 +218,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
                 style="background: var(--bg-raised); border-color: var(--border-gold);"
               >
                 {!isLoggedIn ? (
-                  <a href="/login" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Login</a>
+                  <a href="/login" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Log in</a>
                 ) : (
                   <>
                     <a href="/profile" class="block px-4 py-2.5 text-sm transition-colors hover:text-(--accent)" style="color: var(--text-body);">Profile</a>
@@ -229,7 +230,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
                       id="logoutBtn"
                       class="w-full text-left px-4 py-2.5 text-sm transition-colors hover:text-(--accent)"
                       style="color: var(--text-muted);"
-                    >Logout</button>
+                    >Log out</button>
                   </>
                 )}
               </div>
@@ -273,7 +274,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <button
               id="themeToggleMobile"
               class="flex items-center gap-3 px-3 py-2.5 text-sm rounded-md transition-colors text-left"
-              style="color: rgba(242,232,213,0.45);"
+              style="color: rgba(242,232,213,0.75);"
               aria-label="Toggle dark mode"
             >
               <svg id="sunIconMobile" class="w-4 h-4 hidden dark:block shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -289,7 +290,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             <button
               id="userMenuBtnMobile"
               class="flex items-center justify-between w-full px-3 py-2.5 text-sm rounded-md transition-colors text-left"
-              style="color: rgba(242,232,213,0.45);"
+              style="color: rgba(242,232,213,0.75);"
               aria-label="User menu"
             >
               <span class="flex items-center gap-3">
@@ -305,14 +306,14 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
 
             <div id="userAccordionMobile" class="hidden pl-3 space-y-0.5">
               {!isLoggedIn ? (
-                <a href="/login" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Login</a>
+                <a href="/login" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Log in</a>
               ) : (
                 <>
                   <a href="/profile" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Profile</a>
                   {canAccessUsers && (
                     <a href="/users" class="block px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Users</a>
                   )}
-                  <button id="logoutBtnMobile" class="w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Logout</button>
+                  <button id="logoutBtnMobile" class="w-full text-left px-3 py-2.5 text-sm rounded-md transition-colors hover:text-(--accent)" style="color: var(--text-muted);">Log out</button>
                 </>
               )}
             </div>
@@ -342,6 +343,8 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     
     <!-- PWA Quick Access Buttons (only shown in standalone mode for logged-in users) -->
     {isLoggedIn && <PWAQuickAccess />}
+
+    <ConfirmDialog />
     
     <script>
       // Function to get theme preference from localStorage

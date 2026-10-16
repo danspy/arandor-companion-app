@@ -47,7 +47,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d4</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -59,7 +59,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d6</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -71,7 +71,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d8</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -83,7 +83,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d10</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -95,7 +95,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d12</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -107,7 +107,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         >
           <div class="text-center">
             <span class="t-body-text text-lg font-bold">d20</span>
-            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-white rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
+            <div class="dice-count absolute -top-2 -right-2 bg-(--gold) text-(--on-gold) rounded-xs w-8 h-8 flex items-center justify-center text-sm font-bold shadow-lg hidden">0</div>
           </div>
         </button>
 
@@ -159,7 +159,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="button"
           class="t-btn-secondary font-bold py-4 px-8"
         >
-          Clear Selection
+          Clear selection
         </button>
       </div>
 
@@ -206,7 +206,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="button"
           class="t-faint text-sm font-medium hover:opacity-80" style="color:var(--danger);"
         >
-          Clear History
+          Clear history
         </button>
       </div>
       <div id="rollHistory" class="space-y-2">
@@ -589,8 +589,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   }
 
   // ── Clear history ────────────────────────────────────────────────────────
-  clearHistoryButton.addEventListener('click', () => {
-    if (confirm('Are you sure you want to clear the roll history?')) {
+  clearHistoryButton.addEventListener('click', async () => {
+    if ((await window.arandorConfirm('Clear the roll history?', { confirmLabel: 'Clear history', danger: true }))) {
       rollHistory = [];
       updateHistoryDisplay();
     }

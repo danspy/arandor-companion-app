@@ -108,15 +108,20 @@ layer(base);
   --bg-raised:  #faf6ee;
   --text-strong: #1e1408;
   --text-body:   #3d2e1a;
-  --text-muted:  #7a6340;
-  --text-faint:  #a08a60;
+  /* Text tokens meet WCAG AA (4.5:1) on page, surface and raised backgrounds. */
+  --text-muted:  #6b5434;
+  --text-faint:  #7a6440;
   --border:      rgba(110, 69, 20, 0.14);
   --border-gold: rgba(201, 144, 50, 0.28);
   --accent-rgb:  201, 144, 50;
-  --accent:      #c99032;
+  /* Light mode uses a deeper gold so gold text and links stay readable on cream. */
+  --accent:      #875a14;
   --accent-dim:  rgba(201, 144, 50, 0.10);
   --accent-glow: rgba(201, 144, 50, 0.22);
-  --gold:        #c99032;
+  --gold:        #875a14;
+  --on-gold:     #ffffff;   /* text on a gold background */
+  --danger:      #a8352b;   /* red and green text, readable on light surfaces */
+  --success:     #2e6930;
   --gold-dim:    rgba(201, 144, 50, 0.12);
   --nav-bg:      rgba(30, 20, 8, 0.93);
   --nav-border:  rgba(201, 144, 50, 0.18);
@@ -129,8 +134,13 @@ layer(base);
   --bg-raised:  #1a1410;
   --text-strong: #f2e8d5;
   --text-body:   #d0c4aa;
-  --text-muted:  #8c7c60;
-  --text-faint:  #5c5040;
+  --text-muted:  #a08f70;
+  --text-faint:  #908062;
+  --accent:      #c99032;
+  --gold:        #c99032;
+  --on-gold:     #1e1408;
+  --danger:      #f87171;
+  --success:     #4ade80;
   --border:      rgba(201, 144, 50, 0.10);
   --border-gold: rgba(201, 144, 50, 0.22);
   --accent-dim:  rgba(201, 144, 50, 0.12);
@@ -222,13 +232,19 @@ main {
 /* While a page's scene header is behind it, the nav becomes a soft gradient over the image
    (html.hero-nav is toggled in Layout.astro). */
 .app-nav { transition: background 0.35s ease, border-color 0.35s ease; }
+/* The nav is dark in both themes, so it always uses the bright gold. */
+.app-nav { --gold: #c99032; --accent: #c99032; --on-gold: #1e1408; }
 html.hero-nav .app-nav {
-  background: linear-gradient(to bottom, rgba(8, 6, 3, 0.6), rgba(8, 6, 3, 0));
+  background: linear-gradient(to bottom, rgba(8, 6, 3, 0.85), rgba(8, 6, 3, 0.35) 70%, rgba(8, 6, 3, 0));
   border-bottom-color: transparent;
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }
 html.hero-nav .app-nav::after { opacity: 0; }
+/* Keep links legible on any image behind the nav. */
+html.hero-nav .app-nav a,
+html.hero-nav .app-nav button { text-shadow: 0 1px 6px rgba(0, 0, 0, 0.85); }
+html.hero-nav .app-nav svg { filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.8)); }
 html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg); }
 
 /* Ember glow strip at the very bottom of nav */
@@ -312,10 +328,10 @@ html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg)
 /* ── Nav link states ────────────────────────────────────────────── */
 
 .nav-link-inactive {
-  color: rgba(242, 232, 213, 0.45);
+  color: rgba(242, 232, 213, 0.82);
 }
 .nav-link-inactive:hover {
-  color: rgba(242, 232, 213, 0.85);
+  color: #f2e8d5;
   background: rgba(201, 144, 50, 0.06);
 }
 .nav-link-active {
@@ -619,12 +635,12 @@ a.t-row:hover { text-decoration: none; }
 .t-badge-red {
   background: rgba(220, 38, 38, 0.10);
   border-color: rgba(220, 38, 38, 0.25);
-  color: #f87171;
+  color: var(--danger);
 }
 .t-badge-green {
   background: rgba(22, 163, 74, 0.10);
   border-color: rgba(22, 163, 74, 0.25);
-  color: #4ade80;
+  color: var(--success);
 }
 .t-badge-blue {
   /* Kept for markup that still uses it (player role); themed instead of blue. */
@@ -679,7 +695,7 @@ a.t-row:hover { text-decoration: none; }
   align-items: center;
   gap: 0.4rem;
   background: var(--gold);
-  color: #fff;
+  color: var(--on-gold);
   border: none;
   border-radius: 2px;
   padding: 0.5rem 1.125rem;
@@ -691,7 +707,7 @@ a.t-row:hover { text-decoration: none; }
   box-shadow: 0 0 16px rgba(201, 144, 50, 0.15);
 }
 .t-btn-primary:hover {
-  background: #b5822d;
+  background: color-mix(in srgb, var(--gold) 88%, #000);
   box-shadow: 0 0 24px rgba(201, 144, 50, 0.25);
 }
 
@@ -790,7 +806,7 @@ main h1 {
 }
 .t-icon-btn-danger:hover {
   border-color: rgba(220,38,38,0.30);
-  color: #f87171;
+  color: var(--danger);
   background: rgba(220,38,38,0.08);
 }
 
@@ -885,7 +901,7 @@ main h1 {
   align-items: center;
   gap: 0.4rem;
   background: rgba(220,38,38,0.10);
-  color: #f87171;
+  color: var(--danger);
   border: 1px solid rgba(220,38,38,0.25);
   border-radius: 2px;
   padding: 0.5rem 1.125rem;
@@ -1030,8 +1046,8 @@ main h1 {
   z-index: 9999;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
 }
-.t-toast-success { border-color: rgba(22,163,74,0.35); color: #4ade80; }
-.t-toast-error   { border-color: rgba(220,38,38,0.35); color: #f87171; }
+.t-toast-success { border-color: rgba(22,163,74,0.35); color: var(--success); }
+.t-toast-error   { border-color: rgba(220,38,38,0.35); color: var(--danger); }
 
 /* ── Detail field (label + value pair) ───────────────────────────── */
 .t-field-label {
