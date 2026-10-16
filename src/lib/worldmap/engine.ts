@@ -593,13 +593,19 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       memberLabel.style.transform = `translate(${Math.round(sx)}px, ${Math.round(sy)}px) translate(-50%, -100%)`;
     } else memberLabel.style.display = 'none';
     if (bubbleVisible) {
-      const sx = (party.pos.x - cam.x) * cam.s, sy = (party.pos.y - cam.y) * cam.s - (HERO_H + 2) * Math.max(1, 1 / cam.s) * cam.s;
+      // anchor on the whole party, not the leader: above the topmost hero, or below the lowest one when flipped
+      const kk = Math.max(1, 1 / cam.s);
+      let top = party.pos.y - HERO_H * kk, bottom = party.pos.y;
+      for (const m of members.values()) { top = Math.min(top, m.y - HERO_H * kk); bottom = Math.max(bottom, m.y); }
+      const sx = (party.pos.x - cam.x) * cam.s;
+      const syTop = (top - cam.y) * cam.s - 6, syBottom = (bottom - cam.y) * cam.s + 6;
       const bw = bubble.offsetWidth || 240;
       const left = Math.max(8, Math.min(vw - bw - 8, sx - bw / 2));
       bubble.style.left = `${Math.round(left)}px`;
       const bh = bubble.offsetHeight || 160;
-      const below = sy - bh - 10 < 8;
-      bubble.style.top = `${Math.round(below ? sy + 18 : sy)}px`;
+      const below = syTop - bh - 10 < 8;
+      const sy = below ? syBottom : syTop;
+      bubble.style.top = `${Math.round(below ? sy + 12 : sy)}px`;
       bubble.style.setProperty('--tail-x', `${Math.round(sx - left)}px`);
       bubble.classList.toggle('wm-bubble-below', below);
     }
