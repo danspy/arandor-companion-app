@@ -32,7 +32,6 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       title: body.title,
       content: body.content,
       summary: body.summary || null,
-      podcastAudioUrl: body.podcastAudioUrl || null,
       session: body.session,
       tags: body.tags || [],
       coverImageUrl: body.coverImageUrl || null,

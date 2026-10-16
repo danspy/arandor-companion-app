@@ -169,14 +169,6 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </div>
           <div class="flex gap-4 text-sm t-faint mt-1">
             <span>Session {entry.session}</span>
-            {entry.podcastAudioUrl && (
-              <span class="t-badge inline-flex items-center gap-1">
-                <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-                </svg>
-                Podcast
-              </span>
-            )}
           </div>
         </div>
 
@@ -265,6 +257,18 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             class="t-input px-3 py-2"
           ></textarea>
           <p class="text-xs t-faint mt-1">Use **bold**, *italic*, # headings, - lists, and more</p>
+        </div>
+
+        <div>
+          <label for="summary" class="t-label block mb-1">Summary <span class="t-faint font-normal">(optional)</span></label>
+          <textarea
+            id="summary"
+            name="summary"
+            rows="3"
+            maxlength="400"
+            class="t-input px-3 py-2"
+            placeholder="One or two sentences. Shown in the party's speech bubble on the world map."
+          ></textarea>
         </div>
 
         <div>
@@ -779,6 +783,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       date: formData.get('date'),
       session: parseInt(formData.get('session') as string),
       content: formData.get('content'),
+      summary: ((formData.get('summary') as string) || '').trim() || null,
       tags,
       coverImageUrl,
       coverVideoUrl,
@@ -864,6 +869,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         const dateEl = document.getElementById('date') as HTMLInputElement;
         const sessionEl = document.getElementById('session') as HTMLInputElement;
         const contentEl = document.getElementById('content') as HTMLTextAreaElement;
+        const summaryEl = document.getElementById('summary') as HTMLTextAreaElement;
         const tagsEl = document.getElementById('tags') as HTMLInputElement;
         const coverImageUrlEl = document.getElementById('coverImageUrl') as HTMLInputElement;
         const coverVideoUrlEl = document.getElementById('coverVideoUrl') as HTMLInputElement;
@@ -877,6 +883,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         dateEl.value = entry.date || '';
         sessionEl.value = entry.session || '';
         contentEl.value = entry.content || '';
+        if (summaryEl) summaryEl.value = entry.summary || '';
         tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
         coverImageUrlEl.value = entry.coverImageUrl || '';
         coverVideoUrlEl.value = entry.coverVideoUrl || '';

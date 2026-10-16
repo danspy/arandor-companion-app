@@ -65,13 +65,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     // Create mutable copy for conditional updates
     const finalUpdateData = { ...updateData };
     
-    // Only update summary and podcastAudioUrl if explicitly provided in the request
+    // Only update summary if explicitly provided in the request
     // This prevents accidental deletion when these fields are not included in the form
     if ('summary' in body) {
       (finalUpdateData as any).summary = body.summary || null;
-    }
-    if ('podcastAudioUrl' in body) {
-      (finalUpdateData as any).podcastAudioUrl = body.podcastAudioUrl || null;
     }
     
     await db.update(DiaryEntry)

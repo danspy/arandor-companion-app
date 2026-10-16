@@ -6,7 +6,7 @@ dist/
 .astro/
 
 # Database
-data/
+/data/
 
 # Environment variables
 .env
