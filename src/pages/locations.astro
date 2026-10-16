@@ -68,7 +68,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text"
           id="searchInput"
           placeholder="Search locations by name, type, region, or description..."
-          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-xs transition"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -123,15 +123,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                   alt={location.name}
                   class="absolute inset-0 w-full h-full object-cover"
                 />
-                <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
               </>
             ) : (
               <div class={`absolute inset-0 ${
-                location.type === 'city' ? 'bg-gradient-to-br from-blue-600 to-blue-500' :
-                location.type === 'dungeon' ? 'bg-gradient-to-br from-purple-600 to-purple-500' :
-                location.type === 'wilderness' ? 'bg-gradient-to-br from-green-600 to-green-500' :
-                location.type === 'building' ? 'bg-gradient-to-br from-amber-600 to-amber-500' :
-                'bg-gradient-to-br from-stone-800 to-stone-700'
+                location.type === 'city' ? 'bg-linear-to-br from-blue-600 to-blue-500' :
+                location.type === 'dungeon' ? 'bg-linear-to-br from-purple-600 to-purple-500' :
+                location.type === 'wilderness' ? 'bg-linear-to-br from-green-600 to-green-500' :
+                location.type === 'building' ? 'bg-linear-to-br from-amber-600 to-amber-500' :
+                'bg-linear-to-br from-stone-800 to-stone-700'
               }`}></div>
             )}
 
@@ -154,7 +154,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <h2 class="text-2xl font-bold">{location.name}</h2>
             </a>
             {isLoggedIn && (
-              <div class="flex gap-2 items-center flex-shrink-0">
+              <div class="flex gap-2 items-center shrink-0">
                 <Button
                   variant="icon"
                   size="sm"
@@ -308,7 +308,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </div>
           <p class="text-xs t-faint">An image to display in the location header. If not set, a gradient based on location type will be shown.</p>
           <div id="imagePreview" class="hidden mt-2">
-            <img id="imagePreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-sm">
+            <img id="imagePreviewImg" src="" alt="Preview" class="max-w-full h-32 object-cover rounded-xs">
           </div>
         </div>
 
@@ -318,7 +318,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               type="checkbox"
               id="visited"
               name="visited"
-              class="w-4 h-4 rounded"
+              class="w-4 h-4 rounded-sm"
             >
             <span class="ml-2 text-sm t-body-text">Mark as visited</span>
           </label>
@@ -330,7 +330,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               type="checkbox"
               id="visibleOnMap"
               name="visibleOnMap"
-              class="w-4 h-4 rounded"
+              class="w-4 h-4 rounded-sm"
             >
             <span class="ml-2 text-sm t-body-text">Show pin on map</span>
           </label>

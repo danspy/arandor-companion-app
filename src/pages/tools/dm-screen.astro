@@ -42,7 +42,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     <!-- Player Display Link -->
     <div class="t-callout p-4 mb-6">
       <div class="flex items-start gap-3">
-        <svg class="w-6 h-6 flex-shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-6 h-6 shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
         </svg>
         <div class="flex-1">
@@ -105,7 +105,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
         <div id="locationPreview" class="hidden">
           <p class="t-body-text text-sm font-medium mb-2">Preview:</p>
-          <div class="rounded-sm overflow-hidden" style="border:2px solid var(--border);">
+          <div class="rounded-xs overflow-hidden" style="border:2px solid var(--border);">
             <div id="locationImageContainer" class="t-inset aspect-video flex items-center justify-center">
               <img id="locationImage" class="w-full h-full object-cover hidden" alt="Location" />
               <p id="noLocationImage" class="t-faint">No image available</p>
@@ -145,7 +145,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                 </option>
               ))}
             </select>
-            <Button variant="primary" size="sm" id="addNpcBtn" class="w-full lg:w-auto lg:flex-shrink-0">
+            <Button variant="primary" size="sm" id="addNpcBtn" class="w-full lg:w-auto lg:shrink-0">
               Add
             </Button>
           </div>
@@ -171,7 +171,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <input 
             type="checkbox" 
             id="showInitiativeTracker"
-            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
+            class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
           />
           <label for="showInitiativeTracker" class="ml-2 t-body-text text-sm">
             Show initiative tracker on player display
@@ -186,7 +186,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         <div class="pt-4" style="border-top:1px solid var(--border);">
           <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 mb-3">
             <span class="t-body-text text-sm font-medium">Combat Controls</span>
-            <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-sm">
+            <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-xs">
               <span class="t-body-text text-xs font-medium">Round:</span>
               <span id="dmCurrentRound" class="text-lg font-bold" style="color:var(--gold);">1</span>
             </div>
@@ -231,7 +231,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <span class="t-body-text text-sm font-medium mb-2 block">Turn Order</span>
           
           <!-- Current Turn -->
-          <div id="currentTurnDisplay" class="t-inset mb-2 p-3 rounded-sm" style="border:2px solid var(--gold);">
+          <div id="currentTurnDisplay" class="t-inset mb-2 p-3 rounded-xs" style="border:2px solid var(--gold);">
             <div class="flex items-center gap-2 mb-1">
               <svg class="w-4 h-4" style="color:var(--gold);" fill="currentColor" viewBox="0 0 20 20">
                 <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path>
@@ -245,7 +245,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           </div>
           
           <!-- Next Turn -->
-          <div id="nextTurnDisplay" class="t-inset p-3 rounded-sm">
+          <div id="nextTurnDisplay" class="t-inset p-3 rounded-xs">
             <div class="flex items-center gap-2 mb-1">
               <svg class="w-4 h-4 t-faint" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
@@ -281,7 +281,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <input 
             type="checkbox" 
             id="showTimer"
-            class="w-4 h-4 rounded" style="accent-color:var(--accent);"
+            class="w-4 h-4 rounded-sm" style="accent-color:var(--accent);"
           />
           <label for="showTimer" class="ml-2 t-body-text text-sm">
             Show timer on player display
@@ -308,7 +308,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         </div>
         
         <!-- Timer Display -->
-        <div class="t-inset rounded-sm p-4 text-center">
+        <div class="t-inset rounded-xs p-4 text-center">
           <div id="timerDisplay" class="text-4xl font-bold mb-2" style="color:var(--gold);">
             00:00
           </div>
@@ -343,7 +343,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
       <div class="space-y-4">
         <!-- Show/Hide Screen Toggle -->
-        <div class="t-inset p-4 rounded-sm">
+        <div class="t-inset p-4 rounded-xs">
           <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-2">
             <label class="t-body-text text-sm font-medium">Screen Visibility</label>
             <div class="flex items-center gap-2">
@@ -362,7 +362,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         </div>
         
         <!-- Placeholder Image Upload -->
-        <div class="t-inset p-4 rounded-sm">
+        <div class="t-inset p-4 rounded-xs">
           <label class="t-label block mb-2">
             Placeholder Wallpaper
           </label>
