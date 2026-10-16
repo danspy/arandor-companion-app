@@ -217,6 +217,19 @@ export function warmUp() {
   if (!prefersReducedMotion()) void getDiceBox();
 }
 
+/** Take any dice still lying on the screen away now (no-op while a roll is in flight). */
+export function clearTable() {
+  if (rolling) return;
+  if (hideTimer) clearTimeout(hideTimer);
+  hideTimer = null;
+  const overlay = document.getElementById(OVERLAY_ID);
+  if (overlay) {
+    overlay.style.opacity = '0';
+    overlay.classList.remove('is-rolling');
+  }
+  void diceBox?.clear();
+}
+
 export function isRolling() {
   return rolling;
 }

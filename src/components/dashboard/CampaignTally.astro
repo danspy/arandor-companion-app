@@ -1,0 +1,216 @@
+---
+// "The tale so far": campaign numbers as linked tiles with a small breakdown bar each.
+// Numbers count up and bars fill when the panel scrolls into view.
+interface Segment { value: number; color: string; label: string }
+interface Tile {
+  href: string;
+  label: string;
+  value: number;
+  note: string;
+  icon: 'book' | 'people' | 'map' | 'trophy';
+  segments: Segment[];
+}
+
+interface Props {
+  sessions: number;
+  firstSessionDate: string | null;
+  npcs: Array<{ relationship: string }>;
+  locations: Array<{ visited: boolean }>;
+  quests: Array<{ status: string }>;
+}
+
+const { sessions, firstSessionDate, npcs, locations, quests } = Astro.props;
+
+const count = <T,>(items: T[], pred: (i: T) => boolean) => items.filter(pred).length;
+const since = firstSessionDate
+  ? new Date(firstSessionDate).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' })
+  : null;
+const years = firstSessionDate ? (Date.now() - new Date(firstSessionDate).getTime()) / (365.25 * 86_400_000) : 0;
+
+const allies = count(npcs, (n) => n.relationship === 'ally');
+const enemies = count(npcs, (n) => n.relationship === 'enemy');
+const visited = count(locations, (l) => l.visited);
+const done = count(quests, (q) => q.status === 'completed');
+const active = count(quests, (q) => q.status === 'active');
+const failed = count(quests, (q) => q.status === 'failed');
+
+const tiles: Tile[] = [
+  {
+    href: '/diary',
+    label: 'Sessions played',
+    value: sessions,
+    note: since ? (years >= 1 ? `Since ${since}, ${years.toFixed(1)} years of adventure` : `Since ${since}`) : 'The first page is still blank',
+    icon: 'book',
+    segments: [],
+  },
+  {
+    href: '/npcs',
+    label: 'NPCs met',
+    value: npcs.length,
+    note: `${allies} ${allies === 1 ? 'ally' : 'allies'} · ${enemies} ${enemies === 1 ? 'foe' : 'foes'}`,
+    icon: 'people',
+    segments: [
+      { value: allies, color: 'var(--tally-green)', label: 'Allies' },
+      { value: npcs.length - allies - enemies, color: 'var(--gold)', label: 'Neutral' },
+      { value: enemies, color: 'var(--tally-red)', label: 'Foes' },
+    ],
+  },
+  {
+    href: '/locations',
+    label: 'Places discovered',
+    value: visited,
+    note: locations.length ? `${Math.round((visited / locations.length) * 100)}% of the ${locations.length} known places` : 'The map is still blank',
+    icon: 'map',
+    segments: [
+      { value: visited, color: 'var(--gold)', label: 'Visited' },
+      { value: locations.length - visited, color: 'var(--tally-track)', label: 'Not yet visited' },
+    ],
+  },
+  {
+    href: '/quests',
+    label: 'Quests completed',
+    value: done,
+    note: `${active} active · ${failed} failed`,
+    icon: 'trophy',
+    segments: [
+      { value: done, color: 'var(--gold)', label: 'Completed' },
+      { value: active, color: 'var(--tally-blue)', label: 'Active' },
+      { value: failed, color: 'var(--tally-red)', label: 'Failed' },
+    ],
+  },
+];
+---
+
+<section class="t-panel tally p-5 mb-6" aria-labelledby="tally-h">
+  <div class="flex items-baseline justify-between gap-3 mb-4">
+    <h2 id="tally-h" class="t-section-h text-xl">The tale so far</h2>
+  </div>
+
+  <div class="tally-grid">
+    {tiles.map((t) => {
+      const total = t.segments.reduce((s, x) => s + x.value, 0);
+      return (
+        <a href={t.href} class="tally-tile t-inset">
+          <svg class="tally-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            {t.icon === 'book' && <path d="M4 5a2 2 0 0 1 2-2h12v16H6a2 2 0 0 0-2 2Zm0 16V5M8 7h6" />}
+            {t.icon === 'people' && <path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm-6 9c0-3.3 2.7-6 6-6s6 2.7 6 6M16 4.5a3.5 3.5 0 0 1 0 6.5M18 14c2 .7 3.5 2.8 3.5 6" />}
+            {t.icon === 'map' && <path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Zm0 0v14m6-12v14" />}
+            {t.icon === 'trophy' && <path d="M8 4h8v5a4 4 0 0 1-8 0V4Zm0 2H4v1a4 4 0 0 0 4 4m8-5h4v1a4 4 0 0 1-4 4m-4 2v4m-4 3h8l-1-3H9Z" />}
+          </svg>
+          <span class="tally-num t-num" data-count={t.value}>{t.value}</span>
+          <span class="t-label-sm">{t.label}</span>
+          {total > 0 && (
+            <span class="tally-bar" role="img" aria-label={t.segments.map((s) => `${s.label}: ${s.value}`).join(', ')}>
+              {t.segments.filter((s) => s.value > 0).map((s) => (
+                <span style={`--w:${(s.value / total) * 100}%; background:${s.color}`} title={`${s.label}: ${s.value}`}></span>
+              ))}
+            </span>
+          )}
+          <span class="tally-note">{t.note}</span>
+        </a>
+      );
+    })}
+  </div>
+</section>
+
+<style>
+  .tally {
+    --tally-green: #16a34a;
+    --tally-red: #dc2626;
+    --tally-blue: #3b82f6;
+    --tally-track: color-mix(in srgb, var(--text-faint) 30%, transparent);
+  }
+  .tally-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; }
+  @media (min-width: 768px) { .tally-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+
+  .tally-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.25rem;
+    padding: 1.1rem 0.75rem 1rem;
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+  /* A faint glow behind the number. */
+  .tally-tile::before {
+    content: '';
+    position: absolute;
+    top: -30%;
+    left: 50%;
+    width: 9rem;
+    height: 9rem;
+    transform: translateX(-50%);
+    background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+    opacity: 0.5;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .tally-tile:hover { transform: translateY(-3px); border-color: var(--gold); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25); }
+  .tally-tile:hover::before { opacity: 1; }
+  .tally-tile:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  .tally-icon { position: relative; width: 1.5rem; height: 1.5rem; color: var(--gold); opacity: 0.85; }
+  .tally-num { position: relative; font-size: 2.75rem; line-height: 1; font-variant-numeric: tabular-nums; }
+  @media (min-width: 768px) { .tally-num { font-size: 3.25rem; } }
+
+  .tally-bar {
+    display: flex;
+    width: 100%;
+    max-width: 9rem;
+    height: 5px;
+    margin-top: 0.4rem;
+    gap: 2px;
+    background: var(--tally-track);
+  }
+  .tally-bar > span { width: var(--w); transform-origin: left; transition: transform 0.9s cubic-bezier(0.2, 0.9, 0.3, 1) 0.2s; }
+  .tally-note { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.25rem; line-height: 1.35; }
+
+  /* Before the reveal: bars empty (numbers are reset by the script). */
+  .tally:not(.is-counted) .tally-bar > span { transform: scaleX(0); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tally-tile, .tally-tile:hover { transition: none; transform: none; }
+    .tally-bar > span { transition: none; transform: none !important; }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const panel = document.querySelector<HTMLElement>('.tally');
+    if (!panel) return;
+    const nums = panel.querySelectorAll<HTMLElement>('[data-count]');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || !('IntersectionObserver' in window)) {
+      panel.classList.add('is-counted');
+      return;
+    }
+    nums.forEach((n) => (n.textContent = '0'));
+
+    const countUp = () => {
+      panel.classList.add('is-counted');
+      const start = performance.now();
+      const duration = 1200;
+      const tick = (now: number) => {
+        const t = Math.min(1, (now - start) / duration);
+        const eased = 1 - Math.pow(1 - t, 3);
+        nums.forEach((n) => (n.textContent = String(Math.round(Number(n.dataset.count) * eased))));
+        if (t < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        observer.disconnect();
+        countUp();
+      },
+      { rootMargin: '0px 0px -10% 0px' }
+    );
+    observer.observe(panel);
+  });
+</script>

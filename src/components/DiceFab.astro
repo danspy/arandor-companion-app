@@ -35,7 +35,7 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
           <span class="dice-pick-count" hidden>0</span>
         </button>
       ))}
-      <button type="button" class="dice-pick dice-pick-clear" data-clear title="Clear selection">Clear</button>
+      <button type="button" class="dice-pick dice-pick-reset" data-reset title="Reset dice, modifier and the table">Reset</button>
     </div>
 
     <div class="flex items-center justify-between gap-3 mt-3">
@@ -47,8 +47,6 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
       <button type="button" id="dice-fab-roll" class="t-btn-primary flex-1 justify-center py-2" disabled>Roll</button>
     </div>
     <p id="dice-fab-formula" class="t-faint text-xs mt-2 text-center min-h-4"></p>
-
-    <div id="dice-fab-history" class="mt-2 space-y-1"></div>
   </div>
 
   <button
@@ -226,7 +224,7 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   .dice-quick:hover, .dice-pick:hover, .dice-step:hover { border-color: var(--gold); background: var(--accent-dim); }
   .dice-quick:active, .dice-pick:active, .dice-step:active { transform: scale(0.95); }
   .dice-quick[data-quick='normal'] { color: var(--gold); }
-  .dice-pick-clear { color: var(--text-faint); font-weight: 500; }
+  .dice-pick-reset { color: var(--text-muted); font-weight: 500; }
   .dice-step { width: 2rem; padding-inline: 0; }
   .dice-mod { width: 3.25rem; padding: 0.4rem 0.25rem; text-align: center; }
 
@@ -245,20 +243,6 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   }
   .dice-pick-count[hidden] { display: none; }
 
-  .dice-fab-history-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 0.5rem;
-    padding: 0.3rem 0.5rem;
-    font-size: 0.75rem;
-    color: var(--text-muted);
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-  }
-  .dice-fab-history-row strong { color: var(--gold); font-size: 0.95rem; }
-
   @media (prefers-reduced-motion: reduce) {
     .dice-banner-card, .dice-fab-panel, .dice-spark { animation: none !important; }
     .dice-fab, .dice-fab:hover, .dice-fab[aria-expanded='true'] { transition: none; transform: none; }
@@ -269,10 +253,9 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   import {
     DIE_TYPES,
     ROLL_EVENT,
-    HISTORY_CLEARED_EVENT,
     roll,
     warmUp,
-    getHistory,
+    clearTable,
     formatSelection,
     diceCount,
     type DieType,
@@ -290,7 +273,6 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   const rollBtn = document.getElementById('dice-fab-roll') as HTMLButtonElement;
   const modInput = document.getElementById('dice-fab-mod') as HTMLInputElement;
   const formulaEl = document.getElementById('dice-fab-formula') as HTMLParagraphElement;
-  const historyEl = document.getElementById('dice-fab-history') as HTMLDivElement;
   const bannerCard = document.querySelector('#dice-result-banner .dice-banner-card') as HTMLButtonElement;
 
   const selection: DiceSelection = {};
@@ -307,10 +289,7 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   function setOpen(open: boolean) {
     panel.hidden = !open;
     fab.setAttribute('aria-expanded', String(open));
-    if (open) {
-      warmUp();
-      renderHistory();
-    }
+    if (open) warmUp();
   }
 
   function renderSelection() {
@@ -324,21 +303,6 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     const hasDice = diceCount(selection) > 0;
     rollBtn.disabled = !hasDice;
     formulaEl.textContent = hasDice ? formatSelection(selection, modifier()) : 'Pick dice, or tap a quick roll';
-  }
-
-  function renderHistory() {
-    const items = getHistory().slice(0, 3);
-    historyEl.innerHTML = '';
-    for (const r of items) {
-      const row = document.createElement('div');
-      row.className = 'dice-fab-history-row';
-      const label = document.createElement('span');
-      label.textContent = r.formula;
-      const total = document.createElement('strong');
-      total.textContent = String(r.total);
-      row.append(label, total);
-      historyEl.append(row);
-    }
   }
 
   async function doRoll(sel: DiceSelection, mode: RollMode = 'normal') {
@@ -409,9 +373,7 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   window.addEventListener(ROLL_EVENT, (e) => {
     const record = (e as CustomEvent<RollRecord>).detail;
     showBanner(record);
-    if (!panel.hidden) renderHistory();
   });
-  window.addEventListener(HISTORY_CLEARED_EVENT, renderHistory);
 
   // ── FAB: tap toggles the panel, long-press rolls a d20 straight away ──
   let pressTimer: ReturnType<typeof setTimeout> | null = null;
@@ -456,10 +418,13 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     });
   }
 
-  panel.querySelector('[data-clear]')?.addEventListener('click', () => {
+  panel.querySelector('[data-reset]')?.addEventListener('click', () => {
     for (const d of DIE_TYPES) delete selection[d];
     modInput.value = '0';
     renderSelection();
+    clearTable();
+    if (bannerTimer) clearTimeout(bannerTimer);
+    bannerCard.hidden = true;
   });
 
   for (const btn of panel.querySelectorAll<HTMLButtonElement>('.dice-step')) {
@@ -471,10 +436,17 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   modInput.addEventListener('input', renderSelection);
 
   for (const btn of panel.querySelectorAll<HTMLButtonElement>('.dice-quick')) {
-    btn.addEventListener('click', () => doRoll({ d20: 1 }, btn.dataset.quick as RollMode));
+    btn.addEventListener('click', () => {
+      setOpen(false);
+      void doRoll({ d20: 1 }, btn.dataset.quick as RollMode);
+    });
   }
 
-  rollBtn.addEventListener('click', () => doRoll({ ...selection }));
+  // Close the panel so the dice have the screen; the selection stays for the next roll.
+  rollBtn.addEventListener('click', () => {
+    setOpen(false);
+    void doRoll({ ...selection });
+  });
 
   // Close on Escape or a click outside the panel.
   document.addEventListener('keydown', (e) => {
