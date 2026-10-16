@@ -1,0 +1,93 @@
+---
+// Latest library entries as book spines on a shelf.
+interface Props {
+  entries: Array<{ id: string; title: string; tags: string[] }>;
+}
+
+const { entries } = Astro.props;
+
+// Stable per-title colour and height so the shelf looks varied but never reshuffles.
+const hash = (s: string) => [...s].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7);
+const leathers = ['#6b2a1f', '#2f4a3a', '#2a3550', '#5a3d1a', '#4a2340', '#3a3a2a', '#6b4a1f', '#1f3f4a'];
+const books = entries.map((e) => {
+  const h = hash(e.title);
+  return { ...e, color: leathers[h % leathers.length], height: 10 + (h % 4) * 0.8, width: 2.6 + ((h >> 3) % 3) * 0.35 };
+});
+---
+
+<section class="t-panel p-5 h-full shelf-panel">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="t-section-h text-xl">From the Library</h2>
+    <a href="/library" class="t-link">Library →</a>
+  </div>
+  {books.length > 0 ? (
+    <div class="shelf">
+      <div class="shelf-books">
+        {books.map((b) => (
+          <a href={`/library/${b.id}`} class="book" style={`--book:${b.color};height:${b.height}rem;width:${b.width}rem`} title={b.title}>
+            <span class="book-band"></span>
+            <span class="book-title">{b.title}</span>
+            <span class="book-band"></span>
+          </a>
+        ))}
+      </div>
+      <div class="shelf-board"></div>
+    </div>
+  ) : (
+    <p class="t-muted text-sm italic">The library shelves are still empty.</p>
+  )}
+</section>
+
+<style>
+  .shelf-panel { display: flex; flex-direction: column; }
+  .shelf { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; min-height: 15rem; }
+  .shelf-books {
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.25rem;
+    padding: 1.2rem 0.5rem 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .book {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-radius: 3px 3px 1px 1px;
+    color: #f2dfb0;
+    background:
+      linear-gradient(90deg, rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.12) 30%, rgba(0, 0, 0, 0.05) 60%, rgba(0, 0, 0, 0.4)),
+      var(--book);
+    box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.3), 2px 0 3px rgba(0, 0, 0, 0.3);
+    transition: transform 0.25s ease;
+    transform-origin: bottom center;
+  }
+  .book:hover { transform: translateY(-0.9rem); }
+  .book:nth-child(4n + 2):hover { transform: translateY(-0.9rem) rotate(-3deg); }
+  .book-band { width: 70%; height: 3px; border-top: 1px solid #d9af60; border-bottom: 1px solid #d9af60; opacity: 0.8; }
+  .book-title {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    line-height: 1.1;
+    max-height: 80%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .shelf-board {
+    height: 0.9rem;
+    border-radius: 2px;
+    background: linear-gradient(to bottom, #8d5a18, #4e3010);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.35);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .book { transition: none; }
+  }
+</style>

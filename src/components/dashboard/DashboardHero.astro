@@ -6,12 +6,11 @@ interface Props {
   imageUrl: string;
   canEdit: boolean;
   level: number;
-  progress: number; // 0-100, set in 10% steps
+  progress: number; // 0-100
   lastSession: { number: number; daysAgo: number } | null;
 }
 
 const { imageUrl, canEdit, level, progress, lastSession } = Astro.props;
-const milestones = Math.round(progress / 10);
 const lastPlayed = lastSession
   ? lastSession.daysAgo === 0 ? 'played today' : lastSession.daysAgo === 1 ? 'last played yesterday' : `last played ${lastSession.daysAgo} days ago`
   : null;
@@ -47,7 +46,7 @@ const lastPlayed = lastSession
         <div class="dash-hero-progress-body">
           <div class="dash-hero-progress-text">
             <span>Party level {level}</span>
-            <span>{milestones} of 10 milestones to {level + 1}</span>
+            <span>{progress}% to {level + 1}</span>
           </div>
           <div class="dash-hero-progress-track">
             <div class="dash-hero-progress-fill" style={`width:${progress}%`}></div>
@@ -191,7 +190,19 @@ const lastPlayed = lastSession
     text-shadow: 0 1px 6px rgba(0, 0, 0, 0.8);
     margin-bottom: 1.1rem;
   }
-  .dash-hero-progress { display: flex; align-items: center; gap: 0.75rem; max-width: 24rem; }
+  /* Glass backing so the level row stays readable where the image fades into a light page. */
+  .dash-hero-progress {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    max-width: 26rem;
+    padding: 0.45rem 0.75rem 0.45rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(8, 6, 3, 0.5);
+    border: 1px solid rgba(201, 144, 50, 0.25);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
   .dash-hero-level {
     flex-shrink: 0;
     width: 2.6rem;

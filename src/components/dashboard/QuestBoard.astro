@@ -1,0 +1,117 @@
+---
+// Active quests as parchment notes pinned to a board, sealed by priority.
+import { markdownExcerpt } from '../../utils/markdown';
+
+interface Props {
+  quests: Array<{ id: string; title: string; description: string; priority: string }>;
+  completed: number;
+  failed: number;
+}
+
+const { quests, completed, failed } = Astro.props;
+const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const sorted = quests.slice().sort((a, b) => (order[a.priority] ?? 3) - (order[b.priority] ?? 3)).slice(0, 6);
+// Fixed, varied tilts so the board looks hand-pinned but doesn't jump around.
+const tilts = [-1.6, 1.2, -0.6, 1.8, -1.1, 0.7];
+---
+
+<section class="t-panel quest-board-panel p-5 h-full">
+  <div class="flex items-center justify-between mb-4">
+    <h2 class="t-section-h text-xl">Quest Board</h2>
+    <a href="/quests" class="t-link">All quests →</a>
+  </div>
+
+  {sorted.length > 0 ? (
+    <div class="quest-board">
+      {sorted.map((q, i) => (
+        <a href="/quests" class="quest-note" style={`--tilt:${tilts[i % tilts.length]}deg`}>
+          <span class="quest-pin" aria-hidden="true"></span>
+          <h3 class="quest-title">{q.title}</h3>
+          <p class="quest-text">{markdownExcerpt(q.description, 140)}</p>
+          <span class={`quest-seal seal-${q.priority}`} title={`${q.priority} priority`}>
+            {q.priority === 'high' ? '!' : q.priority === 'medium' ? '◆' : '·'}
+          </span>
+        </a>
+      ))}
+    </div>
+  ) : (
+    <p class="t-muted text-sm italic">No open quests. The party is free.</p>
+  )}
+
+  <p class="quest-tally">
+    <span><strong>{quests.length}</strong> open</span>
+    <span><strong>{completed}</strong> completed</span>
+    {failed > 0 && <span><strong>{failed}</strong> failed</span>}
+  </p>
+</section>
+
+<style>
+  .quest-board-panel { display: flex; flex-direction: column; }
+  .quest-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+    gap: 1.1rem 1rem;
+    padding: 0.5rem 0.25rem;
+  }
+  .quest-note {
+    position: relative;
+    display: block;
+    padding: 1.1rem 1rem 1.6rem;
+    color: #3d2e1a;
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.35), transparent 40%),
+      linear-gradient(160deg, #f1dfb5, #e2c88f);
+    border-radius: 2px;
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.35), inset 0 0 30px rgba(140, 90, 30, 0.25);
+    transform: rotate(var(--tilt));
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+  .quest-note:hover { transform: rotate(0deg) translateY(-4px) scale(1.02); box-shadow: 0 12px 24px rgba(0, 0, 0, 0.4), inset 0 0 30px rgba(140, 90, 30, 0.25); }
+  .quest-pin {
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    width: 14px;
+    height: 14px;
+    margin-left: -7px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #ffb3a0, #b3261e 60%, #5a0f0b);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  }
+  .quest-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.15rem; font-weight: 700; line-height: 1.15; color: #2a1d0c; }
+  .quest-text {
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    color: #5a4426;
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .quest-seal {
+    position: absolute;
+    right: 0.6rem;
+    bottom: -0.7rem;
+    width: 2rem;
+    height: 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45), inset 0 -2px 4px rgba(0, 0, 0, 0.3);
+  }
+  .seal-high { background: radial-gradient(circle at 35% 30%, #e0584a, #8f1a12); }
+  .seal-medium { background: radial-gradient(circle at 35% 30%, #e7b45a, #8d5a18); }
+  .seal-low { background: radial-gradient(circle at 35% 30%, #6fbf73, #24602a); }
+
+  .quest-tally { display: flex; gap: 1rem; margin-top: auto; padding-top: 1.25rem; font-size: 0.75rem; color: var(--text-muted); }
+  .quest-tally strong { color: var(--gold); font-size: 0.95rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quest-note { transition: none; }
+  }
+</style>

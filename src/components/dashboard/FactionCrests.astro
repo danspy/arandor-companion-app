@@ -1,0 +1,105 @@
+---
+// Faction standings as heraldic crests. Keeps the edit/delete hooks the dashboard script
+// uses (.faction-item, .edit-faction-btn, .delete-faction-btn, #addFactionBtn).
+import Button from '../Button.astro';
+
+interface Props {
+  factions: Array<{ id: string; name: string; status: string; progress: number }>;
+  canEdit: boolean;
+}
+
+const { factions, canEdit } = Astro.props;
+
+const STATUS: Record<string, { label: string; color: string }> = {
+  enemy: { label: 'Enemy', color: '#dc2626' },
+  suspicious: { label: 'Suspicious', color: '#ea580c' },
+  neutral: { label: 'Neutral', color: '#ca8a04' },
+  friendly: { label: 'Friendly', color: '#16a34a' },
+  respectful: { label: 'Respectful', color: '#0d9488' },
+};
+const order = ['respectful', 'friendly', 'neutral', 'suspicious', 'enemy'];
+const sorted = factions.slice().sort((a, b) => order.indexOf(a.status) - order.indexOf(b.status) || b.progress - a.progress);
+const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+---
+
+<section class="t-panel p-5 mb-6">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="t-section-h text-xl">Faction Standings</h2>
+    {canEdit && (
+      <Button variant="primary" size="sm" icon="add" id="addFactionBtn" title="Add new faction">Add Faction</Button>
+    )}
+  </div>
+
+  {sorted.length === 0 ? (
+    <p class="t-muted text-sm italic">No factions tracked yet.{canEdit && ' Add the first one to track the party’s reputation.'}</p>
+  ) : (
+    <div class="crests">
+      {sorted.map((f) => {
+        const s = STATUS[f.status] ?? { label: f.status, color: '#64748b' };
+        return (
+          <div class="crest faction-item" data-faction-id={f.id} style={`--c:${s.color}`}>
+            <svg class="crest-shield" viewBox="0 0 64 76" aria-hidden="true">
+              <path d="M32 2 60 12v24c0 18-12 30-28 38C16 66 4 54 4 36V12Z" fill="var(--c)" fill-opacity="0.18" stroke="var(--c)" stroke-width="2.5" />
+              <path d="M32 9 53 17v19c0 13-9 23-21 29-12-6-21-16-21-29V17Z" fill="none" stroke="var(--c)" stroke-opacity="0.45" stroke-width="1" />
+              <text x="32" y="44" text-anchor="middle" font-family="Cormorant Garamond, Georgia, serif" font-weight="700" font-size="22" fill="var(--c)">{initials(f.name)}</text>
+            </svg>
+            <div class="crest-body">
+              <div class="crest-top">
+                <h3 class="crest-name">{f.name}</h3>
+                {canEdit && (
+                  <span class="crest-actions">
+                    <button class="edit-faction-btn" title="Edit" data-faction-id={f.id} data-faction-name={f.name} data-faction-status={f.status} data-faction-progress={f.progress}>
+                      <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                    </button>
+                    <button class="delete-faction-btn" title="Delete" data-faction-id={f.id}>
+                      <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    </button>
+                  </span>
+                )}
+              </div>
+              <span class="crest-status">{s.label}</span>
+              <div class="crest-bar" title={`${f.progress}%`}>
+                <div style={`width:${f.progress}%`}></div>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  )}
+</section>
+
+<style>
+  .crests { display: grid; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); gap: 0.75rem; }
+  @media (max-width: 640px) {
+    .crests { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+    .crest { flex-direction: column; align-items: stretch; text-align: center; gap: 0.4rem; padding: 0.7rem 0.6rem; }
+    .crest-shield { margin: 0 auto; }
+    .crest-top { justify-content: center; }
+    .crest-name { white-space: normal; }
+  }
+  .crest {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 3px;
+    background: linear-gradient(110deg, color-mix(in srgb, var(--c) 10%, transparent), transparent 60%), var(--bg-raised);
+    border: 1px solid color-mix(in srgb, var(--c) 30%, var(--border));
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .crest:hover { transform: translateY(-2px); border-color: var(--c); }
+  .crest-shield { width: 2.8rem; flex-shrink: 0; filter: drop-shadow(0 0 8px color-mix(in srgb, var(--c) 35%, transparent)); }
+  .crest-body { flex: 1; min-width: 0; }
+  .crest-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+  .crest-name { font-weight: 600; font-size: 0.9rem; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .crest-actions { display: flex; gap: 0.35rem; color: var(--text-muted); }
+  .crest-actions button:hover { color: var(--gold); }
+  .crest-actions .delete-faction-btn:hover { color: #ef4444; }
+  .crest-status { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--c); }
+  .crest-bar { margin-top: 0.35rem; height: 4px; border-radius: 999px; background: color-mix(in srgb, var(--c) 15%, var(--bg-page)); overflow: hidden; }
+  .crest-bar div { height: 100%; border-radius: 999px; background: var(--c); }
+  @media (prefers-reduced-motion: reduce) {
+    .crest { transition: none; }
+  }
+</style>

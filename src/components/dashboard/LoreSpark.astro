@@ -1,5 +1,6 @@
 ---
-// "Do you remember…?" — a random NPC, location or library entry, shuffled per visit.
+// "Do you remember…?": NPCs, places, older sessions and library entries, shuffled per visit.
+// Rotates every 10 s (paused while hovered/focused), with the item's image blurred behind it.
 export interface LoreItem {
   kind: 'NPC' | 'Location' | 'Library' | 'Session';
   title: string;
@@ -17,60 +18,91 @@ const { items } = Astro.props;
 ---
 
 {items.length > 0 && (
-  <div class="lore t-panel p-5" data-lore>
-    <div class="flex items-center justify-between mb-3">
-      <h2 class="t-section-h text-lg">Do you remember…?</h2>
-      {items.length > 1 && (
-        <button type="button" class="lore-next" data-lore-next title="Another memory" aria-label="Show another memory">
-          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" />
-          </svg>
-        </button>
-      )}
+  <div class="lore t-panel" data-lore>
+    <div class="lore-bgs" aria-hidden="true">
+      {items.map((item, i) => (
+        <div class:list={['lore-bg', { on: i === 0 }]} style={item.imageUrl ? `background-image:url("${item.imageUrl}")` : undefined}></div>
+      ))}
     </div>
-    {items.map((item, i) => (
-      <a href={item.href} class="lore-item" data-lore-item hidden={i !== 0}>
-        <div class="lore-portrait">
-          {item.imageUrl ? (
-            <img src={item.imageUrl} alt="" loading="lazy" />
-          ) : (
-            <span>{item.title.charAt(0)}</span>
-          )}
-        </div>
-        <span class="t-badge lore-kind">{item.kind}</span>
-        <h3 class="lore-title">{item.title}</h3>
-        {item.subtitle && <p class="t-faint text-xs">{item.subtitle}</p>}
-        <p class="t-muted text-sm mt-2 line-clamp-4">{item.text}</p>
-      </a>
-    ))}
+    <div class="lore-inner">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="t-section-h text-lg">Do you remember…?</h2>
+        {items.length > 1 && (
+          <button type="button" class="lore-next" data-lore-next title="Another memory" aria-label="Show another memory">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 12a9 9 0 1 1-3-6.7L21 8" /><path d="M21 3v5h-5" />
+            </svg>
+          </button>
+        )}
+      </div>
+      {items.map((item, i) => (
+        <a href={item.href} class="lore-item" data-lore-item hidden={i !== 0}>
+          <div class="lore-portrait">
+            {item.imageUrl ? (
+              <img src={item.imageUrl} alt="" loading="lazy" />
+            ) : (
+              <span>{item.title.charAt(0)}</span>
+            )}
+          </div>
+          <span class="t-badge lore-kind">{item.kind}</span>
+          <h3 class="lore-title">{item.title}</h3>
+          {item.subtitle && <p class="lore-sub">{item.subtitle}</p>}
+          {item.text && <p class="lore-text">{item.text}</p>}
+        </a>
+      ))}
+    </div>
+    {items.length > 1 && <div class="lore-timer" data-lore-timer aria-hidden="true"></div>}
   </div>
 )}
 
 <style>
-  .lore { height: 100%; display: flex; flex-direction: column; }
+  .lore { position: relative; height: 100%; overflow: hidden; display: flex; flex-direction: column; }
+
+  /* Blurred, darkened image of the current item behind the card. */
+  .lore-bgs { position: absolute; inset: 0; z-index: 0; }
+  .lore-bg {
+    position: absolute;
+    inset: -30px;
+    background-size: cover;
+    background-position: center;
+    filter: blur(18px) saturate(1.2);
+    opacity: 0;
+    transform: scale(1.1);
+    transition: opacity 1s ease, transform 10s linear;
+  }
+  .lore-bg.on { opacity: 1; transform: scale(1.2); }
+  .lore-bgs::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to bottom, color-mix(in srgb, var(--bg-surface) 70%, transparent), color-mix(in srgb, var(--bg-surface) 88%, transparent));
+  }
+
+  .lore-inner { position: relative; z-index: 1; flex: 1; display: flex; flex-direction: column; padding: 1.25rem; }
   .lore-next {
     display: inline-flex;
     padding: 0.4rem;
     border-radius: 999px;
     color: var(--gold);
     border: 1px solid var(--border-gold);
+    background: color-mix(in srgb, var(--bg-surface) 60%, transparent);
     transition: transform 0.4s ease, background 0.15s ease;
   }
   .lore-next:hover { background: var(--accent-dim); transform: rotate(180deg); }
-  .lore-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding-bottom: 1.5rem; }
+  .lore-item { display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; flex: 1; padding-bottom: 1rem; }
   .lore-item[hidden] { display: none; }
-  .lore-item.enter { animation: lore-in 0.4s ease-out both; }
+  .lore-item.enter { animation: lore-in 0.5s ease-out both; }
   @keyframes lore-in {
-    from { opacity: 0; transform: translateY(6px) rotateX(20deg); }
+    from { opacity: 0; transform: translateY(8px) rotateX(20deg); }
     to   { opacity: 1; transform: none; }
   }
   .lore-portrait {
-    width: 5.5rem;
-    height: 5.5rem;
+    width: 8.5rem;
+    height: 8.5rem;
     border-radius: 999px;
     overflow: hidden;
     border: 2px solid var(--border-gold);
-    box-shadow: 0 0 24px var(--accent-glow);
+    box-shadow: 0 0 28px var(--accent-glow), 0 6px 16px rgba(0, 0, 0, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -78,30 +110,106 @@ const { items } = Astro.props;
     margin-bottom: 0.75rem;
   }
   .lore-portrait img { width: 100%; height: 100%; object-fit: cover; }
-  .lore-portrait span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.5rem; font-weight: 700; color: var(--gold); }
+  @media (max-width: 640px) { .lore-portrait { width: 7rem; height: 7rem; } }
+  .lore-portrait span { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 3.5rem; font-weight: 700; color: var(--gold); }
   .lore-kind { margin-bottom: 0.4rem; }
-  .lore-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.4rem; font-weight: 700; color: var(--text-strong); line-height: 1.15; }
+  .lore-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; font-weight: 700; color: var(--text-strong); line-height: 1.15; }
   .lore-item:hover .lore-title { color: var(--gold); }
+  .lore-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem; }
+  .lore-text {
+    margin-top: 0.6rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--text-body);
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .lore-timer {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    height: 2px;
+    width: 100%;
+    z-index: 1;
+    background: var(--gold);
+    opacity: 0.7;
+    transform-origin: left;
+    transform: scaleX(0);
+  }
+  .lore-timer.run { animation: lore-timer 10s linear forwards; }
+  .lore:hover .lore-timer, .lore:focus-within .lore-timer { animation-play-state: paused; }
+  @keyframes lore-timer { to { transform: scaleX(1); } }
+
   @media (prefers-reduced-motion: reduce) {
-    .lore-item.enter { animation: none; }
+    .lore-item.enter, .lore-timer.run { animation: none; }
+    .lore-bg { transition: none; transform: none; }
     .lore-next:hover { transform: none; }
   }
 </style>
 
 <script>
+  const ROTATE_MS = 10_000;
+  let timer: ReturnType<typeof setInterval> | null = null;
+
   document.addEventListener('astro:page-load', () => {
+    if (timer) clearInterval(timer);
+    timer = null;
     const root = document.querySelector<HTMLElement>('[data-lore]');
     const next = root?.querySelector<HTMLButtonElement>('[data-lore-next]');
     if (!root || !next) return;
+
     const items = [...root.querySelectorAll<HTMLElement>('[data-lore-item]')];
+    const bgs = [...root.querySelectorAll<HTMLElement>('.lore-bg')];
+    const bar = root.querySelector<HTMLElement>('[data-lore-timer]');
     let index = 0;
-    next.addEventListener('click', () => {
+    let elapsed = 0;
+    let paused = false;
+
+    const restartBar = () => {
+      if (!bar) return;
+      bar.classList.remove('run');
+      void bar.offsetWidth;
+      bar.classList.add('run');
+    };
+
+    const show = (i: number) => {
       items[index].hidden = true;
-      index = (index + 1) % items.length;
+      bgs[index].classList.remove('on');
+      index = (i + items.length) % items.length;
       items[index].hidden = false;
+      bgs[index].classList.add('on');
       items[index].classList.remove('enter');
       void items[index].offsetWidth;
       items[index].classList.add('enter');
-    });
+      elapsed = 0;
+      restartBar();
+    };
+
+    next.addEventListener('click', () => show(index + 1));
+
+    // Pause while the pointer or keyboard focus is on the card.
+    const pause = () => (paused = true);
+    const resume = () => (paused = root.matches(':hover') || root.contains(document.activeElement));
+    root.addEventListener('pointerenter', pause);
+    root.addEventListener('pointerleave', resume);
+    root.addEventListener('focusin', pause);
+    root.addEventListener('focusout', () => setTimeout(resume));
+
+    // Tick in small steps so a pause keeps the time already elapsed (matches the bar).
+    const TICK = 250;
+    timer = setInterval(() => {
+      if (paused || document.hidden) return;
+      elapsed += TICK;
+      if (elapsed >= ROTATE_MS) show(index + 1);
+    }, TICK);
+    restartBar();
+  });
+
+  document.addEventListener('astro:before-swap', () => {
+    if (timer) clearInterval(timer);
+    timer = null;
   });
 </script>

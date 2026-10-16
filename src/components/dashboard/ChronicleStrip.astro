@@ -1,0 +1,145 @@
+---
+// Earlier sessions as a swipeable strip of picture cards.
+export interface ChronicleItem {
+  id: string;
+  session: number;
+  title: string;
+  date: string;
+  excerpt: string;
+  imageUrl: string | null;
+}
+
+interface Props {
+  items: ChronicleItem[];
+}
+
+const { items } = Astro.props;
+const fmt = (d: string) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+---
+
+<section class="t-panel chronicle mb-6">
+  <div class="chronicle-head">
+    <h2 class="t-section-h text-xl">The Chronicle</h2>
+    <div class="chronicle-nav">
+      <button type="button" data-chronicle-prev aria-label="Earlier">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m15 6-6 6 6 6" /></svg>
+      </button>
+      <button type="button" data-chronicle-next aria-label="Later">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6" /></svg>
+      </button>
+      <a href="/diary" class="t-link">Full diary →</a>
+    </div>
+  </div>
+  <div class="chronicle-track" data-chronicle-track>
+    {items.map((e) => (
+      <a href={`/diary/${e.id}`} class="chronicle-card">
+        <div class="chronicle-img">
+          {e.imageUrl ? <img src={e.imageUrl} alt="" loading="lazy" /> : <div class="chronicle-noimg"></div>}
+          <span class="chronicle-num">{e.session}</span>
+        </div>
+        <div class="chronicle-body">
+          <p class="chronicle-date">Session {e.session} · {fmt(e.date)}</p>
+          <h3 class="chronicle-title">{e.title}</h3>
+          {e.excerpt && <p class="chronicle-text">{e.excerpt}</p>}
+        </div>
+      </a>
+    ))}
+    <a href="/diary" class="chronicle-card chronicle-more">
+      <span>All sessions</span>
+      <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M5 12h14m-6-6 6 6-6 6" /></svg>
+    </a>
+  </div>
+</section>
+
+<style>
+  .chronicle { padding: 1.25rem 0 1.25rem 1.25rem; }
+  .chronicle-head { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-right: 1.25rem; margin-bottom: 1rem; }
+  .chronicle-nav { display: flex; align-items: center; gap: 0.5rem; }
+  .chronicle-nav button {
+    display: inline-flex;
+    padding: 0.35rem;
+    border-radius: 999px;
+    color: var(--gold);
+    border: 1px solid var(--border-gold);
+  }
+  .chronicle-nav button:hover { background: var(--accent-dim); }
+  @media (max-width: 640px) { .chronicle-nav button { display: none; } }
+
+  .chronicle-track {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(15rem, 17rem);
+    gap: 0.9rem;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 0;
+    padding: 0.25rem 1.25rem 0.75rem 0;
+    scrollbar-width: thin;
+  }
+  @media (max-width: 640px) { .chronicle-track { grid-auto-columns: 78%; } }
+
+  .chronicle-card {
+    scroll-snap-align: start;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    border-radius: 3px;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  }
+  .chronicle-card:hover { transform: translateY(-4px); border-color: var(--border-gold); box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25); }
+  .chronicle-img { position: relative; aspect-ratio: 16 / 9; overflow: hidden; background: #120d07; }
+  .chronicle-img img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.6s ease; }
+  .chronicle-card:hover .chronicle-img img { transform: scale(1.06); }
+  .chronicle-noimg { width: 100%; height: 100%; background: radial-gradient(circle at 70% 30%, rgba(201, 144, 50, 0.3), transparent 60%), #1a1410; }
+  .chronicle-num {
+    position: absolute;
+    right: 0.6rem;
+    bottom: 0.15rem;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 3.5rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #ffd98a;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.9);
+    opacity: 0.9;
+  }
+  .chronicle-body { padding: 0.8rem 0.9rem 1rem; }
+  .chronicle-date { font-size: 0.65rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-muted); }
+  .chronicle-title { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.2rem; font-weight: 700; line-height: 1.15; color: var(--text-strong); margin-top: 0.15rem; }
+  .chronicle-card:hover .chronicle-title { color: var(--gold); }
+  .chronicle-text {
+    margin-top: 0.4rem;
+    font-size: 0.8rem;
+    line-height: 1.45;
+    color: var(--text-body);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  .chronicle-more {
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    min-height: 10rem;
+    color: var(--gold);
+    font-weight: 600;
+    border-style: dashed;
+    border-color: var(--border-gold);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .chronicle-card, .chronicle-img img { transition: none; }
+  }
+</style>
+
+<script>
+  document.addEventListener('astro:page-load', () => {
+    const track = document.querySelector<HTMLElement>('[data-chronicle-track]');
+    if (!track) return;
+    const step = () => (track.querySelector<HTMLElement>('.chronicle-card')?.offsetWidth ?? 260) + 14;
+    document.querySelector('[data-chronicle-prev]')?.addEventListener('click', () => track.scrollBy({ left: -step() * 2, behavior: 'smooth' }));
+    document.querySelector('[data-chronicle-next]')?.addEventListener('click', () => track.scrollBy({ left: step() * 2, behavior: 'smooth' }));
+  });
+</script>
