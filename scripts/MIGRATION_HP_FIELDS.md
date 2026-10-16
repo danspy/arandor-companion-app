@@ -178,6 +178,6 @@ The HP fields integrate with:
 
 ## See Also
 
-- [D&D Beyond HP Sync Documentation](../docs/DNDBEYOND_HP_SYNC.md)
-- [Deployment Guide](../docs/DEPLOYMENT.md)
+- [D&D Beyond HP Sync Documentation](../docs/DnD-Beyond-Sync.md)
+- [Deployment Guide](../docs/Deployment.md)
 - Main README: [../README.md](../README.md)
