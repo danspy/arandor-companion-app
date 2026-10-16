@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, DiaryNote, eq, and } from 'astro:db';
+import { db, DiaryNote, eq, and } from '@/db';
 import { requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 

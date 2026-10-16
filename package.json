@@ -5,13 +5,14 @@
   "description": "The new Arandor Companion App - A D&D companion for tracking adventures",
   "scripts": {
     "dev": "astro dev",
-    "build": "ASTRO_DATABASE_FILE=./data/content.db astro build",
+    "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
     "generate-icons": "node scripts/generate-icons.mjs",
     "generate-splash": "node scripts/generate-splash-screens.mjs",
     "generate-screenshots": "node scripts/generate-screenshots.mjs",
-    "generate-all-assets": "npm run generate-icons && npm run generate-splash && npm run generate-screenshots"
+    "generate-all-assets": "npm run generate-icons && npm run generate-splash && npm run generate-screenshots",
+    "db:dev": "drizzle-kit push --force && tsx db/seed.ts"
   },
   "keywords": [
     "dnd",
@@ -22,10 +23,11 @@
   "license": "ISC",
   "dependencies": {
     "@3d-dice/dice-box": "^1.1.4",
-    "@astrojs/db": "^0.20.1",
     "@astrojs/node": "^10.1.4",
+    "@libsql/client": "^0.18.0",
     "astro": "^6.4.8",
     "dotenv": "^18.0.8",
+    "drizzle-orm": "^0.45.4",
     "marked": "^18.1.1",
     "typescript": "^5.9.3"
   },
@@ -34,8 +36,10 @@
     "@tailwindcss/typography": "^0.5.20",
     "@tailwindcss/vite": "^4.3.3",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "drizzle-kit": "^0.31.11",
     "playwright": "^1.64.1",
     "sharp": "^0.35.5",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15"
   }
 }

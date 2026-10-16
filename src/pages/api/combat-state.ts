@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, CombatState, eq } from 'astro:db';
+import { db, CombatState, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../lib/middleware';
 
 const COMBAT_STATE_ID = 'current-combat';

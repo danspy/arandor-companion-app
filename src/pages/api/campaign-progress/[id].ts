@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, CampaignProgress, eq } from 'astro:db';
+import { db, CampaignProgress, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {

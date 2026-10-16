@@ -1,4 +1,4 @@
-import { db, User, eq } from 'astro:db';
+import { db, User, eq } from '@/db';
 import type { AstroCookies } from 'astro';
 
 const SESSION_COOKIE_NAME = 'session';

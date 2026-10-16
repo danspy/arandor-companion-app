@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Location, eq } from 'astro:db';
+import { db, Location, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 export const GET: APIRoute = async () => {

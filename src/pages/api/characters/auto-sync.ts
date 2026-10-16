@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Character, eq } from 'astro:db';
+import { db, Character, eq } from '@/db';
 
 /**
  * Auto-sync basic character information from D&D Beyond

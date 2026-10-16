@@ -10,7 +10,7 @@ if (!userRole || userRole !== 'admin') {
 }
 
 // Fetch all users
-import { db, User } from 'astro:db';
+import { db, User } from '@/db';
 
 const users = await db.select({
   id: User.id,

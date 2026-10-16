@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, InitiativeTracker, Character, User, eq } from 'astro:db';
+import { db, InitiativeTracker, Character, User, eq } from '@/db';
 import { requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 
