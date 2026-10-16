@@ -74,7 +74,7 @@ const users = await db.select({
             </div>
             
             <!-- Actions -->
-            <div class="flex gap-1.5 items-center flex-shrink-0">
+            <div class="flex gap-1.5 items-center shrink-0">
               <button 
                 class="edit-user-btn t-icon-btn"
                 data-user-id={user.id}
@@ -109,7 +109,7 @@ const users = await db.select({
   </div>
 
   <!-- Add User Modal -->
-  <div id="addUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay-safe">
+  <div id="addUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Add New User</h2>
@@ -206,7 +206,7 @@ const users = await db.select({
   </div>
 
   <!-- Edit User Modal -->
-  <div id="editUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay-safe">
+  <div id="editUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="font-display italic font-semibold text-2xl" style="color:var(--gold);">Edit User</h2>
@@ -224,7 +224,7 @@ const users = await db.select({
           <label class="t-label block mb-1">
             Username
           </label>
-          <p id="editUsername" class="t-inset px-4 py-2 rounded-sm t-body-text w-full"></p>
+          <p id="editUsername" class="t-inset px-4 py-2 rounded-xs t-body-text w-full"></p>
           <p class="t-faint text-xs mt-1">Username cannot be changed</p>
         </div>
 
@@ -296,7 +296,7 @@ const users = await db.select({
   </div>
 
   <!-- Delete Confirmation Modal -->
-  <div id="deleteUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 modal-overlay-safe">
+  <div id="deleteUserModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs z-50 flex items-center justify-center p-4 modal-overlay-safe">
     <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-6">
         <h2 class="font-display italic font-semibold text-2xl" style="color:var(--danger);">Delete User</h2>
@@ -552,7 +552,7 @@ const users = await db.select({
                     <span class="font-medium">Created:</span> ${escapeHtml(new Date(result.user.createdAt).toLocaleString())}
                   </div>
                 </div>
-                <div class="flex gap-1.5 items-center flex-shrink-0">
+                <div class="flex gap-1.5 items-center shrink-0">
                   <button 
                     class="edit-user-btn t-icon-btn"
                     data-user-id="${escapedId}"

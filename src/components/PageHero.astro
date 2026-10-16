@@ -29,7 +29,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
     </div>
     {canEditHero && (
       <button
-        class="edit-hero-btn absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-sm text-xs font-medium transition-all"
+        class="edit-hero-btn absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xs text-xs font-medium transition-all"
         style="background: rgba(8,6,3,0.65); border: 1px solid rgba(201,144,50,0.3); color: rgba(242,232,213,0.7); backdrop-filter: blur(8px);"
         data-page-name={pageName}
         title="Edit hero image"
@@ -83,7 +83,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
           <input
             type="file"
             accept="image/*"
-            class="hero-file-input w-full px-3 py-2 rounded-sm text-sm transition-colors"
+            class="hero-file-input w-full px-3 py-2 rounded-xs text-sm transition-colors"
             style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-body);"
             data-page-name={pageName}
           />
@@ -100,7 +100,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
           <label class="block text-xs font-medium uppercase tracking-wider mb-2" style="color: var(--text-muted);">Image URL</label>
           <input
             type="text"
-            class="hero-url-input w-full px-3 py-2 rounded-sm text-sm transition-colors"
+            class="hero-url-input w-full px-3 py-2 rounded-xs text-sm transition-colors"
             style="background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-body);"
             value={heroImageUrl || ''}
             placeholder="https://... or /uploads/..."
@@ -111,7 +111,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
         <div class="flex gap-3 pt-1">
           <button
             type="submit"
-            class="hero-submit-btn flex-1 px-4 py-2.5 rounded-sm text-sm font-medium transition-all"
+            class="hero-submit-btn flex-1 px-4 py-2.5 rounded-xs text-sm font-medium transition-all"
             style="background: var(--accent); color: #fff;"
             data-page-name={pageName}
           >
@@ -126,7 +126,7 @@ const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
           </button>
           <button
             type="button"
-            class="cancel-hero-btn flex-1 px-4 py-2.5 rounded-sm text-sm transition-all"
+            class="cancel-hero-btn flex-1 px-4 py-2.5 rounded-xs text-sm transition-all"
             style="background: transparent; border: 1px solid var(--border); color: var(--text-muted);"
             data-page-name={pageName}
           >Cancel</button>

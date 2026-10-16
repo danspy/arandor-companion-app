@@ -193,7 +193,7 @@ For production deployment instructions (including Uberspace deployment), see [DE
 │   ├── utils/           # Utility functions (markdown rendering)
 │   └── types.ts         # TypeScript type definitions
 ├── astro.config.mjs     # Astro configuration
-├── tailwind.config.mjs  # Tailwind configuration
+├── src/styles/global.css # Tailwind v4 theme + global styles
 └── tsconfig.json        # TypeScript configuration
 ```
 
@@ -374,7 +374,7 @@ colors: {
 }
 ```
 
-Each color includes a complete range of shades (50-950) following Tailwind's color system conventions. Edit `tailwind.config.mjs` to customize the color scheme further.
+Each color includes a complete range of shades (50-950) following Tailwind's color system conventions. Edit the `@theme` block in `src/styles/global.css` to customize the color scheme further.
 
 ## Future Enhancements
 

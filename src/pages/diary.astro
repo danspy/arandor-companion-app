@@ -76,7 +76,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           type="text"
           id="searchInput"
           placeholder="Search diary entries by title, content, or tags..."
-          class="t-search w-full px-4 py-2 pl-10 rounded-sm transition"
+          class="t-search w-full px-4 py-2 pl-10 rounded-xs transition"
         >
         <svg class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 t-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -139,11 +139,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         )}
         <div class="mb-4">
           <div class="flex items-start justify-between gap-2 mb-1">
-            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold t-gold hover:opacity-80 transition min-w-0 break-words">
+            <a href={`/diary/${entry.id}`} class="text-2xl font-semibold t-gold hover:opacity-80 transition min-w-0 wrap-break-word">
               {entry.title}
             </a>
             {isLoggedIn && (
-              <div class="flex gap-2 items-center flex-shrink-0">
+              <div class="flex gap-2 items-center shrink-0">
                 <Button
                   variant="icon"
                   size="sm"
@@ -173,7 +173,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         </div>
 
         <div class="prose max-w-none mb-4">
-          <p class="t-body-text line-clamp-3 break-words">{entry.content}</p>
+          <p class="t-body-text line-clamp-3 wrap-break-word">{entry.content}</p>
         </div>
 
         <div class="flex gap-2 flex-wrap mb-4">
@@ -298,7 +298,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
           </div>
           <div id="imagePreview" class="mt-3 hidden">
-            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-sm shadow-md">
+            <img id="previewImg" src="" alt="Preview" class="max-w-xs rounded-xs shadow-md">
           </div>
         </div>
 
@@ -338,7 +338,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               loop
               preload="auto"
               disablePictureInPicture
-              class="max-w-xs rounded-sm shadow-md"
+              class="max-w-xs rounded-xs shadow-md"
               aria-label="Video preview"
             ></video>
           </div>
@@ -499,7 +499,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         ? document.createElement('video')
         : document.createElement('img');
       media.src = item.src;
-      media.className = 'w-full h-20 object-cover rounded-sm';
+      media.className = 'w-full h-20 object-cover rounded-xs';
       if (item.isVideo) {
         (media as HTMLVideoElement).muted = true;
       }

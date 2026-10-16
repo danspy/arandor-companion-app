@@ -98,7 +98,7 @@ const statMod = (v: number) => {
             <div class="absolute inset-0" style="background:linear-gradient(to bottom,rgba(8,6,3,0.2),rgba(8,6,3,0.75));"></div>
           </>
         ) : (
-          <div class={`absolute inset-0 ${character.isActive ? 'bg-gradient-to-br from-orange-900 via-amber-900 to-stone-900' : 'bg-gradient-to-br from-stone-900 via-stone-800 to-stone-900'}`}
+          <div class={`absolute inset-0 ${character.isActive ? 'bg-linear-to-br from-orange-900 via-amber-900 to-stone-900' : 'bg-linear-to-br from-stone-900 via-stone-800 to-stone-900'}`}
             style="background-image:repeating-linear-gradient(45deg,transparent,transparent 60px,rgba(201,144,50,0.03) 60px,rgba(201,144,50,0.03) 62px);">
           </div>
         )}
@@ -331,7 +331,7 @@ const statMod = (v: number) => {
         syncBtn.disabled = true;
         if (syncButtonText) syncButtonText.textContent = 'Syncing…';
         if (syncStatus) {
-          syncStatus.className = 'mt-3 p-3 rounded-sm t-inset t-body-text text-sm';
+          syncStatus.className = 'mt-3 p-3 rounded-xs t-inset t-body-text text-sm';
           syncStatus.textContent = 'Syncing character data from D&D Beyond…';
           syncStatus.classList.remove('hidden');
         }

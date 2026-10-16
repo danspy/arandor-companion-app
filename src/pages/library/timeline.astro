@@ -141,11 +141,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           const labelsAtYear = labels.filter(l => l.year === year);
           const isCenturyMarker = year % 100 === 0;
           return (
-            <div class="timeline-year-marker flex-shrink-0" key={year} style="min-width: 320px;">
+            <div class="timeline-year-marker shrink-0" key={year} style="min-width: 320px;">
               {/* Year marker with line connector */}
               <div class="text-center mb-4 relative" style="min-height: 80px;">
                 <div class={`absolute top-8 left-1/2 w-1 h-8 transform -translate-x-1/2 ${isCenturyMarker ? '' : 'opacity-50'}`} style="background:var(--border-gold);"></div>
-                <div class={`inline-block text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-sm shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
+                <div class={`inline-block text-white ${isCenturyMarker ? 'px-4 py-2' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
                   <div class={isCenturyMarker ? 'text-2xl font-bold' : 'text-sm font-semibold'}>{year}</div>
                 </div>
               </div>
@@ -155,7 +155,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="space-y-2 mb-4">
                   {labelsAtYear.map((label) => (
                     <div class="timeline-label w-80" data-entry-id={label.id}>
-                      <div class="t-inset rounded-sm px-3 py-2">
+                      <div class="t-inset rounded-xs px-3 py-2">
                         <div class="flex items-center justify-between">
                           <span class="text-sm font-semibold italic" style="color:var(--accent);">
                             {label.label}
@@ -197,7 +197,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                           <img 
                             src={event.imageUrl} 
                             alt={event.headline}
-                            class="w-full h-48 object-cover rounded-sm mb-4"
+                            class="w-full h-48 object-cover rounded-xs mb-4"
                           />
                         )}
                         
@@ -271,7 +271,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           <div class="timeline-year-marker-mobile" key={year}>
             {/* Year marker with line connector */}
             <div class="flex items-center mb-4" style="min-height: 60px;">
-              <div class={`flex-shrink-0 text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-sm shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
+              <div class={`shrink-0 text-white ${isCenturyMarker ? 'px-3 py-1.5' : 'px-2 py-1'} rounded-xs shadow-md relative z-10 ${isCenturyMarker ? '' : 'opacity-90'}`} style="background:var(--gold);border:3px solid var(--bg-surface);">
                 <div class={isCenturyMarker ? 'text-lg font-bold' : 'text-sm font-semibold'}>{year}</div>
               </div>
             </div>
@@ -281,7 +281,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
               <div class="space-y-2 pl-14 mb-4">
                 {labelsAtYear.map((label) => (
                   <div class="timeline-label" data-entry-id={label.id}>
-                    <div class="t-inset rounded-sm px-3 py-2">
+                    <div class="t-inset rounded-xs px-3 py-2">
                       <div class="flex items-center justify-between">
                         <span class="text-sm font-semibold italic" style="color:var(--accent);">
                           {label.label}
@@ -323,7 +323,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                         <img 
                           src={event.imageUrl} 
                           alt={event.headline}
-                          class="w-full h-48 object-cover rounded-sm mb-4"
+                          class="w-full h-48 object-cover rounded-xs mb-4"
                         />
                       )}
                       
@@ -385,7 +385,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {/* Detail Modal */}
-  <div id="timelineDetailModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
+  <div id="timelineDetailModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="t-modal-panel p-4 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
       <div class="flex justify-between items-start mb-6">
         <div>
@@ -402,7 +402,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       </div>
       
       <div id="detailImage" class="hidden mb-6">
-        <img src="" alt="" class="w-full h-64 object-cover rounded-sm" />
+        <img src="" alt="" class="w-full h-64 object-cover rounded-xs" />
       </div>
       
       <div id="detailDescription" class="t-prose max-w-none mb-6"></div>
@@ -412,7 +412,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   </div>
 
   {/* Add/Edit Modal */}
-  <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 modal-overlay-safe">
+  <div id="timelineEntryModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center z-50 p-4 modal-overlay-safe">
     <div class="t-modal-panel p-6 sm:p-8 max-w-4xl w-full max-h-[90vh] overflow-y-auto modal-content-safe">
       <h2 id="timelineModalTitle" class="font-display italic font-semibold text-2xl mb-6" style="color:var(--gold);">New Timeline Entry</h2>
       <form id="timelineEntryForm" class="space-y-6">
@@ -564,7 +564,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             
             <!-- Image Preview -->
             <div id="imagePreview" class="hidden mt-4">
-              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-sm" />
+              <img id="previewImg" src="" alt="Preview" class="max-w-full h-48 object-cover rounded-xs" />
             </div>
           </div>
           
@@ -1026,8 +1026,8 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                     ${locations.map(loc => `
                       <a href="/locations/${loc.id}" class="t-row p-3 flex items-center gap-3">
                         ${loc.imageUrl ? 
-                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded object-cover" style="border:2px solid var(--border-gold);" />` :
-                          `<div class="w-12 h-12 rounded flex items-center justify-center text-xl font-bold" style="background:var(--bg-raised);color:var(--accent);">📍</div>`
+                          `<img src="${loc.imageUrl}" alt="${loc.name}" class="w-12 h-12 rounded-sm object-cover" style="border:2px solid var(--border-gold);" />` :
+                          `<div class="w-12 h-12 rounded-sm flex items-center justify-center text-xl font-bold" style="background:var(--bg-raised);color:var(--accent);">📍</div>`
                         }
                         <div class="flex-1 min-w-0">
                           <div class="t-body-text font-semibold truncate">${loc.name}</div>
