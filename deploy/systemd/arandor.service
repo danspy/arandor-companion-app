@@ -12,6 +12,8 @@ Environment=NODE_ENV=production
 Environment=HOST=127.0.0.1
 Environment=PORT=4321
 Environment=UPLOAD_DIR=/srv/arandor/uploads
+# SESSION_SECRET (signs login cookies). Root-only file, created on the server, never in git.
+EnvironmentFile=/etc/arandor/live.env
 ExecStart=/usr/bin/node /srv/arandor/app/current/dist/server/entry.mjs
 Restart=always
 RestartSec=5
