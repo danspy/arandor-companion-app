@@ -175,7 +175,7 @@ for (let y = 0; y < H; y++) {
       const f = fbm(x, y, 1);
       if (coast) c = hash(x, y, 5) < 0.75 ? 'b' : 'g';
       else if (nearMtn && hash(x, y, 4) < 0.7) c = 'h';
-      else if (r === 5 && fbm(x, y, 2) > 0.58) c = 'h';           // Rulik highlands
+      else if (r === 5 && fbm(x, y, 2) > 0.64) c = 'h';           // Rulik highlands
       else if (f > FOREST_T[r] + 0.1) c = 'd';                    // dense forest
       else if (f > FOREST_T[r]) c = 'f';                           // forest
       else if (r === 1 && fbm(x, y, 9) > 0.62) c = 'y';            // Requsanien fields

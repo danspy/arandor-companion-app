@@ -237,9 +237,12 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       return;
     }
     // walk from the current position along the routed path
-    const from = prev.location, route = target > prev.index
-      ? routeBetween(from, next.location)
-      : [...routeBetween(next.location, from)].reverse();
+    const wasMoving = !!moving;
+    const from = prev.location;
+    const dest = standAt(next.location);
+    const route = wasMoving
+      ? findRoute(party.pos.x, party.pos.y, dest.x, dest.y)
+      : target > prev.index ? routeBetween(from, next.location) : [...routeBetween(next.location, from)].reverse();
     const { lengths, total } = polyLengths(route);
     const dur = Math.min(14000, Math.max(900, (total / (WALK_PX_PER_SEC * speed)) * 1000));
     moving = { route, lengths, total, start: performance.now(), dur, target };
@@ -376,6 +379,8 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
 
   viewport.addEventListener('pointerdown', (ev) => {
     if (ev.button !== 0 && ev.pointerType === 'mouse') return;
+    // let the speech bubble (and its link) handle its own clicks
+    if ((ev.target as HTMLElement).closest('.wm-bubble')) return;
     viewport.setPointerCapture(ev.pointerId);
     pointers.set(ev.pointerId, { x: ev.clientX, y: ev.clientY });
     if (pointers.size === 1) panStart = { x: ev.clientX, y: ev.clientY, cx: cam.x, cy: cam.y, moved: false };
@@ -439,7 +444,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     if (!showTrail || steps.length < 2) return;
     ctx.save();
     ctx.translate(-cam.x * cam.s, -cam.y * cam.s); ctx.scale(cam.s, cam.s);
-    const dot = Math.max(1.2, 2.2 / Math.sqrt(cam.s));
+    const dot = Math.max(1.5, 3 / cam.s), gap = Math.max(6, 9 / cam.s);
     const seen = new Set<string>();
     for (let i = 1; i < steps.length; i++) {
       const a = steps[i - 1].location, b = steps[i].location;
@@ -452,14 +457,15 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       const { lengths, total } = polyLengths(route);
       const limit = partial ? (Math.min(1, (now - moving!.start) / moving!.dur)) * total : (future ? total : total);
       ctx.globalAlpha = future && !partial ? 0.28 : 0.95;
-      for (let d = 0; d <= limit; d += 7) {
+      for (let d = 0; d <= limit; d += gap) {
         const p = pointAt(route, lengths, d);
         const idx = lengths.findIndex((l) => l >= d);
         const sea = idx > 0 && segmentOverWater(route[idx - 1], route[idx]);
+        const o = dot * 0.35;
+        ctx.fillStyle = sea ? '#1e4d8a' : '#4a2410';
+        ctx.fillRect(p.x - dot / 2 - o, p.y - dot / 2 - o, dot + 2 * o, dot + 2 * o);
         ctx.fillStyle = sea ? '#eaf4ff' : '#f0a04a';
         ctx.fillRect(p.x - dot / 2, p.y - dot / 2, dot, dot);
-        ctx.fillStyle = sea ? '#5c93d6' : '#9a3412';
-        ctx.fillRect(p.x - dot / 2, p.y + dot / 2 - 0.6, dot, 0.6);
       }
     }
     ctx.restore();
@@ -523,7 +529,7 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
     }
     for (const r of regionLabels) {
       const sx = (r.x - cam.x) * cam.s, sy = (r.y - cam.y) * cam.s;
-      const show = cam.s < 2.6 && cam.s > 0.28;
+      const show = cam.s < 2.6 && cam.s > 0.18;
       r.el.style.display = show ? 'block' : 'none';
       if (show) {
         r.el.style.transform = `translate(${Math.round(sx)}px, ${Math.round(sy)}px) translate(-50%, -50%)`;
@@ -536,9 +542,11 @@ export function initWorldMap(viewport: HTMLElement, data: MapData, hooks: Engine
       const bw = bubble.offsetWidth || 240;
       const left = Math.max(8, Math.min(vw - bw - 8, sx - bw / 2));
       bubble.style.left = `${Math.round(left)}px`;
-      bubble.style.top = `${Math.round(Math.max(8, sy))}px`;
+      const bh = bubble.offsetHeight || 160;
+      const below = sy - bh - 10 < 8;
+      bubble.style.top = `${Math.round(below ? sy + 18 : sy)}px`;
       bubble.style.setProperty('--tail-x', `${Math.round(sx - left)}px`);
-      bubble.classList.toggle('wm-bubble-below', sy < 140);
+      bubble.classList.toggle('wm-bubble-below', below);
     }
   }
 
