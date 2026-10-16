@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
 import { getUserRole } from '../lib/auth';
 
@@ -22,9 +23,8 @@ const users = await db.select({
 ---
 
 <Layout title="User Management">
-  <div class="max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-8">
-      <h1 class="font-display italic font-semibold text-4xl" style="color:var(--gold);">User Management</h1>
+  <PageHero title="User Management" pageName="users" canEditHero={false} compact subtitle="Who can log in, and what they may change.">
+    <Fragment slot="actions">
       <Button 
         variant="primary"
         size="md"
@@ -34,7 +34,9 @@ const users = await db.select({
       >
         Add User
       </Button>
-    </div>
+    </Fragment>
+  </PageHero>
+  <div class="max-w-4xl mx-auto">
 
     <!-- Success/Error Messages -->
     <div id="messageContainer" class="hidden mb-6"></div>

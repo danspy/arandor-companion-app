@@ -87,41 +87,22 @@ const getOwnershipText = (character: typeof characters[0]) => {
     heroImageUrl={heroImageUrl}
     pageName="characters"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addCharacter"
-        title="Add new character"
-      >
-        Add Character
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length}</div>
-      <div class="text-xs md:text-base t-muted">Total Characters</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.filter(c => c.isActive !== false).length}</div>
-      <div class="text-xs md:text-base t-muted">Active Players</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{allClasses.length}</div>
-      <div class="text-xs md:text-base t-muted">Unique Classes</div>
-    </div>
-    <div class="t-panel p-5 text-center">
-      <div class="text-2xl md:text-3xl font-bold t-gold">{characters.length > 0 ? Math.round(characters.reduce((sum, c) => sum + c.level, 0) / characters.length) : 0}</div>
-      <div class="text-xs md:text-base t-muted">Average Level</div>
-    </div>
-  </div>
+    subtitle={`${characters.filter(c => c.isActive !== false).length} adventurers in the party, ${characters.length} characters in total`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addCharacter"
+      title="Add new character"
+    >
+      Add Character
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-5 mb-6">

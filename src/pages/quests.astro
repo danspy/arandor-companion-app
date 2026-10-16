@@ -47,41 +47,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="quests"
     canEditHero={canEdit}
-  />
-
-  {canEdit && (
-    <div class="flex justify-end mb-4">
-      <Button
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addQuest"
-        title="Add new Add Quest"
-      >
-        Add Quest
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{quests.length}</div>
-      <div class="t-label-sm mt-1">Total Quests</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{activeQuests.length}</div>
-      <div class="t-label-sm mt-1">Active</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{completedQuests.length}</div>
-      <div class="t-label-sm mt-1">Completed</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{failedQuests.length}</div>
-      <div class="t-label-sm mt-1">Failed</div>
-    </div>
-  </div>
+    subtitle={`${activeQuests.length} open, ${completedQuests.length} completed${failedQuests.length ? `, ${failedQuests.length} failed` : ''}`}
+  >
+    <Fragment slot="actions">
+      {canEdit && (
+    <Button
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addQuest"
+      title="Add new Add Quest"
+    >
+      Add Quest
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-4 mb-6">

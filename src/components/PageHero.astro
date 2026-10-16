@@ -1,73 +1,144 @@
 ---
-import Button from './Button.astro';
+// Page header used across the app: a full-width scene under the (transparent) nav, the
+// page title over it, an optional one-line summary and the page's main action.
+// Pages without their own image borrow the campaign image, dimmed.
+import { db, CampaignProgress } from '@/db';
 
 interface Props {
   title: string;
   heroImageUrl?: string | null;
   pageName: string;
   canEditHero: boolean;
+  /** One short line under the title, e.g. "57 NPCs, 19 of them allies". */
+  subtitle?: string;
+  /** Lower scene for tool pages that need the room below. */
+  compact?: boolean;
 }
 
-const { title, heroImageUrl, pageName, canEditHero } = Astro.props;
+const { title, heroImageUrl, pageName, canEditHero, subtitle, compact = false } = Astro.props;
+const fallbackImage = heroImageUrl
+  ? null
+  : (await db.select({ url: CampaignProgress.heroImageUrl }).from(CampaignProgress).limit(1))[0]?.url ?? null;
+const image = heroImageUrl || fallbackImage;
+const hasActions = Astro.slots.has('actions');
 ---
 
-{heroImageUrl ? (
-  <div class="relative mb-10 rounded-2xl overflow-hidden" style="box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 0 1px var(--border);">
-    <img
-      src={heroImageUrl}
-      alt={`${title} Hero`}
-      class="w-full h-56 md:h-72 lg:h-88 object-cover"
-    />
-    <!-- Dramatic gradient overlay -->
-    <div class="absolute inset-0" style="background: linear-gradient(to top, rgba(8,6,3,0.85) 0%, rgba(8,6,3,0.35) 45%, rgba(8,6,3,0.05) 100%);"></div>
-    <!-- Orange ember line at bottom -->
-    <div class="absolute bottom-0 left-0 right-0 h-px" style="background: linear-gradient(90deg, transparent, var(--accent) 30%, var(--accent) 70%, transparent); opacity: 0.6;"></div>
-    <div class="absolute inset-0 flex items-end">
-      <div class="p-6 md:p-8 w-full">
-        <h1 class="font-display italic font-semibold text-4xl md:text-5xl lg:text-6xl leading-tight" style="color: var(--text-strong); text-shadow: 0 2px 20px rgba(0,0,0,0.6);">{title}</h1>
-      </div>
-    </div>
-    {canEditHero && (
-      <button
-        class="edit-hero-btn absolute top-4 right-4 flex items-center gap-1.5 px-3 py-1.5 rounded-xs text-xs font-medium transition-all"
-        style="background: rgba(8,6,3,0.65); border: 1px solid rgba(201,144,50,0.3); color: rgba(242,232,213,0.7); backdrop-filter: blur(8px);"
-        data-page-name={pageName}
-        title="Edit hero image"
-      >
-        <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-        </svg>
-        Edit
-      </button>
-    )}
+<section class:list={['scene-hero', { 'scene-hero-compact': compact, 'scene-hero-borrowed': !heroImageUrl }]} data-immersive-hero>
+  <div class="scene-hero-bg" aria-hidden="true">
+    {image && <img src={image} alt="" fetchpriority="high" />}
   </div>
-) : (
-  <div class="mb-10">
-    <div class="flex flex-wrap justify-between items-start gap-4">
-      <h1 class="font-display italic font-semibold text-4xl md:text-5xl leading-tight" style="color: var(--text-strong);">{title}</h1>
-      {canEditHero && (
-        <button
-          class="edit-hero-btn shrink-0 mt-2 flex items-center gap-1.5 text-xs font-medium transition-colors"
-          style="color: var(--accent); opacity: 0.7;"
-          data-page-name={pageName}
-          title="Add hero image"
-        >
-          <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-          </svg>
-          Add Hero
-        </button>
-      )}
+
+  {canEditHero && (
+    <button class="edit-hero-btn scene-hero-edit" data-page-name={pageName} title={heroImageUrl ? 'Change the header image' : 'Set a header image for this page'}>
+      <svg class="w-3.5 h-3.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+      </svg>
+      {heroImageUrl ? 'Change image' : 'Add image'}
+    </button>
+  )}
+
+  <div class="scene-hero-content container mx-auto px-4 sm:px-6">
+    <div class="scene-hero-text">
+      <h1 class="scene-hero-title">{title}</h1>
+      {subtitle && <p class="scene-hero-sub">{subtitle}</p>}
     </div>
-    <!-- Subtle underline rule -->
-    <div class="mt-4 h-px" style="background: linear-gradient(90deg, var(--accent) 0%, var(--border-gold) 40%, transparent 100%); max-width: 320px;"></div>
+    {hasActions && <div class="scene-hero-actions"><slot name="actions" /></div>}
   </div>
-)}
+</section>
+
+<style>
+  /* Pull the scene up under the sticky nav (60px) and main's top padding (2rem). */
+  .scene-hero {
+    --hero-pull: calc(2rem + 60px);
+    position: relative;
+    width: 100vw;
+    margin-left: calc(50% - 50vw);
+    margin-top: calc(-1 * var(--hero-pull));
+    margin-bottom: 1.75rem;
+    min-height: clamp(16rem, 42svh, 25rem);
+    display: flex;
+    align-items: flex-end;
+    isolation: isolate;
+  }
+  .scene-hero-compact { min-height: clamp(11rem, 26svh, 14rem); }
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    .scene-hero { --hero-pull: calc(2rem + var(--safe-top)); }
+  }
+
+  .scene-hero-bg {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 70% 20%, rgba(201, 144, 50, 0.25), transparent 60%), #120d07;
+    /* Fade into the page instead of ending on a hard edge. */
+    -webkit-mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 78%, transparent 100%);
+  }
+  .scene-hero-bg img { width: 100%; height: 100%; object-fit: cover; }
+  .scene-hero-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to bottom, rgba(8, 6, 3, 0.55) 0%, transparent 30%),
+      linear-gradient(to top, rgba(8, 6, 3, 0.6) 0%, rgba(8, 6, 3, 0.15) 60%, transparent 100%);
+  }
+  /* A borrowed campaign image is muted so each page's own image stays special. */
+  .scene-hero-borrowed .scene-hero-bg img { filter: saturate(0.55) brightness(0.55) blur(2px); transform: scale(1.04); }
+
+  .scene-hero-edit {
+    position: absolute;
+    top: calc(var(--hero-pull) + 0.25rem);
+    right: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    padding: 0.375rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: 2px;
+    background: rgba(8, 6, 3, 0.55);
+    border: 1px solid rgba(201, 144, 50, 0.3);
+    color: rgba(242, 232, 213, 0.8);
+    backdrop-filter: blur(8px);
+  }
+  .scene-hero-edit:hover { color: #ffd98a; border-color: #ffd98a; }
+
+  .scene-hero-content {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem 2rem;
+    padding-top: calc(var(--hero-pull) + 2.5rem);
+    padding-bottom: 3rem;
+  }
+  .scene-hero-text { min-width: 0; }
+  .scene-hero-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-style: italic;
+    font-weight: 600;
+    font-size: clamp(2.6rem, 8vw, 4.75rem);
+    line-height: 1;
+    color: #f2e8d5;
+    text-shadow: 0 2px 24px rgba(0, 0, 0, 0.7);
+  }
+  .scene-hero-compact .scene-hero-title { font-size: clamp(2.2rem, 6vw, 3.4rem); }
+  .scene-hero-sub {
+    margin-top: 0.5rem;
+    max-width: 40rem;
+    font-size: 0.95rem;
+    color: rgba(242, 232, 213, 0.82);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+  }
+  .scene-hero-actions { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+</style>
 
 <!-- Hero Image Modal -->
 {canEditHero && (
   <div id={`heroModal-${pageName}`} class="hero-modal hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay-safe" style="background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);">
-    <div class="max-w-md w-full p-6 rounded-2xl shadow-2xl modal-content-safe" style="background: var(--bg-raised); border: 1px solid var(--border-gold);">
+    <div class="t-modal-panel max-w-md w-full p-6 modal-content-safe">
       <div class="flex justify-between items-center mb-5">
         <h3 class="font-display italic font-semibold text-xl" style="color: var(--text-strong);">Hero Image</h3>
         <button class="close-hero-modal transition-colors" style="color: var(--text-muted);" data-page-name={pageName}>

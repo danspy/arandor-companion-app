@@ -35,33 +35,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="library-docs"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addLibraryEntry"
-        title="Add new Add Entry"
-      >
-        Add Entry
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="text-2xl md:text-3xl font-bold" style="color:var(--gold);">{libraryEntries.length}</div>
-      <div class="t-muted text-xs md:text-base">Total Entries</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="text-2xl md:text-3xl font-bold" style="color:var(--accent);">{allTags.length}</div>
-      <div class="t-muted text-xs md:text-base">Unique Tags</div>
-    </div>
-  </div>
+    subtitle={`${libraryEntries.length} documents`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addLibraryEntry"
+      title="Add new Add Entry"
+    >
+      Add Entry
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-4 mb-6">

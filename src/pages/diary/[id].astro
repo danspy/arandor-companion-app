@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import SceneBackdrop from '../../components/SceneBackdrop.astro';
 import Button from '../../components/Button.astro';
 import { db, DiaryEntry, NPC, Location, Character, Quest, eq, inArray } from '@/db';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
@@ -73,6 +74,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
 ---
 
 <Layout title={entry.title}>
+  <SceneBackdrop imageUrl={entry.coverImageUrl} />
   <div class="max-w-4xl mx-auto">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-6">
@@ -80,7 +82,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
         <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Diary
+        All sessions
       </a>
       {isLoggedIn && (
         <div class="flex gap-2">

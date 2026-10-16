@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import SceneBackdrop from '../../components/SceneBackdrop.astro';
 import { db, Character, DiaryEntry, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 
@@ -60,6 +61,7 @@ const statMod = (v: number) => {
 ---
 
 <Layout title={character.name}>
+  <SceneBackdrop imageUrl={character.avatarUrl} />
   <div class="max-w-4xl mx-auto px-1 sm:px-0">
 
     <!-- Nav row -->
@@ -68,7 +70,7 @@ const statMod = (v: number) => {
         <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
         </svg>
-        Characters
+        All characters
       </a>
       {canEdit && (
         <div class="flex gap-2">

@@ -598,6 +598,29 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
         init();
         lastPath = window.location.pathname;
       });
+
+      // Nav over a page's scene header: transparent while the scene is behind it.
+      let heroNavScroll: (() => void) | null = null;
+      document.addEventListener('astro:page-load', () => {
+        if (heroNavScroll) window.removeEventListener('scroll', heroNavScroll);
+        heroNavScroll = null;
+        const hero = document.querySelector<HTMLElement>('[data-immersive-hero]');
+        const root = document.documentElement;
+        if (!hero) {
+          root.classList.remove('hero-nav');
+          return;
+        }
+        let frame = 0;
+        heroNavScroll = () => {
+          if (frame) return;
+          frame = requestAnimationFrame(() => {
+            frame = 0;
+            root.classList.toggle('hero-nav', window.scrollY < hero.offsetHeight - 120);
+          });
+        };
+        heroNavScroll();
+        window.addEventListener('scroll', heroNavScroll, { passive: true });
+      });
     </script>
   </body>
 </html>

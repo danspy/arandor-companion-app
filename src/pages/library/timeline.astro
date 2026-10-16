@@ -105,21 +105,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="timeline"
     canEditHero={canEditHero}
-  />
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addTimelineEntry"
+      title="Add new Timeline Entry"
+    >
+      Add Entry
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
-  {isLoggedIn && (
-    <div class="flex justify-end mb-6">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addTimelineEntry"
-        title="Add new Timeline Entry"
-      >
-        Add Entry
-      </Button>
-    </div>
-  )}
 
   {timelineEntries.length === 0 && (
     <div class="t-panel text-center py-16">

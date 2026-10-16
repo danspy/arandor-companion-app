@@ -1,5 +1,6 @@
 ---
 import Layout from '../layouts/Layout.astro';
+import PageHero from '../components/PageHero.astro';
 import { getCurrentUser } from '../lib/auth';
 
 // Check if user is authenticated
@@ -16,8 +17,8 @@ const roleDisplay = {
 ---
 
 <Layout title="My Profile">
+  <PageHero title="My Profile" pageName="profile" canEditHero={false} compact subtitle="Your name, picture, characters and password." />
   <div class="max-w-2xl mx-auto" data-user-role={user.role}>
-    <h1 class="font-display italic font-semibold text-4xl mb-8" style="color:var(--gold);">My Profile</h1>
 
     <!-- Success/Error Messages -->
     <div id="messageContainer" class="hidden mb-6"></div>

@@ -27,37 +27,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="locations"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addLocation"
-        title="Add new Add Location"
-      >
-        Add Location
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{locations.length}</div>
-      <div class="t-label-sm mt-1">Total Locations</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{visitedLocations.length}</div>
-      <div class="t-label-sm mt-1">Visited</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{unvisitedLocations.length}</div>
-      <div class="t-label-sm mt-1">To Explore</div>
-    </div>
-  </div>
+    subtitle={`${visitedLocations.length} of ${locations.length} places visited`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addLocation"
+      title="Add new Add Location"
+    >
+      Add Location
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-4 mb-6">
@@ -126,23 +111,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="absolute inset-0 bg-linear-to-t from-black/60 to-transparent"></div>
               </>
             ) : (
-              <div class={`absolute inset-0 ${
-                location.type === 'city' ? 'bg-linear-to-br from-blue-600 to-blue-500' :
-                location.type === 'dungeon' ? 'bg-linear-to-br from-purple-600 to-purple-500' :
-                location.type === 'wilderness' ? 'bg-linear-to-br from-green-600 to-green-500' :
-                location.type === 'building' ? 'bg-linear-to-br from-amber-600 to-amber-500' :
-                'bg-linear-to-br from-stone-800 to-stone-700'
-              }`}></div>
+              <div class={`absolute inset-0 place-bg-${['city','dungeon','wilderness','building'].includes(location.type) ? location.type : 'other'}`}></div>
             )}
 
             <!-- Type badge -->
-            <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
-              location.type === 'city' ? 'bg-blue-600/90' :
-              location.type === 'dungeon' ? 'bg-purple-600/90' :
-              location.type === 'wilderness' ? 'bg-green-600/90' :
-              location.type === 'building' ? 'bg-amber-600/90' :
-              'bg-stone-700/90'
-            }`}>
+            <div class={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full shadow-lg place-tag place-tag-${['city','dungeon','wilderness','building'].includes(location.type) ? location.type : 'other'}`}>
               {location.type.charAt(0).toUpperCase() + location.type.slice(1)}
             </div>
           </div>

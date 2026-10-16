@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import SceneBackdrop from '../../components/SceneBackdrop.astro';
 import Button from '../../components/Button.astro';
 import { db, LibraryEntry, Location, eq } from '@/db';
 import { isAuthenticated } from '../../lib/auth';
@@ -34,6 +35,7 @@ const renderedContent = renderMarkdown(entry.content);
 ---
 
 <Layout title={entry.title}>
+  <SceneBackdrop imageUrl={null} />
   <div class="max-w-4xl mx-auto">
     <!-- Header with Back Button -->
     <div class="flex items-center justify-between mb-6">
@@ -41,7 +43,7 @@ const renderedContent = renderMarkdown(entry.content);
         <svg class="w-6 h-6 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
         </svg>
-        Back to Docs
+        All documents
       </a>
       {isLoggedIn && (
         <div class="flex gap-2">

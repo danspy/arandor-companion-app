@@ -18,7 +18,7 @@ const lastPlayed = lastSession
 
 <div class="hero-ambient" style={`background-image:url("${imageUrl}")`} aria-hidden="true"></div>
 
-<section class="dash-hero" data-dash-hero>
+<section class="dash-hero" data-dash-hero data-immersive-hero>
   <div class="dash-hero-bg">
     <div class="dash-hero-media" data-hero-parallax>
       <img src={imageUrl} alt="" fetchpriority="high" />
@@ -276,18 +276,6 @@ const lastPlayed = lastSession
   }
 </style>
 
-<style is:global>
-  /* While the hero is behind it, the nav turns into a soft gradient over the image. */
-  html.hero-nav .app-nav {
-    background: linear-gradient(to bottom, rgba(8, 6, 3, 0.6), rgba(8, 6, 3, 0));
-    border-bottom-color: transparent;
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-  }
-  html.hero-nav .app-nav::after { opacity: 0; }
-  html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg); }
-  .app-nav { transition: background 0.35s ease, border-color 0.35s ease; }
-</style>
 
 <script>
   import { startSparks } from '../../lib/sparks';
@@ -298,11 +286,7 @@ const lastPlayed = lastSession
     cleanup?.();
     cleanup = null;
     const hero = document.querySelector<HTMLElement>('[data-dash-hero]');
-    const root = document.documentElement;
-    if (!hero) {
-      root.classList.remove('hero-nav');
-      return;
-    }
+    if (!hero) return;
 
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const media = hero.querySelector<HTMLElement>('[data-hero-parallax]');
@@ -312,7 +296,6 @@ const lastPlayed = lastSession
       frame = requestAnimationFrame(() => {
         frame = 0;
         const y = window.scrollY;
-        root.classList.toggle('hero-nav', y < hero.offsetHeight - 120);
         if (media && !reduce && y < hero.offsetHeight) media.style.transform = `translate3d(0, ${y * 0.35}px, 0)`;
       });
     };
@@ -325,7 +308,6 @@ const lastPlayed = lastSession
     cleanup = () => {
       window.removeEventListener('scroll', onScroll);
       stopSparks?.();
-      root.classList.remove('hero-nav');
     };
   }
 

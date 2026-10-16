@@ -39,33 +39,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="diary"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addDiaryEntry"
-        title="Add new Add Entry"
-      >
-        Add Entry
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{maxSession}</div>
-      <div class="t-label-sm mt-1">Sessions</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{allTags.length}</div>
-      <div class="t-label-sm mt-1">Unique Tags</div>
-    </div>
-  </div>
+    subtitle={`${maxSession} sessions written down`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addDiaryEntry"
+      title="Add new Add Entry"
+    >
+      Add Entry
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-4 mb-6">

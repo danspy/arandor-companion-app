@@ -82,21 +82,22 @@ function getHostName(hostId: string | null): string {
     heroImageUrl={heroImageUrl}
     pageName="calendar"
     canEditHero={canEditHero}
-  />
-
-  {canEdit && (
-    <div class="flex justify-end mb-4">
-      <Button 
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addEvent"
-        title="Add new event"
-      >
-        Add Event
-      </Button>
-    </div>
-  )}
+    subtitle={upcomingEventsCount > 0 ? `${upcomingEventsCount} sessions planned` : 'No session planned yet'}
+  >
+    <Fragment slot="actions">
+      {canEdit && (
+    <Button 
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addEvent"
+      title="Add new event"
+    >
+      Add Event
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Calendar Subscription Section -->
   <div class="t-panel mb-6 overflow-hidden">
@@ -171,22 +172,6 @@ function getHostName(hostId: string | null): string {
           </button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- Stats -->
-  <div class="grid grid-cols-3 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="text-2xl md:text-3xl font-bold" style="color:var(--gold);">{events.length}</div>
-      <div class="t-muted text-xs md:text-base">Total Events</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="text-2xl md:text-3xl font-bold" style="color:var(--accent);">{upcomingEventsCount}</div>
-      <div class="t-muted text-xs md:text-base">Upcoming</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-muted text-2xl md:text-3xl font-bold">{pastEventsCount}</div>
-      <div class="t-muted text-xs md:text-base">Past</div>
     </div>
   </div>
 

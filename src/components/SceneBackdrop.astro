@@ -1,0 +1,55 @@
+---
+// Blurred picture behind the top of a detail page (the entry's own image, else the campaign
+// image), reaching up under the transparent nav. Takes no layout space.
+import { db, CampaignProgress } from '@/db';
+
+interface Props {
+  imageUrl?: string | null;
+}
+
+const own = Astro.props.imageUrl ?? null;
+const image = own || ((await db.select({ url: CampaignProgress.heroImageUrl }).from(CampaignProgress).limit(1))[0]?.url ?? null);
+---
+
+{image && (
+  <div class:list={['scene-backdrop', { borrowed: !own }]} data-immersive-hero aria-hidden="true">
+    <img src={image} alt="" />
+  </div>
+)}
+
+<style>
+  .scene-backdrop {
+    position: absolute;
+    top: calc(-2rem - 60px);
+    left: 50%;
+    width: 100vw;
+    height: min(75vh, 46rem);
+    transform: translateX(-50%);
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 30%, transparent 100%);
+  }
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    .scene-backdrop { top: calc(-2rem - var(--safe-top)); }
+  }
+  .scene-backdrop img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(28px) saturate(1.2);
+    transform: scale(1.15);
+    opacity: 0.55;
+  }
+  .scene-backdrop.borrowed img { opacity: 0.35; filter: blur(28px) saturate(0.6); }
+  :global(html:not(.dark)) .scene-backdrop img { opacity: 0.35; }
+  /* Darken behind the nav so it stays readable over bright images. */
+  .scene-backdrop::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 8rem;
+    background: linear-gradient(to bottom, rgba(8, 6, 3, 0.55), transparent);
+  }
+</style>

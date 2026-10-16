@@ -26,41 +26,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="npcs"
     canEditHero={canEditHero}
-  />
-
-  {isLoggedIn && (
-    <div class="flex justify-end mb-4">
-      <Button
-        variant="primary"
-        size="md"
-        icon="add"
-        id="addNPC"
-        title="Add new Add NPC"
-      >
-        Add NPC
-      </Button>
-    </div>
-  )}
-
-  <!-- Stats -->
-  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-8">
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{npcs.length}</div>
-      <div class="t-label-sm mt-1">Total NPCs</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{alliedNPCs.length}</div>
-      <div class="t-label-sm mt-1">Allies</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{neutralNPCs.length}</div>
-      <div class="t-label-sm mt-1">Neutral</div>
-    </div>
-    <div class="t-panel p-3 md:p-6 text-center">
-      <div class="t-num text-2xl md:text-3xl">{enemyNPCs.length}</div>
-      <div class="t-label-sm mt-1">Enemies</div>
-    </div>
-  </div>
+    subtitle={`${npcs.length} people met, ${alliedNPCs.length} of them allies and ${enemyNPCs.length} enemies`}
+  >
+    <Fragment slot="actions">
+      {isLoggedIn && (
+    <Button
+      variant="primary"
+      size="md"
+      icon="add"
+      id="addNPC"
+      title="Add new Add NPC"
+    >
+      Add NPC
+    </Button>
+      )}
+    </Fragment>
+  </PageHero>
 
   <!-- Search and Filter -->
   <div class="t-panel p-4 mb-6">
@@ -112,11 +93,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <div class="absolute inset-0 bg-black/30"></div>
               </>
             ) : (
-              <div class={`absolute inset-0 ${
-                npc.relationship === 'ally' ? 'bg-linear-to-br from-green-700 to-green-600' :
-                npc.relationship === 'enemy' ? 'bg-linear-to-br from-red-800 to-red-700' :
-                'bg-linear-to-br from-stone-800 to-stone-700'
-              }`}></div>
+              <div class={`absolute inset-0 rel-bg-${['ally','enemy'].includes(npc.relationship) ? npc.relationship : 'neutral'}`}></div>
             )}
 
             <!-- Circular avatar on top -->
@@ -136,11 +113,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             </div>
 
             <!-- Relationship badge -->
-            <div class={`absolute top-3 right-3 text-white text-xs px-3 py-1 rounded-full shadow-lg ${
-              npc.relationship === 'ally' ? 'bg-green-600/90' :
-              npc.relationship === 'enemy' ? 'bg-red-600/90' :
-              'bg-gray-600/90'
-            }`}>
+            <div class={`absolute top-3 right-3 text-xs px-3 py-1 rounded-full shadow-lg rel-tag rel-tag-${['ally','enemy'].includes(npc.relationship) ? npc.relationship : 'neutral'}`}>
               {npc.relationship.charAt(0).toUpperCase() + npc.relationship.slice(1)}
             </div>
           </div>
