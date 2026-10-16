@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# arandor-dev-refresh
+#
+# Gives dev.arandor.app a copy of the real data: the newest LIVE BACKUP database and
+# uploads, like arandor-preview-refresh does for preview. The live files themselves are
+# never read; only /var/backups/arandor is. The previous dev database is moved to
+# /srv/arandor-dev/data/archive/; uploads are only added, never removed.
+# Back to demo data: sudo arandor-dev-reseed
+#
+# Installed at /usr/local/sbin/arandor-dev-refresh (root:root 0755). Run as root.
+
+set -euo pipefail
+umask 027
+
+BACKUPS=/var/backups/arandor
+DEV=/srv/arandor-dev
+DB=$DEV/data/dev.db
+# astro dev serves uploads from the checkout's public/uploads (see src/pages/api/upload.ts).
+UPLOADS=$DEV/repo/public/uploads
+TS="$(date -u +%Y%m%d_%H%M%SZ)"
+
+[[ $EUID -eq 0 ]] || { echo "run as root (sudo)" >&2; exit 1; }
+SRC_DB="$(readlink -f "$BACKUPS/db/latest.db")"
+SRC_UP="$(readlink -f "$BACKUPS/uploads/latest")"
+[ -f "$SRC_DB" ] && [ -d "$SRC_UP" ] || { echo "no backup found - run arandor-backup first" >&2; exit 1; }
+
+systemctl stop arandor-dev
+if [ -f "$DB" ]; then
+  install -d -o arandor-dev -g arandor-dev -m 0750 "$DEV/data/archive"
+  mv "$DB" "$DEV/data/archive/dev.$TS.before-refresh.db"
+fi
+install -o arandor-dev -g arandor-dev -m 0640 "$SRC_DB" "$DB"
+install -d -o arandor-dev -g arandor-dev -m 0755 "$UPLOADS"
+rsync -a --chown=arandor-dev:arandor-dev --chmod=D755,F644 "$SRC_UP/" "$UPLOADS/"
+systemctl start arandor-dev
+echo "dev refreshed from $(basename "$SRC_DB") and uploads snapshot $(basename "$SRC_UP")"
