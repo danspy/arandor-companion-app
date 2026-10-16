@@ -1,80 +1,63 @@
-All notable changes to the Arandor Companion App will be documented in this file.
+What's new in the Arandor Companion App, newest first.
 
-## Recent Features
+## October 2026
 
-### 🗺️ Interactive Map
-- Visual map interface with draggable location pins
-- Hero path showing journey progression
-- Zoom and pan controls (mouse wheel, buttons, touch gestures)
-- Edit mode for placing and moving pins
-- Color-coded legend by location type
+### A new look
+- One dark, immersive design across the whole app, with large scene images behind every page
+- Smooth page transitions: pages zoom into details and slide between sections
+- Themed dialogs instead of browser pop-ups, and better contrast everywhere
+- Dark mode only: the light theme and its switch were removed
 
-### 📚 Library Timeline
-- Timeline view for organizing library entries chronologically
-- Visual representation of campaign lore and knowledge
+### Dashboard
+- Welcome header with the next session countdown and "Add to my calendar"
+- "Previously on Arandor…" recap of the last session, next to "Do you remember…?" with a
+  random NPC, place, session or library document
+- Party cards that flip to show ability scores; your own characters come first
+- The Chronicle of earlier sessions, a quest board, the newest library documents, faction
+  crests, and "The tale so far" with the campaign's numbers
 
-### 🎭 DM Screen
-- Control panel for Dungeon Masters (DM/admin only)
-- Select locations to display mood images
-- Spotlight NPCs for player view
-- Toggle initiative tracker visibility
-- Generate shareable link for player display screen
-- Real-time synchronization between DM control and player display
+### World map
+- The world of Arandor is now drawn as a pixel-art world right in the browser
+- The party walks its journey session by session, with story bubbles from the diary
+- Journey log, travelled path, party members joining and leaving, and a playback timeline
 
-### 🎲 Initiative Tracker
-- Track combat initiative order for characters, NPCs, and monsters
-- Initiative order with HP, AC, and notes
-- Type badges (character, NPC, monster, other)
-- D&D Beyond HP Sync - Automatically sync character HP from D&D Beyond in real-time
-- Editable by DM/admin, viewable by all logged-in users
-- Quick add/edit/delete functionality
+### Dice everywhere
+- A dice button on every page: quick d20, advantage, disadvantage, any mix of dice with a
+  modifier, Reset, and press-and-hold for an instant d20
+- 3D dice roll across the whole screen; natural 20s get sparks
 
-### 📅 Calendar & Events
-- Schedule and track D&D sessions
-- Event management with date, time, duration, and host
-- Calendar subscription (iCal/ICS feed)
-- Works with Google Calendar, Apple Calendar, Outlook
-- Automatic updates when events are added or changed
+### Under the hood
+- More secure logins: signed login cookies and stronger password protection
+  (everyone had to log in once more)
+- Newer foundation (Astro 7), a test site for every change before it goes live, and nightly
+  backups that are kept forever
+- The AI features (summaries, images, narration) were removed
 
-### 🤖 AI-Powered Features
-- **AI Summaries** - Generate concise summaries of diary entries (requires OpenAI API key)
-- **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
-- **AI Podcast Narration** - Generate epic narration with dramatic narrator voice
+### Fixes
+- Calendar subscriptions show sessions at the right time (they were 1–2 hours late)
+- "Delete summary" on a diary entry works again
+- The player display link uses the real address and the player display has its styles back
 
-### 👥 User Management & Profiles
-- Role-based authentication (admin, dungeonmaster, player)
-- User profile management
-- Profile images (upload or URL)
-- Link characters to player accounts
-- Favorite pages for PWA quick access (up to 4 pages, reorderable)
+## June 2026
+- Session gallery: several images and videos per diary entry
+- Diary list fixes on phones
 
-### 📖 Core Campaign Management
-- **Dashboard** - Overview of campaign progress, faction standings, quests, and party
-- **Adventure Diary** - Document campaign sessions with markdown, images, and entity links
-- **Library** - Store campaign lore and knowledge with tags
-- **Characters** - Track party members with full stats and D&D Beyond integration
-- **NPCs** - Manage non-player characters with relationships
-- **Locations** - Catalog places with map coordinates
-- **Quests** - Organize and track quest status
-- **Factions** - Track relationships with factions
+## March 2026
+- First 3D dice roller
+- Design overhaul
 
-### 🎨 UI/UX Enhancements
-- Dark mode support
-- Mobile responsive design
-- PWA (Progressive Web App) support
-- Image upload functionality (max 5MB)
-- Markdown formatting support
+## January – February 2026
+- Library timeline: the history of the world by year
+- Calendar with game sessions and subscription for Google, Apple and Outlook calendars
+- Timer and hide-screen wallpaper on the DM screen
+- Dice roller tool
+- Images on diary entries
+- Changelog on the profile page
+- D&D Beyond: better sync of characters, multiclass and hit points
+- Initiative tracker: monster groups, reset combat, players update their own HP and death saves
 
-### 🔧 Technical Features
-- Built with Astro.js 5.x and Tailwind CSS
-- SQLite database with Astro DB
-- RESTful API endpoints
-- Type-safe TypeScript development
-- Server-side rendering
-
-## Future Enhancements
-
-- Custom asset upload for DM Screen
-- Full D&D Beyond character import/export
-- Image uploads for characters/NPCs
-- Dice roller integration
+## December 2025
+- Installed app: bottom menu and favourite pages
+- Profiles with picture, first name and your characters
+- DM screen and player display, initiative tracker, and many fixes for phones and tablets
+- Roles: player, dungeonmaster and admin

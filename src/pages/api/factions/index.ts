@@ -5,8 +5,6 @@ import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 const VALID_STATUSES = ['enemy', 'suspicious', 'neutral', 'friendly', 'respectful'];
 
 export const GET: APIRoute = async () => {
-  console.log('process.env.ASTRO_DATABASE_FILE:', process.env.ASTRO_DATABASE_FILE);
-  console.log('NODE_ENV:', process.env.NODE_ENV);
   try {
     const factions = await db.select().from(Faction);
     return new Response(JSON.stringify(factions), {

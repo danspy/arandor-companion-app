@@ -2,6 +2,8 @@
  * iCal/ICS utilities for generating RFC 5545 compliant calendar feeds
  */
 
+import { campaignDateTime } from './campaignTime';
+
 interface ICalEvent {
   id: string;
   title: string;
@@ -38,17 +40,12 @@ function formatICalDateTime(date: Date): string {
 
 /**
  * Generate a single VEVENT component
- * 
- * Note: Input times are assumed to be in the local timezone of the campaign.
- * They are then converted to UTC for the iCal format, and calendar apps will
- * display them in the user's local timezone.
+ *
+ * Event date and time are stored in the campaign's time zone (see campaignTime.ts).
+ * They are converted to UTC here; calendar apps show them in each viewer's time zone.
  */
 function generateVEvent(event: ICalEvent): string {
-  // Parse the date and time strings. The Date constructor will interpret these
-  // as local time (server timezone). Since most D&D groups schedule in their
-  // local timezone, this behavior is acceptable. Calendar apps will convert
-  // to the viewer's timezone automatically.
-  const startDateTime = new Date(`${event.date}T${event.time}:00`);
+  const startDateTime = campaignDateTime(event.date, event.time);
   const endDateTime = new Date(startDateTime);
   
   // If duration is provided, add it to the end time

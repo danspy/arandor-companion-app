@@ -4,8 +4,8 @@
   "description": "A D&D companion app for tracking adventures, characters, NPCs, locations, and more",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#8b4545",
-  "theme_color": "#8b4545",
+  "background_color": "#0c0906",
+  "theme_color": "#080603",
   "orientation": "portrait-primary",
   "icons": [
     {
