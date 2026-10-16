@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import { isAuthenticated, getUserRole } from '../lib/auth';
-import { db, PageSettings, eq } from 'astro:db';
+import { db, PageSettings, eq } from '@/db';
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);

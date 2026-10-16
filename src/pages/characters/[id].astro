@@ -1,6 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
-import { db, Character, DiaryEntry, User, eq } from 'astro:db';
+import { db, Character, DiaryEntry, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 
 const { id } = Astro.params;

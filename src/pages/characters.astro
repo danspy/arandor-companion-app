@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
-import { db, Character, PageSettings, User, eq } from 'astro:db';
+import { db, Character, PageSettings, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../lib/auth';
 
 const characters = await db.select().from(Character);

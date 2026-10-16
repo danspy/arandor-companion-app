@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
-import { db, Location, NPC, PageSettings, eq } from 'astro:db';
+import { db, Location, NPC, PageSettings, eq } from '@/db';
 
 // DM Screen is only accessible to DM/Admin
 const isLoggedIn = isAuthenticated(Astro.cookies);

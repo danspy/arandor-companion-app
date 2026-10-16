@@ -37,11 +37,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build against a scratch database on the runner
-        run: |
-          mkdir -p ./data
-          touch ./data/content.db
-          npm run build
+      - name: Build
+        run: npm run build
 
       - name: Check the build opens ./data/content.db relative to its working directory
         run: |

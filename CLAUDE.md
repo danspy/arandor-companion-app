@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-A D&D companion app built with **Astro 6 + Astro DB + TailwindCSS v4 + Node adapter**.
+A D&D companion app built with **Astro 6 + Drizzle ORM (SQLite) + TailwindCSS v4 + Node adapter**.
 
 Tracks adventures, characters, NPCs, locations, quests, factions, and more. The world map is rendered in the browser as a pixel-art tile world (see `src/lib/worldmap/` and `scripts/trace-world.mjs`). There is no AI integration.
 
@@ -10,7 +10,7 @@ Tracks adventures, characters, NPCs, locations, quests, factions, and more. The 
 
 - **Framework**: Astro 6 (SSR, server output)
 - **Adapter**: `@astrojs/node` (standalone mode)
-- **Database**: `@astrojs/db` (SQLite via libSQL)
+- **Database**: Drizzle ORM over SQLite (`@libsql/client`). Schema in `src/db/schema.ts`, client and query helpers in `src/db/index.ts` (import from `@/db`)
 - **Styling**: TailwindCSS v4 (via `@tailwindcss/vite`; theme tokens live in `src/styles/global.css`) + `@tailwindcss/typography`
 - **Testing**: Playwright
 
@@ -27,17 +27,19 @@ Tracks adventures, characters, NPCs, locations, quests, factions, and more. The 
 
 ```bash
 npm install
+npm run db:dev   # creates and seeds ./data/dev.db
 npm run dev
 ```
 
 ## Build
 
 ```bash
-ASTRO_DATABASE_FILE=./data/content.db astro build
+npm run build   # does not touch any database
 ```
 
 ## Notes
 
-- The DB storage path defaults to `./data/dev.db`; `astro.config.mjs` refuses any path under `/srv/`. **Never run `astro build`, `astro dev` or `astro db` on the server** — they recreate the database file.
+- The app opens `./data/content.db` relative to its working directory in production and `./data/dev.db` in `astro dev`; `DATABASE_FILE` overrides both. Create the dev DB with `npm run db:dev`.
+- Changing `src/db/schema.ts` does not change any database. Live schema changes are reviewed SQL migrations applied to preview first (see `deploy/README.md`). `drizzle.config.ts` refuses any database under `/srv/`.
 - Deployment (live + preview environments, backups, promote) is described in `deploy/README.md`.
 - HTTPS config should follow project memory: `server: { https: true }` for dev server.

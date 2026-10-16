@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, DMScreenState, eq } from 'astro:db';
+import { db, DMScreenState, eq } from '@/db';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';

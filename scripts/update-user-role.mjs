@@ -47,7 +47,7 @@ async function main() {
   }
 
   // Determine database path from environment or use default
-  const dbPath = process.env.ASTRO_DATABASE_FILE || './data/content.db';
+  const dbPath = process.env.DATABASE_FILE || process.env.ASTRO_DATABASE_FILE || './data/content.db';
   
   console.log(`Using database: ${dbPath}`);
   
@@ -110,7 +110,7 @@ async function main() {
       console.error('');
       console.error('Database file not found. Please ensure:');
       console.error('1. The database has been created (run npm run build first)');
-      console.error('2. The ASTRO_DATABASE_FILE environment variable points to the correct location');
+      console.error('2. The DATABASE_FILE environment variable points to the correct location');
       console.error(`   Current path: ${dbPath}`);
     }
     

@@ -149,7 +149,7 @@ The map page renders the world of Arandor entirely in the browser as a pixel-art
 - `src/lib/worldmap/` holds the renderer: pixel sprites, terrain pre-render, A* routing and the journey engine.
 - Locations marked *visible on map* appear as pixel markers; diary entries linked to those locations become the party's journey. The timeline bar replays it: the party walks the routed path, members join at the session they first appear in, and a speech bubble shows the entry's summary (or the first sentences of its content).
 
-No environment variables are required beyond `ASTRO_DATABASE_FILE` for local builds.
+Local development uses `./data/dev.db`: run `npm run db:dev` once to create and seed it. `DATABASE_FILE` points the app at another file.
 
 ## Deployment
 
@@ -252,7 +252,7 @@ node scripts/add-user.mjs dm_alice dmpass dungeonmaster
 node scripts/add-user.mjs superadmin adminpass admin
 
 # Using custom database location
-ASTRO_DATABASE_FILE=/path/to/db.db node scripts/add-user.mjs jane mypass player
+DATABASE_FILE=/path/to/db.db node scripts/add-user.mjs jane mypass player
 ```
 
 **Update User Roles:**

@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, InitiativeTracker, CombatState, eq } from 'astro:db';
+import { db, InitiativeTracker, CombatState, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 const COMBAT_STATE_ID = 'current-combat';
@@ -10,7 +10,7 @@ export const POST: APIRoute = async ({ cookies }) => {
   if (authError) return authError;
 
   try {
-    const { sql } = await import('astro:db');
+    const { sql } = await import('@/db');
     
     // Update all character entries to initiative 10 (batch operation)
     await db.update(InitiativeTracker)

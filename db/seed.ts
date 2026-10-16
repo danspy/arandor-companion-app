@@ -1,6 +1,7 @@
-import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress } from '../src/db';
 import { hashPassword } from '../src/lib/auth';
 
+// Seeds an empty development database: npm run db:dev
 export default async function seed() {
   // Only seed if database is empty (check if User table has any records)
   // This preserves existing data during deployments while allowing initial setup
@@ -207,3 +208,5 @@ export default async function seed() {
 
   console.log('Database seeded successfully!');
 }
+
+await seed();

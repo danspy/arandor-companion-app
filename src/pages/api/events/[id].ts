@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Event, eq } from 'astro:db';
+import { db, Event, eq } from '@/db';
 import { requireAuth } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {

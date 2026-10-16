@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Event, User } from 'astro:db';
+import { db, Event, User } from '@/db';
 import { generateICalFeed } from '../../../utils/ical';
 
 // Helper function to get host name

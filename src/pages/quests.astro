@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 import PageHero from '../components/PageHero.astro';
 import Button from '../components/Button.astro';
-import { db, Quest, PageSettings, eq } from 'astro:db';
+import { db, Quest, PageSettings, eq } from '@/db';
 import { getUserRole } from '../lib/auth';
 
 // Quests page is viewable by everyone, editable by dungeonmaster and admin

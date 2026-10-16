@@ -20,7 +20,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'ASTRO_DATABASE_FILE=./data/content.db HOST=0.0.0.0 PORT=4323 node dist/server/entry.mjs',
+    command: 'DATABASE_FILE=./data/content.db HOST=0.0.0.0 PORT=4323 node dist/server/entry.mjs',
     url: 'http://localhost:4323',
     reuseExistingServer: true,
     timeout: 15000,

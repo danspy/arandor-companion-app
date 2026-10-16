@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, InitiativeTracker, eq } from 'astro:db';
+import { db, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];

@@ -29,14 +29,14 @@ database and uploads.
 
 ## Data safety rules
 
-- **Never run `astro build`, `astro dev` or `astro db` on the server.** Astro DB recreates the
-  database file. `astro.config.mjs` refuses any database path under `/srv/`.
+- Builds happen in CI only. A build does not open any database; `drizzle-kit` (local dev only)
+  refuses any database path under `/srv/`.
 - The release opens its database as `./data/content.db` relative to the unit's
   `WorkingDirectory`; `arandor-activate` refuses a release that contains an absolute `/srv/…/*.db` path.
 - The CI user (`deploy`) owns only `app/`. It cannot write either database or uploads.
 - The preview service cannot see live data or backups (`InaccessiblePaths=`), even if its code is wrong.
 - Every live deploy takes a backup first. A nightly backup (03:15 UTC) is followed by a restore test.
-- Schema changes are never applied to live automatically.
+- Schema changes are never applied to live automatically (see below).
 
 ## Deploying
 
@@ -48,6 +48,19 @@ database and uploads.
    answer within 60 s, the previous release is switched back in automatically.
 
 The last 5 releases per environment are kept (code only).
+
+## Schema changes
+
+`src/db/schema.ts` describes the tables; editing it does not change any database.
+To change the schema:
+
+1. Edit `src/db/schema.ts` and write the matching SQL (`ALTER TABLE ... ADD COLUMN ...`) in
+   `db/migrations/<date>_<name>.sql`. New columns must be nullable or have a default, so the
+   old release keeps working with the new schema (rollback stays possible).
+2. In the PR, apply the SQL to preview: `sudo arandor-backup before-migration`, then
+   `sudo -u arandor-preview sqlite3 /srv/arandor-preview/data/content.db < file.sql`.
+3. After merging and testing on preview, apply the same file to live (backup first,
+   with `sudo -u arandor sqlite3 /srv/arandor/data/content.db`), then promote.
 
 ## Commands on the server
 

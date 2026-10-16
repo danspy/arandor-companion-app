@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Character, InitiativeTracker, eq } from 'astro:db';
+import { db, Character, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 import { fetchDnDBeyondHP, type DnDBeyondHPData } from '../../../lib/dndbeyond';
 

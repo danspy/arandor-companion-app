@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User } from 'astro:db';
+import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User } from '@/db';
 import { getUserRole } from '../lib/auth';
 
 // Dashboard is viewable by everyone, editable by dungeonmaster and admin

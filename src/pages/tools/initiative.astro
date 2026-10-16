@@ -3,7 +3,7 @@ import Layout from '../../layouts/Layout.astro';
 import Button from '../../components/Button.astro';
 import PageHero from '../../components/PageHero.astro';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
-import { db, InitiativeTracker, Character, PageSettings, User, eq } from 'astro:db';
+import { db, InitiativeTracker, Character, PageSettings, User, eq } from '@/db';
 
 // Initiative tracker is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -28,7 +28,7 @@ const sortedInitiatives = initiatives.sort((a, b) => {
 
 // Fetch active characters and NPCs for dropdown
 const activeCharacters = await db.select().from(Character).where(eq(Character.isActive, true));
-const { NPC } = await import('astro:db');
+const { NPC } = await import('@/db');
 const activeNPCs = await db.select().from(NPC);
 
 // Fetch all users to check legacy ownership (characterIds arrays)
@@ -39,7 +39,7 @@ const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.
 const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : null;
 
 // Get combat state (round and turn tracking)
-const { CombatState } = await import('astro:db');
+const { CombatState } = await import('@/db');
 const COMBAT_STATE_ID = 'current-combat';
 let combatState = await db.select().from(CombatState).where(eq(CombatState.id, COMBAT_STATE_ID)).get();
 

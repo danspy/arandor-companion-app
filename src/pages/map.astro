@@ -1,7 +1,7 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, Location, NPC, DiaryEntry, LibraryEntry, Character } from 'astro:db';
+import { db, Location, NPC, DiaryEntry, LibraryEntry, Character } from '@/db';
 import { getUserRole } from '../lib/auth';
 
 // Map page is viewable by everyone, editable by dungeonmaster and admin

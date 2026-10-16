@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, CampaignProgress } from 'astro:db';
+import { db, CampaignProgress } from '@/db';
 
 export const GET: APIRoute = async () => {
   try {
