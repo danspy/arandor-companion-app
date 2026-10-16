@@ -1,112 +1,93 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, Location, NPC, DiaryEntry, LibraryEntry } from 'astro:db';
+import { db, Location, NPC, DiaryEntry, LibraryEntry, Character } from 'astro:db';
 import { getUserRole } from '../lib/auth';
 
 // Map page is viewable by everyone, editable by dungeonmaster and admin
 const userRole = await getUserRole(Astro.cookies);
-
-const locations = await db.select().from(Location);
-const npcs = await db.select().from(NPC);
-const diaryEntries = await db.select().from(DiaryEntry);
-const libraryEntries = await db.select().from(LibraryEntry);
-const isLoggedIn = !!userRole;
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
-// Hard-coded, non-editable landmarks you can configure in code
-/*const configuredLandmarks = [
-  { id: 'lm-capital', name: 'Arandor City', type: 'city', mapX: 30, mapY: 50, notes: 'Capital of the realm' },
-  { id: 'lm-fort', name: 'Greyfort', type: 'building', mapX: 55, mapY: 45, notes: 'Old fort' },
-  { id: 'lm-ancient', name: 'Stone Circle', type: 'wilderness', mapX: 70, mapY: 40, notes: 'Druidic site' }
-];*/
-const configuredLandmarks = [];
+const [locations, npcs, diaryEntries, libraryEntries, characters] = await Promise.all([
+  db.select().from(Location),
+  db.select().from(NPC),
+  db.select().from(DiaryEntry),
+  db.select().from(LibraryEntry),
+  db.select().from(Character),
+]);
 
-// Create a map of location IDs to NPCs
-const locationNPCs = new Map<string, typeof npcs>();
-npcs.forEach(npc => {
-  if (npc.locationId) {
-    if (!locationNPCs.has(npc.locationId)) {
-      locationNPCs.set(npc.locationId, []);
-    }
-    locationNPCs.get(npc.locationId)!.push(npc);
-  }
-});
+const asList = (v: unknown): string[] => (Array.isArray(v) ? v.map(String) : []);
 
-// Create a map of location IDs to diary entries
-const locationDiaryEntries = new Map<string, typeof diaryEntries>();
-diaryEntries.forEach(entry => {
-  const locationIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
-  locationIds.forEach((locId: string) => {
-    if (!locationDiaryEntries.has(locId)) {
-      locationDiaryEntries.set(locId, []);
-    }
-    locationDiaryEntries.get(locId)!.push(entry);
-  });
-});
+/** Short, plain-text excerpt for the speech bubble: the DM summary, else the first sentences of the entry. */
+function excerptFor(entry: { summary: string | null; content: string }): string {
+  const source = (entry.summary && entry.summary.trim()) || entry.content || '';
+  const plain = source
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/^#+\s*/gm, '')
+    .replace(/[*_`>~]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (plain.length <= 200) return plain;
+  const cut = plain.slice(0, 200);
+  const end = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '));
+  return (end > 80 ? cut.slice(0, end + 1) : cut.replace(/\s\S*$/, '') + '…');
+}
 
-// Create a map of location IDs to library entries
-const locationLibraryEntries = new Map<string, typeof libraryEntries>();
-libraryEntries.forEach(entry => {
-  if (entry.locationId) {
-    if (!locationLibraryEntries.has(entry.locationId)) {
-      locationLibraryEntries.set(entry.locationId, []);
-    }
-    locationLibraryEntries.get(entry.locationId)!.push(entry);
-  }
-});
+const mapData = {
+  canEdit,
+  locations: locations.map((l) => ({
+    id: l.id, name: l.name, type: l.type, region: l.region, visited: !!l.visited,
+    visibleOnMap: l.visibleOnMap === true, mapX: l.mapX, mapY: l.mapY,
+    description: l.description, notes: l.notes, imageUrl: l.imageUrl,
+  })),
+  characters: characters.map((c) => ({
+    id: c.id, name: c.name, class: c.class, race: c.race, isActive: c.isActive !== false,
+    hair: c.hair, skin: c.skin, avatarUrl: c.avatarUrl,
+  })),
+  entries: diaryEntries.map((e) => ({
+    id: e.id, session: e.session, date: e.date, title: e.title, excerpt: excerptFor(e),
+    locationIds: asList(e.locationIds), characterIds: asList(e.characterIds),
+  })),
+  npcsByLocation: Object.fromEntries(
+    locations.map((l) => [l.id, npcs.filter((n) => n.locationId === l.id).map((n) => ({ id: n.id, name: n.name, race: n.race, occupation: n.occupation, relationship: n.relationship }))]),
+  ),
+  entriesByLocation: Object.fromEntries(
+    locations.map((l) => [l.id, diaryEntries.filter((e) => asList(e.locationIds).includes(l.id)).map((e) => ({ id: e.id, title: e.title, session: e.session }))]),
+  ),
+  libraryByLocation: Object.fromEntries(
+    locations.map((l) => [l.id, libraryEntries.filter((e) => e.locationId === l.id).map((e) => ({ id: e.id, title: e.title, tags: asList(e.tags) }))]),
+  ),
+};
 ---
 
-<Layout title="Interactive Map">
-  <!-- Page Header with Controls -->
+<Layout title="World Map">
   <div class="mb-6">
     <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
       <h1 class="font-display italic font-semibold text-4xl" style="color:var(--gold);">Map of Arandor</h1>
-      
+
       <div class="flex flex-wrap gap-2">
-        <Button 
-          variant="primary"
-          size="sm"
-          id="toggleSidebar"
-          title="Toggle location details sidebar"
-          class="flex items-center gap-2"
-        >
+        <Button variant="primary" size="sm" id="toggleJourney" title="Journey log" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
           </svg>
-          <span class="hidden sm:inline" id="sidebarToggleText">Show Details</span>
+          <span class="hidden sm:inline">Journey</span>
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          id="toggleHeroPath"
-          title="Toggle hero path"
-          class="flex items-center gap-2"
-        >
+        <Button variant="secondary" size="sm" id="toggleHeroPath" title="Toggle travelled path" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h3l3-8 4 16 3-12 3 8h3"></path>
           </svg>
-          <span class="hidden sm:inline" id="heroPathToggleText">Show Path</span>
+          <span class="hidden sm:inline" id="heroPathToggleText">Hide Path</span>
         </Button>
-        <Button
-          variant="secondary"
-          size="sm"
-          id="toggleLegend"
-          title="Toggle legend"
-          class="flex items-center gap-2"
-        >
+        <Button variant="secondary" size="sm" id="toggleLegend" title="Toggle legend" class="flex items-center gap-2">
           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
           </svg>
           <span class="hidden sm:inline" id="legendToggleText">Show Legend</span>
         </Button>
         {canEdit && (
-          <Button 
-            variant="primary"
-            size="sm"
-            id="toggleEditMode"
-            class="flex items-center gap-2"
-          >
+          <Button variant="primary" size="sm" id="toggleEditMode" class="flex items-center gap-2">
             <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
             </svg>
@@ -117,1359 +98,377 @@ libraryEntries.forEach(entry => {
     </div>
   </div>
 
-  <!-- Map Container -->
   <div id="mapPageContainer" class="t-panel overflow-hidden">
+    <div id="mapColumn" class="relative" style="height: calc(100vh - 310px); min-height: 520px;">
 
-    <!-- Map Viewport with max-height: navbar (72px) + external header (~120px) + container padding + footer (68px) ≈ 310px -->
-    <div id="mapColumn" class="relative" style="background:var(--bg-page); height: calc(100vh - 310px); min-height: 500px;">
-      <!-- Zoom controls - positioned in top-left to avoid PWA menu -->
+      <!-- Viewport: canvas (terrain + trail) + world-space sprites + screen-space labels -->
+      <div id="mapViewport" class="absolute inset-0 overflow-hidden select-none" style="touch-action:none; background:#2b63a8; cursor:grab;">
+        <canvas id="worldCanvas" class="absolute inset-0"></canvas>
+        <div id="spriteLayer" class="absolute left-0 top-0" style="transform-origin:0 0;"></div>
+        <div id="labelLayer" class="absolute inset-0 pointer-events-none overflow-hidden">
+          <div id="partyBubble" class="wm-bubble"></div>
+        </div>
+        <div id="mapLoading" class="absolute inset-0 flex items-center justify-center" style="background:#2b63a8;">
+          <div class="wm-pixel text-sm" style="color:#eaf4ff;">Drawing the world…</div>
+        </div>
+      </div>
+
+      <!-- Zoom controls -->
       <div class="absolute top-4 left-4 z-20 flex gap-2">
-        <button
-          id="zoomIn"
-          title="Zoom In"
-          class="map-ctrl-btn"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
-          </svg>
+        <button id="zoomIn" title="Zoom in" class="map-ctrl-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
         </button>
-        <button
-          id="zoomOut"
-          title="Zoom Out"
-          class="map-ctrl-btn"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
-          </svg>
+        <button id="zoomOut" title="Zoom out" class="map-ctrl-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg>
         </button>
-        <button
-          id="resetZoom"
-          title="Reset View"
-          class="map-ctrl-btn px-3"
-        >
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <span class="text-xs font-medium">Reset</span>
+        <button id="zoomFit" title="Show whole world" class="map-ctrl-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4h4M20 8V4h-4M4 16v4h4M20 16v4h-4"></path></svg>
+        </button>
+        <button id="zoomParty" title="Find the party" class="map-ctrl-btn">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
         </button>
       </div>
 
-      <!-- Map container with panning and zooming -->
-      <div class="relative bg-[rgb(208,208,208)] overflow-hidden w-full h-full" id="mapViewport" style="touch-action: none;">
-        <!-- Draggable map container -->
-        <div id="mapWrapper" class="w-full h-full" style="cursor: grab; position: relative;">
-          <div id="mapContainer" class="absolute w-full h-full inset-0">
-            <!-- SVG-based map: image + pins + path all live in a single SVG coordinate space (0..100) -->
-            <svg id="mapSvg" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" class="absolute inset-0 w-full h-full">
-              <defs>
-                <filter id="gray"
-                        x="-20%" y="-20%" width="140%" height="140%"
-                        filterUnits="objectBoundingBox"
-                        color-interpolation-filters="sRGB">
-                  <feColorMatrix type="saturate" values="0"/>
-                </filter>
-              </defs>
-              <g id="mapGroup">
-                <!-- raster map image as SVG image so pins and path share the same coordinate system -->
-                <image id="mapImage" href="/map.png" x="0" y="0" width="100" height="100" filter="url(#gray)" preserveAspectRatio="xMidYMid meet"></image>
-
-                <!-- path layer -->
-                <g id="pathGroup" pointer-events="none">
-                  <polyline id="heroPath" fill="none" stroke="rgba(250,100,0,0.95)" stroke-width="0.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"></polyline>
-                </g>
-
-                <!-- landmarks (non-editable) -->
-                <g id="landmarksGroup"></g>
-
-                <!-- pins (locations) -->
-                <g id="pinsGroup"></g>
-              </g>
-            </svg>
-          </div>
+      <!-- Legend -->
+      <div id="mapLegend" class="absolute left-4 z-20 max-w-[calc(100%-2rem)] rounded-sm p-3 transition-opacity duration-300 opacity-0 pointer-events-none" style="bottom: 84px; background:rgba(12,9,6,0.92); border:1px solid var(--border-gold); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
+        <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs" style="color:#d0c4aa;">
+          <div class="flex items-center gap-2"><canvas data-legend="city" width="16" height="16"></canvas><span>City</span></div>
+          <div class="flex items-center gap-2"><canvas data-legend="building" width="16" height="16"></canvas><span>Building</span></div>
+          <div class="flex items-center gap-2"><canvas data-legend="dungeon" width="16" height="16"></canvas><span>Dungeon</span></div>
+          <div class="flex items-center gap-2"><canvas data-legend="wilderness" width="16" height="16"></canvas><span>Wilderness</span></div>
+          <div class="flex items-center gap-2"><canvas data-legend="other" width="16" height="16"></canvas><span>Other</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-3 h-3" style="background:#f0a04a;"></span><span>Travelled path</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-3 h-3" style="background:#eaf4ff;"></span><span>By sea</span></div>
+          <div class="flex items-center gap-2"><span class="inline-block w-3 h-3 opacity-50" style="background:#f0a04a;"></span><span>Ahead</span></div>
         </div>
       </div>
 
-      <!-- Legend - positioned in bottom-left, toggleable, hidden by default -->
-      <div id="mapLegend" class="absolute bottom-6 left-4 max-w-[calc(100%-2rem)] z-20 backdrop-blur-sm rounded-sm p-3 sm:p-4 transition-opacity duration-300 opacity-0 pointer-events-none" style="background:rgba(12,9,6,0.92); border:1px solid var(--border-gold); box-shadow:0 4px 16px rgba(0,0,0,0.5);">
-        <div class="t-body-text flex flex-wrap gap-2 sm:gap-3 text-xs sm:text-sm">
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-blue-500 rounded-full"></div>
-            <span>City</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-purple-600 rounded-full"></div>
-            <span>Dungeon</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-green-500 rounded-full"></div>
-            <span>Wilderness</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-amber-500 rounded-full"></div>
-            <span>Building</span>
-          </div>
-          <div class="flex items-center gap-2">
-            <div class="w-3 h-3 bg-gray-500 rounded-full"></div>
-            <span>Other</span>
-          </div>
+      <!-- Timeline bar -->
+      <div id="timelineBar" class="absolute left-0 right-0 bottom-0 z-20 px-3 py-2 flex items-center gap-2" style="background:rgba(12,9,6,0.92); border-top:1px solid var(--border-gold);">
+        <button id="tlPrev" class="map-ctrl-btn" title="Previous stop">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path></svg>
+        </button>
+        <button id="tlPlay" class="map-ctrl-btn map-ctrl-btn-accent" title="Play the journey">
+          <svg id="tlPlayIcon" class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"></path></svg>
+          <svg id="tlPauseIcon" class="w-4 h-4 hidden" fill="currentColor" viewBox="0 0 24 24"><path d="M6 5h4v14H6zM14 5h4v14h-4z"></path></svg>
+        </button>
+        <button id="tlNext" class="map-ctrl-btn" title="Next stop">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+        <div class="flex-1 min-w-0 flex flex-col gap-1">
+          <input id="tlRange" type="range" min="0" max="0" value="0" class="wm-range w-full" aria-label="Journey position" />
+          <div id="tlLabel" class="wm-pixel text-[11px] truncate" style="color:#d0c4aa;">No journey yet — link diary entries to located places.</div>
         </div>
+        <button id="tlSpeed" class="map-ctrl-btn wm-pixel text-[10px] px-2" title="Playback speed" style="width:auto;">1×</button>
       </div>
-    </div>
 
-      <!-- Slide-in Sidebar for Location Details -->
+      <!-- Sidebar: location details / journey log -->
       <div id="locationDetails" class="absolute top-0 right-0 bottom-0 w-full sm:w-96 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out z-40 overflow-y-auto" style="background:var(--bg-surface);">
-        <!-- Sidebar Header -->
         <div class="sticky top-0 p-4 flex items-center justify-between z-10" style="background:var(--bg-surface);border-bottom:1px solid var(--border);">
-          <h2 id="detailsLocationName" class="font-display italic font-semibold text-xl" style="color:var(--gold);">Location Details</h2>
-          <Button
-            variant="icon"
-            size="md"
-            icon="close"
-            iconPosition="only"
-            id="closeSidebar"
-            title="Close sidebar"
-            ariaLabel="Close sidebar"
-          />
+          <h2 id="sidebarTitle" class="font-display italic font-semibold text-xl" style="color:var(--gold);">Journey</h2>
+          <Button variant="icon" size="md" icon="close" iconPosition="only" id="closeSidebar" title="Close sidebar" ariaLabel="Close sidebar" />
         </div>
 
-        <!-- Sidebar Content -->
-        <div class="p-4">
-        <div id="locationDetailsPlaceholder" class="t-faint text-center py-12">
-          <svg class="w-16 h-16 mx-auto mb-4 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
-          </svg>
-          <p class="text-sm">Click on a location pin to view details</p>
+        <div id="journeyView" class="p-4">
+          <p class="t-muted text-sm mb-4">Every stop of the party, in session order. Click a stop to travel there.</p>
+          <ol id="journeyList" class="space-y-1"></ol>
         </div>
-        <div id="locationDetailsContent" class="hidden">
+
+        <div id="detailsView" class="p-4 hidden">
           <div id="detailsContent"></div>
-          
           {canEdit && (
             <div id="coordinateEditor" class="hidden mt-6 pt-6" style="border-top:1px solid var(--border);">
-              <h3 class="t-body-text text-lg font-semibold mb-4">Map Coordinates</h3>
+              <h3 class="t-body-text text-lg font-semibold mb-2">Map Coordinates</h3>
+              <p class="t-muted text-xs mb-4">Drag the marker on the map or type values (0–100).</p>
               <div class="grid grid-cols-2 gap-4 mb-4">
                 <div>
                   <label class="t-label block mb-1">X Position (%)</label>
-                  <input 
-                    type="number" 
-                    id="coordX" 
-                    min="0" 
-                    max="100" 
-                    step="0.1"
-                    class="t-input w-full px-4 py-2"
-                  />
+                  <input type="number" id="coordX" min="0" max="100" step="0.1" class="t-input w-full px-4 py-2" />
                 </div>
                 <div>
                   <label class="t-label block mb-1">Y Position (%)</label>
-                  <input 
-                    type="number" 
-                    id="coordY" 
-                    min="0" 
-                    max="100" 
-                    step="0.1"
-                    class="t-input w-full px-4 py-2"
-                  />
+                  <input type="number" id="coordY" min="0" max="100" step="0.1" class="t-input w-full px-4 py-2" />
                 </div>
               </div>
-              <Button
-                variant="primary"
-                size="md"
-                id="saveCoordinates"
-                class="w-full"
-              >
-                Save Coordinates
-              </Button>
+              <Button variant="primary" size="md" id="saveCoordinates" class="w-full">Save Coordinates</Button>
             </div>
           )}
         </div>
       </div>
     </div>
 
-    <!-- Mobile Overlay Backdrop -->
     <div id="sidebarBackdrop" class="hidden sm:hidden fixed inset-0 bg-black/50 z-30" style="display: none;"></div>
   </div>
 
-  <!-- Upload modal removed — using built-in, non-user-uploadable map image -->
+  <script type="application/json" id="mapData" set:html={JSON.stringify(mapData)}></script>
 </Layout>
 
 <script>
-  // Import markdown renderer for client-side use
+  import { initWorldMap, type MapLocation, type Step, type WorldMapApi } from '../lib/worldmap/engine';
+  import { LOCATION_SPRITES, rasterize } from '../lib/worldmap/sprites';
   import { renderMarkdown } from '../utils/markdown';
-  // Make it globally available for the inline script
-  window.renderMarkdown = renderMarkdown;
-</script>
 
-<script define:vars={{ locations, diaryEntries, configuredLandmarks, locationNPCs: Object.fromEntries(locationNPCs), locationDiaryEntries: Object.fromEntries(locationDiaryEntries), locationLibraryEntries: Object.fromEntries(locationLibraryEntries), isLoggedIn: isLoggedIn, canEdit: canEdit }}>
-  // Clean up tooltips before View Transition swaps to prevent them persisting on other pages
-  document.addEventListener('astro:before-swap', () => {
-    document.querySelectorAll('.landmark-tooltip, .pin-tooltip').forEach(t => t.remove());
-  });
+  const esc = (s: string) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]!));
+  const cap = (s: string) => (s ? s.charAt(0).toUpperCase() + s.slice(1) : '');
+  const typeBadge = (type: string) => ({ city: 'bg-blue-500 text-white', dungeon: 'bg-purple-600 text-white', wilderness: 'bg-green-600 text-white', building: 'bg-amber-500 text-white' }[type] || 'bg-gray-500 text-white');
 
-  let editMode = false;
-  let selectedLocationId = null;
-  let draggedPin = null;
-  let currentMapImage = null;
-  let isSidebarOpen = false;
-  
-  // Constants for pin opacity (strings because SVG setAttribute expects strings)
-  const VISITED_OPACITY = '1.0';
-  const UNVISITED_OPACITY = '0.5';
-  
-  // Debounce time to prevent click event immediately after drag
-  const DRAG_CLICK_DEBOUNCE_MS = 100;
-  
-  // Zoom and pan state with default scale
-  let scale = 1.5; // Start at 1.5x zoom to show more detail
-  let translateX = 0;
-  let translateY = 0;
-  let isPanning = false;
-  let startPanX = 0;
-  let startPanY = 0;
-
-  // Touch state for pinch zoom
-  let touchStartDistance = 0;
-  let touchStartScale = 1;
-  let touchStartTranslateX = 0;
-  let touchStartTranslateY = 0;
-  let wasPinching = false; // Track if we were just pinching to prevent immediate pan after pinch
-  // Track last pointer position (relative to mapWrapper) so button zoom can use pointer as origin
-  let lastPointerX = null;
-  let lastPointerY = null;
-  let isPointerOverMap = false;
-
-  const mapWrapper = document.getElementById('mapWrapper');
-  const mapContainer = document.getElementById('mapContainer');
-  const mapSvg = document.getElementById('mapSvg');
-  const mapGroup = document.getElementById('mapGroup');
-  const pinsGroup = document.getElementById('pinsGroup');
-  const pathGroup = document.getElementById('pathGroup');
-  const heroPath = document.getElementById('heroPath');
-  const landmarksGroup = document.getElementById('landmarksGroup');
-  const locationDetails = document.getElementById('locationDetails');
-  const toggleEditModeBtn = document.getElementById('toggleEditMode');
-  const editModeText = document.getElementById('editModeText');
-  const coordinateEditor = document.getElementById('coordinateEditor');
-  const zoomInBtn = document.getElementById('zoomIn');
-  const zoomOutBtn = document.getElementById('zoomOut');
-  const resetZoomBtn = document.getElementById('resetZoom');
-  const toggleSidebarBtn = document.getElementById('toggleSidebar');
-  const closeSidebarBtn = document.getElementById('closeSidebar');
-  const sidebarToggleText = document.getElementById('sidebarToggleText');
-  const sidebarBackdrop = document.getElementById('sidebarBackdrop');
-  const mapViewport = document.getElementById('mapViewport');
-  const heroPathToggleBtn = document.getElementById('toggleHeroPath');
-  const heroPathToggleText = document.getElementById('heroPathToggleText');
-  const toggleLegendBtn = document.getElementById('toggleLegend');
-  const legendToggleText = document.getElementById('legendToggleText');
-  const mapLegend = document.getElementById('mapLegend');
-  
-  // Legend state - hidden by default on all devices
-  let isLegendVisible = false;
-  
-  // Initialize legend state on load - always hidden
-  if (mapLegend) {
-    mapLegend.style.opacity = '0';
-    mapLegend.style.pointerEvents = 'none';
-    if (legendToggleText) legendToggleText.textContent = 'Show Legend';
-  }
-
-  // Make map fluid: container fills available area and SVG uses a 0-100 viewBox
-  function applyMapSize() {
-    if (!mapContainer) return;
-    // Use fluid sizing so the map fills the viewport wrapper
-    mapContainer.style.width = '100%';
-    mapContainer.style.height = '100%';
-    // Make sure the SVG fills the container and uses the 0..100 coordinate system
-    if (mapSvg) {
-      mapSvg.style.width = '100%';
-      mapSvg.style.height = '100%';
-      mapSvg.setAttribute('viewBox', '0 0 100 100');
-      mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    }
-  }
-
-  // Ensure the heroPathSvg fills the map container and scales with it.
-  function ensureMapSvgFillsContainer() {
-    if (!mapSvg || !mapContainer) return;
-    mapSvg.style.position = 'absolute';
-    mapSvg.style.left = '0';
-    mapSvg.style.top = '0';
-    mapSvg.style.width = '100%';
-    mapSvg.style.height = '100%';
-    mapSvg.style.bottom = '0';
-    mapSvg.style.right = '0';
-    mapSvg.setAttribute('viewBox', '0 0 100 100');
-    mapSvg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-  }
-
-  // Calculate centered position for a given scale
-  function calculateCenteredPosition(targetScale) {
-    if (mapWrapper) {
-      const rect = mapWrapper.getBoundingClientRect();
-      // The map fills the wrapper at scale 1, so we can calculate the offset
-      // to center it when scaled up
-      return {
-        x: rect.width * (1 - targetScale) / 2,
-        y: rect.height * (1 - targetScale) / 2
-      };
-    }
-    return { x: 0, y: 0 };
-  }
-
-  // Fit map to viewport initially (no fixed pixel math) — reset transform to show full container
-  function fitToViewport() {
-    // With fluid sizing we start with identity scale and centered position
-    scale = 1.5;
-    const pos = calculateCenteredPosition(scale);
-    translateX = pos.x;
-    translateY = pos.y;
-    updateTransform();
-  }
-
-  window.addEventListener('resize', () => {
-    fitToViewport();
-    // realign SVG overlay after resize
-  try { ensureMapSvgFillsContainer(); } catch (e) {}
-  });
-
-  // Render configured, non-editable landmarks into the SVG landmarksGroup
-  function renderLandmarks() {
-    if (!landmarksGroup) return;
-    // remove any existing landmark tooltips to avoid leaks
-    document.querySelectorAll('.landmark-tooltip').forEach(t => t.remove());
-    landmarksGroup.innerHTML = '';
-    (configuredLandmarks || []).forEach(l => {
-      const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-      g.setAttribute('class', 'landmark-pin');
-      g.setAttribute('data-landmark-id', l.id);
-      g.setAttribute('transform', `translate(${l.mapX}, ${l.mapY})`);
-
-      // render icon: prefer inline svg markup, then image, otherwise a simple circle
-      if (l.svg && typeof l.svg === 'string') {
-        // insert raw SVG markup inside group (trusted config)
-        const wrapper = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-        wrapper.innerHTML = l.svg;
-        g.appendChild(wrapper);
-      } else if (l.iconUrl) {
-        const img = document.createElementNS('http://www.w3.org/2000/svg', 'image');
-        img.setAttribute('href', l.iconUrl);
-        img.setAttribute('x', '-3');
-        img.setAttribute('y', '-8');
-        img.setAttribute('width', '6');
-        img.setAttribute('height', '6');
-        g.appendChild(img);
-      } else {
-        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-        circle.setAttribute('cx', '0');
-        circle.setAttribute('cy', '-3');
-        circle.setAttribute('r', '0.5');
-        circle.setAttribute('fill', getLocationHex(l.type));
-        circle.setAttribute('stroke', '#fff');
-        circle.setAttribute('stroke-width', '0.2');
-        g.appendChild(circle);
-      }
-
-      landmarksGroup.appendChild(g);
-
-      // create tooltip element for this landmark (DOM) and position it over the svg group
-      const tooltip = document.createElement('div');
-      tooltip.className = 'landmark-tooltip t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
-      tooltip.style.cssText = 'position:fixed; min-width: 100px; max-width: 220px; white-space: normal; z-index: 9999; pointer-events: none;';
-      tooltip.innerHTML = `<div class="font-semibold">${l.name}</div>${l.notes ? `<div class="t-muted text-xs mt-1">${l.notes}</div>` : ''}`;
-      document.body.appendChild(tooltip);
-
-      let hideTimeout;
-
-      const showTooltipAt = () => {
-        const rect = g.getBoundingClientRect();
-        tooltip.style.left = `${rect.left + rect.width / 2}px`;
-        tooltip.style.top = `${rect.top - 8}px`;
-        tooltip.style.transform = 'translate(-50%, -100%)';
-        tooltip.style.opacity = '1';
-        tooltip.style.pointerEvents = 'auto';
-      };
-
-      g.addEventListener('mouseenter', () => {
-        clearTimeout(hideTimeout);
-        showTooltipAt();
-      });
-
-      g.addEventListener('mouseleave', () => {
-        hideTimeout = setTimeout(() => {
-          tooltip.style.opacity = '0';
-          tooltip.style.pointerEvents = 'none';
-        }, 100);
-      });
-
-      g.addEventListener('click', (e) => {
-        e.stopPropagation();
-        // toggle tooltip visibility
-        const visible = tooltip.style.opacity === '1';
-        document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
-        if (!visible) showTooltipAt();
-      });
-
-      g.addEventListener('touchstart', (e) => { e.stopPropagation(); const visible = tooltip.style.opacity === '1'; document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; }); if (!visible) showTooltipAt(); }, { passive: true });
-    });
-    // ensure svg fills container
-    try { ensureMapSvgFillsContainer(); } catch (e) {}
-  }
-
-  // Hide any open landmark tooltips when tapping/clicking outside
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
-  });
-  document.addEventListener('touchstart', () => {
-    document.querySelectorAll('.landmark-tooltip').forEach(t => { t.style.opacity = '0'; t.style.pointerEvents = 'none'; });
-  }, { passive: true });
-
-  // Build hero path from diary entries connected to locations
-  function buildHeroPath() {
-    if (!heroPath) return;
-    // diaryEntries is passed in from the server
-    const entries = (diaryEntries || []).slice();
-    // Sort chronologically by session then date
-    entries.sort((a, b) => {
-      const sA = a.session || 0;
-      const sB = b.session || 0;
-      if (sA !== sB) return sA - sB;
-      const dA = new Date(a.date || 0).getTime();
-      const dB = new Date(b.date || 0).getTime();
-      return dA - dB;
-    });
-
-    // Build ordered list of location ids from diary entries (all referenced locations)
-    const sequence = [];
-    entries.forEach(entry => {
-      const locIds = Array.isArray(entry.locationIds) ? entry.locationIds : [];
-      locIds.forEach(locId => sequence.push({ locId, entry }));
-    });
-
-    // For each referenced location, try to read the existing pin's transform (preferred),
-    // otherwise fall back to location.mapX/mapY from server data.
-    const points = [];
-    sequence.forEach(({ locId }) => {
-      const pin = document.querySelector(`[data-location-id="${locId}"]`);
-      let xPct = null, yPct = null;
-      if (pin) {
-        // Try to read SVG transform translate(x y)
-        const t = pin.getAttribute('transform') || '';
-        const m = t.match(/translate\(([^)]+)\)/);
-        if (m) {
-          const parts = m[1].trim().split(/[ ,]+/).map(Number);
-          if (parts.length >= 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
-            xPct = parts[0];
-            yPct = parts[1];
-          }
-        }
-      }
-
-      // fallback to server-side coordinates if pin not found
-      if ((xPct == null || yPct == null) && locations) {
-        const loc = locations.find(l => l.id === locId);
-        if (loc && loc.mapX != null && loc.mapY != null) {
-          xPct = Number(loc.mapX);
-          yPct = Number(loc.mapY);
-        }
-      }
-
-      if (xPct != null && yPct != null) {
-        points.push({ x: xPct, y: yPct });
-      }
-    });
-
-    // Update polyline points on existing heroPath element
-    heroPath.setAttribute('points', '');
-    if (points.length < 2) {
-      console.warn('Hero path: not enough points to build a route (need 2+).');
-      return;
-    }
-
-    // debug: print the computed points in console to help diagnose mismatches
-    console.debug('Hero path points (percent):', points);
-
-    // Draw a single simple polyline connecting the pin positions (percent coordinates within viewBox 0..100)
-    heroPath.setAttribute('points', points.map(p => `${p.x},${p.y}`).join(' '));
-  }
-
-  // Toggle visibility handler
-  if (heroPathToggleBtn) {
-    heroPathToggleBtn.addEventListener('click', () => {
-      if (!heroPath) return;
-      const hidden = heroPath.style.display === 'none' || heroPath.getAttribute('data-hidden') === 'true';
-      heroPath.style.display = hidden ? 'block' : 'none';
-      heroPath.setAttribute('data-hidden', hidden ? 'false' : 'true');
-      if (heroPathToggleText) heroPathToggleText.textContent = hidden ? 'Hide Path' : 'Show Path';
-    });
-  }
-
-  // Toggle legend visibility handler
-  if (toggleLegendBtn && mapLegend) {
-    toggleLegendBtn.addEventListener('click', () => {
-      isLegendVisible = !isLegendVisible;
-      if (isLegendVisible) {
-        mapLegend.style.opacity = '1';
-        mapLegend.style.pointerEvents = 'auto';
-        if (legendToggleText) legendToggleText.textContent = 'Hide Legend';
-      } else {
-        mapLegend.style.opacity = '0';
-        mapLegend.style.pointerEvents = 'none';
-        if (legendToggleText) legendToggleText.textContent = 'Show Legend';
-      }
-    });
-  }
-
-  // Get color for location type (returns full class string for tag styling)
-  function getLocationColor(type) {
-    switch(type) {
-      case 'city': return 'bg-blue-500 text-white';
-      case 'dungeon': return 'bg-purple-600 text-white';
-      case 'wilderness': return 'bg-green-600 text-white';
-      case 'building': return 'bg-amber-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
-  }
-  
-  // Capitalize first letter of location type for display
-  function capitalizeType(type) {
-    if (!type) return '';
-    return type.charAt(0).toUpperCase() + type.slice(1);
-  }
-
-  // Hex color mapping for SVG pins
-  function getLocationHex(type) {
-    switch(type) {
-      case 'city': return '#3b82f6'; // blue-500
-      case 'dungeon': return '#9333ea'; // purple-600
-      case 'wilderness': return '#16a34a'; // green-600
-      case 'building': return '#f59e0b'; // amber-500
-      default: return '#6b7280'; // gray-500
-    }
-  }
-
-  // Create pin element
-  function createPin(location) {
-    // Create an SVG-based pin (group) so it shares the SVG coordinate system
-    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-    g.setAttribute('class', 'location-pin');
-    g.setAttribute('data-location-id', location.id);
-    const x = location.mapX != null ? Number(location.mapX) : 50;
-    const y = location.mapY != null ? Number(location.mapY) : 50;
-    g.setAttribute('transform', `translate(${x}, ${y})`);
-
-    // Set opacity based on visited status (only for visible pins)
-    if (location.visited) {
-      g.setAttribute('opacity', VISITED_OPACITY);
-    } else {
-      g.setAttribute('opacity', UNVISITED_OPACITY);
-    }
-
-    // visual: circle above a small tip so that the provided (x,y) is the bottom-center anchor
-    const color = getLocationHex(location.type);
-    // Classic map pin: teardrop / pin shape with white outline and small white center highlight
-    const pinPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-    // symmetric teardrop whose tip sits at (0,0) and bulb extends upward (negative y)
-  // Plain, classic map pin made from a rounded head (circle) and a pointed bottom (triangle).
-  // Tip (apex) sits at (0,0) so the given translate(x,y) anchors the pin to that point.
-  const head = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-  head.setAttribute('cx', '0');
-  head.setAttribute('cy', '-1.7');
-  head.setAttribute('r', '1');
-  head.setAttribute('fill', color);
-  head.setAttribute('stroke', '#ffffff');
-  head.setAttribute('stroke-width', '0.2');
-  g.appendChild(head);
-
-  // Small triangle under the circle pointing to (0,0).
-  // Make the point smaller and fill it fully white so it reads as a precise anchor.
-  const tri = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-  // narrower base and shorter height so the tip is small
-  tri.setAttribute('d', 'M -0.3 -0.7 L 0.3 -0.7 L 0 0 Z');
-  tri.setAttribute('fill', '#ffffff');
-  tri.setAttribute('stroke', 'none');
-  g.appendChild(tri);
-
-    // Build tooltip content (DOM) as before
-    const npcs = locationNPCs[location.id] || [];
-    const entries = locationDiaryEntries[location.id] || [];
-    const libraryItems = locationLibraryEntries[location.id] || [];
-    let tooltipContent = `<div class="font-semibold mb-1"><a href="/locations/${location.id}" class="hover:underline">${location.name}</a></div>`;
-    if (npcs.length > 0) {
-      tooltipContent += `<div class="text-xs mt-1 pt-1" style="border-top:1px solid var(--border);"><div class="font-medium">NPCs:</div>`;
-      npcs.slice(0,3).forEach(npc => { tooltipContent += `<a href="/npcs/${npc.id}" class="t-link block">• ${npc.name}</a>`; });
-      if (npcs.length > 3) tooltipContent += `<div class="t-faint">+${npcs.length-3} more</div>`;
-      tooltipContent += `</div>`;
-    }
-    if (entries.length > 0) {
-      tooltipContent += `<div class="text-xs mt-1 pt-1" style="border-top:1px solid var(--border);"><div class="font-medium">Diary:</div>`;
-      entries.slice(0,2).forEach(entry => { tooltipContent += `<a href="/diary/${entry.id}" class="t-link block">• ${entry.title}</a>`; });
-      if (entries.length > 2) tooltipContent += `<div class="t-faint">+${entries.length-2} more</div>`;
-      tooltipContent += `</div>`;
-    }
-    if (libraryItems.length > 0) {
-      tooltipContent += `<div class="text-xs mt-1 pt-1" style="border-top:1px solid var(--border);"><div class="font-medium">Library:</div>`;
-      libraryItems.slice(0,2).forEach(item => { tooltipContent += `<a href="/library/${item.id}" class="t-link block">• ${item.title}</a>`; });
-      if (libraryItems.length > 2) tooltipContent += `<div class="t-faint">+${libraryItems.length-2} more</div>`;
-      tooltipContent += `</div>`;
-    }
-
-    const tooltip = document.createElement('div');
-    tooltip.className = 'pin-tooltip t-panel px-3 py-2 shadow-xl text-xs opacity-0 transition-opacity';
-    tooltip.style.cssText = 'position:fixed; min-width: 150px; max-width: 250px; white-space: normal; z-index: 9999; pointer-events: none;';
-    tooltip.innerHTML = tooltipContent;
-    document.body.appendChild(tooltip);
-
-    let hideTooltipTimeout;
-
-    const showTooltip = () => {
-      const rect = g.getBoundingClientRect();
-      tooltip.style.left = `${rect.left + rect.width/2}px`;
-      tooltip.style.top = `${rect.top - 8}px`;
-      tooltip.style.transform = 'translate(-50%, -100%)';
-      tooltip.style.opacity = '1';
-      tooltip.style.pointerEvents = 'auto';
-    };
-
-    const hideTooltip = () => {
-      hideTooltipTimeout = setTimeout(() => { tooltip.style.opacity = '0'; tooltip.style.pointerEvents = 'none'; }, 100);
-    };
-
-    g.addEventListener('mouseenter', () => { clearTimeout(hideTooltipTimeout); showTooltip(); });
-    g.addEventListener('mouseleave', () => { hideTooltip(); });
-    tooltip.addEventListener('mouseenter', () => { clearTimeout(hideTooltipTimeout); tooltip.style.opacity = '1'; tooltip.style.pointerEvents = 'auto'; });
-    tooltip.addEventListener('mouseleave', hideTooltip);
-
-    g.addEventListener('click', (e) => {
-      if (!draggedPin || !editMode) {
-        document.querySelectorAll('.location-pin').forEach(p => p.classList && p.classList.remove('pin-active'));
-        // mark as active visually via class on SVG group
-        if (g.classList) g.classList.add('pin-active');
-        showLocationDetails(location);
-      }
-    });
-
-    // Drag functionality in edit mode
-    // This handler is only attached to visible pins (visibleOnMap === true), 
-    // but only activates when editMode is enabled
-    if (canEdit) {
-      g.addEventListener('mousedown', (e) => {
-        if (editMode) {
-          e.preventDefault();
-          draggedPin = { element: g, location: location };
-          // bring to front
-          g.setAttribute('data-z', '1000');
-        }
-      });
-    }
-
-    return g;
-  }
-
-  // Render all pins
-  function renderPins() {
-    if (!pinsGroup) return;
-    // Remove any existing pin tooltips to avoid memory leaks and duplicates
-    document.querySelectorAll('.pin-tooltip').forEach(t => t.remove());
-    pinsGroup.innerHTML = '';
-    locations.forEach(location => {
-      // Only render pins that are explicitly marked as visible on map
-      // Uses strict equality (=== true) to require explicit opt-in;
-      // undefined/null/false all result in pin not being rendered (secure by default)
-      if (location.visibleOnMap === true) {
-        const pinEl = createPin(location);
-        pinsGroup.appendChild(pinEl);
-      }
-    });
-    // ensure SVG sizing
-    try { ensureMapSvgFillsContainer(); } catch (e) {}
-  }
-
-  // Show location details
-  function showLocationDetails(location) {
-    selectedLocationId = location.id;
-    
-    const detailsPanel = document.getElementById('locationDetails');
-    const detailsPlaceholder = document.getElementById('locationDetailsPlaceholder');
-    const detailsContent = document.getElementById('locationDetailsContent');
-    const detailsLocationName = document.getElementById('detailsLocationName');
-    const detailsContentDiv = document.getElementById('detailsContent');
-    const coordX = document.getElementById('coordX');
-    const coordY = document.getElementById('coordY');
-    const coordinateEditor = document.getElementById('coordinateEditor');
-    
-    // Show the panel if hidden
-    detailsPanel.classList.remove('hidden');
-    
-    // Hide placeholder, show content
-    detailsPlaceholder.classList.add('hidden');
-    detailsContent.classList.remove('hidden');
-    
-    // Set location name as clickable link
-    detailsLocationName.innerHTML = `<a href="/locations/${location.id}" class="hover:underline">${location.name}</a>`;
-    
-    // Render description as markdown
-    const renderedDescription = window.renderMarkdown ? window.renderMarkdown(location.description) : location.description;
-    
-    let html = `
-      <div class="space-y-4">
-        ${location.imageUrl ? `
-          <div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden">
-            <img 
-              src="${location.imageUrl}" 
-              alt="${location.name}"
-              class="w-full h-full object-cover"
-            />
-            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
-          </div>
-        ` : ''}
-        <div class="flex flex-wrap items-center gap-2">
-          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${getLocationColor(location.type)}">
-            ${capitalizeType(location.type)}
-          </span>
-          ${location.region ? `<span class="t-muted text-sm">📍 ${location.region}</span>` : ''}
-          ${location.visited ? `<span class="t-badge t-badge-green">✓ Visited</span>` : ''}
-        </div>
-        <div class="t-prose max-w-none">${renderedDescription}</div>
-        ${location.notes ? `<div class="t-callout p-3"><p class="t-body-text text-sm"><strong>Notes:</strong> ${location.notes}</p></div>` : ''}
-    `;
-
-    // Add NPCs
-    const npcs = locationNPCs[location.id] || [];
-    if (npcs.length > 0) {
-      html += `
-        <div class="pt-4" style="border-top:1px solid var(--border);">
-          <h3 class="t-body-text font-semibold mb-2">NPCs at this location:</h3>
-          <div class="space-y-2">
-            ${npcs.map(npc => `
-              <a href="/npcs/${npc.id}" class="t-row p-3 block">
-                <div class="flex justify-between items-start">
-                  <div>
-                    <div class="t-link font-medium">${npc.name}</div>
-                    <div class="t-muted text-sm">${npc.race} ${npc.occupation ? `• ${npc.occupation}` : ''}</div>
-                  </div>
-                  <span class="px-2 py-1 rounded text-xs font-medium ${
-                    npc.relationship === 'ally' ? 't-badge t-badge-green' :
-                    npc.relationship === 'enemy' ? 't-badge t-badge-red' :
-                    't-badge'
-                  }">
-                    ${npc.relationship}
-                  </span>
-                </div>
-              </a>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Add diary entries
-    const entries = locationDiaryEntries[location.id] || [];
-    if (entries.length > 0) {
-      html += `
-        <div class="pt-4" style="border-top:1px solid var(--border);">
-          <h3 class="t-body-text font-semibold mb-2">Diary Entries:</h3>
-          <div class="space-y-2">
-            ${entries.map(entry => `
-              <a href="/diary/${entry.id}" class="t-row p-3 block">
-                <div class="t-link font-medium">${entry.title}</div>
-                <div class="t-muted text-sm">Session ${entry.session}</div>
-              </a>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    // Add library entries
-    const libraryItems = locationLibraryEntries[location.id] || [];
-    if (libraryItems.length > 0) {
-      html += `
-        <div class="pt-4" style="border-top:1px solid var(--border);">
-          <h3 class="t-body-text font-semibold mb-2">Library Entries:</h3>
-          <div class="space-y-2">
-            ${libraryItems.map(item => `
-              <a href="/library/${item.id}" class="t-row p-3 block">
-                <div class="t-link font-medium">${item.title}</div>
-                <div class="t-muted text-sm">${item.tags && item.tags.length > 0 ? item.tags.slice(0, 3).map(tag => `#${tag}`).join(' ') : 'No tags'}</div>
-              </a>
-            `).join('')}
-          </div>
-        </div>
-      `;
-    }
-
-    html += '</div>';
-    detailsContentDiv.innerHTML = html;
-
-    if (canEdit && editMode && coordinateEditor) {
-      coordinateEditor.classList.remove('hidden');
-      if (coordX && coordY) {
-        coordX.value = location.mapX || 50;
-        coordY.value = location.mapY || 50;
-      }
-    } else if (coordinateEditor) {
-      coordinateEditor.classList.add('hidden');
-    }
-
-    // Open sidebar when location is selected
-    if (!isSidebarOpen) {
-      toggleSidebar();
-    }
-  }
-
-  // Toggle sidebar
-  function toggleSidebar() {
-    isSidebarOpen = !isSidebarOpen;
-    
-    if (isSidebarOpen) {
-      locationDetails.classList.remove('translate-x-full');
-      if (sidebarToggleText) {
-        sidebarToggleText.textContent = 'Hide Details';
-      }
-      
-      // Show backdrop on mobile
-      if (window.innerWidth < 640) {
-        sidebarBackdrop.style.display = 'block';
-        setTimeout(() => sidebarBackdrop.classList.remove('hidden'), 10);
-      }
-    } else {
-      locationDetails.classList.add('translate-x-full');
-      if (sidebarToggleText) {
-        sidebarToggleText.textContent = 'Show Details';
-      }
-      
-      // Hide backdrop on mobile
-      sidebarBackdrop.classList.add('hidden');
-      setTimeout(() => sidebarBackdrop.style.display = 'none', 300);
-    }
-  }
-
-  toggleSidebarBtn?.addEventListener('click', toggleSidebar);
-  closeSidebarBtn?.addEventListener('click', toggleSidebar);
-  sidebarBackdrop?.addEventListener('click', toggleSidebar);
-
-  // Toggle edit mode
-  toggleEditModeBtn?.addEventListener('click', () => {
-    editMode = !editMode;
-    if (editMode) {
-      editModeText.textContent = 'Disable Edit Mode';
-      mapContainer.style.cursor = 'crosshair';
-      if (selectedLocationId) {
-        coordinateEditor?.classList.remove('hidden');
-      }
-    } else {
-      editModeText.textContent = 'Enable Edit Mode';
-      mapContainer.style.cursor = 'default';
-      coordinateEditor?.classList.add('hidden');
-    }
-  });
-
-  // Drag handling
-  if (canEdit) {
-    document.addEventListener('mousemove', (e) => {
-      if (draggedPin && editMode) {
-        const rect = mapSvg.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        // Clamp values
-        const clampedX = Math.max(0, Math.min(100, x));
-        const clampedY = Math.max(0, Math.min(100, y));
-
-        // update svg group transform
-        draggedPin.element.setAttribute('transform', `translate(${clampedX}, ${clampedY})`);
-
-        // Update coordinate inputs if details panel is open
-        if (selectedLocationId === draggedPin.location.id) {
-          document.getElementById('coordX').value = clampedX.toFixed(1);
-          document.getElementById('coordY').value = clampedY.toFixed(1);
-        }
-      }
-    });
-
-    document.addEventListener('mouseup', async (e) => {
-      if (draggedPin && editMode) {
-        const rect = mapSvg.getBoundingClientRect();
-        const x = ((e.clientX - rect.left) / rect.width) * 100;
-        const y = ((e.clientY - rect.top) / rect.height) * 100;
-
-        const clampedX = Math.max(0, Math.min(100, x));
-        const clampedY = Math.max(0, Math.min(100, y));
-
-        // Save coordinates
-        await saveLocationCoordinates(draggedPin.location.id, clampedX, clampedY);
-
-        // restore z
-        draggedPin.element.removeAttribute('data-z');
-
-        // Small delay before clearing to prevent immediate click event
-        setTimeout(() => {
-          draggedPin = null;
-        }, DRAG_CLICK_DEBOUNCE_MS);
-      }
-    });
-  }
-
-  // Save coordinates
-  async function saveLocationCoordinates(locationId, x, y) {
-    try {
-      const response = await fetch(`/api/locations/${locationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          mapX: parseFloat(x.toFixed(1)),
-          mapY: parseFloat(y.toFixed(1))
-        }),
-      });
-
-      if (!response.ok) {
-        alert('Failed to save coordinates. Please try again.');
-      } else {
-        // Update local data
-        const location = locations.find(l => l.id === locationId);
-        if (location) {
-          location.mapX = parseFloat(x.toFixed(1));
-          location.mapY = parseFloat(y.toFixed(1));
-          // rebuild route after coordinates changed
-          try { buildHeroPath(); } catch (e) { /* ignore */ }
-        }
-      }
-    } catch (error) {
-      alert('An error occurred while saving coordinates.');
-    }
-  }
-
-  // Save coordinates from input fields
-  document.getElementById('saveCoordinates')?.addEventListener('click', async () => {
-    if (!selectedLocationId) return;
-    
-    const x = parseFloat(document.getElementById('coordX').value);
-    const y = parseFloat(document.getElementById('coordY').value);
-    
-    if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) {
-      alert('Please enter valid coordinates between 0 and 100.');
-      return;
-    }
-    
-    await saveLocationCoordinates(selectedLocationId, x, y);
-    
-    // Update pin position (SVG group transform)
-    const pin = document.querySelector(`[data-location-id="${selectedLocationId}"]`);
-    if (pin) {
-      pin.setAttribute('transform', `translate(${x}, ${y})`);
-    }
-    
-    // update route to reflect changed pin position
-    try { buildHeroPath(); } catch (e) {}
-
-    alert('Coordinates saved successfully!');
-  });
-
-  // Custom map upload/ localStorage removed — using built-in map image
-
-  // Zoom and pan functionality
-  let rafId = null;
-  
-  function updateTransform() {
-    // Cancel any pending animation frame to avoid stacking updates
-    if (rafId !== null) {
-      cancelAnimationFrame(rafId);
-    }
-    
-    rafId = requestAnimationFrame(() => {
-      // Apply transforms to the SVG so image, pins and path scale together in the same coordinate space
-      if (mapSvg) {
-        mapSvg.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-        mapSvg.style.transformOrigin = '0 0';
-      } else {
-        mapContainer.style.transform = `translate(${translateX}px, ${translateY}px) scale(${scale})`;
-      }
-      rafId = null;
-    });
-  }
-  
-  // Zoom button controls
-  zoomInBtn?.addEventListener('click', () => {
-    const rect = mapWrapper.getBoundingClientRect();
-    // If the pointer is over the map and we have a last pointer position, zoom toward that point.
-    const centerX = (isPointerOverMap && lastPointerX != null) ? lastPointerX : rect.width / 2;
-    const centerY = (isPointerOverMap && lastPointerY != null) ? lastPointerY : rect.height / 2;
-    
-    const newScale = Math.min(scale * 1.2, 9);
-    const scaleChange = newScale / scale;
-    translateX = centerX - (centerX - translateX) * scaleChange;
-    translateY = centerY - (centerY - translateY) * scaleChange;
-    
-    scale = newScale;
-    updateTransform();
-  });
-  
-  zoomOutBtn?.addEventListener('click', () => {
-    const rect = mapWrapper.getBoundingClientRect();
-    const centerX = (isPointerOverMap && lastPointerX != null) ? lastPointerX : rect.width / 2;
-    const centerY = (isPointerOverMap && lastPointerY != null) ? lastPointerY : rect.height / 2;
-    
-    const newScale = Math.max(scale * 0.8, 0.3);
-    const scaleChange = newScale / scale;
-    translateX = centerX - (centerX - translateX) * scaleChange;
-    translateY = centerY - (centerY - translateY) * scaleChange;
-    
-    scale = newScale;
-    updateTransform();
-  });
-  
-  resetZoomBtn?.addEventListener('click', () => {
-    scale = 1.5;
-    const pos = calculateCenteredPosition(scale);
-    translateX = pos.x;
-    translateY = pos.y;
-    updateTransform();
-  });
-
-  // Mouse wheel zoom
-  mapWrapper?.addEventListener('wheel', (e) => {
-    e.preventDefault();
-    
-    const rect = mapWrapper.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseY = e.clientY - rect.top;
-    
-    // Calculate zoom
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
-    const newScale = Math.min(Math.max(0.3, scale * delta), 9);
-    
-    // Adjust translation to zoom towards mouse position
-    const scaleChange = newScale / scale;
-    translateX = mouseX - (mouseX - translateX) * scaleChange;
-    translateY = mouseY - (mouseY - translateY) * scaleChange;
-    
-    scale = newScale;
-    updateTransform();
-  });
-
-  // Touch support for pinch zoom and pan
-  let touches = [];
-  
-  function getTouchDistance(touch1, touch2) {
-    const dx = touch1.clientX - touch2.clientX;
-    const dy = touch1.clientY - touch2.clientY;
-    return Math.sqrt(dx * dx + dy * dy);
-  }
-  
-  function getTouchCenter(touch1, touch2) {
-    return {
-      x: (touch1.clientX + touch2.clientX) / 2,
-      y: (touch1.clientY + touch2.clientY) / 2
-    };
-  }
-
-  mapWrapper?.addEventListener('touchstart', (e) => {
-    touches = Array.from(e.touches);
-    
-    // record pointer/touch for possible button-origin zoom
-    if (touches.length >= 1) {
-      const rect = mapWrapper.getBoundingClientRect();
-      lastPointerX = touches[0].clientX - rect.left;
-      lastPointerY = touches[0].clientY - rect.top;
-      isPointerOverMap = true;
-    }
-
-    if (touches.length === 2) {
-      // Start pinch zoom - prevent default to stop browser zoom
-      e.preventDefault();
-      // Disable transition during interaction for smooth performance
-      if (mapSvg) mapSvg.style.transition = 'none';
-      mapWrapper.classList.add('interacting');
-      wasPinching = true;
-      isPanning = false; // Ensure panning is disabled during pinch
-      touchStartDistance = getTouchDistance(touches[0], touches[1]);
-      touchStartScale = scale;
-      
-      const rect = mapWrapper.getBoundingClientRect();
-      const center = getTouchCenter(touches[0], touches[1]);
-      const centerX = center.x - rect.left;
-      const centerY = center.y - rect.top;
-      
-      touchStartTranslateX = translateX;
-      touchStartTranslateY = translateY;
-    } else if (touches.length === 1 && !wasPinching) {
-      // Only start pan if we weren't just pinching
-      // Disable transition during interaction for smooth performance
-      if (mapSvg) mapSvg.style.transition = 'none';
-      mapWrapper.classList.add('interacting');
-      isPanning = true;
-      startPanX = touches[0].clientX - translateX;
-      startPanY = touches[0].clientY - translateY;
-    }
-  }, { passive: false });
-
-  mapWrapper?.addEventListener('touchmove', (e) => {
-    touches = Array.from(e.touches);
-    
-    if (touches.length === 2) {
-      // Pinch zoom - prevent browser zoom
-      e.preventDefault();
-      wasPinching = true;
-      isPanning = false; // Ensure panning is disabled during pinch
-      const currentDistance = getTouchDistance(touches[0], touches[1]);
-      const distanceRatio = currentDistance / touchStartDistance;
-      
-      const newScale = Math.min(Math.max(0.3, touchStartScale * distanceRatio), 9);
-      
-      const rect = mapWrapper.getBoundingClientRect();
-      const center = getTouchCenter(touches[0], touches[1]);
-      const centerX = center.x - rect.left;
-      const centerY = center.y - rect.top;
-      
-      // Adjust translation to zoom towards center of pinch
-      const scaleChange = newScale / touchStartScale;
-      translateX = centerX - (centerX - touchStartTranslateX) * scaleChange;
-      translateY = centerY - (centerY - touchStartTranslateY) * scaleChange;
-      
-      scale = newScale;
-      updateTransform();
-    } else if (touches.length === 1 && isPanning && !wasPinching) {
-      // Only pan if we're in panning mode and weren't just pinching
-      e.preventDefault();
-      translateX = touches[0].clientX - startPanX;
-      translateY = touches[0].clientY - startPanY;
-      updateTransform();
-    }
-  }, { passive: false });
-
-  mapWrapper?.addEventListener('touchend', (e) => {
-    touches = Array.from(e.touches);
-    
-    // When going from 2 touches to 1 touch (one finger lifted during pinch)
-    if (touches.length === 1 && wasPinching) {
-      // Prevent automatic panning mode activation with the remaining finger
-      // wasPinching flag will be reset when all fingers are lifted
-      isPanning = false;
-      // Reset pan state for the remaining finger so it doesn't jump when user starts new gesture
-      startPanX = touches[0].clientX - translateX;
-      startPanY = touches[0].clientY - translateY;
-    }
-    
-    if (touches.length < 2) {
-      touchStartDistance = 0;
-    }
-    
-    if (touches.length === 0) {
-      // All fingers lifted - reset all touch states
-      isPanning = false;
-      wasPinching = false;
-      mapWrapper.classList.remove('interacting');
-      // Re-enable transition after interaction ends
-      if (mapSvg) mapSvg.style.transition = '';
-    }
-  });
-
-  mapWrapper?.addEventListener('touchcancel', (e) => {
-    touches = [];
-    touchStartDistance = 0;
-    isPanning = false;
-    wasPinching = false;
-    mapWrapper.classList.remove('interacting');
-    // Re-enable transition after interaction ends
-    if (mapSvg) mapSvg.style.transition = '';
-  });
-
-  // Track mouse/touch pointer inside the map so zoom buttons can use pointer-origin when hovering
-  mapWrapper?.addEventListener('mouseenter', (e) => {
-    isPointerOverMap = true;
-  });
-  mapWrapper?.addEventListener('mouseleave', (e) => {
-    isPointerOverMap = false;
-    lastPointerX = null;
-    lastPointerY = null;
-  });
-  mapWrapper?.addEventListener('mousemove', (e) => {
-    const rect = mapWrapper.getBoundingClientRect();
-    lastPointerX = e.clientX - rect.left;
-    lastPointerY = e.clientY - rect.top;
-  });
-
-  // Pan with mouse drag
-  mapWrapper?.addEventListener('mousedown', (e) => {
-    // Don't pan if clicking on a pin or in edit mode dragging a pin
-    if (e.target.closest('.location-pin') && editMode) {
-      return;
-    }
-    
-    isPanning = true;
-    // Disable transition during interaction for smooth performance
-    if (mapSvg) mapSvg.style.transition = 'none';
-    mapWrapper.classList.add('interacting');
-    startPanX = e.clientX - translateX;
-    startPanY = e.clientY - translateY;
-    mapWrapper.style.cursor = 'grabbing';
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (isPanning && !draggedPin) {
-      translateX = e.clientX - startPanX;
-      translateY = e.clientY - startPanY;
-      updateTransform();
-    }
-  });
-
-  document.addEventListener('mouseup', () => {
-    if (isPanning) {
-      isPanning = false;
-      mapWrapper.classList.remove('interacting');
-      // Re-enable transition after interaction ends
-      if (mapSvg) mapSvg.style.transition = '';
-      mapWrapper.style.cursor = 'grab';
-    }
-  });
-
-  // Prevent context menu on map
-  mapWrapper?.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-  });
-
-  // Initial render and setup function
   function initializeMap() {
-    // Apply configured map size and initial fitting
-    applyMapSize();
-    renderLandmarks();
-    // Render pins first so DOM elements exist, then build the hero path from actual pin positions
-    renderPins();
-    // Now that pins are in the DOM, build the hero path to follow them
-    buildHeroPath();
-    fitToViewport();
-    updateTransform(); // Apply initial transform
-  }
-  
-  // Initialize map on page load (works with both initial load and view transitions)
-  // astro:page-load fires after the page is visible and scripts are loaded
-  document.addEventListener('astro:page-load', () => {
-    initializeMap();
-  });
+    const viewport = document.getElementById('mapViewport');
+    const dataEl = document.getElementById('mapData');
+    if (!viewport || !dataEl || viewport.dataset.ready) return;
+    viewport.dataset.ready = '1';
+    const data = JSON.parse(dataEl.textContent || '{}');
 
+    const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+    const sidebar = $('locationDetails')!, backdrop = $('sidebarBackdrop')!, sidebarTitle = $('sidebarTitle')!;
+    const journeyView = $('journeyView')!, detailsView = $('detailsView')!, journeyList = $('journeyList')!;
+    const detailsContent = $('detailsContent')!, coordinateEditor = $('coordinateEditor');
+    const coordX = $<HTMLInputElement>('coordX'), coordY = $<HTMLInputElement>('coordY');
+    const tlRange = $<HTMLInputElement>('tlRange')!, tlLabel = $('tlLabel')!;
+    const tlPlayIcon = $('tlPlayIcon')!, tlPauseIcon = $('tlPauseIcon')!;
+    let sidebarOpen = false, selected: MapLocation | null = null, editMode = false;
+
+    /* ── sidebar ────────────────────────────────────────────────── */
+    function openSidebar(view: 'journey' | 'details') {
+      journeyView.classList.toggle('hidden', view !== 'journey');
+      detailsView.classList.toggle('hidden', view !== 'details');
+      sidebarTitle.innerHTML = view === 'journey' ? 'Journey' : (selected ? `<a href="/locations/${esc(selected.id)}" class="hover:underline">${esc(selected.name)}</a>` : 'Location');
+      if (!sidebarOpen) {
+        sidebarOpen = true;
+        sidebar.classList.remove('translate-x-full');
+        if (window.innerWidth < 640) { backdrop.style.display = 'block'; setTimeout(() => backdrop.classList.remove('hidden'), 10); }
+      }
+    }
+    function closeSidebar() {
+      sidebarOpen = false;
+      sidebar.classList.add('translate-x-full');
+      backdrop.classList.add('hidden'); setTimeout(() => (backdrop.style.display = 'none'), 300);
+    }
+    $('closeSidebar')?.addEventListener('click', closeSidebar);
+    backdrop.addEventListener('click', closeSidebar);
+    $('toggleJourney')?.addEventListener('click', () => (sidebarOpen && !journeyView.classList.contains('hidden')) ? closeSidebar() : openSidebar('journey'));
+
+    function renderDetails(loc: MapLocation) {
+      const npcs = data.npcsByLocation[loc.id] || [], entries = data.entriesByLocation[loc.id] || [], lib = data.libraryByLocation[loc.id] || [];
+      let html = `<div class="space-y-4">
+        ${loc.imageUrl ? `<div class="relative -mx-4 -mt-4 mb-4 h-48 overflow-hidden"><img src="${esc(loc.imageUrl)}" alt="${esc(loc.name)}" class="w-full h-full object-cover" /><div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div></div>` : ''}
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="inline-block px-3 py-1 rounded-full text-sm font-semibold shadow-sm ${typeBadge(loc.type)}">${esc(cap(loc.type))}</span>
+          ${loc.region ? `<span class="t-muted text-sm">📍 ${esc(loc.region)}</span>` : ''}
+          ${loc.visited ? `<span class="t-badge t-badge-green">✓ Visited</span>` : ''}
+        </div>
+        <div class="t-prose max-w-none">${renderMarkdown(loc.description || '')}</div>
+        ${loc.notes ? `<div class="t-callout p-3"><p class="t-body-text text-sm"><strong>Notes:</strong> ${esc(loc.notes)}</p></div>` : ''}`;
+      if (npcs.length) html += `<div class="pt-4" style="border-top:1px solid var(--border);"><h3 class="t-body-text font-semibold mb-2">NPCs at this location</h3><div class="space-y-2">${npcs.map((n: any) => `
+        <a href="/npcs/${esc(n.id)}" class="t-row p-3 block"><div class="flex justify-between items-start"><div><div class="t-link font-medium">${esc(n.name)}</div><div class="t-muted text-sm">${esc(n.race)}${n.occupation ? ` • ${esc(n.occupation)}` : ''}</div></div>
+        <span class="${n.relationship === 'ally' ? 't-badge t-badge-green' : n.relationship === 'enemy' ? 't-badge t-badge-red' : 't-badge'}">${esc(n.relationship)}</span></div></a>`).join('')}</div></div>`;
+      if (entries.length) html += `<div class="pt-4" style="border-top:1px solid var(--border);"><h3 class="t-body-text font-semibold mb-2">Diary entries</h3><div class="space-y-2">${entries.map((e: any) => `
+        <a href="/diary/${esc(e.id)}" class="t-row p-3 block"><div class="t-link font-medium">${esc(e.title)}</div><div class="t-muted text-sm">Session ${esc(String(e.session))}</div></a>`).join('')}</div></div>`;
+      if (lib.length) html += `<div class="pt-4" style="border-top:1px solid var(--border);"><h3 class="t-body-text font-semibold mb-2">Library entries</h3><div class="space-y-2">${lib.map((e: any) => `
+        <a href="/library/${esc(e.id)}" class="t-row p-3 block"><div class="t-link font-medium">${esc(e.title)}</div><div class="t-muted text-sm">${e.tags.length ? e.tags.slice(0, 3).map((t: string) => `#${esc(t)}`).join(' ') : 'No tags'}</div></a>`).join('')}</div></div>`;
+      html += '</div>';
+      detailsContent.innerHTML = html;
+      if (coordinateEditor) {
+        coordinateEditor.classList.toggle('hidden', !editMode);
+        if (coordX && coordY) { coordX.value = String(loc.mapX ?? 50); coordY.value = String(loc.mapY ?? 50); }
+      }
+    }
+
+    function renderJourney(current: Step | null, steps: Step[]) {
+      if (!steps.length) { journeyList.innerHTML = '<li class="t-faint text-sm">No stops yet. Diary entries linked to locations that are visible on the map become the party\'s journey.</li>'; return; }
+      let lastSession = -1;
+      journeyList.innerHTML = steps.map((s) => {
+        const head = s.entry.session !== lastSession ? `<li class="wm-pixel text-[10px] pt-3 pb-1" style="color:var(--gold);">SESSION ${s.entry.session}<span class="t-faint font-sans text-xs ml-2">${esc(s.entry.date)}</span></li>` : '';
+        lastSession = s.entry.session;
+        const active = current && current.index === s.index;
+        return `${head}<li><button data-step="${s.index}" class="t-row w-full text-left p-3 block ${active ? 'wm-step-active' : ''}">
+          <div class="flex items-center gap-2"><span class="wm-step-dot"></span><div class="min-w-0"><div class="t-link font-medium truncate">${esc(s.location.name)}</div><div class="t-muted text-xs truncate">${esc(s.entry.title)}</div></div></div>
+          ${s.newMembers.length ? `<div class="text-xs mt-1" style="color:var(--gold);">✦ ${esc(s.newMembers.map((id) => data.characters.find((c: any) => c.id === id)?.name).filter(Boolean).join(', '))} joined</div>` : ''}
+        </button></li>`;
+      }).join('');
+      journeyList.querySelectorAll<HTMLButtonElement>('[data-step]').forEach((b) => b.addEventListener('click', () => {
+        api.pause(); api.goToStep(Number(b.dataset.step), true);
+        if (window.innerWidth < 640) closeSidebar();
+      }));
+      const activeEl = journeyList.querySelector('.wm-step-active');
+      if (activeEl && sidebarOpen) activeEl.scrollIntoView({ block: 'nearest' });
+    }
+
+    /* ── engine ─────────────────────────────────────────────────── */
+    const api: WorldMapApi = initWorldMap(viewport, data, {
+      onSelectLocation(loc) { selected = loc; renderDetails(loc); openSidebar('details'); },
+      onStepChange(step, steps) {
+        tlRange.max = String(Math.max(0, steps.length - 1));
+        tlRange.value = String(step ? step.index : 0);
+        tlLabel.textContent = step ? `Session ${step.entry.session} · ${step.location.name} — ${step.entry.title}` : 'No journey yet — link diary entries to located places.';
+        renderJourney(step, steps);
+      },
+      async onLocationMoved(loc) {
+        try {
+          const res = await fetch(`/api/locations/${loc.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mapX: loc.mapX, mapY: loc.mapY }) });
+          if (!res.ok) alert('Failed to save coordinates. Please try again.');
+          return res.ok;
+        } catch { alert('An error occurred while saving coordinates.'); return false; }
+      },
+      onReady() { $('mapLoading')?.remove(); },
+    });
+
+    viewport.addEventListener('wm:coords', (ev: Event) => {
+      const loc = (ev as CustomEvent<MapLocation>).detail;
+      if (selected && selected.id === loc.id && coordX && coordY) { coordX.value = String(loc.mapX); coordY.value = String(loc.mapY); }
+    });
+    viewport.addEventListener('wm:playing', (ev: Event) => {
+      const on = (ev as CustomEvent<boolean>).detail;
+      tlPlayIcon.classList.toggle('hidden', on); tlPauseIcon.classList.toggle('hidden', !on);
+    });
+
+    /* ── controls ───────────────────────────────────────────────── */
+    $('zoomIn')?.addEventListener('click', () => api.zoomIn());
+    $('zoomOut')?.addEventListener('click', () => api.zoomOut());
+    $('zoomFit')?.addEventListener('click', () => api.fitWorld());
+    $('zoomParty')?.addEventListener('click', () => api.centerOnParty());
+    $('tlPrev')?.addEventListener('click', () => { api.pause(); api.prev(); });
+    $('tlNext')?.addEventListener('click', () => { api.pause(); api.next(); });
+    $('tlPlay')?.addEventListener('click', () => api.togglePlay());
+    tlRange.addEventListener('input', () => { api.pause(); api.goToStep(Number(tlRange.value), false); });
+    const speeds = [1, 2, 4];
+    $('tlSpeed')?.addEventListener('click', (ev) => {
+      const next = speeds[(speeds.indexOf(api.speed) + 1) % speeds.length];
+      api.setSpeed(next); (ev.currentTarget as HTMLElement).textContent = `${next}×`;
+    });
+    document.addEventListener('keydown', (ev) => {
+      if ((ev.target as HTMLElement)?.matches('input, textarea, select')) return;
+      if (ev.key === ' ') { ev.preventDefault(); api.togglePlay(); }
+      else if (ev.key === 'ArrowRight') { api.pause(); api.next(); }
+      else if (ev.key === 'ArrowLeft') { api.pause(); api.prev(); }
+    }, { signal: pageSignal() });
+
+    const heroPathText = $('heroPathToggleText');
+    $('toggleHeroPath')?.addEventListener('click', () => {
+      api.setTrail(!api.trailVisible);
+      if (heroPathText) heroPathText.textContent = api.trailVisible ? 'Hide Path' : 'Show Path';
+    });
+
+    const legend = $('mapLegend')!, legendText = $('legendToggleText');
+    legend.querySelectorAll<HTMLCanvasElement>('canvas[data-legend]').forEach((c) => {
+      c.getContext('2d')!.drawImage(rasterize(LOCATION_SPRITES[c.dataset.legend!]), 0, 0);
+    });
+    let legendVisible = false;
+    $('toggleLegend')?.addEventListener('click', () => {
+      legendVisible = !legendVisible;
+      legend.style.opacity = legendVisible ? '1' : '0';
+      legend.style.pointerEvents = legendVisible ? 'auto' : 'none';
+      if (legendText) legendText.textContent = legendVisible ? 'Hide Legend' : 'Show Legend';
+    });
+
+    const editText = $('editModeText');
+    $('toggleEditMode')?.addEventListener('click', () => {
+      editMode = !editMode;
+      api.setEditMode(editMode);
+      if (editText) editText.textContent = editMode ? 'Done Editing' : 'Edit Mode';
+      coordinateEditor?.classList.toggle('hidden', !editMode || !selected);
+    });
+    $('saveCoordinates')?.addEventListener('click', async () => {
+      if (!selected || !coordX || !coordY) return;
+      const x = parseFloat(coordX.value), y = parseFloat(coordY.value);
+      if (isNaN(x) || isNaN(y) || x < 0 || x > 100 || y < 0 || y > 100) { alert('Please enter valid coordinates between 0 and 100.'); return; }
+      selected.mapX = Math.round(x * 10) / 10; selected.mapY = Math.round(y * 10) / 10;
+      const res = await fetch(`/api/locations/${selected.id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ mapX: selected.mapX, mapY: selected.mapY }) });
+      if (!res.ok) { alert('Failed to save coordinates. Please try again.'); return; }
+      api.locationsChanged();
+      api.centerOnLocation(selected);
+    });
+  }
+
+  // document-level listeners are removed when navigating away (view transitions)
+  function pageSignal() {
+    const ac = new AbortController();
+    document.addEventListener('astro:before-swap', () => ac.abort(), { once: true });
+    return ac.signal;
+  }
+
+  document.addEventListener('astro:page-load', initializeMap);
 </script>
 
-<style>
-  /* Map page container */
-  #mapPageContainer {
-    position: relative;
+<style is:global>
+  @import url('https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;600&display=swap');
+
+  .wm-pixel { font-family: 'Pixelify Sans', 'Outfit', system-ui, sans-serif; letter-spacing: 0.02em; }
+
+  #mapViewport canvas { image-rendering: pixelated; image-rendering: crisp-edges; }
+  #mapViewport:active { cursor: grabbing; }
+  #mapViewport.wm-editing .wm-loc { cursor: move; }
+
+  /* world-space markers */
+  .wm-loc {
+    position: absolute; width: 16px; height: 16px; transform-origin: 50% 100%;
+    pointer-events: auto; cursor: pointer; padding: 4px; margin: -4px; box-sizing: content-box;
+  }
+  .wm-loc canvas { display: block; width: 16px; height: 16px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)); }
+  .wm-loc-unvisited canvas { opacity: 0.72; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.35)) saturate(0.55); }
+  .wm-loc-selected canvas, .wm-loc:hover canvas { filter: drop-shadow(0 0 2px #ffd36a) drop-shadow(0 1px 0 rgba(0,0,0,0.35)); opacity: 1; }
+  .wm-char { position: absolute; width: 12px; height: 16px; transform-origin: 50% 100%; pointer-events: none; }
+  .wm-char canvas { display: block; width: 12px; height: 16px; filter: drop-shadow(0 1px 0 rgba(0,0,0,0.4)); animation: wm-idle 0.9s steps(2) infinite; }
+  .wm-char-join canvas { animation: wm-join 0.9s ease-out; }
+  @keyframes wm-idle { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-1px); } }
+  @keyframes wm-join { 0% { transform: translateY(-14px) scale(0.2); opacity: 0; } 60% { transform: translateY(2px) scale(1.1); opacity: 1; } 100% { transform: translateY(0) scale(1); } }
+
+  /* screen-space labels */
+  .wm-label {
+    position: absolute; left: 0; top: 0; white-space: nowrap; display: none;
+    font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 12px; line-height: 1; padding: 2px 5px;
+    color: #f7efdd; background: rgba(12,9,6,0.72); border: 1px solid rgba(201,144,50,0.35); border-radius: 2px;
+  }
+  .wm-label-active { color: #ffd36a; background: rgba(12,9,6,0.9); border-color: #c99032; }
+  .wm-region {
+    position: absolute; left: 0; top: 0; white-space: nowrap; display: none; pointer-events: none;
+    font-family: 'Pixelify Sans', system-ui, sans-serif; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase;
+    color: #fff8e6; text-shadow: 0 1px 0 #1a1410, 1px 0 0 #1a1410, -1px 0 0 #1a1410, 0 -1px 0 #1a1410, 0 2px 6px rgba(0,0,0,0.5);
   }
 
-  /* SVG pin root: keep small by default and scale up on hover or on touch devices */
-  .location-pin {
-    transform-box: fill-box; /* ensure CSS transform uses the group's bounding box */
-    transform-origin: 50% 50%;
-    transform: scale(0.7);
-    transition: transform 0.12s ease, opacity 0.12s ease;
-    cursor: pointer;
+  /* speech bubble */
+  .wm-bubble {
+    position: absolute; left: 0; top: 0; width: 260px; max-width: calc(100% - 16px); pointer-events: auto;
+    transform: translateY(-100%) translateY(-10px); opacity: 0; visibility: hidden; transition: opacity 0.25s ease;
+    background: #fff8e6; color: #1e1408; padding: 10px 12px 8px;
+    border: 3px solid #1a1410; box-shadow: 4px 4px 0 #1a1410, inset 0 0 0 2px #c99032;
+    font-family: 'Outfit', system-ui, sans-serif;
   }
+  .wm-bubble-visible { opacity: 1; visibility: visible; }
+  .wm-bubble::after {
+    content: ''; position: absolute; left: var(--tail-x, 50%); bottom: -13px; margin-left: -8px;
+    width: 0; height: 0; border-left: 8px solid transparent; border-right: 8px solid transparent; border-top: 12px solid #1a1410;
+  }
+  .wm-bubble::before {
+    content: ''; position: absolute; left: var(--tail-x, 50%); bottom: -8px; margin-left: -5px; z-index: 1;
+    width: 0; height: 0; border-left: 5px solid transparent; border-right: 5px solid transparent; border-top: 8px solid #fff8e6;
+  }
+  .wm-bubble-below { transform: translateY(26px); }
+  .wm-bubble-below::after { bottom: auto; top: -13px; border-top: none; border-bottom: 12px solid #1a1410; }
+  .wm-bubble-below::before { bottom: auto; top: -8px; border-top: none; border-bottom: 8px solid #fff8e6; }
+  .wm-bubble-head { font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: #8d5a18; margin-bottom: 2px; }
+  .wm-bubble-title { font-family: 'Cormorant Garamond', Georgia, serif; font-style: italic; font-weight: 700; font-size: 17px; line-height: 1.15; margin-bottom: 4px; }
+  .wm-bubble-text { font-size: 12.5px; line-height: 1.4; color: #3d2e1a; margin: 0; }
+  .wm-bubble-join { font-family: 'Pixelify Sans', system-ui, sans-serif; font-size: 11px; color: #9a3412; margin-top: 6px; }
+  .wm-bubble-link { display: inline-block; margin-top: 6px; font-size: 11px; font-weight: 600; color: #8d5a18; text-decoration: underline; }
 
-  .location-pin:hover {
-    transform: scale(1.0);
-    z-index: 50;
-  }
-
-  .location-pin.pin-active {
-    transform: scale(1.15);
-    z-index: 60;
-  }
-
-  .location-pin.pin-active .pin-circle {
-    transform-box: fill-box;
-    transform-origin: 50% 50%;
-    transform: scale(1.3);
-  }
-  
-  .pin-tooltip a {
-    pointer-events: auto !important;
-  }
-
-  #mapContainer {
-    user-select: none;
-  }
-  
-  #mapWrapper {
-    position: relative;
-  }
-  
-  #mapSvg {
-    /* Hardware acceleration for smoother transforms on mobile */
-    transform: translateZ(0);
-    backface-visibility: hidden;
-  }
-  
-  /* Apply will-change only during active interactions for better performance */
-  #mapWrapper.interacting #mapSvg {
-    will-change: transform;
-  }
-
-  /* Sidebar slide-in animation */
-  #locationDetails {
-    transition: transform 0.3s ease-in-out;
-  }
-
-  /* Make pins larger on touch devices for better tap targets */
-  @media (hover: none) and (pointer: coarse) {
-    .location-pin {
-      transform: scale(1.15);
-    }
-    .location-pin:active {
-      transform: scale(1.2);
-    }
-  }
-
-  /* Mobile overlay sidebar */
-  @media (max-width: 639px) {
-    #locationDetails {
-      width: 100%;
-    }
-    
-    #sidebarBackdrop {
-      display: none;
-      opacity: 0;
-      transition: opacity 0.3s ease-in-out;
-    }
-    
-    #sidebarBackdrop:not(.hidden) {
-      opacity: 1;
-    }
-  }
-
-  /* Landmarks (non-editable) */
-  .landmark-pin { z-index: 15; }
-  .landmark-dot { box-shadow: 0 2px 6px rgba(0,0,0,0.15); }
-  .landmark-svg svg { width: 1.25rem; height: 1.25rem; display: block; }
-
-  /* Landmark tooltip */
-  .landmark-tooltip { z-index: 9999; pointer-events: none; }
-
-  /* Hero path styling (SVG) */
-  #mapSvg { z-index: 5; }
-
-  /* Map control buttons */
+  /* controls */
   .map-ctrl-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.25rem;
-    height: 2.25rem;
-    padding: 0 0.5rem;
-    background: rgba(12, 9, 6, 0.92);
-    border: 1px solid var(--border-gold);
-    border-radius: 2px;
-    color: var(--gold);
-    cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background 0.15s, border-color 0.15s, color 0.15s;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+    width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; flex: none;
+    color: #d0c4aa; background: rgba(12,9,6,0.85); border: 1px solid var(--border-gold); border-radius: 2px;
+    transition: color 0.15s, border-color 0.15s, background 0.15s;
   }
-  .map-ctrl-btn:hover {
-    background: rgba(12, 9, 6, 0.98);
-    border-color: var(--gold);
-    color: #d4a43e;
-  }
+  .map-ctrl-btn:hover { color: #ffd36a; border-color: var(--gold); background: rgba(12,9,6,0.95); }
+  .map-ctrl-btn-accent { color: #ffd36a; border-color: var(--gold); }
+  .wm-range { -webkit-appearance: none; appearance: none; height: 6px; background: linear-gradient(90deg, rgba(201,144,50,0.5), rgba(201,144,50,0.5)); border: 1px solid var(--border-gold); outline: none; }
+  .wm-range::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 18px; background: #ffd36a; border: 2px solid #1a1410; cursor: pointer; }
+  .wm-range::-moz-range-thumb { width: 14px; height: 18px; background: #ffd36a; border: 2px solid #1a1410; border-radius: 0; cursor: pointer; }
+  .wm-step-dot { width: 8px; height: 8px; flex: none; background: var(--gold); border: 2px solid #1a1410; }
+  .wm-step-active { background: var(--accent-dim); border-color: var(--gold); }
+  .wm-step-active .wm-step-dot { background: #ffd36a; box-shadow: 0 0 6px #ffd36a; }
 
-  /* Prose handled by t-prose class */
+  @media (max-width: 639px) {
+    #mapColumn { height: calc(100vh - 230px) !important; }
+    .wm-bubble { width: 220px; }
+  }
 </style>
-</Layout>

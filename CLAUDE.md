@@ -4,7 +4,7 @@
 
 A D&D companion app built with **Astro 5 + Astro DB + TailwindCSS v3 + Node adapter**.
 
-Tracks adventures, characters, NPCs, locations, quests, factions, and more. Includes optional AI features (OpenAI integration for summaries, image generation, podcast narration).
+Tracks adventures, characters, NPCs, locations, quests, factions, and more. The world map is rendered in the browser as a pixel-art tile world (see `src/lib/worldmap/` and `scripts/trace-world.mjs`). There is no AI integration.
 
 ## Tech Stack
 

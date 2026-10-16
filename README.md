@@ -10,10 +10,7 @@ A modern D&D companion app built with Astro.js and Tailwind CSS for tracking you
 - **Adventure Diary** - Document your campaign sessions with:
   - Markdown formatting support
   - Cover image uploads
-  - AI-powered summaries (optional, requires OpenAI API key or compatible service)
-  - AI-powered image generation (optional, requires OpenAI API key with DALL-E access)
-  - AI-powered podcast narration with epic, dramatic voices (optional, requires OpenAI API key)
-  - Uses deep, narrator-quality voice for all languages - perfect for great adventures
+  - Optional short summary per entry (shown as the party's speech bubble on the world map)
   - Tags for organization
   - Session numbers
   - Links to NPCs, locations, characters, and quests mentioned
@@ -143,65 +140,16 @@ npm run preview
 
 ## Configuration
 
-### AI Features (Optional)
+### World Map
 
-The app includes optional AI-powered features for diary entries. These features require an OpenAI API key (or compatible service).
+The map page renders the world of Arandor entirely in the browser as a pixel-art tile world — no map image is served.
 
-**Available AI Features:**
-- **AI Summaries** - Generate concise summaries of diary entries (2-3 sentences)
-- **AI Image Generation** - Create fantasy D&D scene illustrations using DALL-E
-- **AI Podcast Narration** - Generate EPIC narration with a deep, dramatic narrator voice perfect for legendary adventures in all languages (German/English/etc.)
+- `scripts/map-source/map.png` is the hand-drawn political map used only as the tracing source.
+- `node scripts/trace-world.mjs` converts it into `src/data/arandor-world.json` (coastlines, regions, mountains, rivers, lakes plus deterministic forests, hills and beaches). Re-run it after changing the source image.
+- `src/lib/worldmap/` holds the renderer: pixel sprites, terrain pre-render, A* routing and the journey engine.
+- Locations marked *visible on map* appear as pixel markers; diary entries linked to those locations become the party's journey. The timeline bar replays it: the party walks the routed path, members join at the session they first appear in, and a speech bubble shows the entry's summary (or the first sentences of its content).
 
-**Setup:**
-
-1. Copy `.env.example` to `.env`:
-```bash
-cp .env.example .env
-```
-
-2. Add your OpenAI API key:
-```bash
-OPENAI_API_KEY=your-api-key-here
-```
-
-3. (Optional) Configure AI models and settings:
-```bash
-# Text generation model (default: gpt-3.5-turbo)
-OPENAI_MODEL=gpt-3.5-turbo
-
-# Image generation model (default: dall-e-3)
-OPENAI_IMAGE_MODEL=dall-e-3
-
-# Image size (default: 1024x1024)
-# DALL-E 2: 256x256, 512x512, 1024x1024
-# DALL-E 3: 1024x1024, 1792x1024, 1024x1792
-OPENAI_IMAGE_SIZE=1024x1024
-
-# Image quality (default: standard)
-# Options: standard, hd (DALL-E 3 only)
-OPENAI_IMAGE_QUALITY=standard
-
-# Text-to-Speech model (default: tts-1-hd)
-OPENAI_TTS_MODEL=tts-1-hd
-
-# TTS voice for EPIC D&D narration (default: onyx for all languages)
-# If not set, uses "onyx" - an epic, deep narrator voice perfect for dramatic
-# D&D adventure narration in ALL languages (English, German, etc.)
-# Options: alloy, echo, fable, onyx, nova, shimmer
-# Recommended for EPIC narration: onyx (deep, epic), fable (storytelling)
-# For less dramatic style: alloy (clear), echo (balanced)
-# OPENAI_TTS_VOICE=onyx
-
-# TTS speed (default: 1.0)
-OPENAI_TTS_SPEED=1.0
-```
-
-**Permissions:**
-- AI summaries, image generation, and podcast narration are restricted to **Admin** and **Dungeon Master** roles
-- Generated content (summaries, images, and podcasts) is visible to all users, including logged-out visitors
-
-**Alternative Providers:**
-You can use OpenRouter, local LLMs, or other OpenAI-compatible services by setting `OPENAI_API_BASE`. See `.env.example` for examples.
+No environment variables are required beyond `ASTRO_DATABASE_FILE` for local builds.
 
 ## Deployment
 

@@ -229,18 +229,6 @@ The workflow only:
 
 ## Recent Schema Changes
 
-### Podcast Feature (December 2025)
-
-Added podcast functionality to diary entries using browser's Web Speech API.
-
-**Migration required:** No - no database changes needed.
-
-**Details:**
-- **NO database changes** - podcast feature uses client-side Web Speech API
-- **NO audio files stored** - audio is generated on-demand by the browser
-- **NO server storage or bandwidth costs** - everything runs client-side
-- Future enhancement: If pre-generated audio files are needed, would require adding a `podcastAudioUrl` column and server-side TTS implementation
-
 ## Important Notes
 
 - Migrations are idempotent - safe to run multiple times
