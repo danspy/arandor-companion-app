@@ -96,8 +96,8 @@ function isActiveLink(href: string): boolean {
 }
 ---
 
+<!-- Quick Access Buttons (only visible in PWA mode) -->
 {visibleFavoritePages.length > 0 && (
-  <!-- Quick Access Buttons (only visible in PWA mode) -->
   <div class="pwa-quick-access-container hidden-in-browser">
     <div class="pwa-quick-access-buttons">
       {visibleFavoritePages.map((page, index) => (
