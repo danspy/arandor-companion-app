@@ -1,7 +1,12 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import Button from '../components/Button.astro';
-import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User } from '@/db';
+import SessionCountdown from '../components/dashboard/SessionCountdown.astro';
+import PreviouslyOn from '../components/dashboard/PreviouslyOn.astro';
+import LoreSpark, { type LoreItem } from '../components/dashboard/LoreSpark.astro';
+import PartyRow from '../components/dashboard/PartyRow.astro';
+import { markdownExcerpt } from '../utils/markdown';
+import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User, NPC, Location } from '@/db';
 import { getUserRole } from '../lib/auth';
 
 // Dashboard is viewable by everyone, editable by dungeonmaster and admin
@@ -16,6 +21,8 @@ const libraryEntries = await db.select().from(LibraryEntry);
 const factions = await db.select().from(Faction);
 const events = await db.select().from(Event);
 const users = await db.select().from(User);
+const npcs = await db.select().from(NPC);
+const locations = await db.select().from(Location);
 
 // Get combat state
 const combatStateData = await db.select().from(CombatState);
@@ -105,6 +112,45 @@ const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
 
 const isLoggedIn = !!userRole;
 
+const latestEntry = latestEntries[0] ?? null;
+const activeCharacters = characters.filter(c => c.isActive !== false);
+
+// "Do you remember…?": a shuffled handful of NPCs, visited locations and library entries.
+const shuffle = <T,>(items: T[]): T[] => {
+  const a = items.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+const lorePool: LoreItem[] = shuffle([
+  ...npcs.map((n): LoreItem => ({
+    kind: 'NPC',
+    title: n.name,
+    subtitle: [n.race, n.occupation].filter(Boolean).join(' · '),
+    text: markdownExcerpt(n.description, 180),
+    href: `/npcs/${n.id}`,
+    imageUrl: n.avatarUrl,
+  })),
+  ...locations.filter(l => l.visited).map((l): LoreItem => ({
+    kind: 'Location',
+    title: l.name,
+    subtitle: [l.type, l.region].filter(Boolean).join(' · '),
+    text: markdownExcerpt(l.description, 180),
+    href: `/locations/${l.id}`,
+    imageUrl: l.imageUrl,
+  })),
+  ...libraryEntries.map((e): LoreItem => ({
+    kind: 'Library',
+    title: e.title,
+    subtitle: '',
+    text: markdownExcerpt(e.content, 180),
+    href: `/library/${e.id}`,
+    imageUrl: null,
+  })),
+]).slice(0, 12);
+
 // Use progressPercent directly (0-100)
 const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPercent));
 ---
@@ -169,12 +215,13 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
   )}
 
   <!-- Next Event -->
-  {isLoggedIn && nextEvent && (
+  {nextEvent && (
     <div class="t-panel p-5 mb-6">
       <div class="flex justify-between items-center mb-4">
         <h2 class="t-section-h text-xl">Next Event</h2>
-        <a href="/calendar" class="t-link">View Calendar →</a>
+        {isLoggedIn && <a href="/calendar" class="t-link">View Calendar →</a>}
       </div>
+      <SessionCountdown date={nextEvent.date} time={nextEvent.time} duration={nextEvent.duration} />
       <div class="t-inset p-4">
         <h3 class="t-body-text font-medium text-sm mb-1">{nextEvent.title}</h3>
         {nextEvent.description && <p class="t-muted text-sm mb-3">{nextEvent.description}</p>}
@@ -207,6 +254,22 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       </div>
     </div>
   )}
+
+  <!-- Previously on… + Do you remember…? -->
+  {(latestEntry || lorePool.length > 0) && (
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
+      {latestEntry && (
+        <div class={lorePool.length > 0 ? 'lg:col-span-2' : 'lg:col-span-3'}>
+          <PreviouslyOn entry={latestEntry} />
+        </div>
+      )}
+      <div class={latestEntry ? '' : 'lg:col-span-3'}>
+        <LoreSpark items={lorePool} />
+      </div>
+    </div>
+  )}
+
+  <PartyRow characters={activeCharacters} />
 
   <!-- Campaign Progress -->
   <div class="t-panel p-5 mb-6">
@@ -260,7 +323,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
     </div>
   </div>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-5 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-5 mb-6">
     <!-- Latest Diary Entries Card -->
     <div class="t-panel p-5">
       <h2 class="t-section-h text-lg mb-4">Latest Diary</h2>
@@ -278,42 +341,6 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         ))}
       </div>
       <a href="/diary" class="t-link block mt-4">View all diary →</a>
-    </div>
-
-    <!-- Party Members Card -->
-    <div class="t-panel p-5">
-      <h2 class="t-section-h text-lg mb-4">Active Characters</h2>
-      <div class="space-y-2">
-        {characters.filter(char => char.isActive !== false).map(char => (
-          <a href={`/characters/${char.id}`} class="block overflow-hidden rounded-xs cursor-pointer group" style="border:1px solid var(--border);">
-            <div class="relative h-20 overflow-hidden">
-              {char.avatarUrl ? (
-                <img
-                  src={char.avatarUrl}
-                  alt={char.name}
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-              ) : (
-                <div class="w-full h-full flex items-center justify-center" style="background:linear-gradient(135deg,rgba(201,144,50,0.25),rgba(201,144,50,0.18));">
-                  <span class="text-3xl font-bold opacity-40" style="color:var(--gold);font-family:'Cormorant Garamond',serif;">{char.name.charAt(0)}</span>
-                </div>
-              )}
-              <div class="absolute inset-0 bg-linear-to-r from-black/75 via-black/50 to-transparent"></div>
-              <div class="absolute inset-0 flex items-center px-3">
-                <div class="flex-1">
-                  <h3 class="font-bold text-white text-sm drop-shadow-lg">{char.name}</h3>
-                  <p class="text-xs text-white/80">{char.race} {char.class}</p>
-                  <div class="flex items-center gap-2 mt-1">
-                    <span class="text-xs font-medium text-white/90 bg-white/15 backdrop-blur-xs px-1.5 py-0.5 rounded-sm">Lv {char.level}</span>
-                    <span class="text-xs text-white/60">{char.player}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-        ))}
-      </div>
-      <a href="/characters" class="t-link block mt-4">View all characters →</a>
     </div>
 
     <!-- Latest Library Entries Card -->
@@ -445,7 +472,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         <div class="t-label-sm mt-1">Total Quests</div>
       </div>
       <div class="t-inset text-center p-4">
-        <div class="t-num text-4xl">{characters.filter(c => c.isActive !== false).length}</div>
+        <div class="t-num text-4xl">{activeCharacters.length}</div>
         <div class="t-label-sm mt-1">Active Characters</div>
       </div>
       <div class="t-inset text-center p-4">

@@ -1,4 +1,4 @@
-import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress } from '../src/db';
+import { db, DiaryEntry, Quest, Character, NPC, Location, User, CampaignProgress, Event } from '../src/db';
 import { hashPassword } from '../src/lib/auth';
 
 // Seeds an empty development database: npm run db:dev
@@ -204,6 +204,22 @@ export default async function seed() {
       createdAt: new Date(),
       updatedAt: new Date(),
     }
+  ]);
+
+  // An upcoming session three days from now, so the dashboard countdown has something to show.
+  const nextSession = new Date(Date.now() + 3 * 24 * 60 * 60 * 1000);
+  await db.insert(Event).values([
+    {
+      id: '1',
+      title: 'Session: Into the Undermountain',
+      description: 'The party descends beneath the Yawning Portal.',
+      date: nextSession.toISOString().slice(0, 10),
+      time: '19:00',
+      duration: 240,
+      hostId: '3',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    },
   ]);
 
   console.log('Database seeded successfully!');

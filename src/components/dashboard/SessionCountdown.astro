@@ -1,0 +1,129 @@
+---
+// Live countdown to the next session. Times are interpreted in the viewer's timezone,
+// like the rest of the calendar.
+interface Props {
+  date: string; // YYYY-MM-DD
+  time: string | null; // HH:MM
+  duration: number | null; // minutes
+}
+
+const { date, time, duration } = Astro.props;
+const start = `${date}T${time || '00:00'}`;
+---
+
+<div class="countdown t-inset p-4 mb-3" data-countdown-start={start} data-countdown-duration={duration ?? 240}>
+  <div class="countdown-badge" hidden></div>
+  <div class="countdown-units" aria-live="off">
+    {[
+      ['days', 'Days'],
+      ['hours', 'Hours'],
+      ['minutes', 'Min'],
+      ['seconds', 'Sec'],
+    ].map(([unit, label]) => (
+      <div class="countdown-unit">
+        <span class="countdown-value t-num" data-unit={unit}>–</span>
+        <span class="t-label-sm">{label}</span>
+      </div>
+    ))}
+  </div>
+</div>
+
+<style>
+  .countdown { text-align: center; }
+  .countdown-units {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.5rem;
+    max-width: 26rem;
+    margin-inline: auto;
+  }
+  .countdown-units[hidden] { display: none; }
+  .countdown-unit { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+  .countdown-value {
+    font-size: clamp(2rem, 7vw, 3rem);
+    font-variant-numeric: tabular-nums;
+    min-width: 2ch;
+  }
+  .countdown-value.tick { animation: tick 0.35s ease-out; }
+  @keyframes tick {
+    from { transform: translateY(-4px); opacity: 0.4; }
+    to   { transform: none; opacity: 1; }
+  }
+  .countdown-badge {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    padding: 0.25rem 0.9rem;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(90deg, #b45309, var(--gold));
+    box-shadow: 0 0 20px var(--accent-glow);
+    animation: pulse-glow 1.8s ease-in-out infinite;
+  }
+  .countdown-badge[hidden] { display: none; }
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 10px var(--accent-glow); transform: scale(1); }
+    50%      { box-shadow: 0 0 28px rgba(201, 144, 50, 0.6); transform: scale(1.04); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .countdown-value.tick, .countdown-badge { animation: none; }
+  }
+</style>
+
+<script>
+  let timer: ReturnType<typeof setInterval> | null = null;
+
+  function startCountdowns() {
+    if (timer) clearInterval(timer);
+    const els = [...document.querySelectorAll<HTMLElement>('[data-countdown-start]')];
+    if (els.length === 0) return;
+
+    const update = () => {
+      const now = Date.now();
+      for (const el of els) {
+        const start = new Date(el.dataset.countdownStart!).getTime();
+        const end = start + Number(el.dataset.countdownDuration) * 60_000;
+        const badge = el.querySelector('.countdown-badge') as HTMLElement;
+        const units = el.querySelector('.countdown-units') as HTMLElement;
+
+        const diff = Math.max(0, start - now);
+        const parts: Record<string, number> = {
+          days: Math.floor(diff / 86_400_000),
+          hours: Math.floor(diff / 3_600_000) % 24,
+          minutes: Math.floor(diff / 60_000) % 60,
+          seconds: Math.floor(diff / 1000) % 60,
+        };
+        for (const v of el.querySelectorAll<HTMLElement>('.countdown-value')) {
+          const text = String(parts[v.dataset.unit!]).padStart(2, '0');
+          if (v.textContent !== text) {
+            v.textContent = text;
+            v.classList.remove('tick');
+            void v.offsetWidth;
+            v.classList.add('tick');
+          }
+        }
+
+        const sameDay = new Date(start).toDateString() === new Date(now).toDateString();
+        let label = '';
+        if (now >= start && now < end) label = 'Session in progress!';
+        else if (now >= end) label = 'Session finished';
+        else if (sameDay) label = new Date(start).getHours() >= 17 ? 'Tonight!' : 'Today!';
+        badge.textContent = label;
+        badge.hidden = !label;
+        units.hidden = now >= start;
+      }
+    };
+
+    update();
+    timer = setInterval(update, 1000);
+  }
+
+  document.addEventListener('astro:page-load', startCountdowns);
+  document.addEventListener('astro:before-swap', () => {
+    if (timer) clearInterval(timer);
+    timer = null;
+  });
+</script>
