@@ -25,6 +25,8 @@ bar**:
 - **Menu** on the right opens a sheet with every page, your profile, the user admin (admins),
   *Choose bottom bar pages* and log out. Close it with the same button, a tap outside, or by
   pulling the sheet down.
+- While you scroll down the bar slides away and only a small, dimmed dice stays at the bottom;
+  the bar comes back as soon as you scroll up (or tap the dice).
 - A dark gradient behind the phone's status bar keeps the clock and battery readable.
 
 In a normal browser none of this appears: the top navigation and the dice button in the bottom
