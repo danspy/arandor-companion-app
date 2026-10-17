@@ -1,0 +1,526 @@
+---
+// Bottom bar of the installed app (standalone mode on phones and tablets only).
+// Favourite pages and the menu sit in equal slots; the floating dice button
+// (DiceFab) docks into the raised seal in the middle. "Menu" opens a sheet
+// with every page and the account actions.
+import { getCurrentUser } from '../lib/auth';
+
+interface Props {
+  currentPath: string;
+  isLoggedIn: boolean;
+  canAccessUsers: boolean;
+}
+
+const { currentPath, isLoggedIn, canAccessUsers } = Astro.props;
+
+const user = isLoggedIn ? await getCurrentUser(Astro.cookies) : null;
+const role = user?.role || 'player';
+const isDm = role === 'admin' || role === 'dungeonmaster';
+
+const ICONS: Record<string, string> = {
+  '/': 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6',
+  '/diary': 'M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253',
+  '/library': 'M8 14v3m4-3v3m4-3v3M3 21h18M3 10h18M3 7l9-4 9 4M4 10h16v11H4V10z',
+  '/characters': 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z',
+  '/npcs': 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+  '/locations': 'M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z M15 11a3 3 0 11-6 0 3 3 0 016 0z',
+  '/map': 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7',
+  '/quests': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
+  '/tools': 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z M15 12a3 3 0 11-6 0 3 3 0 016 0z',
+  '/tools/initiative': 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01',
+  '/tools/dm-screen': 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+  '/users': 'M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z',
+  profile: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z',
+  login: 'M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1',
+  logout: 'M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1',
+  edit: 'M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z',
+};
+
+const NAMES: Record<string, string> = {
+  '/': 'Home',
+  '/diary': 'Diary',
+  '/library': 'Library',
+  '/characters': 'Characters',
+  '/npcs': 'NPCs',
+  '/locations': 'Locations',
+  '/map': 'Map',
+  '/quests': 'Quests',
+  '/tools': 'Tools',
+  '/tools/initiative': 'Initiative',
+  '/tools/dm-screen': 'DM Screen',
+  '/users': 'Users',
+};
+
+function allowed(href: string): boolean {
+  if (href.startsWith('/tools') && !isLoggedIn) return false;
+  if (href === '/tools/dm-screen' && !isDm) return false;
+  if (href === '/users' && !canAccessUsers) return false;
+  return href in NAMES;
+}
+
+// The user's favourites from the profile page; Home, Diary and Map until they pick some.
+const picked = (user?.favoritePages || []).filter(allowed).slice(0, 4);
+const tabs = (picked.length ? picked : ['/', '/diary', '/map']).map((href) => ({
+  href,
+  name: NAMES[href],
+  icon: ICONS[href],
+}));
+
+// Split the slots around the dice seal. Both sides take half the bar, so the seal
+// stays centred however many favourites there are.
+const leftTabs = tabs.slice(0, Math.floor((tabs.length + 1) / 2));
+const rightTabs = tabs.slice(leftTabs.length);
+
+function isActive(href: string): boolean {
+  if (href === '/') return currentPath === '/';
+  return currentPath === href || currentPath.startsWith(href + '/');
+}
+
+const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locations', '/map', '/quests', '/tools'].filter(allowed);
+---
+
+<div class="pwa-dock-root">
+  <div id="pwaDockScrim" class="pwa-dock-scrim" hidden></div>
+
+  <div id="pwaDockSheet" class="pwa-dock-sheet" role="dialog" aria-label="Menu" hidden>
+    <div class="pwa-dock-grip" aria-hidden="true"></div>
+    <nav class="pwa-dock-grid" aria-label="All pages">
+      {sheetPages.map((href, i) => (
+        <a
+          href={href}
+          data-astro-reload={href === '/map' ? true : undefined}
+          class:list={['pwa-dock-tile', { 'is-active': isActive(href) }]}
+          aria-current={isActive(href) ? 'page' : undefined}
+          style={`--i: ${i};`}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS[href]} /></svg>
+          <span>{NAMES[href]}</span>
+        </a>
+      ))}
+    </nav>
+
+    <div class="pwa-dock-account">
+      {isLoggedIn ? (
+        <>
+          <a href="/profile" class:list={['pwa-dock-row', { 'is-active': isActive('/profile') }]}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS.profile} /></svg>
+            <span>Profile</span>
+          </a>
+          {canAccessUsers && (
+            <a href="/users" class:list={['pwa-dock-row', { 'is-active': isActive('/users') }]}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS['/users']} /></svg>
+              <span>Users</span>
+            </a>
+          )}
+          <a href="/profile#bottom-bar" class="pwa-dock-row">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS.edit} /></svg>
+            <span>Choose bottom bar pages</span>
+          </a>
+          <button type="button" id="pwaDockLogout" class="pwa-dock-row pwa-dock-row-quiet">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS.logout} /></svg>
+            <span>Log out</span>
+          </button>
+        </>
+      ) : (
+        <a href="/login" class="pwa-dock-row">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={ICONS.login} /></svg>
+          <span>Log in</span>
+        </a>
+      )}
+    </div>
+  </div>
+
+  <nav class="pwa-dock" aria-label="App">
+    <div class="pwa-dock-bar">
+      <div class="pwa-dock-side">
+      {leftTabs.map((t) => (
+        <a
+          href={t.href}
+          data-astro-reload={t.href === '/map' ? true : undefined}
+          class:list={['pwa-dock-tab', { 'is-active': isActive(t.href) }]}
+          aria-current={isActive(t.href) ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={t.icon} /></svg>
+          <span>{t.name}</span>
+        </a>
+      ))}
+
+      </div>
+
+      <div class="pwa-dock-seat" aria-hidden="true">
+        <span class="pwa-dock-notch"></span>
+        <span class="pwa-dock-seat-label">Dice</span>
+      </div>
+
+      <div class="pwa-dock-side">
+
+      {rightTabs.map((t) => (
+        <a
+          href={t.href}
+          data-astro-reload={t.href === '/map' ? true : undefined}
+          class:list={['pwa-dock-tab', { 'is-active': isActive(t.href) }]}
+          aria-current={isActive(t.href) ? 'page' : undefined}
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={t.icon} /></svg>
+          <span>{t.name}</span>
+        </a>
+      ))}
+
+      <button
+        type="button"
+        id="pwaDockMenu"
+        class="pwa-dock-tab pwa-dock-menu"
+        aria-expanded="false"
+        aria-controls="pwaDockSheet"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true">
+          <path class="pwa-dock-burger-a" d="M4 7h16" />
+          <path class="pwa-dock-burger-b" d="M4 12h16" />
+          <path class="pwa-dock-burger-c" d="M4 17h16" />
+        </svg>
+        <span class="pwa-dock-menu-label">Menu</span>
+      </button>
+      </div>
+    </div>
+  </nav>
+</div>
+
+<script>
+  function initPWADock() {
+    const menuBtn = document.getElementById('pwaDockMenu') as HTMLButtonElement | null;
+    const sheet = document.getElementById('pwaDockSheet');
+    const scrim = document.getElementById('pwaDockScrim');
+    const label = menuBtn?.querySelector('.pwa-dock-menu-label');
+    if (!menuBtn || !sheet || !scrim || menuBtn.dataset.ready) return;
+    menuBtn.dataset.ready = '1';
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let closeTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const setOpen = (open: boolean) => {
+      if (closeTimer) clearTimeout(closeTimer);
+      menuBtn.setAttribute('aria-expanded', String(open));
+      if (label) label.textContent = open ? 'Close' : 'Menu';
+      if (open) {
+        sheet.hidden = false;
+        scrim.hidden = false;
+        requestAnimationFrame(() => {
+          sheet.classList.add('is-open');
+          scrim.classList.add('is-open');
+        });
+      } else {
+        sheet.classList.remove('is-open');
+        scrim.classList.remove('is-open');
+        closeTimer = setTimeout(() => {
+          sheet.hidden = true;
+          scrim.hidden = true;
+        }, reduceMotion ? 0 : 260);
+      }
+    };
+    const isOpen = () => menuBtn.getAttribute('aria-expanded') === 'true';
+
+    menuBtn.addEventListener('click', () => setOpen(!isOpen()));
+    scrim.addEventListener('click', () => setOpen(false));
+    sheet.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && isOpen()) {
+        setOpen(false);
+        menuBtn.focus();
+      }
+    });
+    // Reaching for the dice closes the menu.
+    document.getElementById('dice-fab')?.addEventListener('pointerdown', () => isOpen() && setOpen(false));
+
+    // Pull the sheet down to close it.
+    let startY: number | null = null;
+    sheet.addEventListener('touchstart', (e) => {
+      startY = sheet.scrollTop <= 0 ? e.touches[0].clientY : null;
+    }, { passive: true });
+    sheet.addEventListener('touchmove', (e) => {
+      if (startY === null) return;
+      const dy = Math.max(0, e.touches[0].clientY - startY);
+      sheet.style.transform = dy ? `translateY(${dy}px)` : '';
+    }, { passive: true });
+    sheet.addEventListener('touchend', (e) => {
+      if (startY === null) return;
+      const dy = e.changedTouches[0].clientY - startY;
+      sheet.style.transform = '';
+      startY = null;
+      if (dy > 70) setOpen(false);
+    });
+
+    document.getElementById('pwaDockLogout')?.addEventListener('click', async () => {
+      try {
+        const res = await fetch('/api/auth/logout', { method: 'POST' });
+        if (res.ok) window.location.href = '/';
+      } catch (error) {
+        console.error('Logout failed:', error);
+      }
+    });
+  }
+
+  document.addEventListener('astro:page-load', initPWADock);
+</script>
+
+<style>
+  /* Everything here exists only in the installed app on phones and tablets. */
+  .pwa-dock-root { display: none; }
+
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    .pwa-dock-root { display: block; }
+  }
+
+  /* ── Bar ── */
+  .pwa-dock {
+    position: fixed;
+    inset: auto 0 0 0;
+    z-index: 9998;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: linear-gradient(to bottom, rgba(19, 16, 10, 0.92), #0c0906 70%);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    backdrop-filter: blur(14px) saturate(1.2);
+  }
+  /* Gilt edge that fades out towards the sides. */
+  .pwa-dock::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(201, 144, 50, 0.55) 30%, rgba(201, 144, 50, 0.55) 70%, transparent);
+  }
+  /* Page content fades out above the bar instead of running into it. */
+  .pwa-dock::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 100% 0;
+    height: 28px;
+    background: linear-gradient(to top, rgba(12, 9, 6, 0.85), transparent);
+    pointer-events: none;
+  }
+
+  .pwa-dock-bar {
+    display: grid;
+    grid-template-columns: 1fr 70px 1fr;
+    height: var(--pwa-dock-height);
+    max-width: 520px;
+    margin: 0 auto;
+    padding: 0 4px;
+  }
+
+  .pwa-dock-side {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 1fr;
+    min-width: 0;
+  }
+
+  .pwa-dock-tab {
+    position: relative;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 5px;
+    padding: 0 0 10px;
+    color: var(--text-muted);
+    background: none;
+    border: 0;
+    text-decoration: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    letter-spacing: 0;
+    line-height: 1;
+    transition: color 0.2s ease;
+  }
+  /* Long names may reach into the neighbouring slot's padding rather than be cut off. */
+  .pwa-dock-tab span { white-space: nowrap; }
+  .pwa-dock-tab svg {
+    width: 23px;
+    height: 23px;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
+  }
+  .pwa-dock-tab:active svg { transform: scale(0.82); }
+  .pwa-dock-tab:focus-visible { outline: 1px solid var(--gold); outline-offset: -4px; }
+
+  /* Current page: gold, with a lamp lit on the edge above it. */
+  .pwa-dock-tab.is-active { color: var(--gold); }
+  .pwa-dock-tab.is-active svg { filter: drop-shadow(0 0 6px rgba(201, 144, 50, 0.55)); }
+  .pwa-dock-tab.is-active::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    width: 30px;
+    height: 2px;
+    transform: translateX(-50%);
+    background: var(--gold);
+    box-shadow: 0 0 12px 2px rgba(201, 144, 50, 0.6);
+  }
+
+  /* Menu icon turns into a cross while the sheet is open. */
+  .pwa-dock-menu path { transition: transform 0.25s ease, opacity 0.2s ease; transform-origin: 12px 12px; }
+  .pwa-dock-menu[aria-expanded='true'] { color: var(--gold); }
+  .pwa-dock-menu[aria-expanded='true'] .pwa-dock-burger-a { transform: translateY(5px) rotate(45deg); }
+  .pwa-dock-menu[aria-expanded='true'] .pwa-dock-burger-b { opacity: 0; }
+  .pwa-dock-menu[aria-expanded='true'] .pwa-dock-burger-c { transform: translateY(-5px) rotate(-45deg); }
+
+  /* ── The dice seat: DiceFab's seal sits in this notch ── */
+  .pwa-dock-seat {
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 10px;
+  }
+  .pwa-dock-notch {
+    position: absolute;
+    top: -36px;
+    left: 50%;
+    width: 74px;
+    height: 74px;
+    transform: translateX(-50%);
+    clip-path: polygon(50% 0, 93.3% 25%, 93.3% 75%, 50% 100%, 6.7% 75%, 6.7% 25%);
+    background: linear-gradient(to bottom, rgba(201, 144, 50, 0.5), rgba(201, 144, 50, 0) 50%);
+  }
+  .pwa-dock-notch::after {
+    content: '';
+    position: absolute;
+    inset: 1px;
+    clip-path: inherit;
+    background: #100d08;
+  }
+  .pwa-dock-seat-label {
+    font-family: var(--font-sans);
+    font-size: 10px;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--text-muted);
+  }
+  /* Pages with their own dice roller hide the seal; the empty seat stays quiet. */
+  :global(body:has(#dice-fab-root[hidden])) .pwa-dock-seat { opacity: 0.35; }
+
+  /* ── Menu sheet ── */
+  .pwa-dock-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 9996;
+    background: rgba(5, 3, 1, 0.6);
+    -webkit-backdrop-filter: blur(3px);
+    backdrop-filter: blur(3px);
+    opacity: 0;
+    transition: opacity 0.26s ease;
+  }
+  .pwa-dock-scrim.is-open { opacity: 1; }
+  .pwa-dock-scrim[hidden], .pwa-dock-sheet[hidden] { display: none; }
+
+  .pwa-dock-sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--pwa-dock-height) + env(safe-area-inset-bottom, 0px));
+    z-index: 9997;
+    max-width: 520px;
+    max-height: calc(100dvh - var(--pwa-dock-height) - env(safe-area-inset-bottom, 0px) - env(safe-area-inset-top, 0px) - 24px);
+    margin: 0 auto;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 14px 46px;
+    background:
+      radial-gradient(120% 60% at 50% 0%, rgba(201, 144, 50, 0.10), transparent 70%),
+      #120e09;
+    border: 1px solid var(--border-gold);
+    border-bottom: 0;
+    border-radius: 14px 14px 0 0;
+    box-shadow: 0 -18px 40px rgba(0, 0, 0, 0.5);
+    transform: translateY(24px);
+    opacity: 0;
+    transition: transform 0.26s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.2s ease;
+  }
+  .pwa-dock-sheet.is-open { transform: none; opacity: 1; }
+
+  .pwa-dock-grip {
+    width: 38px;
+    height: 4px;
+    margin: 0 auto 14px;
+    border-radius: 4px;
+    background: rgba(201, 144, 50, 0.35);
+  }
+
+  .pwa-dock-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .pwa-dock-tile {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    aspect-ratio: 1.15;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    background: rgba(26, 20, 16, 0.7);
+    color: var(--text-body);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 600;
+    line-height: 1;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+  }
+  .pwa-dock-tile svg { width: 26px; height: 26px; color: var(--text-muted); transition: color 0.2s ease; }
+  .pwa-dock-tile:active { transform: scale(0.95); }
+  .pwa-dock-tile:hover { border-color: var(--border-gold); }
+  .pwa-dock-tile:focus-visible, .pwa-dock-row:focus-visible { outline: 1px solid var(--gold); outline-offset: 2px; }
+  .pwa-dock-tile.is-active {
+    border-color: rgba(201, 144, 50, 0.5);
+    background: radial-gradient(circle at 50% 35%, rgba(201, 144, 50, 0.18), rgba(26, 20, 16, 0.7) 70%);
+    color: var(--gold);
+  }
+  .pwa-dock-tile.is-active svg { color: var(--gold); }
+
+  /* Tiles deal out one after another as the sheet opens. */
+  .pwa-dock-sheet.is-open .pwa-dock-tile {
+    animation: pwa-dock-deal 0.32s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-delay: calc(var(--i) * 22ms);
+  }
+  @keyframes pwa-dock-deal {
+    from { opacity: 0; transform: translateY(10px) scale(0.94); }
+    to   { opacity: 1; transform: none; }
+  }
+
+  .pwa-dock-account {
+    margin-top: 14px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+  .pwa-dock-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    padding: 12px 6px;
+    color: var(--text-body);
+    background: none;
+    border: 0;
+    text-align: left;
+    text-decoration: none;
+    font-family: var(--font-sans);
+    font-size: 15px;
+    cursor: pointer;
+  }
+  .pwa-dock-row svg { width: 20px; height: 20px; color: var(--text-muted); flex-shrink: 0; }
+  .pwa-dock-row.is-active, .pwa-dock-row.is-active svg { color: var(--gold); }
+  .pwa-dock-row-quiet { color: var(--text-muted); }
+
+  @media (prefers-reduced-motion: reduce) {
+    .pwa-dock-sheet, .pwa-dock-scrim, .pwa-dock-tab svg, .pwa-dock-menu path { transition: none; }
+    .pwa-dock-sheet.is-open .pwa-dock-tile { animation: none; }
+  }
+</style>

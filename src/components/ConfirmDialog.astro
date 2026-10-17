@@ -57,7 +57,7 @@
     pointer-events: none;
   }
   @media (display-mode: standalone) and (max-width: 1024px) {
-    .arandor-toasts { bottom: calc(1.25rem + 56px + 12px + env(safe-area-inset-bottom, 0px)); }
+    .arandor-toasts { bottom: calc(var(--pwa-dock-height) + 48px + env(safe-area-inset-bottom, 0px)); }
   }
   .arandor-toast {
     position: static;

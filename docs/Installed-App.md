@@ -15,15 +15,20 @@ A long press on the app icon offers shortcuts to Diary, Characters and Map (Andr
 
 ## What is different in the installed app
 
-On screens up to 1024 px wide, the installed app replaces the top navigation:
+On screens up to 1024 px wide, the installed app replaces the top navigation with a **bottom
+bar**:
 
-- **Menu button** (bottom right): all pages, your profile, the user admin (admins) and
-  log out.
-- **Quick access bar** (bottom left, when logged in): up to **4 favourite pages**. Choose and
-  order them in **Profile → Favourite pages** (drag to reorder). Pages your role can't use are
-  left out.
-- **Dice button** sits above the menu button. Opening the menu closes the dice panel.
+- **Your favourite pages** on both sides: up to **4**, chosen and ordered in
+  **Profile → Bottom bar pages** (drag to reorder). Without favourites, and when logged out, the
+  bar shows Home, Diary and Map. Pages your role can't use are left out.
+- **Dice** in the middle: the gold hexagon is the dice roller (tap to open, hold for a quick d20).
+- **Menu** on the right opens a sheet with every page, your profile, the user admin (admins),
+  *Choose bottom bar pages* and log out. Close it with the same button, a tap outside, or by
+  pulling the sheet down.
 - A dark gradient behind the phone's status bar keeps the clock and battery readable.
+
+In a normal browser none of this appears: the top navigation and the dice button in the bottom
+right corner stay as they are.
 
 The app needs a connection: there is no offline mode (no service worker).
 
@@ -48,7 +53,8 @@ The manifest is `public/manifest.webmanifest`; the iOS tags are in `src/layouts/
 - Safe areas (notch, home indicator) come from `env(safe-area-inset-*)`, exposed as
   `--safe-top` and friends in `src/styles/global.css`. The main area gets bottom padding so the
   floating buttons never cover content.
-- Components: `src/components/PWAFloatingMenu.astro`, `src/components/PWAQuickAccess.astro`;
-  the dice button stacks above the menu via `--dice-fab-bottom` in `DiceFab.astro`.
+- Component: `src/components/PWADock.astro` (bar and menu sheet). In standalone mode
+  `DiceFab.astro` restyles its button as the hexagon and centres it over the bar's middle seat;
+  the bar height is `--pwa-dock-height` in `global.css`.
 - To test the installed layout in a desktop browser, use the device toolbar and emulate
   `display-mode: standalone`, or install the app on a phone and open dev.arandor.app.

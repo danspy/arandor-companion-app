@@ -26,6 +26,10 @@ What's new in the Arandor Companion App, newest first.
   modifier, Reset, and press-and-hold for an instant d20
 - 3D dice roll across the whole screen; natural 20s get sparks
 
+### Installed app
+- New bottom bar: your favourite pages, the dice as a gold seal in the middle, and a menu sheet
+  with every page. Choose the bar's pages under Profile → Bottom bar pages
+
 ### Under the hood
 - More secure logins: signed login cookies and stronger password protection
   (everyone had to log in once more)

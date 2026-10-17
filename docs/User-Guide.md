@@ -7,9 +7,10 @@ A tour of the app, page by page. What you may change depends on your role; see
 
 - **Top bar:** Diary, Library, Characters, NPCs, Locations, Map, Quests, and **Tools** when
   logged in. The key icon opens log in, or Profile / Users / Log out.
-- On phones the links move into the ☰ menu. In the [installed app](Installed-App.md) a menu
-  button and a favourites bar at the bottom replace the top bar.
-- The **dice button** (bottom right) is on every page; see [Dice](#dice).
+- On phones the links move into the ☰ menu. In the [installed app](Installed-App.md) a bottom
+  bar replaces the top bar: your favourite pages, the dice in the middle and Menu.
+- The **dice button** (bottom right; in the installed app the gold hexagon in the bottom bar) is
+  on every page; see [Dice](#dice).
 - Most pages have a large header image. DMs and admins can change it with the image button in
   the header.
 
@@ -113,5 +114,5 @@ With *reduce motion* switched on in your device settings, dice are rolled withou
 
 ## Profile (`/profile`)
 
-Your first name, profile picture, **my characters**, **favourite pages** for the installed
+Your first name, profile picture, **my characters**, **bottom bar pages** for the installed
 app, and password change. Links to the **changelog**.

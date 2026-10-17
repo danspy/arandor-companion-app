@@ -92,7 +92,8 @@ layer(base);
   --safe-top: env(safe-area-inset-top, 0px);
   --pwa-main-padding-top: max(env(safe-area-inset-top), 1rem);
   --pwa-main-padding-bottom: max(env(safe-area-inset-bottom), 1rem);
-  --pwa-floating-menu-clearance: 56px;
+  --pwa-dock-height: 64px;
+  --pwa-floating-menu-clearance: calc(var(--pwa-dock-height) + 24px);
 
   --modal-safe-top: max(env(safe-area-inset-top), 1rem);
   --modal-safe-bottom: max(env(safe-area-inset-bottom), 1rem);

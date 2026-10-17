@@ -2,8 +2,7 @@
 import '../styles/global.css';
 import { isAuthenticated, getUserRole } from '../lib/auth';
 import { ClientRouter } from 'astro:transitions';
-import PWAFloatingMenu from '../components/PWAFloatingMenu.astro';
-import PWAQuickAccess from '../components/PWAQuickAccess.astro';
+import PWADock from '../components/PWADock.astro';
 import ConfirmDialog from '../components/ConfirmDialog.astro';
 import DiceFab from '../components/DiceFab.astro';
 
@@ -272,15 +271,12 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
       </div>
     </footer>
     
-    <!-- PWA Floating Menu (only shown in standalone mode) -->
-    <PWAFloatingMenu 
+    <!-- Bottom bar of the installed app (standalone mode only) -->
+    <PWADock
       currentPath={currentPath}
       isLoggedIn={isLoggedIn}
       canAccessUsers={canAccessUsers}
     />
-    
-    <!-- PWA Quick Access Buttons (only shown in standalone mode for logged-in users) -->
-    {isLoggedIn && <PWAQuickAccess />}
 
     <ConfirmDialog />
     <!-- Floating dice roller (everyone, every page) -->
