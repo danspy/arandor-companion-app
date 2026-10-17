@@ -160,7 +160,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
         data-dndbeyond-url={character.dndbeyondUrl || ""}
       >
         <a href={`/characters/${character.id}`} class="block">
-          <div class="relative h-56 overflow-hidden">
+          <div class="relative h-64 overflow-hidden">
             <!-- Blurred background -->
             {character.avatarUrl ? (
               <>
@@ -181,10 +181,10 @@ const getOwnershipText = (character: typeof characters[0]) => {
                 <img 
                   src={character.avatarUrl} 
                   alt={character.name}
-                  class="w-32 h-32 rounded-full object-cover shadow-xl" style="border:3px solid var(--border-gold);"
+                  class="w-44 h-44 rounded-full object-cover shadow-xl" style="border:3px solid var(--border-gold);"
                 />
               ) : (
-                <div class="w-32 h-32 rounded-full flex items-center justify-center text-5xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
+                <div class="w-44 h-44 rounded-full flex items-center justify-center text-6xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
                   {character.name.charAt(0)}
                 </div>
               )}
