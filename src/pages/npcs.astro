@@ -81,7 +81,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     {npcs.map(npc => (
       <div class="npc-card t-panel overflow-hidden hover:shadow-lg transition" data-relationship={npc.relationship} data-search={`${npc.name} ${npc.race} ${npc.occupation || ''} ${npc.location || ''} ${npc.description}`.toLowerCase()}>
         <a href={`/npcs/${npc.id}`} class="block">
-          <div class="relative h-56 overflow-hidden">
+          <div class="relative h-64 overflow-hidden">
             <!-- Blurred background -->
             {npc.avatarUrl ? (
               <>
@@ -102,11 +102,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
                 <img
                   src={npc.avatarUrl}
                   alt={npc.name}
-                  class="w-32 h-32 rounded-full object-cover shadow-xl"
+                  class="w-44 h-44 rounded-full object-cover shadow-xl"
                   style="border:3px solid var(--border-gold);"
                 />
               ) : (
-                <div class="w-32 h-32 rounded-full flex items-center justify-center text-5xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
+                <div class="w-44 h-44 rounded-full flex items-center justify-center text-6xl font-bold shadow-xl" style="background:var(--bg-surface);border:3px solid var(--border-gold);color:var(--gold);font-family:'Cormorant Garamond',serif;">
                   {npc.name.charAt(0)}
                 </div>
               )}

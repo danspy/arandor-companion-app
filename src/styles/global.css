@@ -1092,6 +1092,11 @@ main h1 {
   background: linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.85) 100%);
   pointer-events: none;
 }
+/* A photo header (location pages): taller, and darkened only behind the title. */
+.t-hero-banner-photo { min-height: clamp(280px, 48vw, 480px); }
+.t-hero-banner-photo::after {
+  background: linear-gradient(to bottom, transparent 45%, rgba(0,0,0,0.45) 75%, rgba(0,0,0,0.8) 100%);
+}
 .t-hero-banner-content {
   position: relative;
   z-index: 1;
