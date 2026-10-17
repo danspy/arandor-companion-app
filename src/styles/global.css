@@ -669,21 +669,22 @@ a.t-row:hover { text-decoration: none; }
 
 /* ── Place types and NPC relationships ───────────────────────────
    Earthy colours that sit with the gold palette (used for card
-   placeholders and small tags on lists, the map and detail pages). */
-.place-bg-city       { background: radial-gradient(circle at 70% 25%, rgba(201,144,50,.45), transparent 60%), #2a1d0c; }
-.place-bg-dungeon    { background: radial-gradient(circle at 70% 25%, rgba(160,48,40,.45), transparent 60%), #1c0c0b; }
-.place-bg-wilderness { background: radial-gradient(circle at 70% 25%, rgba(110,140,70,.45), transparent 60%), #121a0c; }
-.place-bg-building   { background: radial-gradient(circle at 70% 25%, rgba(150,100,55,.45), transparent 60%), #1e140b; }
-.place-bg-other      { background: radial-gradient(circle at 70% 25%, rgba(120,105,140,.45), transparent 60%), #15121a; }
+   placeholders and small tags on lists, the map and detail pages).
+   Flat colours on purpose: no glow or gradient. */
+.place-bg-city       { background: #2a1d0c; }
+.place-bg-dungeon    { background: #1c0c0b; }
+.place-bg-wilderness { background: #121a0c; }
+.place-bg-building   { background: #1e140b; }
+.place-bg-other      { background: #15121a; }
 .place-tag { color: #fff7e6; }
 .place-tag-city       { background: rgba(141, 90, 24, .92); }
 .place-tag-dungeon    { background: rgba(122, 32, 28, .92); }
 .place-tag-wilderness { background: rgba(70, 95, 42, .92); }
 .place-tag-building   { background: rgba(110, 72, 38, .92); }
 .place-tag-other      { background: rgba(85, 72, 102, .92); }
-.rel-bg-ally    { background: radial-gradient(circle at 70% 25%, rgba(110,140,70,.45), transparent 60%), #121a0c; }
-.rel-bg-enemy   { background: radial-gradient(circle at 70% 25%, rgba(160,48,40,.45), transparent 60%), #1c0c0b; }
-.rel-bg-neutral { background: radial-gradient(circle at 70% 25%, rgba(150,100,55,.45), transparent 60%), #1e140b; }
+.rel-bg-ally    { background: #121a0c; }
+.rel-bg-enemy   { background: #1c0c0b; }
+.rel-bg-neutral { background: #1e140b; }
 .rel-tag { color: #fff7e6; }
 .rel-tag-ally    { background: rgba(70, 95, 42, .92); }
 .rel-tag-enemy   { background: rgba(122, 32, 28, .92); }
