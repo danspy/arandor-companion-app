@@ -187,6 +187,8 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
 </div>
 
 <script>
+  let keydownAbort: AbortController | null = null;
+
   function initPWADock() {
     const menuBtn = document.getElementById('pwaDockMenu') as HTMLButtonElement | null;
     const sheet = document.getElementById('pwaDockSheet');
@@ -203,6 +205,7 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
       menuBtn.setAttribute('aria-expanded', String(open));
       if (label) label.textContent = open ? 'Close' : 'Menu';
       if (open) {
+        document.documentElement.classList.remove('pwa-dock-tucked');
         sheet.hidden = false;
         scrim.hidden = false;
         requestAnimationFrame(() => {
@@ -223,14 +226,15 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
     menuBtn.addEventListener('click', () => setOpen(!isOpen()));
     scrim.addEventListener('click', () => setOpen(false));
     sheet.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    // The bar is re-rendered on every page; drop the previous page's document listener.
+    keydownAbort?.abort();
+    keydownAbort = new AbortController();
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && isOpen()) {
         setOpen(false);
         menuBtn.focus();
       }
-    });
-    // Reaching for the dice closes the menu.
-    document.getElementById('dice-fab')?.addEventListener('pointerdown', () => isOpen() && setOpen(false));
+    }, { signal: keydownAbort.signal });
 
     // Pull the sheet down to close it.
     let startY: number | null = null;
@@ -261,6 +265,44 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
   }
 
   document.addEventListener('astro:page-load', initPWADock);
+
+  // Scrolling down tucks the bar away (the dice seal stays, smaller); any scroll up brings it back.
+  const TUCKED = 'pwa-dock-tucked';
+  const root = document.documentElement;
+  let lastY = window.scrollY;
+  let ticking = false;
+  const busy = () =>
+    document.getElementById('pwaDockMenu')?.getAttribute('aria-expanded') === 'true' ||
+    document.getElementById('dice-fab')?.getAttribute('aria-expanded') === 'true';
+  const onScroll = () => {
+    ticking = false;
+    const y = window.scrollY;
+    const maxY = document.documentElement.scrollHeight - window.innerHeight;
+    const dy = y - lastY;
+    // Ignore the rubber-band bounce past the top and bottom edges on iOS.
+    if (y <= 8 || busy()) root.classList.remove(TUCKED);
+    else if (y < maxY && dy > 6) root.classList.add(TUCKED);
+    else if (y < maxY && dy < -3) root.classList.remove(TUCKED);
+    if (Math.abs(dy) > 3 || y <= 8) lastY = y;
+  };
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      ticking = true;
+      requestAnimationFrame(onScroll);
+    }
+  }, { passive: true });
+  // Reaching for the dice closes the menu and brings the bar back. (The dice button persists
+  // across page navigations, so this listens once on the document.)
+  document.addEventListener('pointerdown', (e) => {
+    if (!(e.target as Element).closest?.('#dice-fab')) return;
+    root.classList.remove(TUCKED);
+    const menuBtn = document.getElementById('pwaDockMenu');
+    if (menuBtn?.getAttribute('aria-expanded') === 'true') menuBtn.click();
+  });
+  document.addEventListener('astro:page-load', () => {
+    root.classList.remove(TUCKED);
+    lastY = window.scrollY;
+  });
 </script>
 
 <style>
@@ -276,6 +318,7 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
     position: fixed;
     inset: auto 0 0 0;
     z-index: 9998;
+    transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.3s ease;
     padding-bottom: env(safe-area-inset-bottom, 0px);
     background: linear-gradient(to bottom, rgba(19, 16, 10, 0.92), #0c0906 70%);
     -webkit-backdrop-filter: blur(14px) saturate(1.2);
@@ -296,6 +339,13 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
     inset: auto 0 100% 0;
     height: 28px;
     background: linear-gradient(to top, rgba(12, 9, 6, 0.85), transparent);
+    pointer-events: none;
+  }
+
+  /* Tucked away while scrolling down; the fade above the bar goes with it. */
+  :global(html.pwa-dock-tucked) .pwa-dock {
+    transform: translateY(calc(100% + 30px));
+    opacity: 0;
     pointer-events: none;
   }
 
@@ -521,6 +571,7 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
   .pwa-dock-row-quiet { color: var(--text-muted); }
 
   @media (prefers-reduced-motion: reduce) {
+    .pwa-dock,
     .pwa-dock-sheet, .pwa-dock-scrim, .pwa-dock-tab svg, .pwa-dock-menu path { transition: none; }
     .pwa-dock-sheet.is-open .pwa-dock-tile { animation: none; }
   }
