@@ -58,8 +58,9 @@ function allowed(href: string): boolean {
   return href in NAMES;
 }
 
-// The user's favourites from the profile page; Home, Diary and Map until they pick some.
-const picked = (user?.favoritePages || []).filter(allowed).slice(0, 4);
+// Up to 3 favourites from the profile page (2 + dice + 2 with Menu); Home, Diary and Map
+// until they pick some. Profiles saved before the limit was 3 may hold a fourth.
+const picked = (user?.favoritePages || []).filter(allowed).slice(0, 3);
 const tabs = (picked.length ? picked : ['/', '/diary', '/map']).map((href) => ({
   href,
   name: NAMES[href],

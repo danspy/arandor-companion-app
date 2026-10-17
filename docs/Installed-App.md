@@ -18,9 +18,9 @@ A long press on the app icon offers shortcuts to Diary, Characters and Map (Andr
 On screens up to 1024 px wide, the installed app replaces the top navigation with a **bottom
 bar**:
 
-- **Your favourite pages** on both sides: up to **4**, chosen and ordered in
+- **Your favourite pages** on both sides: up to **3**, chosen and ordered in
   **Profile → Bottom bar pages** (drag to reorder). Without favourites, and when logged out, the
-  bar shows Home, Diary and Map. Pages your role can't use are left out.
+  bar shows Home, Diary and Map. Profiles that saved 4 pages earlier show the first 3. Pages your role can't use are left out.
 - **Dice** in the middle: the gold hexagon is the dice roller (tap to open, hold for a quick d20).
 - **Menu** on the right opens a sheet with every page, your profile, the user admin (admins),
   *Choose bottom bar pages* and log out. Close it with the same button, a tap outside, or by
