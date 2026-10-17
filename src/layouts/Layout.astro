@@ -43,7 +43,9 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <link rel="icon" type="image/png" href="/favicon.png" sizes="32x32" />
     
     <!-- PWA Manifest -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- use-credentials: on preview/dev (password-protected) the phone must send the login
+         when fetching the manifest, otherwise the installed app opens in browser mode. -->
+    <link rel="manifest" href="/manifest.webmanifest" crossorigin="use-credentials" />
     
     <!-- Theme Colors -->
     <meta name="theme-color" content="#080603" />
