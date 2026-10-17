@@ -137,7 +137,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
             headers: { 'Content-Type': 'application/json' }
           });
         }
-        // Validate max 4 favorite pages
+        // The profile page allows 3 (the bottom bar shows 3); profiles saved earlier may hold 4
         if (favoritePages.length > 4) {
           return new Response(JSON.stringify({ error: 'You can select up to 4 favorite pages' }), {
             status: 400,

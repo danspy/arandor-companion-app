@@ -29,11 +29,11 @@ src/
     uploads/        serves uploaded files
     display.astro   full-screen player display (no main layout)
   layouts/
-    Layout.astro    page shell: head, nav, footer, page transitions, dice button, PWA menus
+    Layout.astro    page shell: head, nav, footer, page transitions, dice button, installed-app bottom bar
   components/
     dashboard/      the dashboard sections (hero, recap, party, chronicle, quests, factions, stats)
     DiceFab.astro   floating dice button and result banner
-    PWAFloatingMenu.astro, PWAQuickAccess.astro   menus of the installed app
+    PWADock.astro   bottom bar and menu of the installed app
     PageHero.astro, SceneBackdrop.astro            page header images
     ConfirmDialog.astro, Button.astro
   db/               schema.ts (tables), index.ts (connection)

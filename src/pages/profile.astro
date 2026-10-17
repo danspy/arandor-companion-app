@@ -146,9 +146,9 @@ const roleDisplay = {
           <p class="t-faint text-xs mt-1">Select the characters you play</p>
         </div>
 
-        <div>
+        <div id="bottom-bar" class="scroll-mt-24">
           <label class="t-label block mb-1">
-            Favorite Pages (PWA Quick Access)
+            Bottom bar pages (installed app)
           </label>
           <div class="space-y-3">
             <div id="selectedFavoritePages" class="space-y-2">
@@ -171,7 +171,7 @@ const roleDisplay = {
               </button>
             </div>
           </div>
-          <p class="t-faint text-xs mt-1">Select up to 4 pages for quick access in PWA mode. Drag to reorder.</p>
+          <p class="t-faint text-xs mt-1">Up to 3 pages for the bottom bar of the installed app, next to the dice and Menu. Drag to reorder.</p>
         </div>
 
         <div id="profileFormError" class="hidden text-sm" style="color:var(--danger);"></div>
@@ -826,10 +826,10 @@ const roleDisplay = {
         return;
       }
       
-      // Check max 4 pages
-      if (selectedFavoritePages.length >= 4) {
+      // The bottom bar has room for 3 pages
+      if (selectedFavoritePages.length >= 3) {
         if (profileFormError) {
-          profileFormError.textContent = 'You can select up to 4 favorite pages';
+          profileFormError.textContent = 'The bottom bar has room for 3 pages. Remove one to add another.';
           profileFormError.classList.remove('hidden');
           setTimeout(() => profileFormError.classList.add('hidden'), 3000);
         }
