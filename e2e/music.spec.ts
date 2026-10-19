@@ -98,7 +98,9 @@ test.describe('Music API', () => {
   test('visitor: site playlist is public, the rest needs login', async ({ request }) => {
     const res = await request.get('/api/music/site');
     expect(res.status()).toBe(200);
-    expect((await res.json()).playlist.isSiteDefault).toBe(true);
+    const site = (await res.json()).playlist;
+    expect(site.isSiteDefault).toBe(true);
+    expect((await request.get(`/api/music/playlists/${site.id}`)).status()).toBe(401);
     expect((await request.get('/api/music/playlists')).status()).toBe(401);
     expect((await request.post('/api/music/playlists', { data: { name: 'x' } })).status()).toBe(401);
   });

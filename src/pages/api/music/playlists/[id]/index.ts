@@ -9,6 +9,7 @@ const notFound = () => json({ error: 'Playlist not found' }, 404);
 export const GET: APIRoute = async ({ params, cookies }) => {
   try {
     const viewer = await getViewer(cookies);
+    if (!viewer) return json({ error: 'Not logged in' }, 401);
     const playlist = await loadPlaylist(params.id!);
     if (!playlist || !canView(playlist, viewer)) return notFound();
     return json({ ...playlist, canEdit: canEdit(playlist, viewer) });
