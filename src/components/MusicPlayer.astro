@@ -6,7 +6,8 @@
 
 <div id="music-root" class="music-root" transition:persist>
   <audio id="music-audio" preload="metadata"></audio>
-  <!-- YouTube's terms forbid hidden playback: the video stays visible (≥ 200×200) while a YouTube track is current -->
+  <!-- YouTube's terms forbid hidden playback: the video is visible (≥ 200×200) whenever it plays or is about to.
+       While a YouTube track is paused the tile collapses (is-idle) but keeps its iframe, so nothing reloads. -->
   <div id="music-yt-tile" class="music-yt-tile t-panel" role="region" aria-label="YouTube video" hidden>
     <div class="music-yt-head">
       <span class="t-label-sm">YouTube</span>
@@ -170,6 +171,19 @@
     background-color: var(--bg-raised);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
+  /* Paused: out of the layout and invisible, but the frame keeps its size so the player stays intact */
+  .music-yt-tile.is-idle {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 0;
+    height: 0;
+    padding: 0;
+    overflow: hidden;
+    visibility: hidden;
+    pointer-events: none;
+    box-shadow: none;
+  }
   .music-yt-head { display: flex; align-items: center; justify-content: space-between; height: 28px; padding-left: 6px; }
   /* YouTube's minimum player size is 200×200; ▾ shrinks to exactly that, never smaller or hidden */
   /* 16:9 where it fits; root max-width (100vw − 100px) minus the tile padding */
@@ -216,11 +230,17 @@
       panel.hidden = true;
       expand.setAttribute('aria-expanded', 'false');
     }
-    $('music-yt-tile')!.hidden = !s.youtubeVisible;
+    // No YouTube track: no tile. A paused YouTube track: collapsed, iframe kept (never display:none,
+    // so the player is not reloaded); shown again before playback resumes.
+    const ytTile = $('music-yt-tile')!;
+    const cur = s.queue[s.index];
+    const isYt = !!cur && cur.kind !== 'file';
+    ytTile.hidden = !isYt;
+    ytTile.classList.toggle('is-idle', isYt && !s.youtubeVisible);
+    ytTile.setAttribute('aria-hidden', String(!s.youtubeVisible));
     renderProgress(empty ? null : s);
     if (empty) return;
 
-    const cur = s.queue[s.index];
     const title = $('music-title')!;
     title.textContent = s.videoTitle ?? cur?.title ?? '';
     title.title = title.textContent;

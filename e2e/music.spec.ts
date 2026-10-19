@@ -391,7 +391,6 @@ test.describe('Music player', () => {
     const a = await frac();
     await page.waitForTimeout(1500);
     expect(await frac()).toBeGreaterThan(a);
-    await page.screenshot({ path: `${process.env.SHOT_DIR ?? '/tmp'}/minibar-${test.info().project.name}.png` });
     await page.getByRole('button', { name: 'Stop and close player' }).click();
     await expect(page.locator('#music-bar')).toBeHidden();
   });
@@ -452,6 +451,100 @@ test.describe('Music player', () => {
       expect((await ytState(page)).youtubeVisible).toBe(false);
     });
 
+    // ── Hidden while paused (YouTube's terms: only a *playing* player must be visible) ──
+    const tile = (page: import('@playwright/test').Page) => page.locator('#music-yt-tile');
+    /** Tile shown with the iframe ≥ 200×200 in view. */
+    async function expectTileShown(page: import('@playwright/test').Page) {
+      await expect(tile(page)).toBeVisible();
+      const f = page.locator('#music-yt-tile iframe');
+      await expect(f).toBeVisible();
+      const box = await f.boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(200);
+      expect(box!.height).toBeGreaterThanOrEqual(200);
+    }
+    /** Watches the real YouTube player every 25 ms and records any moment it is PLAYING (1)
+     *  while its tile or iframe is not visible at ≥ 200×200. Also counts hidden samples. */
+    async function watchHiddenPlayback(page: import('@playwright/test').Page) {
+      await page.evaluate(() => {
+        const w = window as any;
+        w.__ytWatch = { violations: [] as string[], hiddenSamples: 0, hiddenStates: [] as number[] };
+        setInterval(() => {
+          const t = document.getElementById('music-yt-tile');
+          const f = t?.querySelector('iframe');
+          if (!t || !f || !f.id) return;
+          const state = w.YT?.get?.(f.id)?.getPlayerState?.();
+          if (typeof state !== 'number') return;
+          const r = f.getBoundingClientRect(), tr = t.getBoundingClientRect();
+          const shown = !t.hidden && f.checkVisibility({ visibilityProperty: true, opacityProperty: true } as any) &&
+            r.width >= 200 && r.height >= 200 && tr.width >= 200 && tr.height >= 200;
+          if (!shown) { w.__ytWatch.hiddenSamples++; w.__ytWatch.hiddenStates.push(state); }
+          if (state === 1 && !shown) w.__ytWatch.violations.push(`${Date.now()} playing while hidden`);
+        }, 25);
+      });
+    }
+    const watchResult = (page: import('@playwright/test').Page) =>
+      page.evaluate(() => (window as any).__ytWatch as { violations: string[]; hiddenSamples: number; hiddenStates: number[] });
+
+    test('tile hides while paused and shows again before it plays', async ({ page }) => {
+      await start(page, [ytVideo]);
+      await expect(page.locator('#music-yt-tile iframe')).toBeVisible({ timeout: 20_000 });
+      await watchHiddenPlayback(page);
+      await ytPlaying(page, 1);
+      await expectTileShown(page);
+      expect((await ytState(page)).youtubeVisible).toBe(true);
+      await page.locator('#music-yt-tile iframe').evaluate((f) => { f.dataset.e2e = 'kept'; });
+
+      await page.getByRole('button', { name: 'Pause', exact: true }).click();
+      await expect(tile(page)).toBeHidden();
+      expect((await ytState(page)).youtubeVisible).toBe(false);
+      expect((await ytState(page)).playing).toBe(false);
+      // The same iframe element stays (not destroyed or reloaded)
+      await expect(page.locator('#music-yt-tile iframe[data-e2e="kept"]')).toHaveCount(1);
+      await page.waitForTimeout(1500);
+      const hidden = await watchResult(page);
+      expect(hidden.hiddenSamples).toBeGreaterThan(10);
+      expect(hidden.hiddenStates.filter((s) => s === 1)).toEqual([]);
+      const tPaused = (await ytState(page)).position;
+
+      await page.getByRole('button', { name: 'Play', exact: true }).click();
+      await expectTileShown(page);
+      await expect(page.locator('#music-yt-tile iframe[data-e2e="kept"]')).toHaveCount(1);
+      await ytPlaying(page, tPaused + 1);
+      expect((await ytState(page)).youtubeVisible).toBe(true);
+      expect((await watchResult(page)).violations).toEqual([]);
+    });
+
+    test('restored YouTube track stays hidden until play', async ({ page }) => {
+      const add = await owner.request.post(`/api/music/playlists/${playlist.id}/tracks`, { data: { youtubeUrl: 'https://youtu.be/dQw4w9WgXcQ', title: 'Never Gonna' } });
+      expect(add.status()).toBe(201);
+      const yt = await add.json();
+      try {
+        await start(page, [{ id: yt.id, kind: yt.kind, title: yt.title, ref: yt.ref }]);
+        await ytPlaying(page, 2);
+        await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+        await page.reload();
+        await page.waitForFunction(() => !!window.__music);
+        await watchHiddenPlayback(page);
+        await expect(page.locator('#music-title')).toHaveText('Never Gonna');
+        // Paused restore: the player is cued in the (hidden) tile
+        await expect(page.locator('#music-yt-tile iframe')).toHaveCount(1, { timeout: 20_000 });
+        await expect.poll(async () => (await watchResult(page)).hiddenSamples, { timeout: 20_000 }).toBeGreaterThan(10);
+        await expect(tile(page)).toBeHidden();
+        const s = await ytState(page);
+        expect(s.playing).toBe(false);
+        expect(s.youtubeVisible).toBe(false);
+
+        await page.getByRole('button', { name: 'Play', exact: true }).click();
+        await expectTileShown(page);
+        await ytPlaying(page, s.position + 1);
+        const w = await watchResult(page);
+        expect(w.violations).toEqual([]);
+        expect(w.hiddenStates.filter((x) => x === 1)).toEqual([]);
+      } finally {
+        await owner.request.delete(`/api/music/tracks/${yt.id}`);
+      }
+    });
+
     test('resumes where it was when the iframe reloads', async ({ page }) => {
       await start(page, [ytVideo]);
       await ytPlaying(page, 4);
@@ -491,6 +584,9 @@ test.describe('Music player', () => {
       expect(s.playing).toBe(false);
       expect(s.position).toBe(30);
       await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+      // Ended and paused: the tile is hidden
+      await expect(page.locator('#music-yt-tile')).toBeHidden();
+      expect(s.youtubeVisible).toBe(false);
     });
 
     test('unplayable video is skipped', async ({ page }) => {
@@ -950,7 +1046,6 @@ test.describe('DM screen music', () => {
       const t0 = await pos.textContent();
       await expect(pos).not.toHaveText(t0!, { timeout: 3000 });
       await expect(panel.locator('#dmm-dur')).toHaveText('0:20');
-      await page.screenshot({ path: `${process.env.SHOT_DIR ?? '/tmp'}/dmscreen-${test.info().project.name}.png` });
       const seek = panel.getByRole('slider', { name: 'Seek' });
       await seek.evaluate((e: HTMLInputElement) => { e.value = '10'; e.dispatchEvent(new Event('change', { bubbles: true })); });
       await expect.poll(() => page.evaluate(() => window.__music.getState().position)).toBeGreaterThanOrEqual(9.5);

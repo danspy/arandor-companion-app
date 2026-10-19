@@ -23,6 +23,12 @@ export interface MusicBackend {
   onPlaying?: (playing: boolean) => void;
   /** Title of the entry now playing inside a list track (YouTube playlist). */
   onTitle?: (title: string) => void;
+  /** YouTube only: called with true whenever the video player reports PLAYING, and with false
+   *  when it is paused, cued, ended or unstarted (not while buffering). The store keeps the
+   *  video tile visible while it plays. */
+  onActive?: (active: boolean) => void;
+  /** YouTube only: true while the video player is playing or buffering (may start playing). */
+  isActive?(): boolean;
   /** Within one track that is itself a list (YouTube playlist): go to its next/previous entry.
    *  Returns false when there is none, so the queue moves on instead. */
   nextInList?(): boolean;

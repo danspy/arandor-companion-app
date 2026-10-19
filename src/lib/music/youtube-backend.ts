@@ -1,5 +1,6 @@
 // Plays YouTube videos and YouTube playlists in a visible player inside #music-yt-tile
-// (YouTube's terms forbid hidden audio-only playback). Same MusicBackend interface as the
+// (YouTube's terms forbid hidden audio-only playback: the store shows the tile before any
+// play and whenever this backend reports PLAYING, and only hides it while idle). Same MusicBackend interface as the
 // <audio> backend; the IFrame Player API script is loaded on the first load().
 //
 // Page changes: #music-root is persisted by ClientRouter. Chromium moves it with moveBefore()
@@ -155,6 +156,8 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
       const last = !isList() || !list?.length || (player?.getPlaylistIndex() ?? 0) >= list.length - 1;
       if (last) backend.onEnded();
     }
+    // Tile visibility: a playing player must be visible; idle states let the store hide it.
+    if (alive && e.data !== S.BUFFERING) backend.onActive?.(e.data === S.PLAYING);
   }
 
   function onError(e: { data: number }) {
@@ -254,6 +257,10 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
     onTime: () => {},
     onPlaying: () => {},
     onTitle: () => {},
+    onActive: () => {},
+    isActive() {
+      return ytState === S.PLAYING || ytState === S.BUFFERING;
+    },
     async load(t, at = 0, autoplay = false) {
       finishLoad();
       track = t;

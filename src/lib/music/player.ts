@@ -20,7 +20,9 @@ export type MusicState = {
   volume: number;
   shuffle: boolean;
   repeat: 'off' | 'all' | 'one';
-  /** True while the current track is a YouTube one: its video tile is shown. */
+  /** True while the current track is a YouTube one that plays or is about to play (loading
+   *  after a play request, buffering, playing): its video tile is shown. False while paused,
+   *  cued after a restore, ended or stopped, and for file tracks. Set before any YouTube play. */
   youtubeVisible: boolean;
   /** Inside a YouTube playlist track: the title of the video playing now, else null. */
   videoTitle: string | null;
@@ -177,6 +179,13 @@ function createStore(): MusicStore {
       wantPlay = p;
       emit();
     };
+    b.onActive = (active) => {
+      if (b !== backend) return;
+      // Safety net: a playing YouTube player is never hidden, whatever path started it
+      if (active) showVideo();
+      // Idle (paused, cued, ended) and nobody asked for playback: hide the tile
+      else if (!wantPlay && state.youtubeVisible) { state.youtubeVisible = false; emit(); }
+    };
     b.onTitle = (title) => {
       if (b !== backend || state.videoTitle === title) return;
       state.videoTitle = title;
@@ -187,6 +196,12 @@ function createStore(): MusicStore {
     backend = b;
     backendKind = kind;
     return b;
+  }
+
+  function showVideo() {
+    if (backendKind !== 'youtube' || state.youtubeVisible) return;
+    state.youtubeVisible = true;
+    emit();
   }
 
   function dropBackend() {
@@ -206,7 +221,9 @@ function createStore(): MusicStore {
     state.position = at;
     state.duration = 0;
     state.videoTitle = null;
-    state.youtubeVisible = kindOf(t) === 'youtube'; // the tile must be shown before its player is built
+    // Shown (and emitted) before the player is built and told to play; a paused load (restore,
+    // next while paused) builds the player in the hidden tile.
+    state.youtubeVisible = kindOf(t) === 'youtube' && autoplay;
     mediaSession(t);
     emit();
     const b = backendFor(t);
@@ -222,6 +239,7 @@ function createStore(): MusicStore {
     }
     if (seq !== loadSeq || b !== backend) return;
     if (wantPlay) await b.play();
+    else if (autoplay) store.pause(); // paused while loading: YouTube started anyway, stop it
   }
 
   function skipBroken() {
@@ -251,6 +269,7 @@ function createStore(): MusicStore {
       // End of the queue: stay on the last track, paused at its start.
       wantPlay = false;
       state.playing = false;
+      state.youtubeVisible = false;
       state.position = 0;
       backend?.seek(0);
       emit();
@@ -341,6 +360,7 @@ function createStore(): MusicStore {
       if (!b) return void loadCurrent(true, state.position);
       wantPlay = true;
       state.playing = true;
+      if (backendKind === 'youtube') state.youtubeVisible = true; // visible before it plays
       emit();
       void b.play();
     },
@@ -348,7 +368,11 @@ function createStore(): MusicStore {
       touched = true;
       wantPlay = false;
       backend?.pause();
-      if (state.playing) { state.playing = false; emit(); }
+      let changed = state.playing;
+      state.playing = false;
+      // Hide the video only once it has stopped; while it still plays, onActive(false) hides it
+      if (state.youtubeVisible && !backend?.isActive?.()) { state.youtubeVisible = false; changed = true; }
+      if (changed) emit();
     },
     toggle() { state.playing ? store.pause() : store.play(); },
     next() {
