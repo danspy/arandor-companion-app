@@ -48,8 +48,9 @@ The entry page shows everything with a gallery viewer, previous/next session but
 
 ## Library (`/library`)
 
-- **Docs** (`/library/docs`): lore documents in Markdown with tags and an optional linked
-  location; search and tag filter.
+- **Docs** (`/library/docs`): lore documents in Markdown with tags, an optional linked
+  location and linked quests; search and tag filter. Linked quests show on the document and
+  under **From the Library** on each quest's page.
 - **Timeline** (`/library/timeline`): the history of the world by year. *Events* have a
   headline, short and full description, image, and links to sessions, documents, NPCs, places,
   characters and quests. *Labels* mark eras or jumps ("100 years later").
