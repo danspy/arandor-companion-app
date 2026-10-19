@@ -186,6 +186,7 @@ export const InitiativeTracker = sqliteTable('InitiativeTracker', {
   ac: integer('ac'), // Armor Class
   notes: text('notes'),
   creatureId: text('creatureId'), // Creature (bestiary stat block) it was added from; DM only
+  conditions: jsonArray('conditions'), // ["Poisoned", "Exhaustion 2", …] (lib/conditions.ts); everyone sees them
   isActive: bool('isActive').notNull().default(true), // Whether this entry is in current combat
   // Death saves (when HP = 0)
   deathSaveSuccesses: integer('deathSaveSuccesses').notNull().default(0), // 0-3

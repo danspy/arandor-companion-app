@@ -480,7 +480,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
   </style>
 
   <script>
-    import { toggleStatBlock } from '../../lib/statblock-panel';
+    import { COMBATANT_CHANGED_EVENT, toggleStatBlock } from '../../lib/statblock-panel';
     import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
     // Store current state
@@ -1033,8 +1033,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     
     // Update initiative preview (current and next turns)
     // Combatants added from the bestiary open their stat block in a side panel (see below)
-    const statBlockButton = (c) => c.creatureId
-      ? `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId)}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}">Stat block</button>`
+    // Every combatant opens its panel (quick edit, conditions, stat block if it has one)
+    const statBlockButton = (c) =>
+      `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId || '')}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}">${c.creatureId ? 'Stat block' : 'Edit'}</button>`;
+    const conditionChips = (c) => (c.conditions || []).length
+      ? `<div class="cond-chips mt-1">${c.conditions.map((x) => `<span class="cond-chip">${escapeHtml(x)}</span>`).join('')}</div>`
       : '';
     // HP with a damage/heal field (see lib/hp-control)
     const hpLine = (c) => c.hp === null || c.hp === undefined
@@ -1081,6 +1084,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <span class="t-muted ml-2">Init: ${currentCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${currentCombatant.type}</span>
           ${statBlockButton(currentCombatant)}
+          ${conditionChips(currentCombatant)}
           ${hpLine(currentCombatant)}
         `);
       }
@@ -1095,6 +1099,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <span class="t-muted ml-2">Init: ${nextCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${nextCombatant.type}</span>
           ${statBlockButton(nextCombatant)}
+          ${conditionChips(nextCombatant)}
           ${hpLine(nextCombatant)}
         `);
       }
@@ -1588,10 +1593,12 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     });
     wireHpControls();
     // After damage/healing (preview or panel): refresh, so a combatant at 0 shows right away
-    window.addEventListener(HP_CHANGED_EVENT, () => {
-      hpChangedAt = Date.now();
-      if (document.getElementById('initiativePreview')) loadCombatData();
-    });
+    for (const event of [HP_CHANGED_EVENT, COMBATANT_CHANGED_EVENT]) {
+      window.addEventListener(event, () => {
+        hpChangedAt = Date.now();
+        if (document.getElementById('initiativePreview')) loadCombatData();
+      });
+    }
     
     // Cleanup before navigation
     document.addEventListener('astro:before-preparation', cleanup);

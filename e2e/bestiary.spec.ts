@@ -208,6 +208,55 @@ test.describe('Bestiary on a test server', () => {
     await dm.close();
   });
 
+  test('quick edit in the side panel: fields, conditions, linking a stat block, new order', async ({ browser }) => {
+    const dm = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+    await login(dm, DM!, DM_PASSWORD!);
+    const bandit = await (await dm.request.post('/api/creatures/from-srd', { data: { key: 'bandit' } })).json();
+    const e = await (await dm.request.post('/api/initiative', { data: { name: 'Quick Edit Bandit', initiative: 15, type: 'monster', hp: 11, maxHp: 11, ac: 12 } })).json();
+    expect(e.conditions).toEqual([]);
+
+    // API: partial updates, checked; players can't use it but see conditions
+    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { conditions: ['Sleepy'] } })).status()).toBe(400);
+    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { ac: 99 } })).status()).toBe(400);
+    const player = await browser.newContext();
+    await login(player, PLAYER!, PLAYER_PASSWORD!);
+    expect((await player.request.patch(`/api/initiative/${e.id}`, { data: { ac: 1 } })).status()).toBe(403);
+
+    const page = await dm.newPage();
+    await page.goto('/tools/initiative');
+    const card = page.locator(`.initiative-card[data-entry-id="${e.id}"]`);
+    await card.locator('h3').click();
+    const panel = page.locator('.sb-panel.is-open');
+    await expect(panel.locator('.sb-panel-who')).toHaveText('Quick Edit Bandit');
+    await expect(card).toHaveClass(/is-selected/);
+
+    await panel.locator('[data-field=ac]').fill('14');
+    await panel.locator('[data-field=ac]').press('Tab');
+    await expect(card.locator('[data-ac-display]')).toHaveText('14');
+    await panel.getByRole('button', { name: 'Poisoned' }).click();
+    await expect(card.locator('[data-conditions]')).toHaveText('Poisoned');
+    await panel.locator('.cp-exhaustion select').selectOption('2');
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Exhaustion 2']);
+    const seen = (await (await player.request.get('/api/initiative')).json()).find((x: any) => x.id === e.id);
+    expect(seen.conditions).toEqual(['Poisoned', 'Exhaustion 2']);
+
+    // Link a stat block: it appears in the panel (the page reloads, the panel opens again)
+    await panel.locator('.cp-link select').selectOption(bandit.id);
+    await panel.getByRole('button', { name: 'Link' }).click();
+    await expect(page.locator('.sb-panel.is-open .sb-name')).toHaveText('Bandit');
+
+    // New initiative: new order, and the panel is back for the same combatant
+    await page.locator('.sb-panel.is-open [data-field=initiative]').fill('99');
+    await page.locator('.sb-panel.is-open [data-field=initiative]').press('Tab');
+    await expect(page.locator('.initiative-card').first()).toHaveAttribute('data-entry-id', e.id);
+    await expect(page.locator('.sb-panel.is-open .sb-panel-who')).toHaveText('Quick Edit Bandit');
+
+    await dm.request.delete(`/api/initiative/${e.id}`);
+    await dm.request.delete(`/api/creatures/${bandit.id}`);
+    await player.close();
+    await dm.close();
+  });
+
   test('linking an NPC to a stat block reaches its combatants already in the fight', async ({ browser }) => {
     const dm = await browser.newContext();
     await login(dm, DM!, DM_PASSWORD!);
@@ -328,8 +377,8 @@ test.describe('Bestiary on a test server', () => {
     await card.getByRole('button', { name: `Stat block of ${added[0].name}` }).click();
     const panel = page.locator('.sb-panel.is-open');
     await expect(panel.locator('.sb-name')).toHaveText('Goblin Warrior');
-    await expect(panel).toContainText(`${added[0].name} · stat block`);
-    await panel.getByRole('button', { name: 'Close the stat block' }).click();
+    await expect(panel.locator('.sb-panel-who')).toHaveText(added[0].name);
+    await panel.getByRole('button', { name: 'Close the panel' }).click();
     await expect(page.locator('.sb-panel.is-open')).toHaveCount(0);
 
     await card.getByLabel(`Damage or healing for ${added[0].name}`).fill('5');

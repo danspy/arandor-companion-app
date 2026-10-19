@@ -23,3 +23,5 @@ CREATE TABLE IF NOT EXISTS Creature (
   updatedAt text NOT NULL
 );
 ALTER TABLE InitiativeTracker ADD COLUMN creatureId text;
+-- Conditions per combatant, e.g. ["Poisoned", "Exhaustion 2"]
+ALTER TABLE InitiativeTracker ADD COLUMN conditions text NOT NULL DEFAULT '[]';

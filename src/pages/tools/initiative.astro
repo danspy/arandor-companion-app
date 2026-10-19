@@ -298,6 +298,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             <div 
               class:list={[
                 "initiative-card relative t-panel overflow-hidden",
+                { 'is-clickable': canEdit },
                 { 'opacity-60': !entry.isActive },
                 
                 { 'ring-2 ring-amber-500': isCurrentTurn }
@@ -306,6 +307,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               data-active-index={activeIndex}
               data-is-active={entry.isActive}
               data-entry-id={entry.id}
+              data-initiative={entry.initiative}
               data-character-id={entry.characterId || ''}
               data-can-view-hp={canViewActualHP(entry)}
               data-can-edit-hp={canEditHP(entry)}
@@ -430,6 +432,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                       </button>
                     </div>
                   )}
+                </div>
+
+                <!-- Conditions (everyone sees them; the DM sets them in the side panel) -->
+                <div class="cond-chips mt-1.5" data-conditions aria-label="Conditions">
+                  {((entry as any).conditions ?? []).map((c: string) => <span class="cond-chip">{c}</span>)}
                 </div>
 
                 <!-- Notes (if present, shown below) -->
@@ -1444,6 +1451,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     }
                   }
                   
+                  // Conditions; a new initiative changes the order: reload
+                  window.arandorRenderConditions?.(card, entry.conditions || []);
+                  if (String(entry.initiative) !== card.getAttribute('data-initiative')) {
+                    window.location.reload();
+                    return;
+                  }
+
                   // Update active status
                   card.setAttribute('data-is-active', entry.isActive);
                   if (entry.isActive) {
@@ -1917,6 +1931,13 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 }
               }
               
+              // Conditions; a new initiative changes the order: reload
+              window.arandorRenderConditions?.(card, entry.conditions || []);
+              if (String(entry.initiative) !== card.getAttribute('data-initiative')) {
+                window.location.reload();
+                return;
+              }
+
               // Update active status
               card.setAttribute('data-is-active', entry.isActive);
               if (entry.isActive) {
@@ -2108,7 +2129,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
   <script>
     // Bestiary in combat: stat block panel, damage/heal, adding creatures and statted NPCs.
     // Delegated handlers, so they keep working when the tracker script redraws cards.
-    import { toggleStatBlock } from '../../lib/statblock-panel';
+    import { COMBATANT_CHANGED_EVENT, PANEL_CLOSED_EVENT, openCombatant, openCombatantId, toggleCombatant, toggleStatBlock, type Combatant } from '../../lib/statblock-panel';
     import { openQuickAdd } from '../../lib/quick-add';
     import { HP_CHANGED_EVENT, formatHp, wireHpControls, type HpEntry } from '../../lib/hp-control';
 
@@ -2118,8 +2139,44 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       wired = true;
       wireHpControls();
       document.addEventListener('click', (e) => {
-        const sb = (e.target as HTMLElement).closest<HTMLButtonElement>('.statblock-btn');
-        if (sb) void toggleStatBlock(sb.dataset.creatureId!, sb.dataset.name!, sb.dataset.entryId);
+        const target = e.target as HTMLElement;
+        const sb = target.closest<HTMLButtonElement>('.statblock-btn');
+        if (sb) return void toggleStatBlock(sb.dataset.creatureId!, sb.dataset.name!, sb.dataset.entryId);
+        // DM: a click on a combatant's row (not on its buttons or fields) opens its panel
+        const card = target.closest<HTMLElement>('.initiative-card.is-clickable');
+        if (card && !target.closest('button, a, input, select, textarea, label')) {
+          void toggleCombatant(card.dataset.entryId!).then(markSelected);
+        }
+      });
+      // Changes from the quick edit: show them on the card; a new order needs a reload
+      window.addEventListener(COMBATANT_CHANGED_EVENT, (e) => {
+        const { entry, changed } = (e as CustomEvent<{ entry: Combatant; changed: string[] }>).detail;
+        if (changed.some((k) => k === 'initiative' || k === 'isActive')) return window.location.reload();
+        const card = document.querySelector<HTMLElement>(`.initiative-card[data-entry-id="${CSS.escape(entry.id)}"]`);
+        if (!card) return;
+        const hp = card.querySelector<HTMLElement>('[data-hp-display]');
+        if (hp && (changed.includes('hp') || changed.includes('maxHp') || changed.includes('tempHp'))) {
+          if (entry.hp === 0 || /^0(\/|$)/.test(hp.textContent!.trim())) return window.location.reload();
+          hp.textContent = formatHp(entry);
+        }
+        const ac = card.querySelector<HTMLElement>('[data-ac-display]');
+        if (ac) ac.textContent = entry.ac !== null ? String(entry.ac) : '-';
+        const notes = card.querySelector<HTMLElement>('[data-notes-display]');
+        if (notes) {
+          notes.textContent = entry.notes ?? '';
+          notes.parentElement?.classList.toggle('hidden', !entry.notes);
+        }
+        renderConditions(card, entry.conditions);
+        if (changed.includes('creatureId')) window.location.reload();
+      });
+      window.addEventListener(PANEL_CLOSED_EVENT, markSelected);
+      // The panel survives reloads (new order, other screens): open again for the same combatant
+      window.addEventListener('pagehide', () => {
+        const id = openCombatantId();
+        try {
+          if (id) sessionStorage.setItem('arandor-open-combatant', id);
+          else sessionStorage.removeItem('arandor-open-combatant');
+        } catch { /* private mode */ }
       });
       // After damage or healing (here or in the stat block panel): show the new HP on the card
       window.addEventListener(HP_CHANGED_EVENT, (e) => {
@@ -2146,7 +2203,29 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       });
     }
 
-    document.addEventListener('astro:page-load', wireBestiary);
+    function renderConditions(card: Element, conditions: string[]) {
+      const box = card.querySelector<HTMLElement>('[data-conditions]');
+      if (!box || box.dataset.list === conditions.join('|')) return;
+      box.dataset.list = conditions.join('|');
+      box.replaceChildren(...conditions.map((c) => Object.assign(document.createElement('span'), { className: 'cond-chip', textContent: c })));
+    }
+    // The tracker's refresh loops (main script) update condition tags through this
+    (window as any).arandorRenderConditions = renderConditions;
+
+    function markSelected() {
+      const id = openCombatantId();
+      document.querySelectorAll('.initiative-card').forEach((c) => c.classList.toggle('is-selected', (c as HTMLElement).dataset.entryId === id));
+    }
+
+    document.addEventListener('astro:page-load', () => {
+      wireBestiary();
+      let reopen: string | null = null;
+      try {
+        reopen = sessionStorage.getItem('arandor-open-combatant');
+        sessionStorage.removeItem('arandor-open-combatant');
+      } catch { /* private mode */ }
+      if (reopen && document.querySelector(`.initiative-card.is-clickable[data-entry-id="${CSS.escape(reopen)}"]`)) void openCombatant(reopen).then(markSelected);
+    });
   </script>
 
 </Layout>

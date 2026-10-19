@@ -31,8 +31,17 @@ All are reached through **Tools** in the menu (shown when logged in).
 - **Damage / Heal:** type a number next to a combatant's HP and press **−** (or Enter) for
   damage, **+** for healing. Damage takes temp HP first, then HP, down to 0; healing goes up to
   max HP and clears death saves. Characters' records follow.
-- **Stat block** (book icon) on combatants added from the bestiary: opens their stat block in
-  a panel at the right (on wide screens next to the list), with working roll buttons.
+- **Side panel:** click a combatant's row to open its panel at the right (on wide screens next
+  to the list; the book icon does the same for combatants with a stat block). It holds:
+  - **quick edit:** initiative, AC, HP, max HP, temp HP, in combat, DM notes; each field is
+    saved as soon as you leave it (a new initiative re-sorts the list and the panel opens again);
+  - **damage / heal**;
+  - **conditions:** Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Invisible,
+    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious, Concentration, and
+    Exhaustion 1–6. They show as tags on the row for everyone, players included;
+  - the **stat block** with working roll buttons, or *Link a stat block from the bestiary* for a
+    combatant without one.
+  The pencil still opens the full edit dialog (name, type, linked character …).
 - **Sync HP** from D&D Beyond for all characters. While combat is active this also happens
   automatically every 10 seconds; see [D&D Beyond sync](DnD-Beyond-Sync.md). With the tracker
   and the DM screen both open, they share one sync instead of each asking D&D Beyond.
@@ -128,8 +137,8 @@ about 2 seconds.
   new place and size, and new ones rise in last. Portraits and the place name also glide (never
   jump) when the location, timer or turn order appears or goes.
 - **Turn preview:** the current and next combatant show their HP with a **damage / heal**
-  field, and a **Stat block** link when they came from the bestiary. The stat block panel shows
-  that combatant's HP with the same field at the top.
+  field and their conditions, and a link to their side panel (*Stat block*, or *Edit* without one)
+  with the same quick edit as in the tracker.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server

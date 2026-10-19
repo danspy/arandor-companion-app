@@ -4,6 +4,7 @@ import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 import { getEntries, ownedCharacters, preserveTurn, redactEntry, setCombatState } from '../../../lib/combat';
 import { creatureIdForNpcName } from '../../../lib/creature-links';
+import { cleanConditions } from '../../../lib/conditions';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
@@ -79,6 +80,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
       creatureId,
+      conditions: cleanConditions(body.conditions) ?? [],
       isActive: body.isActive !== undefined ? body.isActive : true,
       deathSaveSuccesses: 0,
       deathSaveFailures: 0,

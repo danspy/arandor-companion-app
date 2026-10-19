@@ -46,6 +46,10 @@ healing in the tracker make fights faster.
 - **Generator** (`lib/npc-generator.ts`): 9 SRD species × 6 roles × level 1–20 with the 2024
   player rules; saved as an ordinary creature.
 
+- **Combatant panel** for every combatant (row click): quick edit via `PATCH /api/initiative/[id]`,
+  conditions (`InitiativeTracker.conditions`, `lib/conditions.ts`, visible to players), linking a
+  stat block; reopens itself after the reloads a new order needs.
+
 ## Later phases
 
 - **B: limited uses.** Per combatant: spell slots, X/Day, recharge state, legendary action and

@@ -162,6 +162,7 @@ export function redactEntry(entry: InitiativeEntry, owned: OwnedCharacters) {
     deathSaveSuccesses: own || entry.hp === 0 ? entry.deathSaveSuccesses : 0,
     deathSaveFailures: own || entry.hp === 0 ? entry.deathSaveFailures : 0,
     isStable: entry.isStable,
+    conditions: entry.conditions ?? [], // visible at the table anyway
     isOwn: own,
   };
 }

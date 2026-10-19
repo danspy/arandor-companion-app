@@ -103,3 +103,33 @@
 .sb-panel-hp { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 0.9rem; padding: 0.6rem 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-gold); }
 .sb-panel-hp b { font-size: 1.15rem; color: var(--text-strong); min-width: 4rem; }
 .sb-panel-hp .hp-change { margin-left: auto; }
+
+/* ── Combatant quick edit (panel) ── */
+.cp-edit { display: grid; gap: 0.75rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-gold); }
+.cp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(5.5rem, 1fr)); gap: 0.5rem 0.75rem; align-items: end; }
+.cp-field { display: grid; gap: 0.25rem; }
+.cp-input { padding: 0.35rem 0.5rem; min-width: 0; }
+input.cp-input { text-align: center; }
+.cp-check { display: flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; padding-bottom: 0.4rem; }
+.cp-check input { accent-color: var(--accent); }
+.cp-heading { margin: 0 !important; }
+.cp-conditions { display: flex; flex-wrap: wrap; gap: 0.35rem; align-items: center; }
+.cp-chip { padding: 0.15rem 0.5rem; font-size: 0.75rem; color: var(--text-muted); background: none; border: 1px solid var(--border); cursor: pointer; }
+.cp-chip:hover { border-color: var(--border-gold); color: var(--text-body); }
+.cp-chip[aria-pressed='true'] { color: var(--on-gold); background: var(--gold); border-color: var(--gold); }
+.cp-exhaustion { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; color: var(--text-muted); }
+.cp-exhaustion select { padding: 0.1rem 0.3rem; font-size: 0.8rem; }
+.cp-link { display: flex; gap: 0.5rem; }
+.cp-link select { flex: 1; min-width: 0; padding: 0.35rem 0.5rem; }
+.cp-status { min-height: 1rem; margin: 0 !important; color: var(--text-faint); }
+.cp-status[data-state='error'] { color: var(--danger); }
+.cp-status[data-state='ok'] { color: var(--success); }
+.sb-panel-hp { margin-bottom: 0; }
+
+/* ── Conditions on tracker rows and the DM screen ── */
+.cond-chips { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cond-chips:empty { display: none; }
+.cond-chip { padding: 0 0.4rem; font-size: 0.68rem; line-height: 1.4; color: var(--gold); border: 1px solid var(--border-gold); }
+.initiative-card.is-clickable { cursor: pointer; }
+.initiative-card.is-clickable:hover { border-color: var(--gold); }
+.initiative-card.is-selected { box-shadow: inset 3px 0 0 var(--gold); }
