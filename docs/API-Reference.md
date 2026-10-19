@@ -88,6 +88,15 @@ never include exact HP, AC or notes of combatants.
 | `/api/events`, `/api/events/[id]` | GET / POST, PUT, DELETE | Calendar events | public / login |
 | `/api/calendar/ics.ics` | GET | iCal feed of all events (`text/calendar`, cached 5 min) | public |
 
+## Music
+
+| Endpoint | Method | Purpose | Access |
+|---|---|---|---|
+| `/api/music/playlists/[id]/import` | POST `{videoIds, titles?}` | Adds YouTube videos as separate `youtube_video` tracks at the end, in order. 1–200 ids of 11 characters (`[A-Za-z0-9_-]`); duplicates are dropped. Titles come from YouTube oEmbed (at most 6 lookups at once), with `https://youtu.be/<id>` as fallback; `titles` (id → title) skips the lookup. Returns `201 {added, tracks}` | login, may edit the playlist (401 / 404 / 403) |
+
+The browser reads the video ids of a YouTube playlist with a temporary, visible IFrame player
+(`src/lib/music/youtube-list.ts`), so no API key is needed. The import is a snapshot.
+
 ## Files
 
 | Endpoint | Method | Purpose | Access |

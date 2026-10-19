@@ -3,6 +3,8 @@
 // Playback always goes through the global store (player.ts).
 import { music, MUSIC_STATE_EVENT, type QueueTrack } from './player';
 import { audioFileCheck } from './formats';
+import { parseYouTubeUrl } from './youtube';
+import { importYouTubeList } from './youtube-list';
 
 type Summary = {
   id: string; name: string; visibility: string; isSiteDefault: boolean;
@@ -163,6 +165,7 @@ function renderTracks() {
       el('span', { class: 'mp-eq', 'aria-hidden': 'true' }, el('i'), el('i'), el('i')),
       playBtn, title,
       el('span', { class: 'mp-kind', text: KIND[t.kind] }),
+      ...(editable && t.kind === 'youtube_playlist' ? [el('button', { type: 'button', class: 't-icon-btn mp-expand', 'aria-label': `Expand ${t.title} into tracks`, title: 'Expand into tracks' }, svg('M4 6h16M4 12h10M4 18h10M18 14v6M15 17h6', false))] : []),
       ...(editable ? [el('button', { type: 'button', class: 't-icon-btn t-icon-btn-danger mp-del', 'aria-label': `Remove ${t.title}`, title: 'Remove' }, svg('M6 6l12 12M18 6 6 18', false))] : []),
     );
     return li;
@@ -361,23 +364,60 @@ function uploadFiles(files: File[]) {
   });
 }
 
-async function addYouTube(mode?: 'video' | 'playlist') {
+// Shows the choice for links with a list: this video (if any), the list as one entry, or import its videos
+function askMode() {
+  const choice = $('mp-yt-choice');
+  choice.querySelector<HTMLElement>('[data-mode="video"]')!.hidden = !parseYouTubeUrl($<HTMLInputElement>('mp-yt-url').value)?.videoId;
+  choice.hidden = false;
+  choice.querySelector<HTMLElement>('button:not([hidden])')!.focus();
+}
+
+async function addYouTube(mode?: 'video' | 'playlist' | 'import') {
   const p = ctx?.current;
   if (!p) return;
   const url = $<HTMLInputElement>('mp-yt-url'), title = $<HTMLInputElement>('mp-yt-title'), btn = $<HTMLButtonElement>('mp-yt-add');
+  const listId = parseYouTubeUrl(url.value)?.listId;
+  if (listId && !mode) return askMode();
+  if (mode === 'import' && listId) {
+    $('mp-yt-choice').hidden = true;
+    btn.disabled = true;
+    if (await runImport(listId, $('mp-yt'))) { url.value = ''; title.value = ''; }
+    btn.disabled = false;
+    return;
+  }
   btn.disabled = true;
   const r = await api(`/api/music/playlists/${p.id}/tracks`, 'POST', { youtubeUrl: url.value.trim(), title: title.value.trim() || undefined, mode });
   btn.disabled = false;
-  if (r.status === 409 && r.data?.needsMode) {
-    $('mp-yt-choice').hidden = false;
-    $('mp-yt-choice').querySelector('button')!.focus();
-    return;
-  }
+  if (r.status === 409 && r.data?.needsMode) return askMode();
   $('mp-yt-choice').hidden = true;
   if (!r.ok) return fail(r);
   url.value = '';
   title.value = '';
   trackAdded(p.id, r.data);
+}
+
+let importing = false;
+/** Imports the videos of a YouTube list with progress in `host`; `replace` = the list track they replace. */
+async function runImport(listId: string, host: HTMLElement, replace?: string): Promise<boolean> {
+  const p = ctx?.current;
+  if (!p || importing) return false;
+  importing = true;
+  const text = el('p', { class: 'text-sm t-muted' });
+  const box = el('div', { class: 'mp-import', role: 'status' }, text);
+  host.append(box);
+  let ok = false;
+  try {
+    window.alert(await importYouTubeList({ playlistId: p.id, listId, host: box, replace, status: (s) => (text.textContent = s) }));
+    ok = true;
+  } catch (e) {
+    window.alert((e as Error).message);
+  } finally {
+    box.remove();
+    importing = false;
+  }
+  await loadList();
+  if (ctx?.current?.id === p.id) await select(p.id);
+  return ok;
 }
 
 // ── Playlist actions ─────────────────────────────────────────────────────────
@@ -474,6 +514,7 @@ export function initMusicEditor() {
     if (!li) return;
     if (t.closest('.mp-play-track')) playTrack(li);
     else if (t.closest('.mp-del')) deleteTrack(li);
+    else if (t.closest('.mp-expand')) { const tr = ctx?.current?.tracks.find((x) => x.id === li.dataset.id); if (tr) runImport(tr.ref, li, tr.id); }
     else if (t.closest('.mp-title.mp-editable')) renameTrack(li);
   });
   tracks.addEventListener('keydown', (e) => {
@@ -496,7 +537,7 @@ export function initMusicEditor() {
   $('mp-yt-choice').addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-mode]');
     if (!b) return;
-    if (b.dataset.mode) addYouTube(b.dataset.mode as 'video' | 'playlist');
+    if (b.dataset.mode) addYouTube(b.dataset.mode as 'video' | 'playlist' | 'import');
     else $('mp-yt-choice').hidden = true;
   });
   $('mp-public').addEventListener('change', (e) => setPublic(e.target as HTMLInputElement));

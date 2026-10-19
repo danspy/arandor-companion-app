@@ -11,7 +11,7 @@ import type { MusicBackend } from './audio-backend';
 import type { QueueTrack } from './player';
 
 // ── Minimal typings for the parts of the IFrame Player API used here ──
-interface YTPlayer {
+export interface YTPlayer {
   loadVideoById(videoId: string, startSeconds?: number): void;
   cueVideoById(videoId: string, startSeconds?: number): void;
   loadPlaylist(o: { list: string; listType: 'playlist'; index?: number; startSeconds?: number }): void;
@@ -31,7 +31,7 @@ interface YTPlayer {
   getIframe(): HTMLIFrameElement;
   destroy(): void;
 }
-type YTNamespace = {
+export type YTNamespace = {
   Player: new (el: HTMLElement, opts: {
     width?: string | number;
     height?: string | number;
@@ -59,8 +59,8 @@ const POLL_MS = 500; // the API has no timeupdate event
 
 let apiPromise: Promise<YTNamespace> | null = null;
 
-/** Loads the IFrame Player API once per page (survives page changes like the store). */
-function loadApi(): Promise<YTNamespace> {
+/** Loads the IFrame Player API once per page (survives page changes like the store). Shared with youtube-list.ts. */
+export function loadYouTubeApi(): Promise<YTNamespace> {
   if (window.YT?.Player) return Promise.resolve(window.YT);
   if (apiPromise) return apiPromise;
   apiPromise = new Promise<YTNamespace>((resolve, reject) => {
@@ -208,7 +208,7 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
 
   /** Creates a player in the host; resolves once it is ready (or replaced by a newer one). */
   async function createPlayer(): Promise<void> {
-    const YT = await loadApi();
+    const YT = await loadYouTubeApi();
     if (!alive) return;
     const my = ++token;
     const el = document.createElement('div');

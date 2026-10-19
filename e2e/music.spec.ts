@@ -154,6 +154,36 @@ test.describe('Music API', () => {
     }
   });
 
+  test('import: YouTube video ids become separate tracks', async ({ request }) => {
+    const p = await (await create(player, { name: uname(), visibility: 'public' })).json();
+    const first = await player.request.post(`/api/music/playlists/${p.id}/tracks`, { data: { youtubeUrl: 'https://youtu.be/e2eFirst000', title: 'First' } });
+    expect(first.status()).toBe(201);
+    const url = `/api/music/playlists/${p.id}/import`;
+    const ids = ['e2eImport01', 'e2e-Import2', 'e2e_Import3'];
+    const titles = { e2eImport01: 'One', 'e2e-Import2': 'Two', e2e_Import3: 'Three' };
+    const res = await player.request.post(url, { data: { videoIds: [ids[0], ids[1], ids[0], ids[2], ids[1]], titles } });
+    expect(res.status()).toBe(201);
+    const body = await res.json();
+    expect(body.added).toBe(3);
+    expect(body.tracks.map((t: any) => [t.kind, t.ref, t.title, t.position])).toEqual([
+      ['youtube_video', ids[0], 'One', 1], ['youtube_video', ids[1], 'Two', 2], ['youtube_video', ids[2], 'Three', 3],
+    ]);
+    const detail = await (await player.request.get(`/api/music/playlists/${p.id}`)).json();
+    expect(detail.tracks.map((t: any) => t.title)).toEqual(['First', 'One', 'Two', 'Three']);
+    expect(detail.tracks.map((t: any) => t.position)).toEqual([0, 1, 2, 3]);
+
+    const many = Array.from({ length: 201 }, (_, i) => `e2eMany${String(i).padStart(4, '0')}`);
+    for (const videoIds of [many, [], ['short'], ['e2eImport01', 'bad id here'], 'e2eImport01', undefined]) {
+      const r = await player.request.post(url, { data: { videoIds, titles } });
+      expect(r.status(), String(JSON.stringify(videoIds)).slice(0, 40)).toBe(400);
+      expect((await r.json()).error).toBeTruthy();
+    }
+    expect((await player2.request.post(url, { data: { videoIds: ids, titles } })).status()).toBe(403);
+    expect((await request.post(url, { data: { videoIds: ids, titles } })).status()).toBe(401);
+    expect((await player.request.post('/api/music/playlists/nope/import', { data: { videoIds: ids, titles } })).status()).toBe(404);
+    expect((await (await player.request.get(`/api/music/playlists/${p.id}`)).json()).tracks).toHaveLength(4);
+  });
+
   test('site playlist: DM edits, only admin sets default, never private or deleted', async () => {
     const site = (await (await dm.request.get('/api/music/site')).json()).playlist;
     const other = await (await create(player, { name: uname() })).json();
@@ -303,6 +333,46 @@ test.describe('Music API', () => {
   });
 });
 
+// A stand-in for YouTube's IFrame API that records which player methods are called, for
+// YouTube playlists (they can't play from the test server: error 150). Mirrors YouTube:
+// loadPlaylist/nextVideo/previousVideo and seekTo from CUED start playback; cuePlaylist doesn't.
+// getPlaylist() returns window.__ytLists[listId] when a test sets it.
+const FAKE_YT_API = `(() => {
+  const calls = window.__ytCalls = [];
+  class Player {
+    constructor(el, opts) {
+      this.ev = opts.events || {}; this.state = -1; this.t = 0; this.i = 0; this.list = ['a', 'b', 'c'];
+      const host = el.parentElement, r = host ? host.getBoundingClientRect() : { width: 0, height: 0 };
+      (window.__ytHosts = window.__ytHosts || []).push({ cls: host ? host.className : '', w: r.width, h: r.height });
+      this.f = document.createElement('iframe'); this.f.id = 'fake-yt'; el.replaceWith(this.f);
+      setTimeout(() => this.ev.onReady && this.ev.onReady(), 10);
+    }
+    set(s) { this.state = s; setTimeout(() => this.ev.onStateChange && this.ev.onStateChange({ data: s }), 10); }
+    rec(name, arg) { calls.push({ name, arg: arg === undefined ? null : arg, state: this.state }); }
+    getIframe() { return this.f; }
+    setVolume() {}
+    loadPlaylist(o) { this.rec('loadPlaylist', o); this.listId = o.list; this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(1); }
+    cuePlaylist(o) { this.rec('cuePlaylist', o); this.listId = o.list; this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(5); }
+    loadVideoById(id, t) { this.rec('loadVideoById', id); this.t = t || 0; this.set(1); }
+    cueVideoById(id, t) { this.rec('cueVideoById', id); this.t = t || 0; this.set(5); }
+    playVideo() { this.rec('playVideo'); this.set(1); }
+    pauseVideo() { this.rec('pauseVideo'); this.set(2); }
+    seekTo(t) { this.rec('seekTo', t); this.t = t; if (this.state !== 2) this.set(1); }
+    nextVideo() { this.rec('nextVideo'); this.i++; this.t = 0; this.set(1); }
+    previousVideo() { this.rec('previousVideo'); this.i--; this.t = 0; this.set(1); }
+    getCurrentTime() { return this.t; }
+    getDuration() { return 100; }
+    getPlayerState() { return this.state; }
+    getPlaylist() { return (window.__ytLists && window.__ytLists[this.listId]) || this.list; }
+    getPlaylistIndex() { return this.i; }
+    getVideoData() { return { title: 'Entry ' + this.list[this.i], video_id: this.list[this.i] }; }
+    destroy() { this.f.remove(); }
+  }
+  window.YT = { Player, get: () => window.__ytPlayer };
+  const P = Player; window.YT.Player = function (el, o) { return (window.__ytPlayer = new P(el, o)); };
+  window.onYouTubeIframeAPIReady && window.onYouTubeIframeAPIReady();
+})();`;
+
 // ── Music player (store + mini bar), logged in as player; desktop and Pixel 5 ─
 test.describe('Music player', () => {
   test.skip(!haveAccounts, 'Needs the E2E_* accounts (test server only)');
@@ -402,43 +472,6 @@ test.describe('Music player', () => {
     await expect(page.locator('#music-title')).toHaveText('Rain');
     await expect.poll(() => paused(page)).toBe(false);
   });
-
-  // A stand-in for YouTube's IFrame API that records which player methods are called, for
-  // YouTube playlists (they can't play from the test server: error 150). Mirrors YouTube:
-  // loadPlaylist/nextVideo/previousVideo and seekTo from CUED start playback; cuePlaylist doesn't.
-  const FAKE_YT_API = `(() => {
-    const calls = window.__ytCalls = [];
-    class Player {
-      constructor(el, opts) {
-        this.ev = opts.events || {}; this.state = -1; this.t = 0; this.i = 0; this.list = ['a', 'b', 'c'];
-        this.f = document.createElement('iframe'); this.f.id = 'fake-yt'; el.replaceWith(this.f);
-        setTimeout(() => this.ev.onReady && this.ev.onReady(), 10);
-      }
-      set(s) { this.state = s; setTimeout(() => this.ev.onStateChange && this.ev.onStateChange({ data: s }), 10); }
-      rec(name, arg) { calls.push({ name, arg: arg === undefined ? null : arg, state: this.state }); }
-      getIframe() { return this.f; }
-      setVolume() {}
-      loadPlaylist(o) { this.rec('loadPlaylist', o); this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(1); }
-      cuePlaylist(o) { this.rec('cuePlaylist', o); this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(5); }
-      loadVideoById(id, t) { this.rec('loadVideoById', id); this.t = t || 0; this.set(1); }
-      cueVideoById(id, t) { this.rec('cueVideoById', id); this.t = t || 0; this.set(5); }
-      playVideo() { this.rec('playVideo'); this.set(1); }
-      pauseVideo() { this.rec('pauseVideo'); this.set(2); }
-      seekTo(t) { this.rec('seekTo', t); this.t = t; if (this.state !== 2) this.set(1); }
-      nextVideo() { this.rec('nextVideo'); this.i++; this.t = 0; this.set(1); }
-      previousVideo() { this.rec('previousVideo'); this.i--; this.t = 0; this.set(1); }
-      getCurrentTime() { return this.t; }
-      getDuration() { return 100; }
-      getPlayerState() { return this.state; }
-      getPlaylist() { return this.list; }
-      getPlaylistIndex() { return this.i; }
-      getVideoData() { return { title: 'Entry ' + this.list[this.i], video_id: this.list[this.i] }; }
-      destroy() { this.f.remove(); }
-    }
-    window.YT = { Player, get: () => window.__ytPlayer };
-    const P = Player; window.YT.Player = function (el, o) { return (window.__ytPlayer = new P(el, o)); };
-    window.onYouTubeIframeAPIReady && window.onYouTubeIframeAPIReady();
-  })();`;
 
   test('paused YouTube playlist: next/prev cue the entry and stay paused and hidden (fake YouTube API)', async ({ page }) => {
     await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
@@ -903,8 +936,10 @@ test.describe('Music page', () => {
     await page.locator('#mp-yt-add').click();
     const choice = page.locator('#mp-yt-choice');
     await expect(choice).toBeVisible();
-    await expect(choice).toContainText('This video or the whole playlist?');
-    await choice.getByRole('button', { name: 'The whole playlist' }).click();
+    await expect(choice).toContainText('This link has a playlist. What should be added?');
+    await expect(choice.getByRole('button', { name: 'This video' })).toBeVisible();
+    await expect(choice.getByRole('button', { name: 'Import as separate tracks' })).toBeVisible();
+    await choice.getByRole('button', { name: 'Whole playlist (one entry)' }).click();
     await expect(titles(page)).toHaveText(['Rain', 'Tavern Ambience', 'Boss Theme']);
     await expect(choice).toBeHidden();
     const tracks = (await (await context.request.get(`/api/music/playlists/${id}`)).json()).tracks;
@@ -1016,6 +1051,56 @@ test.describe('Music page', () => {
     await page.locator('[data-confirm]').click();
     await expect(page.locator('.mp-item', { hasText: `${name} 2` })).toHaveCount(0);
     expect((await context.request.get(`/api/music/playlists/${id}`)).status()).toBe(404);
+  });
+  test('YouTube playlist import: separate tracks and "Expand into tracks" (fake YouTube API)', async ({ page, context, isMobile }) => {
+    test.skip(isMobile, 'Desktop flow');
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    const lists = { PLe2eNew: ['e2eNewVid01', 'e2eNewVid02', 'e2eNewVid03'], PLe2eOld: ['e2eOldVid01', 'e2eOldVid02'] };
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+    await page.addInitScript((l) => { (window as any).__ytLists = l; }, lists);
+    const res = await context.request.post('/api/music/playlists', { data: { name: `E2E import ${Date.now()}`, visibility: 'private' } });
+    const pid = (await res.json()).id as string;
+    created.push(pid);
+    for (const [youtubeUrl, title] of [[`https://youtu.be/${V}`, 'Intro'], ['https://www.youtube.com/playlist?list=PLe2eOld', 'Old list'], [`https://youtu.be/${V}`, 'Outro']]) {
+      expect((await context.request.post(`/api/music/playlists/${pid}/tracks`, { data: { youtubeUrl, title } })).status()).toBe(201);
+    }
+    const refs = async () => (await (await context.request.get(`/api/music/playlists/${pid}`)).json()).tracks.map((t: any) => [t.kind, t.ref]);
+    await page.goto(`/tools/music?playlist=${pid}`);
+    await expect(titles(page)).toHaveText(['Intro', 'Old list', 'Outro']);
+
+    // A plain list link: no "This video", import adds one row per video at the end
+    await page.locator('#mp-yt-url').fill('https://www.youtube.com/playlist?list=PLe2eNew');
+    await page.locator('#mp-yt-add').click();
+    const choice = page.locator('#mp-yt-choice');
+    await expect(choice).toBeVisible();
+    await expect(choice.getByRole('button', { name: 'This video' })).toBeHidden();
+    await choice.getByRole('button', { name: 'Import as separate tracks' }).click();
+    await expect(page.locator('#arandor-toasts')).toContainText('Imported 3 tracks');
+    await expect(titles(page)).toHaveCount(6);
+    await expect(choice).toBeHidden();
+    await expect(page.locator('#mp-yt-url')).toHaveValue('');
+    expect(await refs()).toEqual([
+      ['youtube_video', V], ['youtube_playlist', 'PLe2eOld'], ['youtube_video', V],
+      ...lists.PLe2eNew.map((r) => ['youtube_video', r]),
+    ]);
+
+    // Expand an existing list entry: its videos take its place, the entry is gone
+    const row = page.locator('#mp-tracks li', { hasText: 'Old list' });
+    await row.getByRole('button', { name: 'Expand Old list into tracks' }).click();
+    await expect(page.locator('#arandor-toasts')).toContainText('Imported 2 tracks');
+    await expect(titles(page)).toHaveCount(7);
+    await expect(page.locator('#mp-tracks li', { hasText: 'Old list' })).toHaveCount(0);
+    expect(await refs()).toEqual([
+      ['youtube_video', V], ...lists.PLe2eOld.map((r) => ['youtube_video', r]), ['youtube_video', V],
+      ...lists.PLe2eNew.map((r) => ['youtube_video', r]),
+    ]);
+    // Only cued, never played, and the reader player was visible (at least 200×200)
+    const calls = await page.evaluate(() => (window as any).__ytCalls as { name: string }[]);
+    expect(calls.map((c) => c.name)).toEqual(['cuePlaylist', 'cuePlaylist']);
+    const hosts = await page.evaluate(() => (window as any).__ytHosts as { w: number; h: number }[]);
+    expect(hosts).toHaveLength(2);
+    for (const h of hosts) { expect(h.w).toBeGreaterThanOrEqual(200); expect(h.h).toBeGreaterThanOrEqual(200); }
+    await expect(page.locator('#mp-root iframe')).toHaveCount(0);
   });
 });
 

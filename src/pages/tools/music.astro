@@ -85,11 +85,12 @@ const formats = Object.keys(AUDIO_MIME).join(', ');
                 <input id="mp-yt-title" class="t-input px-3 py-2 flex-1" maxlength="200" placeholder="Title (optional)" aria-label="Title (optional)" autocomplete="off" />
                 <button id="mp-yt-add" type="submit" class="t-btn-secondary">Add</button>
               </div>
-              <div id="mp-yt-choice" class="mp-yt-choice" role="group" aria-label="Video or playlist" hidden>
-                <p class="text-sm t-body-text mb-2">This video or the whole playlist?</p>
+              <div id="mp-yt-choice" class="mp-yt-choice" role="group" aria-label="What to add from this link" hidden>
+                <p class="text-sm t-body-text mb-2">This link has a playlist. What should be added?</p>
                 <div class="flex flex-wrap gap-2">
                   <button type="button" class="t-btn-secondary" data-mode="video">This video</button>
-                  <button type="button" class="t-btn-secondary" data-mode="playlist">The whole playlist</button>
+                  <button type="button" class="t-btn-secondary" data-mode="playlist">Whole playlist (one entry)</button>
+                  <button type="button" class="t-btn-secondary" data-mode="import">Import as separate tracks</button>
                   <button type="button" class="t-btn-ghost" data-mode="">Cancel</button>
                 </div>
               </div>
@@ -173,6 +174,9 @@ const formats = Object.keys(AUDIO_MIME).join(', ');
   .mp-dragging .mp-handle { cursor: grabbing; }
   .mp-track .t-icon-btn { width: 2rem; height: 2rem; flex: none; }
   .mp-rename { flex: 1; }
+  .mp-track:has(.mp-import) { flex-wrap: wrap; }
+  .mp-import { flex-basis: 100%; padding: 0.5rem 0 0.25rem; }
+  .mp-yt .mp-import { margin-top: 0.75rem; }
 
   .mp-edit { margin-top: 1.5rem; }
   .mp-add { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
