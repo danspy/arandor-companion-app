@@ -339,7 +339,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                       </div>
                     ) : (
                       (() => {
-                        const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
+                        // Players get a ready-made band (`health`) instead of exact HP from the API
+                  const bandLabels = { healthy: ['Healthy', 'bg-green-500 text-white'], injured: ['Injured', 'bg-yellow-500 text-white'], hurt: ['Hurt', 'bg-orange-500 text-white'], bloodied: ['Bloodied', 'bg-red-500 text-white'], unconscious: ['Unconscious', 'bg-red-900 text-white'], dead: ['Dead', 'bg-black text-white'] };
+                  const band = bandLabels[entry.health];
+                  const status = band ? { text: band[0], classes: band[1] } : getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                         return status.text === '-' ? (
                           <span class={`text-xs ${status.classes}`} data-hp-display>{status.text}</span>
                         ) : (
@@ -1076,15 +1079,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           if (!(await window.arandorConfirm('Clear all initiative entries?', { detail: 'This can\u2019t be undone.', confirmLabel: 'Clear all', danger: true }))) return;
 
           try {
-            const response = await fetch('/api/initiative');
-            const entries = await response.json();
-            
-            await Promise.all(
-              entries.map((entry: any) => 
-                fetch(`/api/initiative/${entry.id}`, { method: 'DELETE' })
-              )
-            );
-            
+            const response = await fetch('/api/initiative', { method: 'DELETE' });
+            if (!response.ok) throw new Error('Failed to clear entries');
             window.location.reload();
           } catch (error) {
             console.error('Error clearing entries:', error);
@@ -1262,37 +1258,22 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           }
         };
         
-        const saveState = async (round, turnIndex) => {
+        // The server moves the turn, so the tracker and the DM screen can't compute different turns
+        const moveTurn = async (action) => {
           try {
-            await fetch('/api/combat-state', {
-              method: 'PUT',
+            const response = await fetch('/api/combat-state', {
+              method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ currentRound: round, currentTurnIndex: turnIndex }),
+              body: JSON.stringify({ action }),
             });
+            if (!response.ok) throw new Error((await response.json()).error || 'Failed to change turn');
+            const state = await response.json();
+            updateTurnIndicator(state.currentTurnIndex, state.currentRound);
           } catch (error) {
-            console.error('Error saving combat state:', error);
+            console.error('Error changing turn:', error);
+            alert(error instanceof Error ? error.message : 'Failed to change turn');
           }
         };
-        
-        const activeCards = Array.from(document.querySelectorAll('.initiative-card')).filter(
-          card => card.getAttribute('data-is-active') === 'true'
-        );
-        const maxIndex = activeCards.length - 1;
-        
-        let currentRound = parseInt(document.getElementById('currentRoundDisplay')?.textContent || '1');
-        let currentTurnIndex = 0;
-        
-        // Find current turn from server state by looking for banner
-        const currentTurnCard = document.querySelector('.initiative-card .turn-indicator')?.closest('.initiative-card');
-        if (currentTurnCard) {
-          const idx = parseInt(currentTurnCard.getAttribute('data-active-index') || '0');
-          if (!isNaN(idx)) {
-            currentTurnIndex = idx;
-          }
-        } else {
-          // Fallback: get from first active card
-          currentTurnIndex = parseInt(activeCards[0]?.getAttribute('data-active-index') || '0');
-        }
         
         // Remove old handlers if they exist
         if (nextTurnHandler) {
@@ -1303,25 +1284,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         }
         
         // Create new handlers
-        nextTurnHandler = async () => {
-          currentTurnIndex++;
-          if (currentTurnIndex > maxIndex) {
-            currentTurnIndex = 0;
-            currentRound++;
-          }
-          updateTurnIndicator(currentTurnIndex, currentRound);
-          await saveState(currentRound, currentTurnIndex);
-        };
-        
-        prevTurnHandler = async () => {
-          currentTurnIndex--;
-          if (currentTurnIndex < 0) {
-            currentTurnIndex = maxIndex;
-            if (currentRound > 1) currentRound--;
-          }
-          updateTurnIndicator(currentTurnIndex, currentRound);
-          await saveState(currentRound, currentTurnIndex);
-        };
+        nextTurnHandler = () => moveTurn('next');
+        prevTurnHandler = () => moveTurn('prev');
         
         // Attach new handlers
         nextTurnBtn.addEventListener('click', nextTurnHandler);
@@ -1497,7 +1461,16 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       }
       
       // Create and store new handlers
-      const startHandler = () => updateCombatStatus('active');
+      // Start resumes a paused fight on the same turn, and begins at the top when stopped
+      const startHandler = async () => {
+        const response = await fetch('/api/combat-state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'start' }),
+        });
+        if (response.ok) window.location.reload();
+        else alert((await response.json()).error || 'Failed to start combat');
+      };
       const pauseHandler = () => updateCombatStatus('paused');
       const stopHandler = async () => {
         if ((await window.arandorConfirm('Stop combat?', { detail: 'Live tracking stops for everyone.', confirmLabel: 'Stop combat', danger: true }))) {
@@ -1528,7 +1501,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           syncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
           
           try {
-            const response = await fetch('/api/initiative/sync-hp', {
+            const response = await fetch('/api/initiative/sync-hp?force=1', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
             });
@@ -1570,7 +1543,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       const container = document.querySelector('[data-can-edit]');
       const canEdit = container?.getAttribute('data-can-edit') === 'true';
       
-      if (canEdit) return; // Only run for non-DM/Admin users (players)
+      if (!container || canEdit) return; // Only run on the tracker, for non-DM/Admin users (players)
       
       hpEditInitialized = true;
       
@@ -1715,7 +1688,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     let pollInterval = null;
     
     function setupPollingForPlayers() {
-      if (pollingInitialized) return;
+      // The script stays loaded after client-side navigation: only poll on the tracker page
+      if (pollingInitialized || !document.querySelector('[data-can-edit]')) return;
       
       pollingInitialized = true;
       
@@ -1788,7 +1762,10 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     if (percentage > 25) return { text: 'Hurt', classes: 'bg-orange-500 text-white' };
                     return { text: 'Bloodied', classes: 'bg-red-500 text-white' };
                   };
-                  const status = getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
+                  // Players get a ready-made band (`health`) instead of exact HP from the API
+                  const bandLabels = { healthy: ['Healthy', 'bg-green-500 text-white'], injured: ['Injured', 'bg-yellow-500 text-white'], hurt: ['Hurt', 'bg-orange-500 text-white'], bloodied: ['Bloodied', 'bg-red-500 text-white'], unconscious: ['Unconscious', 'bg-red-900 text-white'], dead: ['Dead', 'bg-black text-white'] };
+                  const band = bandLabels[entry.health];
+                  const status = band ? { text: band[0], classes: band[1] } : getHealthStatus(entry.hp, entry.maxHp, entry.deathSaveFailures || 0, entry.type);
                   hpElement.textContent = status.text;
                   hpElement.className = status.text === '-' ? status.classes : `inline-block px-2 py-0.5 rounded-xs text-xs font-semibold ${status.classes}`;
                 }
@@ -1797,7 +1774,8 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               // Update death saves display (only show for characters at HP = 0)
               const deathSavesSection = card.querySelector('[data-death-saves-section]');
               
-              if (entry.hp === 0 && entry.maxHp !== null && entry.type === 'character') {
+              const isDown = entry.health !== undefined ? entry.health === 'unconscious' : entry.hp === 0 && entry.maxHp !== null;
+              if (isDown && entry.type === 'character') {
                 // Character is at 0 HP - ensure death saves section is visible
                 if (!deathSavesSection) {
                   // Death saves section doesn't exist, need to create it
@@ -2066,14 +2044,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       isInitialized = false;
     });
     
-    // Run on initial page load
-    document.addEventListener('DOMContentLoaded', () => {
-      initializeInitiativeTracker();
-      setupPlayerHPEdit();
-      setupPollingForPlayers();
-    });
-    
-    // Run after Astro view transitions
+    // Runs on the first load and after every client-side navigation (ClientRouter)
     document.addEventListener('astro:page-load', () => {
       initializeInitiativeTracker();
       setupPlayerHPEdit();

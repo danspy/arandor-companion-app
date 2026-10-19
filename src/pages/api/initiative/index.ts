@@ -1,23 +1,22 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
+import { getCurrentUser } from '../../../lib/auth';
+import { getEntries, ownedCharacters, preserveTurn, redactEntry, setCombatState } from '../../../lib/combat';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
-// GET - Fetch initiative tracker (public - no authentication required)
-// This endpoint is public because the player display page (/display) needs access
-// Players on mobile/tablet devices may not have authentication cookies
-export const GET: APIRoute = async () => {
+// GET - Fetch the initiative tracker in turn order.
+// DM/admin get every field. Everyone else (including logged-out visitors) gets a health band
+// instead of HP, and exact HP only for their own characters; AC and notes are DM-only.
+export const GET: APIRoute = async ({ cookies }) => {
   try {
-    const initiatives = await db.select().from(InitiativeTracker);
-    // Sort by initiative (descending) and then by name
-    const sortedInitiatives = initiatives.sort((a, b) => {
-      if (b.initiative !== a.initiative) {
-        return b.initiative - a.initiative;
-      }
-      return a.name.localeCompare(b.name);
-    });
-    return new Response(JSON.stringify(sortedInitiatives), {
+    const entries = await getEntries();
+    const user = await getCurrentUser(cookies);
+    const isDm = user?.role === 'admin' || user?.role === 'dungeonmaster';
+    const owned = await ownedCharacters(isDm ? null : user?.id);
+    const body = isDm ? entries : entries.map((e) => redactEntry(e, owned));
+    return new Response(JSON.stringify(body), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -63,7 +62,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const id = crypto.randomUUID();
     const now = new Date();
     
-    await db.insert(InitiativeTracker).values({
+    await preserveTurn(() => db.insert(InitiativeTracker).values({
       id,
       name: body.name.trim(),
       initiative: body.initiative,
@@ -80,7 +79,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       isStable: false,
       createdAt: now,
       updatedAt: now,
-    });
+    }));
 
     const newEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id));
     
@@ -90,6 +89,26 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     });
   } catch (error) {
     return new Response(JSON.stringify({ error: 'Failed to create initiative entry' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+};
+
+// DELETE - Remove every entry and stop combat (the tracker's "Clear all")
+export const DELETE: APIRoute = async ({ cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+
+  try {
+    await db.delete(InitiativeTracker);
+    await setCombatState({ status: 'stopped', currentRound: 1, currentTurnIndex: 0 });
+    return new Response(JSON.stringify({ success: true }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    return new Response(JSON.stringify({ error: 'Failed to clear initiative tracker' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
