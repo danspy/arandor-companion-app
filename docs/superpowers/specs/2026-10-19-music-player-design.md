@@ -19,7 +19,7 @@ on the dashboard.
 | Playlist visibility | `public`: every logged-in user can see/play. `private`: owner only. Admins see and edit everything |
 | Site playlist | Exactly one playlist is the **site playlist** (`isSiteDefault`). Shown on the dashboard, playable by **everyone including logged-out visitors**. Editable by admins **and DMs**; only an admin can choose which playlist is the site playlist. It is always treated as public |
 | Track sources | Uploaded file, YouTube video, YouTube playlist (stored as one entry, expanded by YouTube's player at play time, no API key) |
-| File formats | mp3, m4a/aac, ogg, opus, webm (audio), flac, wav |
+| File formats | mp3, mpga, mpeg (all audio/mpeg; .mp2 deliberately unsupported: MPEG Layer II does not play in Chrome/Firefox), m4a/aac, ogg, opus, webm (audio), flac, wav |
 | File size | 50 MB per file, no total quota |
 | File privacy | Files are served by unguessable URL under `/uploads` like images; not access-checked |
 | YouTube display | YouTube's terms forbid hidden audio-only playback, so a small (~200×200) video tile is visible while a YouTube track plays |
@@ -83,7 +83,7 @@ Both ids present and no `mode` → `409 { needsMode: true }`; the UI asks "This 
 playlist?". Title from `https://www.youtube.com/oembed?url=…&format=json` (timeout 3 s), falling
 back to the URL. `docs/API-Reference.md` updated.
 
-`src/pages/uploads/[...file].ts`: add audio MIME types (mp3 `audio/mpeg`, m4a/aac `audio/mp4`,
+`src/pages/uploads/[...file].ts`: add audio MIME types (mp3/mpga/mpeg `audio/mpeg`, m4a/aac `audio/mp4`,
 ogg/opus `audio/ogg`, webm `audio/webm`, flac `audio/flac`, wav `audio/wav`) and serve Range
 requests for `audio/*` as for video (needed for seeking).
 

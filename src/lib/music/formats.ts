@@ -1,6 +1,8 @@
 // Allowed audio uploads for the music player. Pure: no DB imports.
 export const AUDIO_MIME: Record<string, string> = {
   mp3: 'audio/mpeg',
+  mpga: 'audio/mpeg',
+  mpeg: 'audio/mpeg',
   m4a: 'audio/mp4',
   aac: 'audio/mp4',
   ogg: 'audio/ogg',

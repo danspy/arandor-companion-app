@@ -20,6 +20,13 @@ test.describe('Music helpers', () => {
   test('audio file check', () => {
     expect(audioFileCheck('Tavern Song.mp3', 1000)).toEqual({ ok: true, ext: 'mp3', title: 'Tavern Song' });
     expect(audioFileCheck('LOUD.MP3', 1)).toMatchObject({ ok: true, ext: 'mp3' });
+    expect(audioFileCheck('Old Song.mpga', 1)).toEqual({ ok: true, ext: 'mpga', title: 'Old Song' });
+    expect(audioFileCheck('x.MPEG', 1)).toMatchObject({ ok: true, ext: 'mpeg' });
+    expect(audioFileCheck('x.mp2', 1)).toMatchObject({ ok: false });
+    expect(audioFileCheck('x.mp2', 1)).toEqual({
+      ok: false,
+      error: 'Unsupported format (allowed: mp3, mpga, mpeg, m4a, aac, ogg, opus, webm, flac, wav)',
+    });
     expect(audioFileCheck('a.b.flac', 1)).toMatchObject({ ok: true, ext: 'flac', title: 'a.b' });
     for (const bad of ['song', 'evil.mp3.html', 'notes.txt', '.mp3x'])
       expect(audioFileCheck(bad, 1)).toMatchObject({ ok: false, error: expect.stringContaining('Unsupported format') });
@@ -195,6 +202,17 @@ test.describe('Music API', () => {
     expect(wavTrack.ref).toMatch(/^\/uploads\/music\/[0-9a-f-]{36}\.wav$/);
     expect((await player.request.get(wavTrack.ref)).status()).toBe(200);
     expect(results[1]).toMatchObject({ name: 'notes.txt', ok: false, error: expect.stringContaining('Unsupported format') });
+
+    // .mpga is accepted and served as audio/mpeg
+    const mpga = await player.request.post(`${base}/tracks`, {
+      multipart: { file: { name: 'Song.mpga', mimeType: 'audio/mpeg', buffer: wav(1) } },
+    });
+    expect(mpga.status()).toBe(201);
+    const mpgaRes = (await mpga.json()).results[0];
+    expect(mpgaRes.ok).toBe(true);
+    expect(mpgaRes.track.ref).toMatch(/\.mpga$/);
+    expect((await player.request.get(mpgaRes.track.ref)).headers()['content-type']).toBe('audio/mpeg');
+    expect((await player.request.delete(`/api/music/tracks/${mpgaRes.track.id}`)).status()).toBe(200);
 
     const two = await player.request.post(`${base}/tracks`, {
       multipart: { file: { name: 'Wind.wav', mimeType: 'audio/wav', buffer: wav(1) } },
