@@ -61,12 +61,21 @@ about 2 seconds.
 - **Location:** pick a location to show its image and name full screen. **Hide from players**
   takes it off the display but keeps it selected; **Show to players** brings it back. It stays
   hidden when you switch to another location, so you can set up the next scene unseen.
-- **NPC spotlight:** add one or more NPCs to show their portraits; remove them with ×. The eye
-  button hides one NPC from the display without removing it (dimmed, marked *Hidden*). Newly
-  added NPCs start visible. **Hide all** hides every spotlight NPC at once (also ones you add
+- **Spotlight:** add party characters and NPCs to show their portraits (the picker groups them
+  as *Party*, *NPCs* and *Former party members*, and only offers who is not in the spotlight
+  yet); remove them with ×. Characters are marked *Party* in the list; on the display their
+  portraits look just like NPC portraits (name, picture and race · class). The eye button
+  hides one entry from the display without removing it (dimmed, marked *Hidden*). Newly added
+  entries start visible. **Hide all** hides the whole spotlight at once (also entries you add
   while it is on); **Show all** brings back exactly what was visible before. **Clear** empties
-  the spotlight. On the display, portraits that stay slide to their new place, new ones rise in
-  and removed or hidden ones fade out.
+  the spotlight.
+- **Focus:** the target button on an entry puts it in focus: the display then shows only the
+  focused entries, big over the blurred campaign image, without location, turn order and timer
+  (e.g. focus 2 of the 5 in the spotlight). **Focus all** focuses everyone visible in the
+  spotlight. A banner names who is in focus; **End focus** brings the location, turn order and
+  timer back as they were. Hidden entries stay hidden even when focused. On the display, removed or hidden portraits fade out, the others glide to their
+  new place and size, and new ones rise in last. Portraits and the place name also glide (never
+  jump) when the location, timer or turn order appears or goes.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server
@@ -84,19 +93,22 @@ device (TV browser, tablet, phone, old laptop) without signing in there.
 
 It fits any screen, from a phone to a 32:9 ultrawide. Text scales with the smaller side of the
 screen, NPC portraits are sized so all of them fit (in several rows if that makes them
-bigger), and the turn order shrinks its rows until every combatant fits (on very small screens
-it scrolls, keeping the current combatant in view). A location picture much wider or taller
+bigger; full rows with a shorter last row centred), and the turn order panel is as tall as its
+rows and shrinks them until every combatant fits (on very small screens it scrolls, keeping the
+current combatant in view). Over a location the portraits keep to the lower half of the picture
+and only take more rows upward when they would otherwise get too small. Small portraits show
+just the name, set smaller rather than broken mid-word when it is long. A location picture much wider or taller
 than the screen is shown whole over a blurred copy instead of being cropped. On upright
 screens (phones, tablets) everything stacks in one scrolling column with the timer and whose
-turn it is first.
+turn it is first, and the scene grows with the portraits instead of shrinking them.
 
 The layout adapts to what is shown:
 
 | Shown | Layout (landscape screens) |
 |---|---|
 | Location | Full screen |
-| NPCs | Portraits over the blurred campaign image |
-| Location + NPCs | Location full screen, portraits along the bottom |
+| Spotlight (characters, NPCs) | Portraits over the blurred campaign image |
+| Location + spotlight | Location full screen, portraits along the bottom, centred in the free space |
 | Timer and/or initiative added | They float as see-through panels on the right, over the location or portraits |
 | Only timer and/or initiative | Centred over the blurred campaign image |
 

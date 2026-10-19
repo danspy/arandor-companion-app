@@ -55,7 +55,7 @@ The schema keeps the encodings of the former Astro DB, so existing databases wor
 | **User** | Accounts | `username*` (unique), `passwordHash*`, `role*` (`admin`/`dungeonmaster`/`player`), `firstName`, `profileImageUrl`, `characterIds`, `favoritePages` (up to 4 page paths) |
 | **InitiativeTracker** | Combatants of the current fight | `name*`, `initiative*`, `type*` (`character`/`npc`/`monster`/`other`), `characterId`, `hp`, `maxHp`, `tempHp`, `ac`, `notes`, `isActive`, death-save fields, `isStable` |
 | **CombatState** | The current fight | `currentRound`, `currentTurnIndex`, `status` (`active`/`paused`/`stopped`) |
-| **DMScreenState** | What the player display shows | `currentLocationId`, `spotlightNpcIds`, `customAssets` (unused), `showInitiativeTracker`, `screenVisible`, `placeholderImageUrl`, `showTimer`, `timerDuration` (s), `timerStartedAt`, `timerPausedAt` (unix), `timerStatus` |
+| **DMScreenState** | What the player display shows | `currentLocationId`, `spotlightNpcIds` (the spotlight in order: NPC ids, and party characters as `character:<id>`), `hiddenNpcIds` (spotlight entries hidden from players, same keys), `locationHidden`, `npcsHidden` (Hide all), `focusNpcIds` (spotlight entries shown on their own; empty = no focus), `customAssets` (unused), `showInitiativeTracker`, `screenVisible`, `placeholderImageUrl`, `showTimer`, `timerDuration` (s), `timerStartedAt`, `timerPausedAt` (unix), `timerStatus` |
 
 All tables also have `id`; most have `createdAt` and `updatedAt`.
 

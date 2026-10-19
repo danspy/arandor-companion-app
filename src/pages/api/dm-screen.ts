@@ -35,6 +35,7 @@ export const GET: APIRoute = async ({ cookies }) => {
         locationHidden: false,
         hiddenNpcIds: [],
         npcsHidden: false,
+        focusNpcIds: [],
         id: DM_SCREEN_STATE_ID, 
         currentLocationId: null, 
         spotlightNpcIds: [], 
@@ -103,11 +104,16 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     }
     delete updates.timerAction;
 
-    // Only NPCs still in the spotlight can be hidden (removing one also forgets its hidden mark)
+    // Only entries still in the spotlight can be hidden or focused (removing one also forgets
+    // its marks)
     const spotlight: string[] = updates.spotlightNpcIds ?? state?.spotlightNpcIds ?? [];
     const hidden: string[] = updates.hiddenNpcIds ?? state?.hiddenNpcIds ?? [];
+    const focus: string[] = updates.focusNpcIds ?? state?.focusNpcIds ?? [];
     if (updates.spotlightNpcIds !== undefined || updates.hiddenNpcIds !== undefined) {
       updates.hiddenNpcIds = hidden.filter((id) => spotlight.includes(id));
+    }
+    if (updates.spotlightNpcIds !== undefined || updates.focusNpcIds !== undefined) {
+      updates.focusNpcIds = focus.filter((id) => spotlight.includes(id));
     }
     
     // Create if doesn't exist
@@ -119,6 +125,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         locationHidden: updates.locationHidden ?? false,
         hiddenNpcIds: updates.hiddenNpcIds ?? [],
         npcsHidden: updates.npcsHidden ?? false,
+        focusNpcIds: updates.focusNpcIds ?? [],
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
         screenVisible: updates.screenVisible ?? true,
@@ -139,6 +146,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           locationHidden: updates.locationHidden !== undefined ? !!updates.locationHidden : state.locationHidden,
           hiddenNpcIds: updates.hiddenNpcIds !== undefined ? updates.hiddenNpcIds : state.hiddenNpcIds,
           npcsHidden: updates.npcsHidden !== undefined ? !!updates.npcsHidden : state.npcsHidden,
+          focusNpcIds: updates.focusNpcIds !== undefined ? updates.focusNpcIds : state.focusNpcIds,
           customAssets: updates.customAssets !== undefined ? updates.customAssets : state.customAssets,
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
           screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,
