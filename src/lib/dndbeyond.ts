@@ -236,7 +236,7 @@ const SKILL_IDS: Record<string, number> = {
 };
 
 // Manual adjustments made on the D&D Beyond sheet (characterValues typeId)
-const VALUE = { skillOverride: 23, skillMiscBonus: 24, skillMagicBonus: 25, saveOverride: 38 } as const;
+const VALUE = { acOverride: 1, acMagicBonus: 2, acMiscBonus: 3, skillOverride: 23, skillMiscBonus: 24, skillMagicBonus: 25, saveOverride: 38 } as const;
 const SKILL_ENTITY = '1958004211';
 const STAT_ENTITY = '1472902489';
 
@@ -287,6 +287,58 @@ function bonusFor(modifiers: any[], subType: string, mods: Record<Ability, numbe
   return sum;
 }
 
+// armorTypeId of D&D Beyond armor
+const ARMOR = { light: 1, medium: 2, heavy: 3, shield: 4 } as const;
+
+function equippedArmor(data: any) {
+  const equipped = (data?.data?.inventory || []).filter((i: any) => i.equipped && i.definition?.armorTypeId);
+  return {
+    armor: equipped.find((i: any) => i.definition.armorTypeId !== ARMOR.shield)?.definition as any,
+    shield: equipped.find((i: any) => i.definition.armorTypeId === ARMOR.shield)?.definition as any,
+  };
+}
+
+/**
+ * Worn armor (light + DEX, medium + DEX up to 2, heavy flat) or unarmored 10 + DEX (+ the best
+ * Unarmored Defense ability), + shield, + armor-class bonuses (magic armor, rings, Defense style
+ * while armored), + the sheet's magic/misc AC bonus. The sheet's AC override wins.
+ */
+function armorClass(data: any, modifiers: any[], mods: Record<Ability, number>): number {
+  const override = characterValue(data, VALUE.acOverride);
+  if (override) return override;
+  const { armor, shield } = equippedArmor(data);
+  let ac: number;
+  if (armor) {
+    const dex = armor.armorTypeId === ARMOR.light ? mods.dex : armor.armorTypeId === ARMOR.medium ? Math.min(mods.dex, 2) : 0;
+    ac = (armor.armorClass || 10) + dex + bonusFor(modifiers, 'armored-armor-class', mods);
+  } else {
+    const unarmored = modifiers.filter((m) => m.type === 'set' && m.subType === 'unarmored-armor-class')
+      .map((m) => (m.statId ? mods[ABILITY_KEYS[m.statId - 1]] : 0) + (m.value || 0));
+    ac = 10 + mods.dex + Math.max(0, ...unarmored);
+  }
+  if (shield) ac += shield.armorClass || 2;
+  return ac + bonusFor(modifiers, 'armor-class', mods)
+    + (characterValue(data, VALUE.acMagicBonus) ?? 0) + (characterValue(data, VALUE.acMiscBonus) ?? 0);
+}
+
+/** Walking speed: species speed (or a "set" innate speed) + speed bonuses; Unarmored Movement only without armor or shield. */
+function walkingSpeed(data: any, modifiers: any[]): number {
+  const { armor, shield } = equippedArmor(data);
+  let speed = data?.data?.race?.weightSpeeds?.normal?.walk || 30;
+  for (const m of modifiers) {
+    if (m.type === 'set' && m.subType === 'innate-speed-walking') speed = Math.max(speed, m.value || 0);
+  }
+  for (const m of modifiers) {
+    if (m.type !== 'bonus') continue;
+    if (m.subType === 'unarmored-movement' && !armor && !shield) speed += m.value || 0;
+    if (m.subType === 'speed' || m.subType === 'speed-walking') {
+      if (/heavy armor/i.test(m.restriction || '') && armor?.armorTypeId === ARMOR.heavy) continue;
+      speed += m.value || 0;
+    }
+  }
+  return speed;
+}
+
 export function buildSheet(data: any): CharacterSheet {
   const scores = abilityScores(data);
   const mods = Object.fromEntries(ABILITY_KEYS.map((a, i) => [a, abilityModifier(scores[ABILITY_NAMES[i]])])) as Record<Ability, number>;
@@ -318,9 +370,9 @@ export function buildSheet(data: any): CharacterSheet {
   return {
     version: 1,
     proficiencyBonus: prof,
-    ac: 0,
+    ac: armorClass(data, modifiers, mods),
     initiative: mods.dex + Math.max(proficiencyValue(initiativeProf, prof), proficiencyValue(allChecks, prof)) + checkBonus + bonusFor(modifiers, 'initiative', mods),
-    speed: 0,
+    speed: walkingSpeed(data, modifiers),
     passivePerception: passive('perception'),
     saves,
     passiveInvestigation: passive('investigation'),

@@ -57,5 +57,10 @@ test.describe('D&D Beyond sheet', () => {
       expect(sheet.initiative).toBe(e.initiative);
       expect(Object.fromEntries(sheet.skills.map((s) => [s.name, s.bonus]))).toEqual(e.skills);
     });
+
+    test(`${name}: armor class and speed match`, () => {
+      const sheet = buildSheet(load(name));
+      expect({ ac: sheet.ac, speed: sheet.speed }).toEqual({ ac: e.ac, speed: e.speed });
+    });
   }
 });
