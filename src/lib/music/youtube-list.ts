@@ -5,7 +5,10 @@
 import { loadYouTubeApi, type YTPlayer } from './youtube-backend';
 
 export const IMPORT_LIMIT = 200; // videos per import (the server enforces it too)
-const READ_ERROR = 'Could not read this YouTube playlist';
+// Also shown for a truncated link (the list id cut short): ids vary in length (PL…, OLAK5uy_…,
+// UU…), so there is no length check; the reader just times out or gets an empty list.
+const READ_ERROR = 'Could not read this YouTube playlist. Check that the link is complete (copy it via Share → Copy link) ' +
+  "and that the playlist is public or unlisted — private playlists and YouTube Mixes can't be read.";
 const TIMEOUT_MS = 10_000; // whole read
 const LIST_WAIT_MS = 5_000; // after the first state change, wait this long for a non-empty list
 const POLL_MS = 250;

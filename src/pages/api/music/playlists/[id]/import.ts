@@ -6,6 +6,7 @@ import { json, getViewer, loadPlaylist } from '../../../../../lib/music/server';
 
 const VIDEO_ID = /^[A-Za-z0-9_-]{11}$/;
 const MAX_VIDEOS = 200;
+const MAX_RAW_IDS = 1000; // raw list length (duplicates included) accepted before the ids are checked
 const LOOKUPS = 6; // concurrent oEmbed title lookups
 
 /** Runs fn over items with at most `limit` running at once; results keep the input order. */
@@ -39,6 +40,8 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
       return json({ error: 'Invalid JSON' }, 400);
     }
     const raw = body?.videoIds;
+    // Checked before the id scan, so a huge list costs nothing
+    if (Array.isArray(raw) && raw.length > MAX_RAW_IDS) return json({ error: `At most ${MAX_VIDEOS} videos per import` }, 400);
     if (!Array.isArray(raw) || raw.some((v) => typeof v !== 'string' || !VIDEO_ID.test(v))) {
       return json({ error: 'videoIds must be a list of YouTube video ids' }, 400);
     }

@@ -173,7 +173,8 @@ test.describe('Music API', () => {
     expect(detail.tracks.map((t: any) => t.position)).toEqual([0, 1, 2, 3]);
 
     const many = Array.from({ length: 201 }, (_, i) => `e2eMany${String(i).padStart(4, '0')}`);
-    for (const videoIds of [many, [], ['short'], ['e2eImport01', 'bad id here'], 'e2eImport01', undefined]) {
+    const huge = Array(1001).fill('e2eImport01'); // rejected on length alone (even as duplicates)
+    for (const videoIds of [many, huge, [], ['short'], ['e2eImport01', 'bad id here'], 'e2eImport01', undefined]) {
       const r = await player.request.post(url, { data: { videoIds, titles } });
       expect(r.status(), String(JSON.stringify(videoIds)).slice(0, 40)).toBe(400);
       expect((await r.json()).error).toBeTruthy();
@@ -1168,6 +1169,16 @@ test.describe('Music page', () => {
     expect(hosts).toHaveLength(2);
     for (const h of hosts) { expect(h.w).toBeGreaterThanOrEqual(200); expect(h.h).toBeGreaterThanOrEqual(200); }
     await expect(page.locator('#mp-root iframe')).toHaveCount(0);
+
+    // A list YouTube cannot read (truncated link, private list, Mix): explains what to check, adds nothing
+    await page.locator('#mp-yt-url').fill('https://www.youtube.com/playlist?list=PLe2eCut');
+    await page.locator('#mp-yt-add').click();
+    await page.evaluate(() => { (window as any).__ytLists.PLe2eCut = []; });
+    await choice.getByRole('button', { name: 'Import as separate tracks' }).click();
+    await expect(page.locator('#arandor-toasts')).toContainText(
+      "Could not read this YouTube playlist. Check that the link is complete (copy it via Share → Copy link) and that the playlist is public or unlisted — private playlists and YouTube Mixes can't be read.",
+      { timeout: 15_000 });
+    await expect(titles(page)).toHaveCount(7);
   });
 });
 

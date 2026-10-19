@@ -29,7 +29,8 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
       if (!files.length) return json({ error: 'No files' }, 400);
       const results: Result[] = [];
       for (const file of files) {
-        const check = audioFileCheck(file.name, file.size); // size is checked before the body is read
+        // formData() has already buffered the whole body; the size limit only stops the file being stored
+        const check = audioFileCheck(file.name, file.size);
         if (!check.ok) {
           results.push({ name: file.name, ok: false, error: check.error });
           continue;

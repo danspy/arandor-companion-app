@@ -186,8 +186,9 @@ shows briefly; no API key needed) and adds up to **200** videos as normal tracks
 YouTube title. It is a **snapshot**: videos added to the YouTube list later do not appear. A
 whole-playlist entry that is already in a playlist has an **Expand into tracks** button which
 does the same import and puts the new tracks where the entry was. Longer lists are cut at 200
-(the message says how many were imported). Private or unavailable YouTube playlists cannot be
-read; you get an error message.
+(the message says how many were imported). Private playlists, YouTube Mixes and incomplete
+links (a list id cut short when copying) cannot be read; the error message says to check that
+the link is complete (copy it via *Share → Copy link*) and that the playlist is public or unlisted.
 
 **YouTube tracks** play in a video window beside the mini bar. YouTube's terms say a playing
 player must be visible and at least 200×200 pixels, so the window cannot be hidden or made

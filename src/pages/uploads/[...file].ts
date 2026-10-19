@@ -78,13 +78,13 @@ export const GET: APIRoute = async ({ params, request }) => {
       // Determine content type from file extension
       const mimeType = getMimeType(file);
       
-      // Handle Range requests for video streaming (required for mobile browsers)
+      // Handle Range requests for video and audio streaming (required for mobile browsers and seeking)
       const rangeHeader = request.headers.get('range');
       
       if (rangeHeader && isStreamable(mimeType)) {
         // Parse Range header (format: "bytes=start-end")
         // Note: This handles standard ranges (e.g., "bytes=0-1023", "bytes=1024-")
-        // Suffix ranges (e.g., "bytes=-500") are not common for video streaming
+        // Suffix ranges (e.g., "bytes=-500") are not common for media streaming
         // and will fall back to serving the complete file
         const parts = rangeHeader.replace(/bytes=/, '').split('-');
         const start = parseInt(parts[0], 10);
@@ -133,7 +133,7 @@ export const GET: APIRoute = async ({ params, request }) => {
         }
       }
       
-      // For non-Range requests or non-video files, serve the complete file
+      // For non-Range requests or files that are not video/audio, serve the complete file
       const buffer = await readFile(filepath);
       
       return new Response(buffer, {
