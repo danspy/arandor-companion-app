@@ -794,3 +794,53 @@ test.describe('Dashboard music', () => {
     expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
   });
 });
+
+test.describe('DM screen music', () => {
+  test.skip(!haveAccounts, 'Needs E2E accounts (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'Desktop flow');
+
+  test('dm picks a playlist and plays it; nothing reaches the display', async ({ browser }) => {
+    const dm = await browser.newContext();
+    await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+    const name = `E2E dmscreen ${Date.now()}`;
+    const res = await dm.request.post('/api/music/playlists', { data: { name } });
+    expect(res.status()).toBe(201);
+    const id = (await res.json()).playlist?.id ?? (await res.json()).id;
+    try {
+      for (const f of ['Alpha.wav', 'Beta.wav']) {
+        const up = await dm.request.post(`/api/music/playlists/${id}/tracks`, {
+          multipart: { file: { name: f, mimeType: 'audio/wav', buffer: wav(20) } },
+        });
+        expect(up.status()).toBe(201);
+      }
+      const page = await dm.newPage();
+      await page.goto('/tools/dm-screen');
+      const panel = page.locator('#dm-music');
+      await expect(panel).toContainText('Music');
+      await panel.locator('#dmm-select').selectOption(id);
+      const rows = panel.locator('[data-dmm-row]');
+      await expect(rows).toHaveCount(2);
+      await rows.nth(1).locator('[data-dmm-play]').click();
+      await expect(page.locator('#music-bar')).toBeVisible();
+      await expect(page.locator('#music-title')).toHaveText('Beta');
+      await expect(rows.nth(1)).toHaveAttribute('aria-current', 'true');
+      await expect(rows.nth(0)).not.toHaveAttribute('aria-current', 'true');
+      await panel.locator('#dmm-shuffle').click();
+      await expect(panel.locator('#dmm-shuffle')).toHaveAttribute('aria-pressed', 'true');
+      await panel.locator('#dmm-repeat').click();
+      await expect(panel.locator('#dmm-repeat')).toHaveAttribute('data-mode', 'all');
+      await panel.locator('#dmm-toggle').click();
+      await expect(panel.locator('#dmm-toggle')).toHaveAttribute('aria-label', 'Play');
+
+      const display = await (await dm.request.get('/api/display')).text();
+      expect(display).not.toContain(name);
+      expect(display.toLowerCase()).not.toContain('music');
+      const dp = await dm.newPage();
+      await dp.goto('/display');
+      await expect(dp.locator('#music-root')).toHaveCount(0);
+    } finally {
+      await dm.request.delete(`/api/music/playlists/${id}`);
+      await dm.close();
+    }
+  });
+});

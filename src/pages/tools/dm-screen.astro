@@ -2,7 +2,7 @@
 import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
-import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 import '../../styles/statblock.css';
@@ -15,6 +15,7 @@ const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 if (!isLoggedIn || !canEdit) {
   return Astro.redirect('/login');
 }
+const musicMe = (await getCurrentUser(Astro.cookies))?.id ?? '';
 
 // Fetch all locations, NPCs and characters for selection
 const locations = await db.select().from(Location);
@@ -459,6 +460,17 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         </div>
       </div>
     </div>
+
+    <!-- Music (table music through the global player; never shown on the player display) -->
+    <div class="t-panel p-6" id="dm-music">
+      <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19a3 3 0 11-6 0 3 3 0 016 0zm12-3a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Music
+      </h2>
+      <div id="dm-music-host" class="space-y-3" data-me={musicMe}></div>
+    </div>
   </div>
 
   <style>
@@ -478,6 +490,15 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       margin-right: 0.5rem;
     }
   </style>
+
+  <script>
+    import { mountMusicPicker } from '../../lib/music/picker';
+    const mountMusic = () => {
+      const host = document.getElementById('dm-music-host');
+      if (host) mountMusicPicker(host);
+    };
+    document.addEventListener('astro:page-load', mountMusic);
+  </script>
 
   <script>
     import { COMBATANT_CHANGED_EVENT, toggleStatBlock } from '../../lib/statblock-panel';
