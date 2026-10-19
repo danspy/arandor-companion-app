@@ -473,6 +473,55 @@ test.describe('Music player', () => {
     await expect.poll(() => paused(page)).toBe(false);
   });
 
+  // A file whose metadata is still loading when its player is dropped (✕, or a switch to
+  // YouTube) must not leave the store ignoring time/play events of the next player: a YouTube
+  // track would never show its progress (nothing else settles that pending load).
+  const ytVideo = { id: 'yt-v', kind: 'youtube_video', title: 'Fake video', ref: 'vid' };
+  const st = (page: import('@playwright/test').Page) => page.evaluate(() => window.__music.getState());
+  async function expectProgress(page: import('@playwright/test').Page) {
+    await expect.poll(async () => (await st(page)).duration).toBeGreaterThan(0);
+    await expect.poll(async () => (await st(page)).position).toBeGreaterThan(0.3);
+    expect((await st(page)).playing).toBe(true);
+  }
+  async function playQueue(page: import('@playwright/test').Page, tracks: unknown[]) {
+    await page.evaluate(({ id, name, tracks }) => window.__music.playPlaylist({ id, name, tracks: tracks as any }), { id: playlist.id, name: playlist.name, tracks });
+  }
+
+  test('stop while a file is loading: the next track still reports time (fake YouTube API)', async ({ page }) => {
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+    await page.goto('/');
+    await page.waitForFunction(() => !!window.__music);
+    const q = asQueue(playlist.tracks);
+    await page.evaluate(({ id, name, q }) => {
+      window.__music.playPlaylist({ id, name, tracks: q as any });
+      window.__music.stop(); // metadata not loaded yet
+    }, { id: playlist.id, name: playlist.name, q });
+    await page.waitForTimeout(300);
+    await playQueue(page, [ytVideo]);
+    await expect(page.locator('#music-title')).toHaveText('Fake video');
+    await expect.poll(async () => (await st(page)).duration).toBe(100);
+    await playQueue(page, q);
+    await expectProgress(page);
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+  });
+
+  test('switching to YouTube while a file is loading: time is still reported (fake YouTube API)', async ({ page }) => {
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+    await page.goto('/');
+    await page.waitForFunction(() => !!window.__music);
+    const q = asQueue(playlist.tracks);
+    await page.evaluate(({ id, name, q, yt }) => {
+      window.__music.playPlaylist({ id, name, tracks: [q[0], yt] as any });
+      window.__music.next(); // drops the audio player before its metadata arrived
+    }, { id: playlist.id, name: playlist.name, q, yt: ytVideo });
+    await expect(page.locator('#music-title')).toHaveText('Fake video');
+    await expect.poll(async () => (await st(page)).duration).toBe(100);
+    await playQueue(page, q);
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await expectProgress(page);
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+  });
+
   test('paused YouTube playlist: next/prev cue the entry and stay paused and hidden (fake YouTube API)', async ({ page }) => {
     await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
     const list = { id: 'yt-list', kind: 'youtube_playlist', title: 'Fake list', ref: 'PLfake' };
@@ -856,6 +905,24 @@ test.describe('Music player', () => {
     await page.waitForTimeout(500);
     expect(await paused(page)).toBe(true);
     expect(await page.evaluate(() => window.__music.getState().playing)).toBe(false);
+
+    // Offline at the next load (the restore check fails): nothing shown, but the saved state
+    // survives the next pagehide and comes back once the server is reachable again
+    await page.route('**/api/music/site', (r) => r.abort());
+    await page.reload();
+    await page.waitForFunction(() => !!window.__music);
+    await page.waitForTimeout(800);
+    await expect(page.locator('#music-bar')).toBeHidden();
+    await page.evaluate(() => window.__music.setVolume(0.5)); // settings still save
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    const kept = await page.evaluate(() => JSON.parse(localStorage.getItem('arandor.music') ?? '{}'));
+    expect(kept.source?.playlistId).toBe(playlist.id);
+    expect(kept.volume).toBe(0.5);
+    await page.unroute('**/api/music/site');
+    await page.reload();
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await expect(page.locator('#music-bar')).toBeVisible();
+    errors.length = 0; // the aborted request logs a network error
 
     // The saved playlist is gone: the saved state is dropped silently
     const del = await owner.request.delete(`/api/music/playlists/${playlist.id}`);

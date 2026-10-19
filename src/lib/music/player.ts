@@ -68,6 +68,7 @@ export function fmtTime(sec: number): string {
 export const MUSIC_STATE_EVENT = 'music:state';
 const STORAGE_KEY = 'arandor.music';
 const TIME_EMIT_MS = 250; // time updates: at most 4 events per second
+const SAVE_TIME_MS = 5000; // position-only changes: saved at most every 5 seconds
 const PREV_RESTARTS_AFTER = 3; // seconds: "previous" restarts the track when past this point
 
 type Saved = Partial<Pick<MusicState, 'volume' | 'shuffle' | 'repeat' | 'source' | 'queue' | 'index' | 'position'>>;
@@ -114,7 +115,10 @@ function createStore(): MusicStore {
   let original: QueueTrack[] = []; // the playlist's own order, for switching shuffle off
   let failed = new Set<string>(); // tracks that could not be played since the last playPlaylist
   let wantPlay = false; // what the user asked for; survives track changes
-  let loading = 0; // > 0 while a track loads: ignore play/pause events of the element then
+  // The loadSeq of the track whose load() is under way (0: none): play/pause/time events of the
+  // element are ignored then. Reset by stop()/dropBackend(), so a load that never settles can't
+  // block those events for good.
+  let loadingSeq = 0;
   let loadSeq = 0;
   let touched = false; // set by any user action; a late restore must not overwrite it
   let restorePending = true; // until the saved state is checked, don't overwrite it
@@ -123,28 +127,36 @@ function createStore(): MusicStore {
 
   // ── Events + persistence ──
   let lastTimeEmit = 0;
+  let lastSave = 0;
   let timeTimer: ReturnType<typeof setTimeout> | null = null;
 
   function save() {
-    if (restorePending && !touched) return;
+    lastSave = Date.now();
     try {
       const { volume, shuffle, repeat, source, queue, index, position } = state;
-      localStorage.setItem(STORAGE_KEY, JSON.stringify({ volume, shuffle, repeat, source, queue, index, position }));
+      // Until the saved queue has been checked (or while that check could not reach the server),
+      // keep it as it is and only update the settings.
+      const data = restorePending && !touched
+        ? { ...saved, volume, shuffle, repeat }
+        : { volume, shuffle, repeat, source, queue, index, position };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch { /* storage full or blocked: the player still works */ }
   }
 
-  function emit() {
+  /** `timeOnly`: only the position moved; the state is then saved at most every SAVE_TIME_MS
+   *  (the whole queue is written each time; pagehide saves the latest position anyway). */
+  function emit(timeOnly = false) {
     if (timeTimer) { clearTimeout(timeTimer); timeTimer = null; }
     lastTimeEmit = Date.now();
-    save();
+    if (!timeOnly || lastTimeEmit - lastSave >= SAVE_TIME_MS) save();
     playbackState();
     document.dispatchEvent(new CustomEvent(MUSIC_STATE_EVENT, { detail: getState() }));
   }
 
   function emitTime() {
     const wait = TIME_EMIT_MS - (Date.now() - lastTimeEmit);
-    if (wait <= 0) emit();
-    else if (!timeTimer) timeTimer = setTimeout(emit, wait);
+    if (wait <= 0) emit(true);
+    else if (!timeTimer) timeTimer = setTimeout(() => emit(true), wait);
   }
 
   function getState(): MusicState {
@@ -165,7 +177,7 @@ function createStore(): MusicStore {
     const b = kind === 'file' ? createAudioBackend(el as HTMLAudioElement) : createYouTubeBackend(el);
     b.setVolume(state.volume);
     b.onTime = (pos, dur) => {
-      if (b !== backend || loading) return;
+      if (b !== backend || loadingSeq) return;
       const durChanged = dur !== state.duration;
       state.position = pos;
       state.duration = dur;
@@ -174,7 +186,9 @@ function createStore(): MusicStore {
     b.onEnded = () => { if (b === backend) ended(); };
     b.onError = () => { if (b === backend) skipBroken(); };
     b.onPlaying = (p) => {
-      if (b !== backend || loading || state.playing === p) return;
+      if (b !== backend || loadingSeq) return;
+      if (p) playedOk();
+      if (state.playing === p) return;
       state.playing = p;
       wantPlay = p;
       emit();
@@ -182,7 +196,7 @@ function createStore(): MusicStore {
     b.onActive = (active) => {
       if (b !== backend) return;
       // Safety net: a playing YouTube player is never hidden, whatever path started it
-      if (active) showVideo();
+      if (active) { playedOk(); showVideo(); }
       // Idle (paused, cued, ended) and nobody asked for playback: hide the tile
       // (not while an autoplay load is still under way: YouTube would start it right after)
       else if (!wantPlay && state.youtubeVisible && !b.isActive?.()) { state.youtubeVisible = false; emit(); }
@@ -199,6 +213,12 @@ function createStore(): MusicStore {
     return b;
   }
 
+  /** The current track plays: it is no longer counted as broken. */
+  function playedOk() {
+    const t = state.queue[state.index];
+    if (t) failed.delete(t.id);
+  }
+
   function showVideo() {
     if (backendKind !== 'youtube' || state.youtubeVisible) return;
     state.youtubeVisible = true;
@@ -209,6 +229,7 @@ function createStore(): MusicStore {
     const b = backend;
     backend = null;
     backendKind = null;
+    loadingSeq = 0;
     b?.destroy();
   }
 
@@ -232,11 +253,11 @@ function createStore(): MusicStore {
       queueMicrotask(() => { if (seq === loadSeq) skipBroken(); });
       return;
     }
-    loading++;
+    loadingSeq = seq;
     try {
       await b.load(t, at, autoplay);
     } finally {
-      loading--;
+      if (loadingSeq === seq) loadingSeq = 0;
     }
     if (seq !== loadSeq || b !== backend) return;
     if (wantPlay) await b.play();
@@ -320,6 +341,7 @@ function createStore(): MusicStore {
   function stop() {
     touched = true;
     loadSeq++;
+    loadingSeq = 0;
     wantPlay = false;
     dropBackend();
     failed = new Set();
@@ -437,14 +459,15 @@ function createStore(): MusicStore {
 
   // ── Restore after a full page load (paused, never autoplay) ──
   async function restore() {
+    let keep = false;
     try {
-      await restoreSaved();
-    } finally {
-      restorePending = false;
-    }
+      keep = (await restoreSaved()) === 'offline';
+    } catch { /* unexpected: fall through */ }
+    // Offline: the saved state stays as it is (save() keeps it) for the next page load.
+    if (!keep) restorePending = false;
   }
 
-  async function restoreSaved() {
+  async function restoreSaved(): Promise<'offline' | void> {
     const queue = Array.isArray(saved.queue) ? saved.queue.filter(isTrack) : [];
     const src = saved.source;
     const idx = typeof saved.index === 'number' ? saved.index : 0;
@@ -454,7 +477,7 @@ function createStore(): MusicStore {
     try {
       tracks = await fetchPlaylistTracks(src.playlistId);
     } catch {
-      return; // offline or server trouble: keep the saved state for next time, show nothing now
+      return 'offline'; // offline or server trouble: keep the saved state for next time, show nothing now
     }
     if (touched) return;
     const fresh = tracks && new Map(tracks.map((t) => [t.id, t]));

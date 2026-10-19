@@ -38,19 +38,25 @@ export interface MusicBackend {
 export function createAudioBackend(audio: HTMLAudioElement): MusicBackend {
   let alive = true;
   let loadToken = 0;
+  // Settles the load() under way. Unloading the element (destroy) or a newer load fires no
+  // 'error', so without this its promise would never settle.
+  let settle: (() => void) | null = null;
   const backend: MusicBackend = {
     onEnded: () => {},
     onError: () => {},
     onTime: () => {},
     onPlaying: () => {},
     load(t, at = 0) {
+      settle?.();
       const token = ++loadToken;
       return new Promise<void>((resolve) => {
         const done = () => {
           audio.removeEventListener('loadedmetadata', onMeta);
           audio.removeEventListener('error', onFail);
+          if (settle === done) settle = null;
           resolve();
         };
+        settle = done;
         const onMeta = () => {
           if (token === loadToken && at > 0 && Number.isFinite(at)) {
             audio.currentTime = Math.min(at, Math.max(0, (audio.duration || at) - 0.25));
@@ -78,6 +84,7 @@ export function createAudioBackend(audio: HTMLAudioElement): MusicBackend {
     destroy() {
       alive = false;
       loadToken++;
+      settle?.();
       for (const [ev, fn] of handlers) audio.removeEventListener(ev, fn);
       audio.pause();
       audio.removeAttribute('src');
