@@ -94,6 +94,7 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
   let playing = false; // last reported to onPlaying
   let lastTitle: string | null = null;
   let pendingLoad: (() => void) | null = null; // resolves the running load()
+  let autoplayPending = false; // a load with autoplay runs: YouTube will start playing by itself
   let rebuilding = false; // until the rebuilt player plays/pauses, don't report its time
   let iframeLoads = 0;
   let swapped = false;
@@ -105,6 +106,7 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
   function finishLoad() {
     const done = pendingLoad;
     pendingLoad = null;
+    autoplayPending = false;
     done?.();
   }
 
@@ -188,6 +190,15 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
     }
   }
 
+  /** Cues another entry of the current list track at its start (stays paused). */
+  function cueEntry(index: number) {
+    if (!track) return;
+    lastPos = 0;
+    lastDur = 0;
+    cue(track, 0, false, index);
+    backend.onTime(0, 0);
+  }
+
   let creating: Promise<void> | null = null;
   /** A ready player, created on first use (one creation at a time). */
   function ensurePlayer(): Promise<void> {
@@ -259,7 +270,7 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
     onTitle: () => {},
     onActive: () => {},
     isActive() {
-      return ytState === S.PLAYING || ytState === S.BUFFERING;
+      return autoplayPending || ytState === S.PLAYING || ytState === S.BUFFERING;
     },
     async load(t, at = 0, autoplay = false) {
       finishLoad();
@@ -270,6 +281,7 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
       rebuilding = false;
       listErrors = 0;
       playing = autoplay;
+      autoplayPending = autoplay;
       // Settles once YouTube reports the video cued/playing, on an error, when a newer load()
       // or destroy() comes, or after a timeout - never later, so the queue can't get stuck.
       await new Promise<void>((resolve) => {
@@ -319,21 +331,28 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
       player = null;
       host.replaceChildren();
     },
+    // nextVideo()/previousVideo() always start playback. While not playing, cue the entry
+    // instead, so a paused list stays paused (and its hidden tile never plays).
     nextInList() {
       if (!player || !ready || !isList()) return false;
       const list = player.getPlaylist();
-      if (!list?.length || player.getPlaylistIndex() >= list.length - 1) return false;
-      player.nextVideo();
+      const i = player.getPlaylistIndex();
+      if (!list?.length || i >= list.length - 1) return false;
+      if (backend.isActive!()) player.nextVideo();
+      else cueEntry(i + 1);
       return true;
     },
     prevInList() {
       if (!player || !ready || !isList()) return false;
       if ((player.getCurrentTime() || 0) > 3) { // same rule as the queue: restart first
-        player.seekTo(0, true);
+        backend.seek(0); // seekTo() would start playback from CUED/ENDED; seek() re-cues there
+        backend.onTime(0, lastDur);
         return true;
       }
-      if (player.getPlaylistIndex() <= 0) return false;
-      player.previousVideo();
+      const i = player.getPlaylistIndex();
+      if (i <= 0) return false;
+      if (backend.isActive!()) player.previousVideo();
+      else cueEntry(i - 1);
       return true;
     },
   };

@@ -184,7 +184,8 @@ function createStore(): MusicStore {
       // Safety net: a playing YouTube player is never hidden, whatever path started it
       if (active) showVideo();
       // Idle (paused, cued, ended) and nobody asked for playback: hide the tile
-      else if (!wantPlay && state.youtubeVisible) { state.youtubeVisible = false; emit(); }
+      // (not while an autoplay load is still under way: YouTube would start it right after)
+      else if (!wantPlay && state.youtubeVisible && !b.isActive?.()) { state.youtubeVisible = false; emit(); }
     };
     b.onTitle = (title) => {
       if (b !== backend || state.videoTitle === title) return;

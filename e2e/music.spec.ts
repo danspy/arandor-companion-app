@@ -403,6 +403,108 @@ test.describe('Music player', () => {
     await expect.poll(() => paused(page)).toBe(false);
   });
 
+  // A stand-in for YouTube's IFrame API that records which player methods are called, for
+  // YouTube playlists (they can't play from the test server: error 150). Mirrors YouTube:
+  // loadPlaylist/nextVideo/previousVideo and seekTo from CUED start playback; cuePlaylist doesn't.
+  const FAKE_YT_API = `(() => {
+    const calls = window.__ytCalls = [];
+    class Player {
+      constructor(el, opts) {
+        this.ev = opts.events || {}; this.state = -1; this.t = 0; this.i = 0; this.list = ['a', 'b', 'c'];
+        this.f = document.createElement('iframe'); this.f.id = 'fake-yt'; el.replaceWith(this.f);
+        setTimeout(() => this.ev.onReady && this.ev.onReady(), 10);
+      }
+      set(s) { this.state = s; setTimeout(() => this.ev.onStateChange && this.ev.onStateChange({ data: s }), 10); }
+      rec(name, arg) { calls.push({ name, arg: arg === undefined ? null : arg, state: this.state }); }
+      getIframe() { return this.f; }
+      setVolume() {}
+      loadPlaylist(o) { this.rec('loadPlaylist', o); this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(1); }
+      cuePlaylist(o) { this.rec('cuePlaylist', o); this.i = o.index || 0; this.t = o.startSeconds || 0; this.set(5); }
+      loadVideoById(id, t) { this.rec('loadVideoById', id); this.t = t || 0; this.set(1); }
+      cueVideoById(id, t) { this.rec('cueVideoById', id); this.t = t || 0; this.set(5); }
+      playVideo() { this.rec('playVideo'); this.set(1); }
+      pauseVideo() { this.rec('pauseVideo'); this.set(2); }
+      seekTo(t) { this.rec('seekTo', t); this.t = t; if (this.state !== 2) this.set(1); }
+      nextVideo() { this.rec('nextVideo'); this.i++; this.t = 0; this.set(1); }
+      previousVideo() { this.rec('previousVideo'); this.i--; this.t = 0; this.set(1); }
+      getCurrentTime() { return this.t; }
+      getDuration() { return 100; }
+      getPlayerState() { return this.state; }
+      getPlaylist() { return this.list; }
+      getPlaylistIndex() { return this.i; }
+      getVideoData() { return { title: 'Entry ' + this.list[this.i], video_id: this.list[this.i] }; }
+      destroy() { this.f.remove(); }
+    }
+    window.YT = { Player, get: () => window.__ytPlayer };
+    const P = Player; window.YT.Player = function (el, o) { return (window.__ytPlayer = new P(el, o)); };
+    window.onYouTubeIframeAPIReady && window.onYouTubeIframeAPIReady();
+  })();`;
+
+  test('paused YouTube playlist: next/prev cue the entry and stay paused and hidden (fake YouTube API)', async ({ page }) => {
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+    const list = { id: 'yt-list', kind: 'youtube_playlist', title: 'Fake list', ref: 'PLfake' };
+    await start(page, [list]);
+    const calls = () => page.evaluate(() => (window as any).__ytCalls.splice(0) as { name: string; arg: any; state: number }[]);
+    const st = () => page.evaluate(() => window.__music.getState());
+    await expect.poll(async () => (await st()).youtubeVisible && (await st()).playing).toBe(true);
+    await expect(page.locator('#music-yt-tile')).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Entry a');
+    // Playing: next moves on inside the list with nextVideo() (keeps playing)
+    await calls();
+    await page.getByRole('button', { name: 'Next track' }).click();
+    await expect(page.locator('#music-title')).toHaveText('Entry b');
+    expect((await calls()).map((c) => c.name)).toEqual(['nextVideo']);
+
+    await page.getByRole('button', { name: 'Pause', exact: true }).click();
+    await expect(page.locator('#music-yt-tile')).toBeHidden();
+    await calls();
+    // Paused: next cues entry c (no nextVideo, nothing starts) and the tile stays hidden
+    await page.getByRole('button', { name: 'Next track' }).click();
+    await expect(page.locator('#music-title')).toHaveText('Entry c');
+    let c = await calls();
+    expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
+    expect(c[0].arg).toMatchObject({ list: 'PLfake', index: 2, startSeconds: 0 });
+    // Paused (cued): prev cues entry b
+    await page.getByRole('button', { name: 'Previous track' }).click();
+    await expect(page.locator('#music-title')).toHaveText('Entry b');
+    c = await calls();
+    expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
+    expect(c[0].arg).toMatchObject({ index: 1, startSeconds: 0 });
+    // Cued, more than 3 s in: prev restarts the entry by cueing it (seekTo would start it)
+    await page.evaluate(() => { (window as any).__ytPlayer.t = 10; });
+    await page.getByRole('button', { name: 'Previous track' }).click();
+    await expect.poll(async () => (await calls()).map((x) => x.name)).toEqual(['cuePlaylist']);
+    await page.waitForTimeout(300);
+    const s = await st();
+    expect(s.playing).toBe(false);
+    expect(s.youtubeVisible).toBe(false);
+    expect(s.position).toBe(0);
+    await expect(page.locator('#music-yt-tile')).toBeHidden();
+    expect(await page.evaluate(() => (window as any).__ytPlayer.state)).not.toBe(1);
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+  });
+
+  test('pause during an autoplay load keeps the tile until YouTube has paused (fake YouTube API)', async ({ page }) => {
+    // The fake player becomes ready only after 1.5 s, so the pause lands mid-load
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript',
+      body: FAKE_YT_API.replace("setTimeout(() => this.ev.onReady && this.ev.onReady(), 10)", "setTimeout(() => this.ev.onReady && this.ev.onReady(), 1500)") }));
+    await start(page, [{ id: 'yt-v', kind: 'youtube_video', title: 'Fake video', ref: 'vid' }]);
+    await expect(page.locator('#music-yt-tile')).toBeVisible();
+    await page.evaluate(() => {
+      const w = window as any;
+      w.__bad = 0;
+      // Record any moment the fake player plays while the tile is hidden
+      setInterval(() => { const p = w.__ytPlayer; const t = document.getElementById('music-yt-tile')!;
+        if (p && p.state === 1 && !t.checkVisibility({ visibilityProperty: true } as any)) w.__bad++; }, 5);
+      window.__music.pause();
+    });
+    expect((await page.evaluate(() => window.__music.getState())).youtubeVisible).toBe(true);
+    await expect(page.locator('#music-yt-tile')).toBeHidden({ timeout: 5000 });
+    expect(await page.evaluate(() => (window as any).__ytPlayer.state)).toBe(2);
+    expect(await page.evaluate(() => (window as any).__bad)).toBe(0);
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+  });
+
   // ── YouTube (real youtube.com; desktop Chromium only) ──
   // YouTube refuses to embed into a page whose origin is a bare IP (error 150 for every video),
   // so these tests open the test server as localhost instead of 127.0.0.1.
@@ -512,6 +614,16 @@ test.describe('Music player', () => {
       await ytPlaying(page, tPaused + 1);
       expect((await ytState(page)).youtubeVisible).toBe(true);
       expect((await watchResult(page)).violations).toEqual([]);
+
+      // Safety net: whatever starts the hidden player (here YouTube's API directly), the tile shows
+      await page.getByRole('button', { name: 'Pause', exact: true }).click();
+      await expect(tile(page)).toBeHidden();
+      await page.evaluate(() => {
+        const f = document.querySelector<HTMLIFrameElement>('#music-yt-tile iframe')!;
+        (window as any).YT.get(f.id).playVideo();
+      });
+      await expectTileShown(page);
+      await expect.poll(async () => { const s = await ytState(page); return s.youtubeVisible && s.playing; }, { timeout: 15_000 }).toBe(true);
     });
 
     test('restored YouTube track stays hidden until play', async ({ page }) => {
