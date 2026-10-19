@@ -711,6 +711,104 @@ test.describe('Music player', () => {
     });
   });
 
+  // ── Installed app (standalone, phone): the mini bar against the bottom dock and dice seal ──
+  test.describe('PWA mode', () => {
+    test.skip(({ isMobile }) => !isMobile, 'Phone (mobile project) only');
+
+    type Box = { x: number; y: number; width: number; height: number };
+    const meets = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+    const box = async (page: import('@playwright/test').Page, sel: string) => (await page.locator(sel).boundingBox())!;
+
+    /** Standalone display mode. This Chromium ignores CDP's display-mode media emulation
+     *  (`Emulation.setEmulatedMedia` leaves `(display-mode: standalone)` false), so the app's own
+     *  CSS and HTML are served with that media query switched on; no rules are copied. */
+    async function standalone(page: import('@playwright/test').Page) {
+      const cdp = await page.context().newCDPSession(page);
+      await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'display-mode', value: 'standalone' }] });
+      if (await page.evaluate(() => matchMedia('(display-mode: standalone)').matches)) return;
+      const origin = new URL(test.info().project.use.baseURL ?? 'http://127.0.0.1:4340').origin;
+      await page.route((u) => u.origin === origin, async (route) => {
+        const res = await route.fetch();
+        if (!/text\/(css|html)/.test(res.headers()['content-type'] ?? '')) return route.fulfill({ response: res });
+        const body = (await res.text()).replace(/\(display-mode:\s*standalone\)/g, '(min-width: 0px)');
+        return route.fulfill({ response: res, body });
+      });
+    }
+    async function tucked(page: import('@playwright/test').Page, on: boolean) {
+      await page.evaluate((on) => document.documentElement.classList.toggle('pwa-dock-tucked', on), on);
+      await page.waitForTimeout(450); // the bar, the seal and the player slide (0.3 s)
+    }
+    /** The mini bar meets neither the dock bar nor the dice seal and lies fully inside the viewport. */
+    async function clear(page: import('@playwright/test').Page, state: string) {
+      const vp = page.viewportSize()!;
+      const bar = await box(page, '#music-bar');
+      const seal = await box(page, '#dice-fab-root button#dice-fab');
+      expect(meets(bar, seal), `${state}: mini bar meets the dice seal`).toBe(false);
+      const dock = page.locator('.pwa-dock-root .pwa-dock-bar');
+      if (await dock.isVisible()) {
+        const d = await dock.boundingBox();
+        if (d && d.y < vp.height) expect(meets(bar, d), `${state}: mini bar meets the dock`).toBe(false);
+      }
+      expect(bar.x >= 0 && bar.y >= 0 && bar.x + bar.width <= vp.width && bar.y + bar.height <= vp.height, `${state}: mini bar inside the viewport`).toBe(true);
+    }
+
+    test('mini bar, toasts, page end and YouTube tile clear the dock and the dice seal', async ({ page }) => {
+      await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+      await standalone(page);
+      await start(page);
+      await expect(page.locator('.pwa-dock-root .pwa-dock-bar')).toBeVisible(); // standalone rules apply
+      await expect(page.locator('#music-bar')).toBeVisible();
+      await expect(page.locator('#music-progress')).toBeVisible();
+      await page.waitForTimeout(450);
+      await clear(page, 'dock shown');
+      await tucked(page, true);
+      await clear(page, 'dock tucked');
+      await tucked(page, false);
+
+      // A toast never covers the mini bar
+      await page.evaluate(() => window.alert('Skipped: Ghost (not playable)'));
+      const toast = page.locator('#arandor-toasts .arandor-toast');
+      await expect(toast).toBeVisible();
+      expect(meets(await box(page, '#arandor-toasts .arandor-toast'), await box(page, '#music-bar')), 'toast meets the mini bar').toBe(false);
+      await toast.click();
+
+      // Scrolled to the end, the page's last content sits above the mini bar
+      await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
+      await page.waitForTimeout(300);
+      await tucked(page, false);
+      const end = await page.evaluate(() => {
+        const m = document.querySelector('main')!;
+        return m.getBoundingClientRect().bottom - parseFloat(getComputedStyle(m).paddingBottom);
+      });
+      expect(end, 'end of the page content is above the mini bar').toBeLessThanOrEqual((await box(page, '#music-bar')).y);
+      await page.evaluate(() => scrollTo(0, 0));
+      await page.waitForTimeout(300);
+
+      // The dice panel opens over the player: bar and queue step aside rather than peek out around it
+      await page.locator('#dice-fab').click();
+      await expect(page.locator('#dice-fab-panel')).toBeVisible();
+      await expect(page.locator('#music-bar')).not.toBeVisible();
+      await page.locator('#dice-fab').click();
+      await expect(page.locator('#dice-fab-panel')).toBeHidden();
+      await expect(page.locator('#music-bar')).toBeVisible();
+
+      // The YouTube tile sits above the mini bar, clear of the dock and the seal
+      await page.evaluate(() => window.__music.playPlaylist({ id: 'yt', name: 'YT', tracks: [{ id: 'yt-v', kind: 'youtube_video', title: 'Fake video', ref: 'vid' }] as any }));
+      await expect(page.locator('#music-yt-tile')).toBeVisible();
+      for (const t of [false, true]) {
+        await tucked(page, t);
+        const tile = await box(page, '#music-yt-tile');
+        const bar = await box(page, '#music-bar');
+        expect(tile.y + tile.height, 'tile above the mini bar').toBeLessThanOrEqual(bar.y);
+        expect(meets(tile, await box(page, '#dice-fab')), 'tile meets the seal').toBe(false);
+        expect(tile.y >= 0 && tile.x + tile.width <= page.viewportSize()!.width, 'tile inside the viewport').toBe(true);
+        await clear(page, `YouTube, dock ${t ? 'tucked' : 'shown'}`);
+      }
+      await tucked(page, false);
+      await page.getByRole('button', { name: 'Stop and close player' }).click();
+    });
+  });
+
   test('restores paused', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));

@@ -46,7 +46,8 @@
   .arandor-toasts {
     position: fixed;
     left: 50%;
-    bottom: calc(1.25rem + env(safe-area-inset-bottom, 0px));
+    /* Above the music mini bar while it shows (MusicPlayer sets --music-bar-top) */
+    bottom: max(calc(1.25rem + env(safe-area-inset-bottom, 0px)), calc(var(--music-bar-top, 0px) + 0.5rem));
     transform: translateX(-50%);
     z-index: 10010;
     display: flex;
@@ -57,7 +58,7 @@
     pointer-events: none;
   }
   @media (display-mode: standalone) and (max-width: 1024px) {
-    .arandor-toasts { bottom: calc(var(--pwa-dock-height) + 48px + env(safe-area-inset-bottom, 0px)); }
+    .arandor-toasts { bottom: max(calc(var(--pwa-dock-height) + 48px + env(safe-area-inset-bottom, 0px)), calc(var(--music-bar-top, 0px) + 0.5rem)); }
   }
   .arandor-toast {
     position: static;

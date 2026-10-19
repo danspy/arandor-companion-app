@@ -61,8 +61,12 @@
 </div>
 
 <style is:global>
+  /* Where the player sits, on the root so toasts and page padding can follow it. */
+  :root { --music-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
+  /* Distance from the screen bottom to the top of the mini bar while it shows (unset otherwise);
+     the toasts (ConfirmDialog) stay above this line. */
+  html:has(#music-bar:not([hidden])) { --music-bar-top: calc(var(--music-bottom) + 44px); }
   .music-root {
-    --music-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
     position: fixed;
     left: calc(16px + env(safe-area-inset-left, 0px));
     bottom: var(--music-bottom);
@@ -194,13 +198,20 @@
 
   /* Installed app: above the bottom dock, clear of the dice seal that pokes ~23px above it. */
   @media (display-mode: standalone) and (max-width: 1024px) {
+    :root { --music-bottom: calc(var(--pwa-dock-height) + 30px + env(safe-area-inset-bottom, 0px)); }
     .music-root {
-      --music-bottom: calc(var(--pwa-dock-height) + 30px + env(safe-area-inset-bottom, 0px));
       max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
       transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
     }
     /* Dock tucked away: the seal sits at the bottom edge, so stay above it. */
-    html.pwa-dock-tucked .music-root { --music-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+    html.pwa-dock-tucked { --music-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+    /* The page can scroll its last lines above the mini bar (global.css pads main by this clearance).
+       Uses the dock-shown position so tucking the dock never changes the page height. */
+    html:has(#music-bar:not([hidden])) main { --pwa-floating-menu-clearance: calc(var(--pwa-dock-height) + 30px + 44px + 8px); }
+    /* The dice panel opens over the player: the bar and queue step aside instead of peeking out around
+       it. The YouTube tile stays (YouTube playback must never be hidden by us). */
+    html:has(#dice-fab[aria-expanded='true']) .music-bar,
+    html:has(#dice-fab[aria-expanded='true']) .music-panel { visibility: hidden; }
   }
   @media (prefers-reduced-motion: reduce) {
     .music-root, .music-progress-fill { transition: none; }
