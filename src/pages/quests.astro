@@ -105,7 +105,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
           <div class="flex-1">
             <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-              <h3 class="text-lg sm:text-xl font-bold t-strong-text">{quest.title}</h3>
+              <h3 class="text-lg sm:text-xl font-bold t-strong-text"><a href={`/quests/${quest.id}`} class="hover:underline">{quest.title}</a></h3>
               <span class={`t-badge ${
                 quest.status === 'completed' ? 't-badge-green' :
                 quest.status === 'failed' ? 't-badge-red' :
@@ -284,6 +284,30 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         alert('An error occurred. Please try again.');
       }
     });
+
+    // Open the edit modal when arriving from a quest page (?edit=<id>)
+    const editId = new URLSearchParams(window.location.search).get('edit');
+    if (editId && modal) {
+      (async () => {
+        try {
+          const response = await fetch(`/api/quests/${editId}`);
+          if (!response.ok) throw new Error('Quest not found');
+          const quest = await response.json();
+
+          editingId = editId;
+          (document.getElementById('title') as HTMLInputElement).value = quest.title;
+          (document.getElementById('description') as HTMLTextAreaElement).value = quest.description;
+          (document.getElementById('priority') as HTMLSelectElement).value = quest.priority;
+          (document.getElementById('status') as HTMLSelectElement).value = quest.status;
+
+          if (modalTitle) modalTitle.textContent = 'Edit quest';
+          modal.classList.remove('hidden');
+          window.history.replaceState({}, '', '/quests');
+        } catch {
+          alert('Failed to load quest. Please try again.');
+        }
+      })();
+    }
   }
 
   // Handle quest actions with event delegation (once per page lifecycle)

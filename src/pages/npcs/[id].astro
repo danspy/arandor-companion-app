@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SceneBackdrop from '../../components/SceneBackdrop.astro';
+import RelatedQuests from '../../components/RelatedQuests.astro';
 import { db, NPC, Location, DiaryEntry, eq } from '@/db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
@@ -135,6 +136,8 @@ const heroBg = npc.relationship === 'ally'
         </div>
       </div>
     )}
+
+    <RelatedQuests diaryEntries={relatedDiaryEntries} />
 
     <!-- Diary Appearances -->
     {relatedDiaryEntries.length > 0 && (

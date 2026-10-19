@@ -1,6 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SceneBackdrop from '../../components/SceneBackdrop.astro';
+import RelatedQuests from '../../components/RelatedQuests.astro';
 import { db, Location, NPC, LibraryEntry, DiaryEntry, eq } from '@/db';
 import { isAuthenticated } from '../../lib/auth';
 import { renderMarkdown } from '../../utils/markdown';
@@ -180,6 +181,8 @@ const npcRelBadge = (rel: string) =>
         </div>
       </div>
     )}
+
+    <RelatedQuests diaryEntries={relatedDiaryEntries} />
 
     <!-- Diary appearances -->
     {relatedDiaryEntries.length > 0 && (

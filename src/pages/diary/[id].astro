@@ -456,7 +456,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
             <ul class="space-y-2">
               {relatedQuests.map(quest => (
                 <li class="pl-3" style="border-left:2px solid var(--border-gold);">
-                  <a href="/quests" class="t-link font-medium">
+                  <a href={`/quests/${quest.id}`} class="t-link font-medium">
                     {quest.title}
                   </a>
                   <p class="t-faint text-xs capitalize">{quest.status} - {quest.priority} priority</p>

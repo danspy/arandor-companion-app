@@ -24,7 +24,7 @@ const PRIORITY: Record<string, string> = { high: 'Urgent', medium: 'Soon', low: 
   {sorted.length > 0 ? (
     <div class="quest-board">
       {sorted.map((q) => (
-        <a href="/quests" class={`quest-note prio-${q.priority}`}>
+        <a href={`/quests/${q.id}`} class={`quest-note prio-${q.priority}`}>
           <span class="quest-prio">{PRIORITY[q.priority] ?? q.priority}</span>
           <h3 class="quest-title">{q.title}</h3>
           <p class="quest-text">{markdownExcerpt(q.description, 140)}</p>

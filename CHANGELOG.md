@@ -2,6 +2,12 @@ What's new in the Arandor Companion App, newest first.
 
 ## October 2026
 
+### Quest pages
+- Every quest has its own page with its diary entries, the NPCs, places and party members
+  involved, and its timeline events
+- Quests on the quest list, dashboard board and diary pages link to their page; NPC and
+  location pages show their quests
+
 ### A new look
 - One dark, immersive design across the whole app, with large scene images behind every page
 - Smooth page transitions: pages zoom into details and slide between sections
