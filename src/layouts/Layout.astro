@@ -5,6 +5,7 @@ import { ClientRouter } from 'astro:transitions';
 import PWADock from '../components/PWADock.astro';
 import ConfirmDialog from '../components/ConfirmDialog.astro';
 import DiceFab from '../components/DiceFab.astro';
+import MusicPlayer from '../components/MusicPlayer.astro';
 
 interface Props {
   title: string;
@@ -283,6 +284,8 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <ConfirmDialog />
     <!-- Floating dice roller (everyone, every page) -->
     <DiceFab />
+    <!-- Music mini bar + audio element (persists across page changes) -->
+    <MusicPlayer />
     
     <script>
       // Function to close mobile menu

@@ -284,3 +284,118 @@ test.describe('Music API', () => {
     expect((await part.body()).length).toBe(100);
   });
 });
+
+// ── Music player (store + mini bar), logged in as player; desktop and Pixel 5 ─
+test.describe('Music player', () => {
+  test.skip(!haveAccounts, 'Needs the E2E_* accounts (test server only)');
+  test.describe.configure({ mode: 'serial' });
+
+  let owner: BrowserContext;
+  let playlist: { id: string; name: string; tracks: { id: string; kind: string; title: string; ref: string }[] };
+
+  test.beforeAll(async ({ browser }) => {
+    owner = await browser.newContext();
+    await login(owner, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    const p = await (await owner.request.post('/api/music/playlists', { data: { name: `E2E player ${Date.now()}`, visibility: 'private' } })).json();
+    for (const name of ['Rain.wav', 'Wind.wav']) {
+      const up = await owner.request.post(`/api/music/playlists/${p.id}/tracks`, {
+        multipart: { file: { name, mimeType: 'audio/wav', buffer: wav(20) } },
+      });
+      expect(up.status()).toBe(201);
+    }
+    playlist = await (await owner.request.get(`/api/music/playlists/${p.id}`)).json();
+    expect(playlist.tracks.map((t) => t.title)).toEqual(['Rain', 'Wind']);
+  });
+
+  test.afterAll(async () => {
+    if (playlist) await owner.request.delete(`/api/music/playlists/${playlist.id}`);
+    await owner?.close();
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+  });
+
+  const asQueue = (tracks: typeof playlist.tracks) => tracks.map(({ id, kind, title, ref }) => ({ id, kind, title, ref }));
+  async function start(page: import('@playwright/test').Page, tracks = asQueue(playlist.tracks)) {
+    await page.goto('/');
+    await page.waitForFunction(() => !!window.__music);
+    await page.evaluate(({ id, name, tracks }) => window.__music.playPlaylist({ id, name, tracks: tracks as any }), { id: playlist.id, name: playlist.name, tracks });
+  }
+  const audio = (page: import('@playwright/test').Page) => page.locator('#music-audio');
+  const currentTime = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.currentTime);
+  const paused = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.paused);
+  async function navTo(page: import('@playwright/test').Page, href: string, isMobile: boolean) {
+    if (isMobile) {
+      await page.locator('#mobileMenuBtn').click();
+      await page.locator(`#mobileMenu a[href="${href}"]`).click();
+    } else {
+      await page.locator(`[data-testid="desktop-nav"] a[href="${href}"]`).click();
+    }
+    await page.waitForURL(`**${href}`);
+  }
+
+  test('keeps playing across pages', async ({ page, isMobile }) => {
+    await start(page);
+    const bar = page.locator('#music-bar');
+    await expect(bar).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.2);
+    const t1 = await currentTime(page);
+    // A marker on window survives client-side navigation but not a full page load
+    await page.evaluate(() => ((window as any).__noReload = true));
+    await navTo(page, '/characters', isMobile);
+    await navTo(page, '/npcs', isMobile);
+    expect(await page.evaluate(() => (window as any).__noReload)).toBe(true);
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(t1);
+    expect(await paused(page)).toBe(false);
+    await expect(bar).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+  });
+
+  test('next and stop', async ({ page }) => {
+    await start(page);
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await page.getByRole('button', { name: 'Next track' }).click();
+    await expect(page.locator('#music-title')).toHaveText('Wind');
+    await expect.poll(() => paused(page)).toBe(false);
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await expect(page.locator('#music-bar')).toBeHidden();
+    expect(await paused(page)).toBe(true);
+  });
+
+  test('skips unplayable', async ({ page }) => {
+    const missing = { id: 'missing', kind: 'file', title: 'Ghost', ref: '/uploads/music/nope.wav' };
+    await start(page, [missing, ...asQueue(playlist.tracks).slice(0, 1)]);
+    await expect(page.locator('#arandor-toasts')).toContainText('Skipped: Ghost (not playable)');
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await expect.poll(() => paused(page)).toBe(false);
+  });
+
+  test('restores paused', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
+    await start(page);
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(1);
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    await page.reload();
+    await expect(page.locator('#music-bar')).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.5);
+    await page.waitForTimeout(500);
+    expect(await paused(page)).toBe(true);
+    expect(await page.evaluate(() => window.__music.getState().playing)).toBe(false);
+
+    // The saved playlist is gone: the saved state is dropped silently
+    const del = await owner.request.delete(`/api/music/playlists/${playlist.id}`);
+    expect(del.ok()).toBe(true);
+    playlist = undefined as any;
+    await page.reload();
+    await page.waitForFunction(() => !!window.__music);
+    await page.waitForTimeout(800);
+    await expect(page.locator('#music-bar')).toBeHidden();
+    expect(await page.evaluate(() => JSON.parse(localStorage.getItem('arandor.music') ?? '{}').source ?? null)).toBeNull();
+    expect(errors).toEqual([]);
+  });
+});
