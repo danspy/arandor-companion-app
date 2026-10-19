@@ -63,7 +63,10 @@ about 2 seconds.
   hidden when you switch to another location, so you can set up the next scene unseen.
 - **NPC spotlight:** add one or more NPCs to show their portraits; remove them with ×. The eye
   button hides one NPC from the display without removing it (dimmed, marked *Hidden*). Newly
-  added NPCs start visible.
+  added NPCs start visible. **Hide all** hides every spotlight NPC at once (also ones you add
+  while it is on); **Show all** brings back exactly what was visible before. **Clear** empties
+  the spotlight. On the display, portraits that stay slide to their new place, new ones rise in
+  and removed or hidden ones fade out.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server

@@ -21,7 +21,7 @@ export const GET: APIRoute = async ({ request }) => {
       : undefined;
 
     const hiddenNpcIds = new Set((screen?.hiddenNpcIds ?? []) as string[]);
-    const npcIds = ((screen?.spotlightNpcIds ?? []) as string[]).filter((id) => !hiddenNpcIds.has(id));
+    const npcIds = screen?.npcsHidden ? [] : ((screen?.spotlightNpcIds ?? []) as string[]).filter((id) => !hiddenNpcIds.has(id));
     const npcRows = npcIds.length
       ? await db.select({ id: NPC.id, name: NPC.name, race: NPC.race, occupation: NPC.occupation, avatarUrl: NPC.avatarUrl })
           .from(NPC).where(inArray(NPC.id, npcIds))

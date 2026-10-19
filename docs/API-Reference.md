@@ -67,7 +67,7 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 | `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
 | `/api/initiative/reset-combat` | POST | Keep player characters (initiative 10), remove everyone else, round 1 | DM |
 | `/api/combat-state` | GET / PUT, POST | Round, turn, status / set them, or move the turn with `{ action: 'start' \| 'next' \| 'prev' \| 'new-fight' }` (only `new-fight` resets the round) | public / DM |
-| `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock | DM |
+| `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`, `npcsHidden`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock | DM |
 | `/api/display` | GET | Everything `/display` shows in one small response (health bands, no HP/AC, nothing hidden on the DM screen); supports ETag / 304 | public |
 | `/api/display/wallpaper` | GET | A wallpaper stored inline as a `data:` URL, served as a cacheable image | public |
 

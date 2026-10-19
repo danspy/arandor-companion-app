@@ -34,6 +34,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       state = { 
         locationHidden: false,
         hiddenNpcIds: [],
+        npcsHidden: false,
         id: DM_SCREEN_STATE_ID, 
         currentLocationId: null, 
         spotlightNpcIds: [], 
@@ -117,6 +118,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         spotlightNpcIds: updates.spotlightNpcIds ?? [],
         locationHidden: updates.locationHidden ?? false,
         hiddenNpcIds: updates.hiddenNpcIds ?? [],
+        npcsHidden: updates.npcsHidden ?? false,
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
         screenVisible: updates.screenVisible ?? true,
@@ -136,6 +138,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           spotlightNpcIds: updates.spotlightNpcIds !== undefined ? updates.spotlightNpcIds : state.spotlightNpcIds,
           locationHidden: updates.locationHidden !== undefined ? !!updates.locationHidden : state.locationHidden,
           hiddenNpcIds: updates.hiddenNpcIds !== undefined ? updates.hiddenNpcIds : state.hiddenNpcIds,
+          npcsHidden: updates.npcsHidden !== undefined ? !!updates.npcsHidden : state.npcsHidden,
           customAssets: updates.customAssets !== undefined ? updates.customAssets : state.customAssets,
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
           screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,

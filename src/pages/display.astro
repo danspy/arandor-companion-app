@@ -234,7 +234,10 @@ import '../styles/global.css';
       }
       body[data-location="0"] .dsp-cast { inset: 3.5rem; justify-content: center; }
       body[data-side="1"] .dsp-cast { right: calc(var(--side-w) + 1.5rem); }
-      .dsp-cast > li { display: block; }
+      .dsp-cast > li { display: block; transition: opacity .55s var(--ease), transform .55s var(--ease); }
+      /* Only portraits that just joined rise in; the others keep their place (see renderCast) */
+      .dsp-cast > li.is-entering .dsp-portrait { animation: dsp-rise .9s var(--ease) both; animation-delay: calc(var(--i, 0) * 120ms); }
+      .dsp-cast > li.is-leaving { opacity: 0; transform: translateY(1rem) scale(.92); pointer-events: none; }
       .dsp-portrait {
         position: relative; margin: 0;
         height: var(--ph, 12rem); width: calc(var(--ph, 12rem) * .75);
@@ -243,8 +246,6 @@ import '../styles/global.css';
         border: 1px solid var(--border-gold);
         box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, .55);
         overflow: hidden;
-        animation: dsp-rise .9s var(--ease) both;
-        animation-delay: calc(var(--i, 0) * 120ms);
       }
       .dsp-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
       .dsp-portrait-mono {
@@ -457,7 +458,7 @@ import '../styles/global.css';
       @media (pointer: coarse) { .dsp-hint { display: none; } }
 
       @media (prefers-reduced-motion: reduce) {
-        .dsp-loc-layer img, .dsp-portrait, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
+        .dsp-loc-layer img, .dsp-portrait, .dsp-cast > li, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
       }
     </style>
 
@@ -538,7 +539,9 @@ import '../styles/global.css';
         }
 
         const hasLocation = !!s.location;
-        const hasCast = s.npcs.length > 0;
+        const finishCast = renderCast(s.npcs);
+        // Keep the cast area while removed portraits are still fading out
+        const hasCast = s.npcs.length > 0 || !!$('cast').querySelector('.is-leaving');
         const hasSide = !!(s.initiative || s.timer);
         if (!hasLocation && !hasCast && !hasSide) {
           showIdle('Waiting for the DM', 'Scenes, characters and the turn order appear here when the DM shares them.');
@@ -554,10 +557,10 @@ import '../styles/global.css';
         setSparks($<HTMLCanvasElement>('idleSparks'), false);
 
         renderLocation(s.location);
-        renderCast(s.npcs);
         renderTurns(s.initiative);
         renderTimer();
         fitLayout();
+        finishCast();
       }
 
       // ── Fit to the screen (any size, from phone to 32:9) ──────────────────
@@ -656,44 +659,114 @@ import '../styles/global.css';
       }
 
       // ── NPC portraits ─────────────────────────────────────────────────
+      // Portraits are keyed by NPC: when the spotlight changes, the ones that stay slide to their
+      // new place and size (FLIP), new ones rise in, removed or hidden ones fade out where they
+      // stood. Returns a step to run once the new layout is in place.
       let castKey = '';
-      function renderCast(npcs: DisplayState['npcs']) {
+      const castItems = new Map<string, HTMLLIElement>();
+
+      function buildPortrait(npc: DisplayState['npcs'][number]): HTMLLIElement {
+        const li = document.createElement('li');
+        li.dataset.sig = `${npc.name}|${npc.avatarUrl ?? ''}|${npc.subtitle}`;
+        const fig = document.createElement('figure');
+        fig.className = 'dsp-portrait';
+        if (npc.avatarUrl) {
+          const img = document.createElement('img');
+          img.src = npc.avatarUrl;
+          img.alt = '';
+          fig.appendChild(img);
+        } else {
+          const mono = document.createElement('div');
+          mono.className = 'dsp-portrait-mono';
+          mono.textContent = npc.name.trim().charAt(0).toUpperCase();
+          fig.appendChild(mono);
+        }
+        const cap = document.createElement('figcaption');
+        const name = document.createElement('p');
+        name.className = 'dsp-portrait-name';
+        name.textContent = npc.name;
+        cap.appendChild(name);
+        if (npc.subtitle) {
+          const role = document.createElement('p');
+          role.className = 'dsp-portrait-role';
+          role.textContent = npc.subtitle;
+          cap.appendChild(role);
+        }
+        fig.appendChild(cap);
+        li.appendChild(fig);
+        return li;
+      }
+
+      function renderCast(npcs: DisplayState['npcs']): () => void {
         const key = npcs.map((n) => `${n.id}|${n.avatarUrl ?? ''}|${n.name}`).join(',');
-        if (key === castKey) return;
+        if (key === castKey) return () => {};
         castKey = key;
         const cast = $('cast');
-        cast.replaceChildren();
-        npcs.forEach((npc, i) => {
-          const li = document.createElement('li');
-          const fig = document.createElement('figure');
-          fig.className = 'dsp-portrait';
-          fig.style.setProperty('--i', String(i));
-          if (npc.avatarUrl) {
-            const img = document.createElement('img');
-            img.src = npc.avatarUrl;
-            img.alt = '';
-            fig.appendChild(img);
-          } else {
-            const mono = document.createElement('div');
-            mono.className = 'dsp-portrait-mono';
-            mono.textContent = npc.name.trim().charAt(0).toUpperCase();
-            fig.appendChild(mono);
-          }
-          const cap = document.createElement('figcaption');
-          const name = document.createElement('p');
-          name.className = 'dsp-portrait-name';
-          name.textContent = npc.name;
-          cap.appendChild(name);
-          if (npc.subtitle) {
-            const role = document.createElement('p');
-            role.className = 'dsp-portrait-role';
-            role.textContent = npc.subtitle;
-            cap.appendChild(role);
-          }
-          fig.appendChild(cap);
-          li.appendChild(fig);
+        const castRect = cast.getBoundingClientRect();
+        const before = new Map<string, DOMRect>();
+        castItems.forEach((li, id) => before.set(id, li.getBoundingClientRect()));
+
+        // Leaving: take out of the flow at their current spot and fade out
+        const wanted = new Set(npcs.map((n) => n.id));
+        castItems.forEach((li, id) => {
+          if (wanted.has(id)) return;
+          castItems.delete(id);
+          const r = before.get(id);
+          if (reduceMotion || !r?.width) { li.remove(); return; }
+          Object.assign(li.style, { position: 'absolute', left: `${r.left - castRect.left}px`, top: `${r.top - castRect.top}px`, transform: '', transition: '' });
+          li.style.setProperty('--ph', `${r.height}px`);
           cast.appendChild(li);
+          void li.offsetWidth;
+          li.classList.add('is-leaving');
+          setTimeout(() => {
+            li.remove();
+            if (state && !cast.querySelector('.is-leaving')) render(state);
+          }, 600);
         });
+
+        // Staying and new, in spotlight order (leaving ones sit at the end, out of the flow)
+        let entering = 0;
+        let prev: HTMLLIElement | null = null;
+        for (const npc of npcs) {
+          let li = castItems.get(npc.id);
+          const sig = `${npc.name}|${npc.avatarUrl ?? ''}|${npc.subtitle}`;
+          if (li && li.dataset.sig !== sig) {
+            const fresh = buildPortrait(npc);
+            li.replaceWith(fresh);
+            li = fresh;
+            castItems.set(npc.id, li);
+          }
+          if (!li) {
+            li = buildPortrait(npc);
+            li.classList.add('is-entering');
+            li.style.setProperty('--i', String(entering++));
+            li.addEventListener('animationend', () => li!.classList.remove('is-entering'), { once: true });
+            castItems.set(npc.id, li);
+          }
+          const target: ChildNode | null = prev ? prev.nextSibling : cast.firstChild;
+          if (target !== li) cast.insertBefore(li, target);
+          prev = li;
+        }
+
+        return () => {
+          if (reduceMotion) return;
+          layoutCast();
+          castItems.forEach((li, id) => {
+            const a = before.get(id);
+            if (!a?.width) return;
+            const b = li.getBoundingClientRect();
+            if (!b.width) return;
+            const dx = a.left - b.left, dy = a.top - b.top, scale = a.height / b.height;
+            if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.01) return;
+            li.style.transition = 'none';
+            li.style.transformOrigin = '0 0';
+            li.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+            void li.offsetWidth;
+            li.style.transition = 'transform .7s var(--ease)';
+            li.style.transform = '';
+            setTimeout(() => { li.style.transition = ''; li.style.transformOrigin = ''; }, 750);
+          });
+        };
       }
 
       // ── Turn order ────────────────────────────────────────────────────

@@ -216,6 +216,7 @@ export const DMScreenState = sqliteTable('DMScreenState', {
   spotlightNpcIds: jsonArray('spotlightNpcIds'), // Array of NPC IDs in spotlight
   locationHidden: bool('locationHidden').notNull().default(false), // Current location kept but not shown on the display
   hiddenNpcIds: jsonArray('hiddenNpcIds'), // Spotlight NPCs kept but not shown on the display
+  npcsHidden: bool('npcsHidden').notNull().default(false), // All spotlight NPCs hidden at once (individual marks kept)
   customAssets: jsonArray('customAssets'), // Array of custom asset URLs
   showInitiativeTracker: bool('showInitiativeTracker').notNull().default(false),
   screenVisible: bool('screenVisible').notNull().default(true), // Content or placeholder on player display
