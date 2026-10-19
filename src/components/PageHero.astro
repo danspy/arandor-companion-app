@@ -51,8 +51,9 @@ const hasActions = Astro.slots.has('actions');
   .scene-hero {
     --hero-pull: calc(2rem + 60px);
     position: relative;
-    width: 100vw;
-    margin-left: calc(50% - 50vw);
+    /* --page-w: the viewport minus a side panel that pushes the page (statblock.css) */
+    width: var(--page-w, 100vw);
+    margin-left: calc(50% - var(--page-w, 100vw) / 2);
     margin-top: calc(-1 * var(--hero-pull));
     margin-bottom: 1.75rem;
     min-height: clamp(16rem, 42svh, 25rem);

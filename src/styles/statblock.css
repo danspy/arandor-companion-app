@@ -94,6 +94,7 @@
 @media (prefers-reduced-motion: reduce) { .hp-flash-damage, .hp-flash-heal { animation: none; } }
 /* Wide screens: the page moves over so the panel sits next to the fight, not on top of it */
 @media (min-width: 1100px) {
+  html.sb-panel-open { --page-w: calc(100vw - min(30rem, 100vw)); }
   html.sb-panel-open body { padding-right: min(30rem, 100vw); transition: padding-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
 }
 /* Rows without a stat block keep its place, so HP and buttons line up down the tracker */
