@@ -56,3 +56,42 @@ test.describe('Character sheet on the server', () => {
     expect(dmView.sheet.inventory.length).toBeGreaterThan(0);
   });
 });
+
+test.describe('Character sheet page', () => {
+  test.skip(!DM || !DM_PASSWORD || !CHARACTER, 'Needs E2E_DM_USER/E2E_DM_PASSWORD and E2E_CHARACTER_ID');
+
+  test('the DM rolls from the sheet and sees the private sections', async ({ browser }) => {
+    const context = await browser.newContext();
+    expect((await context.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } })).ok()).toBe(true);
+    const page = await context.newPage();
+    await page.goto(`/characters/${CHARACTER}`);
+    for (const id of ['#cs-strip', '#cs-abilities', '#cs-skills', '#cs-attacks', '#cs-features', '#cs-inventory']) await expect(page.locator(id)).toBeVisible();
+
+    const name = await page.locator('#character-page').getAttribute('data-character-name');
+    const stealth = page.locator('#cs-skills .cs-roll[data-roll-name="Stealth"]');
+    const expr = await stealth.getAttribute('data-roll');
+    expect(expr).toMatch(/^1d20[+-]\d+$/);
+    await stealth.click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('arandor-dice-history') || '[]')[0]?.name), { timeout: 15000 })
+      .toBe(`${name} · Stealth`);
+
+    // Advantage applies to the next d20 roll only
+    await page.locator('#cs-abilities [data-roll-mode="advantage"]').click();
+    await expect(page.locator('#cs-skills [data-roll-mode="advantage"]')).toHaveAttribute('aria-pressed', 'true');
+    await page.waitForFunction(() => !document.querySelector('#dice-overlay.is-rolling'));
+    await page.locator('#cs-abilities .cs-roll[data-roll-name="Strength check"]').click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('arandor-dice-history') || '[]')[0]), { timeout: 15000 })
+      .toMatchObject({ name: `${name} · Strength check`, mode: 'advantage' });
+    await expect(page.locator('#cs-abilities [data-roll-mode="normal"]')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('a visitor sees stats and core rolls but not the private sections', async ({ page }) => {
+    await page.goto(`/characters/${CHARACTER}`);
+    await expect(page.locator('#cs-strip')).toBeVisible();
+    await expect(page.locator('#cs-abilities .cs-roll[data-roll-name="Dexterity save"]')).toBeVisible();
+    const html = await page.content();
+    for (const id of ['cs-skills', 'cs-attacks', 'cs-features', 'cs-inventory']) expect(html).not.toContain(`id="${id}"`);
+    await page.setViewportSize({ width: 375, height: 800 });
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  });
+});

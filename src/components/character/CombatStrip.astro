@@ -1,0 +1,44 @@
+---
+// HP, AC, initiative, speed, proficiency bonus, passive Perception (public)
+import type { PublicSheet } from '../../lib/character-sheet';
+import { d20, signed } from '../../lib/character-rolls';
+
+interface Props {
+  hp: number | null;
+  maxHp: number | null;
+  tempHp: number | null;
+  sheet: PublicSheet | null;
+  dexterity: number | null; // for initiative when there is no sheet
+}
+const { hp, maxHp, tempHp, sheet, dexterity } = Astro.props;
+const hpPercent = hp != null && maxHp ? Math.max(0, Math.min(100, Math.round((hp / maxHp) * 100))) : null;
+const hpTone = hpPercent == null ? '' : hpPercent <= 25 ? 'is-low' : hpPercent <= 50 ? 'is-mid' : '';
+const initiative = sheet?.initiative ?? (dexterity != null ? Math.floor((dexterity - 10) / 2) : null);
+---
+{(hpPercent != null || sheet || initiative != null) && (
+  <section id="cs-strip" class="cs-strip t-panel mb-6" aria-label="Combat">
+    {hpPercent != null && (
+      <div class="cs-hp">
+        <div class="cs-hp-head">
+          <span class="t-label-sm">Hit points</span>
+          <span class="cs-hp-num"><b>{hp}</b> / {maxHp}{tempHp ? <span class="cs-temp"> +{tempHp} temp</span> : null}</span>
+        </div>
+        <div class="cs-hp-bar" role="meter" aria-valuemin="0" aria-valuemax={maxHp} aria-valuenow={hp} aria-label="Hit points">
+          <span class={hpTone} style={`width:${hpPercent}%`}></span>
+        </div>
+      </div>
+    )}
+    <div class="cs-strip-cells">
+      {sheet && <div class="cs-cell"><span class="t-label-sm">AC</span><b>{sheet.ac}</b></div>}
+      {initiative != null && (
+        <div class="cs-cell">
+          <span class="t-label-sm">Initiative</span>
+          <button type="button" class="cs-roll cs-roll-big" data-roll={d20(initiative)} data-roll-name="Initiative" title={`Roll initiative (${d20(initiative)})`}>{signed(initiative)}</button>
+        </div>
+      )}
+      {sheet && <div class="cs-cell"><span class="t-label-sm">Speed</span><b>{sheet.speed} ft.</b></div>}
+      {sheet && <div class="cs-cell"><span class="t-label-sm">Proficiency</span><b>{signed(sheet.proficiencyBonus)}</b></div>}
+      {sheet && <div class="cs-cell"><span class="t-label-sm">Passive Perception</span><b>{sheet.passivePerception}</b></div>}
+    </div>
+  </section>
+)}

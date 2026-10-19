@@ -1,0 +1,107 @@
+---
+// Skills, attacks & spells, features and inventory: only rendered for the player, the DM and admins
+import type { CharacterSheet } from '../../lib/character-sheet';
+import { d20, signed } from '../../lib/character-rolls';
+import RollMode from './RollMode.astro';
+
+interface Props { sheet: CharacterSheet }
+const { sheet } = Astro.props;
+const ABBR = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' } as const;
+const PROF_LABEL = { none: 'Not proficient', half: 'Half proficiency', proficient: 'Proficient', expertise: 'Expertise' } as const;
+const rollable = (expr: string | null) => !!expr && /\d+d\d+/.test(expr);
+const equipped = sheet.inventory.filter((i) => i.equipped);
+const carried = sheet.inventory.filter((i) => !i.equipped);
+---
+<p class="cs-private-note t-faint text-xs mb-3">Only you, the DM and admins see the sections below.</p>
+
+<section id="cs-skills" class="t-panel p-6 sm:p-8 mb-6">
+  <div class="cs-head">
+    <h2 class="t-section-h text-xl">Skills</h2>
+    <RollMode />
+  </div>
+  <div class="cs-skills">
+    {sheet.skills.map((s) => (
+      <button type="button" class="cs-roll cs-skill" data-roll={d20(s.bonus)} data-roll-name={s.name} title={`${s.name} (${d20(s.bonus)}) · ${PROF_LABEL[s.proficiency]}`}>
+        <span class={`cs-dot is-${s.proficiency}`} aria-hidden="true"></span>
+        <span class="cs-skill-name">{s.name}</span>
+        <span class="cs-skill-ab">{ABBR[s.ability]}</span>
+        <span class="cs-skill-bonus">{signed(s.bonus)}</span>
+      </button>
+    ))}
+  </div>
+  <p class="t-faint text-xs mt-3">Passive Investigation {sheet.passiveInvestigation} · Passive Insight {sheet.passiveInsight}</p>
+</section>
+
+{(sheet.attacks.length > 0 || sheet.spellcasting.length > 0) && (
+  <section id="cs-attacks" class="t-panel p-6 sm:p-8 mb-6">
+    <div class="cs-head">
+      <h2 class="t-section-h text-xl">Attacks &amp; Spells</h2>
+      <RollMode />
+    </div>
+    {sheet.spellcasting.length > 0 && (
+      <p class="cs-casting">
+        {sheet.spellcasting.map((c) => (
+          <span><b>{c.className}</b> ({ABBR[c.ability]}): spell save DC <b>{c.saveDc}</b>, spell attack
+            <button type="button" class="cs-roll cs-chip" data-roll={d20(c.attack)} data-roll-name={`${c.className} spell attack`}>{signed(c.attack)}</button>
+          </span>
+        ))}
+      </p>
+    )}
+    <div class="cs-attacks">
+      {sheet.attacks.map((a) => (
+        <div class="cs-attack">
+          <div class="cs-attack-main">
+            <span class="cs-attack-name">{a.name}</span>
+            <span class="cs-attack-meta">{[a.range, a.damageType, a.notes].filter(Boolean).join(' · ')}</span>
+          </div>
+          <div class="cs-attack-rolls">
+            {a.toHit != null && (
+              <button type="button" class="cs-roll cs-chip" data-roll={d20(a.toHit)} data-roll-label="To hit" data-roll-name={a.name}
+                data-roll-damage={rollable(a.damage) ? a.damage : undefined} data-roll-damage-label={a.damageType || 'Damage'}
+                title={`Attack: ${d20(a.toHit)}${rollable(a.damage) ? ` and ${a.damage} damage` : ''}`}>{signed(a.toHit)} to hit</button>
+            )}
+            {a.damage && (rollable(a.damage)
+              ? <button type="button" class="cs-roll cs-chip cs-chip-dmg" data-roll={a.damage} data-roll-name={`${a.name} damage`} data-roll-label={a.damageType || 'Damage'} title={`Damage only (${a.damage})`}>{a.damage}</button>
+              : <span class="cs-chip cs-chip-flat" title="Fixed damage">{a.damage}</span>)}
+          </div>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
+
+{sheet.features.length > 0 && (
+  <section id="cs-features" class="t-panel p-6 sm:p-8 mb-6">
+    <div class="t-section-header"><h2 class="t-section-h text-xl">Features &amp; Traits</h2></div>
+    <div class="cs-features">
+      {sheet.features.map((f) => (
+        <details class="cs-feature">
+          <summary><span>{f.name}</span><span class="cs-feature-src">{f.source}</span></summary>
+          <p>{f.description}</p>
+        </details>
+      ))}
+    </div>
+  </section>
+)}
+
+{sheet.inventory.length > 0 && (
+  <section id="cs-inventory" class="t-panel p-6 sm:p-8 mb-6">
+    <div class="t-section-header"><h2 class="t-section-h text-xl">Inventory</h2></div>
+    {equipped.length > 0 && (
+      <>
+        <h3 class="t-label-sm mb-2">Equipped</h3>
+        <ul class="cs-items mb-4">
+          {equipped.map((i) => <li><span>{i.name}{i.quantity > 1 ? ` ×${i.quantity}` : ''}</span>{i.attuned && <span class="t-badge cs-attuned">Attuned</span>}</li>)}
+        </ul>
+      </>
+    )}
+    {carried.length > 0 && (
+      <details class="cs-carried">
+        <summary class="t-label-sm">Carried ({carried.length})</summary>
+        <ul class="cs-items mt-2">
+          {carried.map((i) => <li><span>{i.name}{i.quantity > 1 ? ` ×${i.quantity}` : ''}</span></li>)}
+        </ul>
+      </details>
+    )}
+  </section>
+)}

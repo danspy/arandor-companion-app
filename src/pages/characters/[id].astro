@@ -3,6 +3,11 @@ import Layout from '../../layouts/Layout.astro';
 import SceneBackdrop from '../../components/SceneBackdrop.astro';
 import { db, Character, DiaryEntry, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
+import CombatStrip from '../../components/character/CombatStrip.astro';
+import AbilityCards from '../../components/character/AbilityCards.astro';
+import PrivateSheet from '../../components/character/PrivateSheet.astro';
+import { canSeePrivateSheet, publicSheet, type CharacterSheet } from '../../lib/character-sheet';
+import '../../styles/character-sheet.css';
 
 const { id } = Astro.params;
 
@@ -49,6 +54,11 @@ const canEditCharacter = () => {
 
 const canEdit = canEditCharacter();
 
+// The D&D Beyond sheet: stats and core rolls for everyone, the rest for the player, the DM and admins
+const fullSheet = (character.sheet as CharacterSheet | null) ?? null;
+const canSeePrivate = canSeePrivateSheet(character, currentUser, userRole);
+const stats = (character.stats ?? {}) as Record<string, number | undefined>;
+
 const shouldAutoSync = character.dndbeyondUrl &&
   canEdit &&
   (!character.lastSyncedAt ||
@@ -57,15 +67,11 @@ const shouldAutoSync = character.dndbeyondUrl &&
 // What a sync can change on this page: after an auto-sync the page only refreshes if one of these did
 const syncedFields = (c: typeof character) => JSON.stringify([c.name, c.race, c.class, c.level, c.avatarUrl, c.hp, c.maxHp, c.tempHp, c.stats, c.background, c.alignment]);
 
-const statMod = (v: number) => {
-  const m = Math.floor((v - 10) / 2);
-  return (m >= 0 ? '+' : '') + m;
-};
 ---
 
 <Layout title={character.name}>
   <SceneBackdrop imageUrl={character.avatarUrl} />
-  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-auto-sync={shouldAutoSync ? character.id : undefined} data-synced-fields={syncedFields(character)}>
+  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-character-name={character.name} data-auto-sync={shouldAutoSync ? character.id : undefined} data-synced-fields={syncedFields(character)}>
 
     <!-- Nav row -->
     <div class="flex items-center justify-between mb-6">
@@ -161,32 +167,12 @@ const statMod = (v: number) => {
       </div>
     </div>
 
+    <CombatStrip hp={character.hp} maxHp={character.maxHp} tempHp={character.tempHp} sheet={publicSheet(fullSheet)} dexterity={stats.dexterity ?? null} />
+
     <!-- ── Ability Scores ─────────────────────────────────────── -->
-    {character.stats && (
-      <div class="t-panel p-6 sm:p-8 mb-6">
-        <div class="t-section-header">
-          <h2 class="t-section-h text-xl">Ability Scores</h2>
-        </div>
-        <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {([
-            { key: 'strength',     label: 'STR' },
-            { key: 'dexterity',    label: 'DEX' },
-            { key: 'constitution', label: 'CON' },
-            { key: 'intelligence', label: 'INT' },
-            { key: 'wisdom',       label: 'WIS' },
-            { key: 'charisma',     label: 'CHA' },
-          ] as const).map(({ key, label }) => (
-            <div class="t-stat-block">
-              <div class="t-stat-label">{label}</div>
-              <div class="t-stat-value">{(character.stats as any)[key] ?? '—'}</div>
-              {(character.stats as any)[key] !== undefined && (
-                <div class="t-stat-mod">{statMod((character.stats as any)[key])}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+    {character.stats && <AbilityCards stats={stats} sheet={publicSheet(fullSheet)} />}
+
+    {canSeePrivate && fullSheet && <PrivateSheet sheet={fullSheet} />}
 
     <!-- ── Character Details ──────────────────────────────────── -->
     {(character.background || character.alignment || character.gender || character.age || character.height || character.weight || character.eyes || character.skin || character.hair) && (
@@ -299,6 +285,9 @@ const statMod = (v: number) => {
 </Layout>
 
 <script>
+  import { wireCharacterRolls } from '../../lib/character-rolls';
+  wireCharacterRolls();
+
   const SYNC_ICON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
 
   // Once a day the owner's visit pulls fresh data from D&D Beyond in the background.

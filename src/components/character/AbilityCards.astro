@@ -1,0 +1,52 @@
+---
+// Ability scores with check and saving throw roll buttons (public)
+import type { PublicSheet, Ability } from '../../lib/character-sheet';
+import { d20, signed } from '../../lib/character-rolls';
+import RollMode from './RollMode.astro';
+
+interface Props {
+  stats: Record<string, number | undefined>;
+  sheet: PublicSheet | null;
+}
+const { stats, sheet } = Astro.props;
+const ABILITIES: { key: string; short: string; ability: Ability; name: string }[] = [
+  { key: 'strength', short: 'STR', ability: 'str', name: 'Strength' },
+  { key: 'dexterity', short: 'DEX', ability: 'dex', name: 'Dexterity' },
+  { key: 'constitution', short: 'CON', ability: 'con', name: 'Constitution' },
+  { key: 'intelligence', short: 'INT', ability: 'int', name: 'Intelligence' },
+  { key: 'wisdom', short: 'WIS', ability: 'wis', name: 'Wisdom' },
+  { key: 'charisma', short: 'CHA', ability: 'cha', name: 'Charisma' },
+];
+const mod = (v: number) => Math.floor((v - 10) / 2);
+---
+<section id="cs-abilities" class="t-panel p-6 sm:p-8 mb-6">
+  <div class="cs-head">
+    <h2 class="t-section-h text-xl">Ability Scores</h2>
+    <RollMode />
+  </div>
+  <p class="t-faint text-xs mb-4">Tap a modifier to roll a check, or a save to roll the saving throw.</p>
+  <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
+    {ABILITIES.map(({ key, short, ability, name }) => {
+      const score = stats[key];
+      if (score === undefined || score === null) {
+        return (
+          <div class="t-stat-block">
+            <div class="t-stat-label">{short}</div>
+            <div class="t-stat-value">—</div>
+          </div>
+        );
+      }
+      const save = sheet?.saves[ability] ?? { bonus: mod(score), proficient: false };
+      return (
+        <div class="t-stat-block cs-ability">
+          <div class="t-stat-label">{short}</div>
+          <div class="t-stat-value">{score}</div>
+          <button type="button" class="cs-roll t-stat-mod" data-roll={d20(mod(score))} data-roll-name={`${name} check`} title={`${name} check (${d20(mod(score))})`}>{signed(mod(score))}</button>
+          <button type="button" class="cs-roll cs-save" data-roll={d20(save.bonus)} data-roll-name={`${name} save`} title={`${name} saving throw (${d20(save.bonus)})${save.proficient ? ', proficient' : ''}`}>
+            <span class={`cs-dot ${save.proficient ? 'is-on' : ''}`} aria-hidden="true"></span>Save {signed(save.bonus)}
+          </button>
+        </div>
+      );
+    })}
+  </div>
+</section>
