@@ -1,0 +1,122 @@
+---
+// Compact strip for the site playlist. Rendered on the server; the script below only wires playback.
+// Visitors may play it; the Edit link is for admin and dungeonmaster.
+import type { PlaylistWithTracks } from '../../lib/music/server';
+
+interface Props {
+  playlist: PlaylistWithTracks | null;
+  canEdit: boolean;
+}
+
+const { playlist, canEdit } = Astro.props;
+const tracks = playlist?.tracks ?? [];
+const show = !!playlist && (tracks.length > 0 || canEdit);
+const data = playlist
+  ? { id: playlist.id, name: playlist.name, tracks: tracks.map((t) => ({ id: t.id, kind: t.kind, title: t.title, ref: t.ref })) }
+  : null;
+---
+
+{show && playlist && (
+  <section id="tavern-music" class="t-panel tavern-music mb-6" data-playlist-id={playlist.id}>
+    <div class="tm-head">
+      <h2 class="t-section-h text-xl">Tavern music</h2>
+      <span class="tm-name t-muted">{tracks.length > 0 ? `${playlist.name} · ${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}` : 'No tracks yet'}</span>
+      <div class="tm-actions">
+        {tracks.length > 0 && (
+          <>
+            <button type="button" class="tm-btn tm-btn-main" data-tm-play aria-label="Play">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+              Play
+            </button>
+            <button type="button" class="tm-btn" data-tm-shuffle aria-label="Shuffle">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>
+              Shuffle
+            </button>
+          </>
+        )}
+        {canEdit && <a class="t-link" href={`/tools/music?playlist=${playlist.id}`}>Edit</a>}
+      </div>
+    </div>
+    {tracks.length > 0 && (
+      <details class="tm-list">
+        <summary class="t-link">Tracks</summary>
+        <ol>
+          {tracks.map((t, i) => (
+            <li>
+              <button type="button" class="tm-row" data-tm-row data-index={i} data-track-id={t.id}>
+                <span class="tm-num">{i + 1}</span>
+                <span class="tm-title">{t.title}</span>
+              </button>
+            </li>
+          ))}
+        </ol>
+      </details>
+    )}
+    {data && <script type="application/json" id="tavern-music-data" set:html={JSON.stringify(data).replace(/</g, '\\u003c')} />}
+  </section>
+)}
+
+<style>
+  .tavern-music { padding: 0.75rem 1.25rem; }
+  .tm-head { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 1rem; }
+  .tm-name { font-size: 0.85rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tm-actions { margin-left: auto; display: flex; align-items: center; gap: 0.5rem; }
+  .tm-btn {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    padding: 0.3rem 0.7rem; border-radius: 2px; font-size: 0.8rem; font-weight: 500;
+    color: var(--gold); border: 1px solid var(--border-gold);
+  }
+  .tm-btn:hover { background: var(--accent-dim); }
+  .tm-btn-main { background: var(--accent-dim); }
+  .tm-list { margin-top: 0.5rem; }
+  .tm-list summary { cursor: pointer; width: fit-content; }
+  .tm-list ol { margin-top: 0.4rem; max-height: 14rem; overflow-y: auto; }
+  .tm-row {
+    display: flex; width: 100%; gap: 0.75rem; align-items: baseline; text-align: left;
+    padding: 0.3rem 0.5rem; font-size: 0.85rem; color: var(--text-body); border-radius: 2px;
+  }
+  .tm-row:hover { background: var(--accent-dim); color: var(--text-strong); }
+  .tm-row[aria-current='true'] { color: var(--gold); background: var(--accent-dim); }
+  .tm-num { width: 1.5rem; text-align: right; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+  import { music, MUSIC_STATE_EVENT, type MusicState } from '../../lib/music/player';
+
+  type Data = { id: string; name: string; tracks: { id: string; kind: 'file' | 'youtube_video' | 'youtube_playlist'; title: string; ref: string }[] };
+
+  function markPlaying(root: HTMLElement, id: string, s: MusicState) {
+    const current = s.source?.playlistId === id && s.queue.length > 0 ? s.queue[s.index]?.id : null;
+    const rows = root.querySelectorAll<HTMLElement>('[data-tm-row]');
+    rows.forEach((row) => {
+      if (current && row.dataset.trackId === current) row.setAttribute('aria-current', 'true');
+      else row.removeAttribute('aria-current');
+    });
+  }
+
+  // The state listener lives on document and survives ClientRouter swaps, so it is bound once and looks the panel up each time.
+  const w = window as any;
+  if (!w.__tavernMusicBound) {
+    w.__tavernMusicBound = true;
+    document.addEventListener(MUSIC_STATE_EVENT, (e) => {
+      const root = document.getElementById('tavern-music');
+      if (root) markPlaying(root, root.dataset.playlistId ?? '', (e as CustomEvent<MusicState>).detail);
+    });
+  }
+
+  document.addEventListener('astro:page-load', () => {
+    const root = document.getElementById('tavern-music');
+    const raw = document.getElementById('tavern-music-data')?.textContent;
+    if (!root || !raw || root.dataset.bound) return;
+    root.dataset.bound = '1';
+    const data: Data = JSON.parse(raw);
+    const playlist = { id: data.id, name: data.name, tracks: data.tracks };
+
+    root.querySelector('[data-tm-play]')?.addEventListener('click', () => music.playPlaylist(playlist, 0));
+    root.querySelector('[data-tm-shuffle]')?.addEventListener('click', () => music.playPlaylist(playlist, 0, { shuffle: true }));
+    root.querySelectorAll<HTMLElement>('[data-tm-row]').forEach((row) => {
+      row.addEventListener('click', () => music.playPlaylist(playlist, Number(row.dataset.index)));
+    });
+    markPlaying(root, data.id, music.getState());
+  });
+</script>

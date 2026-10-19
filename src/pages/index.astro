@@ -12,6 +12,8 @@ import QuestBoard from '../components/dashboard/QuestBoard.astro';
 import LibraryShelf from '../components/dashboard/LibraryShelf.astro';
 import CampaignTally from '../components/dashboard/CampaignTally.astro';
 import FactionCrests from '../components/dashboard/FactionCrests.astro';
+import TavernMusic from '../components/dashboard/TavernMusic.astro';
+import { loadSitePlaylist } from '../lib/music/server';
 import { markdownExcerpt } from '../utils/markdown';
 import { db, DiaryEntry, Quest, Character, CampaignProgress, LibraryEntry, Faction, CombatState, Event, User, NPC, Location } from '@/db';
 import { getUserRole, getCurrentUser } from '../lib/auth';
@@ -99,6 +101,7 @@ const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
 }).slice(0, 8);
 
 const isLoggedIn = !!userRole;
+const sitePlaylist = await loadSitePlaylist();
 
 const latestEntry = latestEntries[0] ?? null;
 const earlierEntries = latestEntries.slice(1);
@@ -224,6 +227,8 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
       <div class="mt-3 h-px" style="background:linear-gradient(90deg, var(--accent) 0%, var(--border-gold) 40%, transparent 100%); max-width:280px;"></div>
     </div>
   )}
+
+  <TavernMusic playlist={sitePlaylist} canEdit={canEdit} />
 
   <!-- Active Combat Indicator -->
   {isLoggedIn && (

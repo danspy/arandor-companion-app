@@ -698,3 +698,99 @@ test.describe('Music page', () => {
     expect((await context.request.get(`/api/music/playlists/${id}`)).status()).toBe(404);
   });
 });
+
+test.describe('Dashboard music', () => {
+  test.skip(!haveAccounts, 'Needs E2E accounts (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'Desktop flow');
+  test.describe.configure({ mode: 'serial' });
+
+  let admin: BrowserContext, dm: BrowserContext;
+  let siteId = '';
+  let originalIds: string[] = [];
+  const added: string[] = [];
+
+  async function siteTracks(): Promise<any[]> {
+    return (await (await admin.request.get('/api/music/site')).json()).playlist.tracks;
+  }
+  async function removeAll(ids: string[]) {
+    for (const id of ids) await admin.request.delete(`/api/music/tracks/${id}`);
+  }
+
+  test.beforeAll(async ({ browser }) => {
+    [admin, dm] = await Promise.all([browser.newContext(), browser.newContext()]);
+    await login(admin, E.E2E_ADMIN!, E.E2E_ADMIN_PASSWORD!);
+    await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+    const site = (await (await admin.request.get('/api/music/site')).json()).playlist;
+    siteId = site.id;
+    originalIds = site.tracks.map((t: any) => t.id);
+  });
+
+  test.afterAll(async () => {
+    await removeAll(added);
+    await Promise.all([admin, dm].map((c) => c?.close()));
+  });
+
+  test('empty site playlist: visitors see no panel, a dm sees it with Edit', async ({ browser }) => {
+    // The site playlist must be empty for this test; existing tracks are not deleted (they could be real data)
+    test.skip(originalIds.length > 0, 'Site playlist already has tracks');
+    const visitor = await browser.newContext();
+    const vp = await visitor.newPage();
+    await vp.goto('/');
+    await expect(vp.locator('h1').first()).toBeVisible();
+    await expect(vp.getByText('Tavern music')).toHaveCount(0);
+    await visitor.close();
+
+    const page = await dm.newPage();
+    await page.goto('/');
+    const panel = page.locator('#tavern-music');
+    await expect(panel).toContainText('Tavern music');
+    await expect(panel).toContainText('No tracks yet');
+    await expect(panel.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', `/tools/music?playlist=${siteId}`);
+    await page.close();
+  });
+
+  test('visitor plays the site playlist from the dashboard', async ({ browser }) => {
+    for (const name of ['Dash One.wav', 'Dash Two.wav']) {
+      const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
+        multipart: { file: { name, mimeType: 'audio/wav', buffer: wav(20) } },
+      });
+      expect(res.status()).toBe(201);
+      added.push((await res.json()).results[0].track.id);
+    }
+    const tracks = await siteTracks();
+    const first = tracks[0].title;
+
+    const visitor = await browser.newContext();
+    const page = await visitor.newPage();
+    await page.goto('/');
+    const panel = page.locator('#tavern-music');
+    await expect(panel).toContainText('Tavern music');
+    await expect(panel.getByRole('link', { name: 'Edit' })).toHaveCount(0);
+    await panel.locator('[data-tm-play]').click();
+    await expect(page.locator('#music-bar')).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText(first);
+
+    // click a row: plays from it and marks it
+    await panel.locator('summary').click();
+    const rows = panel.locator('[data-tm-row]');
+    await expect(rows).toHaveCount(tracks.length);
+    await rows.last().click();
+    await expect(page.locator('#music-title')).toHaveText(tracks[tracks.length - 1].title);
+    await expect(rows.last()).toHaveAttribute('aria-current', 'true');
+    await expect(rows.first()).not.toHaveAttribute('aria-current', 'true');
+
+    // visitors cannot open the Music tool
+    await page.goto('/tools/music');
+    await expect(page).toHaveURL(/\/login/);
+    await visitor.close();
+
+    // dm sees Edit
+    const dmPage = await dm.newPage();
+    await dmPage.goto('/');
+    await expect(dmPage.locator('#tavern-music').getByRole('link', { name: 'Edit' })).toHaveAttribute('href', `/tools/music?playlist=${siteId}`);
+    await dmPage.close();
+
+    await removeAll(added.splice(0));
+    expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
+  });
+});
