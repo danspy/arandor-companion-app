@@ -14,9 +14,13 @@ All three are reached through **Tools** in the menu (shown when logged in).
 
 ### For the DM
 
-- **Run combat:** Start, Pause, Stop; Previous/Next turn. The round counter advances
-  automatically. *Start* after *Pause* carries on with the same combatant; after *Stop* it
-  begins at the top. The server moves the turn, so the tracker and the DM screen always agree.
+- **Run combat:** Start, Pause, Stop; Previous/Next turn. *Next* past the last combatant starts
+  the next round. The server moves the turn, so the tracker and the DM screen always agree.
+- **The round is never reset on its own.** Start (after Pause *or* Stop) carries on at the
+  stored round and turn, so a fight can span several sessions: pause at round 3, come back next
+  week, press Start, and it is still round 3. To begin a fresh fight at round 1, press
+  **New fight** next to the round counter (tracker or DM screen). *Reset combat* and *Clear all*
+  also go back to round 1.
 - Adding, removing or deactivating a combatant mid-fight keeps the turn with whoever has it.
 - **Add combatants:** name, initiative, type (character, NPC, monster, other), linked character
   or NPC, HP / max HP / temp HP, AC, notes, active flag. For monsters you can enter a **count**:

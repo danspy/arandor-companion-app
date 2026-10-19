@@ -103,7 +103,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
   }
 };
 
-// POST - Move the turn on the server: { action: 'start' | 'next' | 'prev' }.
+// POST - Move the turn on the server: { action: 'start' | 'next' | 'prev' | 'new-fight' }.
+// 'start' continues at the stored round and turn; only 'new-fight' goes back to round 1.
 // The tracker and the DM screen both use this, so they can't compute different turns.
 export const POST: APIRoute = async ({ request, cookies }) => {
   const authError = await requireDungeonmasterOrAdmin(cookies);
@@ -111,8 +112,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
   try {
     const { action } = await request.json();
-    if (!['start', 'next', 'prev'].includes(action)) {
-      return new Response(JSON.stringify({ error: 'Invalid action. Must be start, next or prev' }), {
+    if (!['start', 'next', 'prev', 'new-fight'].includes(action)) {
+      return new Response(JSON.stringify({ error: 'Invalid action. Must be start, next, prev or new-fight' }), {
         status: 400,
         headers: { 'Content-Type': 'application/json' },
       });

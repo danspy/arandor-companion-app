@@ -67,7 +67,7 @@ export async function preserveTurn<T>(change: () => Promise<T>): Promise<T> {
   return result;
 }
 
-export type TurnAction = 'start' | 'next' | 'prev';
+export type TurnAction = 'start' | 'next' | 'prev' | 'new-fight';
 
 /** Moves the turn on the server so two open screens can't compute different turns. */
 export async function advanceTurn(action: TurnAction): Promise<CombatStateRow | { error: string }> {
@@ -75,9 +75,12 @@ export async function advanceTurn(action: TurnAction): Promise<CombatStateRow | 
   if (active.length === 0) return { error: 'No active combatants in the initiative tracker' };
 
   const state = await getCombatState();
+  // Starting never touches the round: a fight can span sessions, so Start always carries on
+  // where it was paused or stopped. Only 'new-fight' (the DM's explicit button) goes to round 1.
   if (action === 'start') {
-    // Resuming a paused fight keeps the turn; starting a stopped one begins at the top.
-    if (state.status === 'paused') return setCombatState({ status: 'active' });
+    return setCombatState({ status: 'active', currentTurnIndex: Math.min(state.currentTurnIndex, active.length - 1) });
+  }
+  if (action === 'new-fight') {
     return setCombatState({ status: 'active', currentRound: 1, currentTurnIndex: 0 });
   }
 

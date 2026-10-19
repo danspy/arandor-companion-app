@@ -185,9 +185,14 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         <div class="pt-4" style="border-top:1px solid var(--border);">
           <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 mb-3">
             <span class="t-body-text text-sm font-medium">Combat Controls</span>
-            <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-xs">
-              <span class="t-body-text text-xs font-medium">Round:</span>
-              <span id="dmCurrentRound" class="text-lg font-bold" style="color:var(--gold);">1</span>
+            <div class="flex items-center gap-2">
+              <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-xs">
+                <span class="t-body-text text-xs font-medium">Round:</span>
+                <span id="dmCurrentRound" class="text-lg font-bold" style="color:var(--gold);">1</span>
+              </div>
+              <Button variant="secondary" size="sm" icon="refresh" id="dmNewFightBtn" class="text-xs" title="Start a new fight at round 1 with the first combatant">
+                New fight
+              </Button>
             </div>
           </div>
           
@@ -947,6 +952,15 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const startCombatHandler = () => turnAction('start');
       dmStartCombatBtn?.addEventListener('click', startCombatHandler);
       eventHandlers.set('dmStartCombatBtn', startCombatHandler);
+
+      // New fight: the only control that puts the round back to 1
+      const dmNewFightBtn = document.getElementById('dmNewFightBtn');
+      const newFightHandler = async () => {
+        if (!(await window.arandorConfirm('Start a new fight?', { detail: 'The round goes back to 1 and the first combatant has the turn. Combatants stay as they are.', confirmLabel: 'New fight' }))) return;
+        await turnAction('new-fight');
+      };
+      dmNewFightBtn?.addEventListener('click', newFightHandler);
+      eventHandlers.set('dmNewFightBtn', newFightHandler);
       
       // Pause combat
       const dmPauseCombatBtn = document.getElementById('dmPauseCombatBtn');
@@ -961,13 +975,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Stop combat
       const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
       const stopCombatHandler = async () => {
-        if (!(await window.arandorConfirm('Stop combat?', { detail: 'The turn order is reset.', confirmLabel: 'Stop combat', danger: true }))) return;
+        if (!(await window.arandorConfirm('Stop combat?', { detail: 'The round and turn are kept; Start carries on from there.', confirmLabel: 'Stop combat', danger: true }))) return;
         
-        await updateCombatState({
-          status: 'stopped',
-          currentTurnIndex: 0,
-          currentRound: 1
-        });
+        await updateCombatState({ status: 'stopped' });
       };
       dmStopCombatBtn?.addEventListener('click', stopCombatHandler);
       eventHandlers.set('dmStopCombatBtn', stopCombatHandler);

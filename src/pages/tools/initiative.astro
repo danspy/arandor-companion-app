@@ -180,6 +180,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               <span id="currentRoundDisplay" class="text-base sm:text-lg font-bold" style="color:var(--gold);">{combatState.currentRound}</span>
             </div>
           )}
+          {canEdit && sortedInitiatives.length > 0 && (
+            <Button variant="secondary" size="sm" icon="refresh" id="newFightBtn" title="Start a new fight at round 1 with the first combatant">
+              New fight
+            </Button>
+          )}
         </div>
         
         <!-- Action Buttons -->
@@ -1268,6 +1273,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             });
             if (!response.ok) throw new Error((await response.json()).error || 'Failed to change turn');
             const state = await response.json();
+            shownTurnKey = `${state.currentRound}:${state.currentTurnIndex}`;
             updateTurnIndicator(state.currentTurnIndex, state.currentRound);
           } catch (error) {
             console.error('Error changing turn:', error);
@@ -1325,6 +1331,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         hpSyncInterval = setInterval(syncHpFromDnDBeyond, HP_SYNC_INTERVAL);
         
         // Poll for combat state and initiative data updates every 2 seconds
+        let shownTurnKey = null;
         combatStateInterval = setInterval(async () => {
           try {
             const [stateResponse, initiativeResponse] = await Promise.all([
@@ -1348,11 +1355,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 return;
               }
               
-              // Sync turn indicator and round
-              if (state.currentRound !== currentRound || state.currentTurnIndex !== currentTurnIndex) {
-                currentRound = state.currentRound;
-                currentTurnIndex = state.currentTurnIndex;
-                updateTurnIndicator(currentTurnIndex, currentRound);
+              // Sync turn indicator and round (e.g. when the DM screen moved the turn)
+              const turnKey = `${state.currentRound}:${state.currentTurnIndex}`;
+              if (turnKey !== shownTurnKey) {
+                shownTurnKey = turnKey;
+                updateTurnIndicator(state.currentTurnIndex, state.currentRound);
               }
               
               // Update round display
@@ -1461,19 +1468,26 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       }
       
       // Create and store new handlers
-      // Start resumes a paused fight on the same turn, and begins at the top when stopped
-      const startHandler = async () => {
+      // Start always continues at the stored round and turn (fights can span sessions).
+      // Only New fight goes back to round 1.
+      const combatAction = async (action) => {
         const response = await fetch('/api/combat-state', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'start' }),
+          body: JSON.stringify({ action }),
         });
         if (response.ok) window.location.reload();
         else alert((await response.json()).error || 'Failed to start combat');
       };
+      const startHandler = () => combatAction('start');
+      const newFightHandler = async () => {
+        if (await window.arandorConfirm('Start a new fight?', { detail: 'The round goes back to 1 and the first combatant has the turn. Combatants stay as they are.', confirmLabel: 'New fight' })) {
+          combatAction('new-fight');
+        }
+      };
       const pauseHandler = () => updateCombatStatus('paused');
       const stopHandler = async () => {
-        if ((await window.arandorConfirm('Stop combat?', { detail: 'Live tracking stops for everyone.', confirmLabel: 'Stop combat', danger: true }))) {
+        if ((await window.arandorConfirm('Stop combat?', { detail: 'Live tracking stops for everyone. The round and turn are kept; Start carries on from there.', confirmLabel: 'Stop combat', danger: true }))) {
           updateCombatStatus('stopped');
         }
       };
@@ -1489,6 +1503,11 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       if (stopCombatBtn) {
         combatControlHandlers.set('stop', stopHandler);
         stopCombatBtn.addEventListener('click', stopHandler);
+      }
+      const newFightBtn = document.getElementById('newFightBtn');
+      if (newFightBtn) {
+        combatControlHandlers.set('newFight', newFightHandler);
+        newFightBtn.addEventListener('click', newFightHandler);
       }
       
       // Sync HP button
