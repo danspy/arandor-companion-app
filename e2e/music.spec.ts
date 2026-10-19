@@ -441,6 +441,26 @@ test.describe('Music player', () => {
       expect(t2).toBeLessThan(t1 + 10);
     });
 
+    test('stops at the end of the queue and seeking then stays paused', async ({ page }) => {
+      await start(page, [ytVideo]);
+      await ytPlaying(page, 1);
+      const dur = (await ytState(page)).duration;
+      expect(dur).toBeGreaterThan(10);
+      await page.evaluate((d) => window.__music.seek(d - 2), dur);
+      // Repeat off, last track: stop, paused at 0 - and stay stopped (no loop)
+      await expect.poll(async () => { const s = await ytState(page); return !s.playing && s.position === 0; }, { timeout: 15_000 }).toBe(true);
+      await page.waitForTimeout(2500);
+      expect((await ytState(page)).playing).toBe(false);
+      expect((await ytState(page)).position).toBe(0);
+      // Seeking while stopped (cued) must not start playback either
+      await page.evaluate(() => window.__music.seek(30));
+      await page.waitForTimeout(2000);
+      const s = await ytState(page);
+      expect(s.playing).toBe(false);
+      expect(s.position).toBe(30);
+      await expect(page.getByRole('button', { name: 'Play', exact: true })).toBeVisible();
+    });
+
     test('unplayable video is skipped', async ({ page }) => {
       const broken = { id: 'yt-broken', kind: 'youtube_video', title: 'Broken', ref: 'xxxxxxxxxxx' };
       await start(page, [broken, ...asQueue(playlist.tracks).slice(0, 1)]);

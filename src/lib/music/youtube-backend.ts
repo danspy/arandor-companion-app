@@ -287,7 +287,16 @@ export function createYouTubeBackend(host: HTMLElement): MusicBackend {
     seek(s) {
       if (!Number.isFinite(s)) return;
       lastPos = Math.max(0, s);
-      if (player && ready) player.seekTo(lastPos, true);
+      if (!player || !ready) return;
+      // seekTo() starts playback from any state except PAUSED (e.g. ENDED at the end of the
+      // queue, or CUED after a paused restore). There, cue the track again at the new time.
+      if (ytState === S.PLAYING || ytState === S.BUFFERING || ytState === S.PAUSED || !track) {
+        player.seekTo(lastPos, true);
+        return;
+      }
+      let index = 0;
+      try { if (isList()) index = Math.max(0, player.getPlaylistIndex()); } catch { /* ignore */ }
+      cue(track, lastPos, false, index);
     },
     setVolume(v) {
       volume = Math.min(1, Math.max(0, v));
