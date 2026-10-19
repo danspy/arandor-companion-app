@@ -88,6 +88,12 @@ The pixel-art world with the party's journey replayed session by session. See
 Active quests first, sorted by priority; filter by status. DMs add and edit quests (title,
 description, priority, status active/completed/failed).
 
+Each quest has its own page (`/quests/<id>`): description, the diary entries that list the
+quest, and the NPCs, locations and party members of those sessions (with how many sessions
+each appears in), plus timeline events linked to the quest. Quests are linked from a diary
+entry's or timeline event's **Quests** field; NPC and location pages list the quests of their
+diary appearances. DMs can complete, fail, reactivate, edit and delete a quest from its page.
+
 ## Tools (`/tools`, logged in)
 
 - **Calendar**: game sessions and the calendar subscription; see [Calendar](Calendar.md).

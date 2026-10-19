@@ -1,0 +1,37 @@
+---
+// Quests linked from the given diary entries (their questIds), for NPC and location pages.
+import { db, Quest, inArray } from '@/db';
+
+interface Props {
+  diaryEntries: Array<{ questIds: unknown }>;
+}
+
+const { diaryEntries } = Astro.props;
+const questIds = [...new Set(diaryEntries.flatMap(entry => Array.isArray(entry.questIds) ? entry.questIds : []))];
+const statusOrder: Record<string, number> = { active: 0, completed: 1, failed: 2 };
+const quests = questIds.length > 0
+  ? (await db.select().from(Quest).where(inArray(Quest.id, questIds)))
+      .sort((a, b) => (statusOrder[a.status] ?? 3) - (statusOrder[b.status] ?? 3) || a.title.localeCompare(b.title))
+  : [];
+---
+
+{quests.length > 0 && (
+  <div class="t-panel p-6 sm:p-8 mb-6">
+    <div class="t-section-header">
+      <h2 class="t-section-h text-xl">Quests</h2>
+      <span class="t-badge t-badge-gold ml-auto">{quests.length}</span>
+    </div>
+    <div class="flex flex-col gap-3">
+      {quests.map(quest => (
+        <a href={`/quests/${quest.id}`} class="t-row p-4 flex items-center justify-between gap-4">
+          <div class="t-body-text font-medium truncate">{quest.title}</div>
+          <span class={`t-badge shrink-0 ${
+            quest.status === 'completed' ? 't-badge-green' :
+            quest.status === 'failed' ? 't-badge-red' :
+            't-badge-accent'
+          }`}>{quest.status}</span>
+        </a>
+      ))}
+    </div>
+  </div>
+)}
