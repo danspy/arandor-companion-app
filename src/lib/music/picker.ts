@@ -94,6 +94,7 @@ export function mountMusicPicker(host: HTMLElement): void {
     // Seek row: only while the playing source is the selected playlist and the duration is known
     const showSeek = here && s.duration > 0;
     if (seekRow.hidden === showSeek) seekRow.hidden = !showSeek;
+    if (!showSeek) seeking = false;
     if (showSeek) {
       const max = String(s.duration);
       if (seek.max !== max) seek.max = max;
@@ -129,15 +130,36 @@ export function mountMusicPicker(host: HTMLElement): void {
   shuffleBtn.addEventListener('click', () => music.setShuffle(!music.getState().shuffle));
   repeatBtn.addEventListener('click', () => music.setRepeat(NEXT_REPEAT[music.getState().repeat]));
 
-  select.addEventListener('change', async () => {
-    if (!select.value) { selected = null; tracks = []; empty.textContent = 'Pick a playlist to see its tracks.'; renderRows(); empty.hidden = false; return; }
-    const r = await getJson(`/api/music/playlists/${encodeURIComponent(select.value)}`);
-    if (!r.ok) { fail(r); return; }
+  // Remembered selection: per user, this browser only. Every access guarded (private mode etc.).
+  const pickKey = me ? `arandor.music.dmPick.${me}` : '';
+  const savePick = (id: string) => {
+    if (!pickKey) return;
+    try { if (id) localStorage.setItem(pickKey, id); else localStorage.removeItem(pickKey); } catch { /* ignore */ }
+  };
+  const loadPick = () => {
+    if (!pickKey) return '';
+    try { return localStorage.getItem(pickKey) ?? ''; } catch { return ''; }
+  };
+
+  // Newest selection wins: a slower earlier fetch must not overwrite it
+  let loadSeq = 0;
+  async function choose(id: string, quiet = false) {
+    const seq = ++loadSeq;
+    seeking = false;
+    if (!id) { selected = null; tracks = []; empty.textContent = 'Pick a playlist to see its tracks.'; renderRows(); empty.hidden = false; return; }
+    const r = await getJson(`/api/music/playlists/${encodeURIComponent(id)}`);
+    if (seq !== loadSeq) return;
+    if (!r.ok) {
+      if (quiet) { select.value = ''; savePick(''); return; }
+      fail(r); return;
+    }
     const pl = r.data?.playlist ?? r.data;
     selected = { id: pl.id, name: pl.name };
     tracks = (pl.tracks ?? []).map((t: any) => ({ id: t.id, kind: t.kind, title: t.title, ref: t.ref }));
     renderRows();
-  });
+  }
+
+  select.addEventListener('change', () => { savePick(select.value); void choose(select.value); });
 
   const onState = (e: Event) => sync((e as CustomEvent<MusicState>).detail ?? music.getState());
   document.addEventListener(MUSIC_STATE_EVENT, onState);
@@ -155,6 +177,12 @@ export function mountMusicPicker(host: HTMLElement): void {
     group('Site', all.filter((p) => p.isSiteDefault));
     group('Mine', all.filter((p) => !p.isSiteDefault && p.ownerId === me));
     group('Public', all.filter((p) => !p.isSiteDefault && p.visibility === 'public' && p.ownerId !== me));
+    // Restore the remembered playlist (no playback); drop it if it is no longer listed
+    const saved = loadPick();
+    if (saved && !select.value) {
+      if (all.some((p) => p.id === saved)) { select.value = saved; await choose(saved, true); }
+      else savePick('');
+    }
     sync(music.getState());
   })();
 }

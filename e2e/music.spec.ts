@@ -1171,4 +1171,80 @@ test.describe('DM screen music', () => {
       await dm.close();
     }
   });
+
+  test('remembers the selected playlist per user on this device', async ({ browser }) => {
+    const dm = await browser.newContext();
+    await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+    const mk = async (name: string, file: string) => {
+      const res = await dm.request.post('/api/music/playlists', { data: { name } });
+      expect(res.status()).toBe(201);
+      const body = await res.json();
+      const id = body.playlist?.id ?? body.id;
+      const up = await dm.request.post(`/api/music/playlists/${id}/tracks`, {
+        multipart: { file: { name: file, mimeType: 'audio/wav', buffer: wav(20) } },
+      });
+      expect(up.status()).toBe(201);
+      return id as string;
+    };
+    const ids: string[] = [];
+    try {
+      const id = await mk(`E2E dmpick ${Date.now()}`, 'Pick.wav');
+      const other = await mk(`E2E dmother ${Date.now()}`, 'Other.wav');
+      ids.push(id, other);
+      const page = await dm.newPage();
+      await page.goto('/tools/dm-screen');
+      const panel = page.locator('#dm-music');
+      const sel = panel.locator('#dmm-select');
+      await expect(sel.locator(`option[value="${id}"]`)).toHaveCount(1);
+      await expect(sel).toHaveValue('');
+      await sel.selectOption(id);
+      await expect(panel.locator('[data-dmm-row]')).toHaveCount(1);
+      const me = await panel.locator('#dm-music-host').getAttribute('data-me');
+      expect(me).toBeTruthy();
+
+      // 1. reload: restored, tracks loaded, no autoplay
+      await page.reload();
+      await expect(sel).toHaveValue(id);
+      await expect(panel.locator('[data-dmm-row]')).toHaveCount(1);
+      expect(await page.evaluate(() => window.__music.getState().playing)).toBe(false);
+
+      // 2. ClientRouter navigation away and back
+      await page.locator('[data-testid="desktop-nav"] a[href="/tools"]').click();
+      await expect(page).toHaveURL(/\/tools$/);
+      await page.goBack();
+      await expect(page.locator('#dmm-select')).toHaveValue(id);
+      await expect(page.locator('#dm-music [data-dmm-row]')).toHaveCount(1);
+
+      // 3. other music starting elsewhere does not move the selection
+      await page.evaluate(async (pid) => {
+        const r = await fetch(`/api/music/playlists/${pid}`);
+        const d = await r.json();
+        const pl = d.playlist ?? d;
+        window.__music.playPlaylist({ id: pl.id, name: pl.name, tracks: pl.tracks.map((t: any) => ({ id: t.id, kind: t.kind, title: t.title, ref: t.ref })) }, 0);
+      }, other);
+      await expect.poll(() => page.evaluate(() => window.__music.getState().source?.playlistId)).toBe(other);
+      await expect(page.locator('#dmm-select')).toHaveValue(id);
+
+      // 5. another user in the same browser is not pre-selected
+      await login(dm, E.E2E_ADMIN!, E.E2E_ADMIN_PASSWORD!);
+      await page.goto('/tools/dm-screen');
+      await expect(page.locator('#dmm-select')).toBeVisible();
+      await expect(page.locator('#dmm-select option').first()).toHaveText(/Choose/);
+      await expect(page.locator('#dmm-select')).toHaveValue('');
+      expect(await page.evaluate((k) => localStorage.getItem(k), `arandor.music.dmPick.${me}`)).toBe(id);
+      await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+
+      // 4. selected playlist deleted: empty state, key removed
+      await dm.request.delete(`/api/music/playlists/${id}`);
+      ids.shift();
+      await page.goto('/tools/dm-screen');
+      await expect(page.locator('#dmm-select option').first()).toHaveText(/Choose/);
+      await expect(page.locator('#dmm-select')).toHaveValue('');
+      await expect(page.locator('#dm-music [data-dmm-row]')).toHaveCount(0);
+      await expect.poll(() => page.evaluate((k) => localStorage.getItem(k), `arandor.music.dmPick.${me}`)).toBeNull();
+    } finally {
+      for (const id of ids) await dm.request.delete(`/api/music/playlists/${id}`);
+      await dm.close();
+    }
+  });
 });
