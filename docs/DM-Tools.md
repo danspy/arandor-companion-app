@@ -169,7 +169,9 @@ what a DM needs.
 **Playlists.** Every logged-in user can make playlists, *Only me* or *Everyone logged in*.
 Owners and admins edit them; the **site playlist** ("Tavern music", plays on the dashboard
 for everybody, even without a login) can also be edited by DMs. An admin picks it with
-*Make site playlist*; it is always public and cannot be deleted. Deleting a playlist or a track
+*Make site playlist*; it is always public and cannot be deleted. Its **Show on the dashboard**
+switch (admins and DMs) hides the dashboard panel for everyone without touching the playlist;
+the panel is also hidden while the playlist is empty. Deleting a playlist or a track
 also deletes the uploaded files. Who may do what is in
 [Roles and permissions](Roles-and-Permissions.md).
 
