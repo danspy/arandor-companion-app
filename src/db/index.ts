@@ -15,4 +15,4 @@ const file = process.env.DATABASE_FILE || (import.meta.env?.DEV ? './data/dev.db
 export const db = drizzle(createClient({ url: pathToFileURL(resolve(file)).href }), { schema });
 
 export * from './schema';
-export { and, eq, inArray, sql } from 'drizzle-orm';
+export { and, eq, inArray, isNull, sql } from 'drizzle-orm';

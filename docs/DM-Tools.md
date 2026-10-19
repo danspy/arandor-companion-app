@@ -86,7 +86,9 @@ not even through the API, and a combatant's link to its stat block is left out o
   sections such as Traits, Actions, Bonus Actions, Reactions, Legendary Actions). Write attacks
   like the book and they become roll buttons.
 - **Used by NPCs:** link named NPCs (e.g. Kimbal Laradan → "Scout"). Adding them to a fight from
-  the tracker or the stat block page uses these numbers.
+  the tracker or the stat block page uses these numbers. An NPC that is already in the fight gets
+  the stat block link as soon as you save (its HP stays as it is), and an NPC added to the
+  tracker by name is linked too.
 - **The stat block** (`/tools/bestiary/<id>`): every number rolls with the 3D dice:
   - an attack's name rolls to hit plus its damage in one throw (a natural 20 doubles the damage
     dice); damage that only applies sometimes ("… if the attack roll had Advantage") has its own

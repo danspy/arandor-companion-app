@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, Creature, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 import { validateCreature } from '../../../lib/statblock';
+import { syncCombatantLinks } from '../../../lib/creature-links';
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
@@ -36,6 +37,8 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     if (!checked.ok) return json({ error: checked.error }, 400);
     const updatedAt = new Date();
     await db.update(Creature).set({ ...checked.creature, updatedAt }).where(eq(Creature.id, existing.id));
+    // Combatants of NPCs linked or unlinked just now follow
+    await syncCombatantLinks(existing.id, checked.creature.npcIds, existing.npcIds as string[]);
     return json({ ...existing, ...checked.creature, updatedAt });
   } catch (error) {
     console.error('Error updating creature:', error);

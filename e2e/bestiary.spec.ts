@@ -208,6 +208,36 @@ test.describe('Bestiary on a test server', () => {
     await dm.close();
   });
 
+  test('linking an NPC to a stat block reaches its combatants already in the fight', async ({ browser }) => {
+    const dm = await browser.newContext();
+    await login(dm, DM!, DM_PASSWORD!);
+    const name = `E2E Tirael ${Date.now()}`;
+    const npc = await (await dm.request.post('/api/npcs', { data: { name, race: 'Elf', description: 'Test NPC', relationship: 'neutral' } })).json();
+    // In the fight before it has a stat block (added by name, like the tracker's form does)
+    const before = await (await dm.request.post('/api/initiative', { data: { name, initiative: 12, type: 'npc', hp: 30, maxHp: 30 } })).json();
+    expect(before.creatureId).toBeNull();
+    const entry = async (id: string) => (await (await dm.request.get(`/api/initiative/${id}`)).json()).creatureId;
+
+    // Linked when the stat block is saved with the NPC…
+    const creature = await (await dm.request.post('/api/creatures', { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [npc.id] } })).json();
+    expect(await entry(before.id)).toBe(creature.id);
+    // …unlinked when the NPC is taken off, linked again when it's put back
+    await dm.request.put(`/api/creatures/${creature.id}`, { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [] } });
+    expect(await entry(before.id)).toBeNull();
+    await dm.request.put(`/api/creatures/${creature.id}`, { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [npc.id] } });
+    expect(await entry(before.id)).toBe(creature.id);
+    // HP stays as it was
+    expect((await (await dm.request.get(`/api/initiative/${before.id}`)).json()).hp).toBe(30);
+    // Added by name later: linked right away
+    const later = await (await dm.request.post('/api/initiative', { data: { name, initiative: 5, type: 'npc', hp: 30, maxHp: 30 } })).json();
+    expect(later.creatureId).toBe(creature.id);
+
+    for (const e of [before, later]) await dm.request.delete(`/api/initiative/${e.id}`);
+    await dm.request.delete(`/api/creatures/${creature.id}`);
+    await dm.request.delete(`/api/npcs/${npc.id}`);
+    await dm.close();
+  });
+
   test('SRD library: one copy per creature, used for fights; generator saves a stat block', async ({ browser }) => {
     const player = await browser.newContext();
     await login(player, PLAYER!, PLAYER_PASSWORD!);

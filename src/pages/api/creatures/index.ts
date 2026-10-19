@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, Creature } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 import { validateCreature } from '../../../lib/statblock';
+import { syncCombatantLinks } from '../../../lib/creature-links';
 
 // The bestiary (DM/admin only, also for reading: stat blocks are never sent to players).
 
@@ -38,6 +39,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const now = new Date();
     const id = crypto.randomUUID();
     await db.insert(Creature).values({ id, ...checked.creature, createdAt: now, updatedAt: now });
+    // Its NPCs may already be in the fight
+    await syncCombatantLinks(id, checked.creature.npcIds);
     return json({ id, ...checked.creature, createdAt: now, updatedAt: now }, 201);
   } catch (error) {
     console.error('Error creating creature:', error);
