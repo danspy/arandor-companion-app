@@ -405,7 +405,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                     <div class="flex gap-1 sm:gap-2 shrink-0">
                       {!entry.creatureId && creatures.length > 0 && <span class="statblock-slot" aria-hidden="true"></span>}
                       {entry.creatureId && (
-                        <button type="button" class="statblock-btn t-icon-btn" data-creature-id={entry.creatureId} data-name={entry.name} title={`Stat block of ${entry.name}`} aria-label={`Stat block of ${entry.name}`}>
+                        <button type="button" class="statblock-btn t-icon-btn" data-creature-id={entry.creatureId} data-name={entry.name} data-entry-id={entry.id} title={`Stat block of ${entry.name}`} aria-label={`Stat block of ${entry.name}`}>
                           <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
                         </button>
                       )}
@@ -2110,24 +2110,28 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     // Delegated handlers, so they keep working when the tracker script redraws cards.
     import { toggleStatBlock } from '../../lib/statblock-panel';
     import { openQuickAdd } from '../../lib/quick-add';
+    import { HP_CHANGED_EVENT, formatHp, wireHpControls, type HpEntry } from '../../lib/hp-control';
 
     let wired = false;
     function wireBestiary() {
       if (wired) return;
       wired = true;
+      wireHpControls();
       document.addEventListener('click', (e) => {
-        const target = e.target as HTMLElement;
-        const sb = target.closest<HTMLButtonElement>('.statblock-btn');
-        if (sb) void toggleStatBlock(sb.dataset.creatureId!, sb.dataset.name!);
-        const hp = target.closest<HTMLButtonElement>('.hp-change-btn');
-        if (hp) void changeHp(hp.closest<HTMLElement>('.hp-change')!, hp.dataset.kind as 'damage' | 'heal');
+        const sb = (e.target as HTMLElement).closest<HTMLButtonElement>('.statblock-btn');
+        if (sb) void toggleStatBlock(sb.dataset.creatureId!, sb.dataset.name!, sb.dataset.entryId);
       });
-      document.addEventListener('keydown', (e) => {
-        const input = (e.target as HTMLElement).closest?.('.hp-amount');
-        if (input && e.key === 'Enter') {
-          e.preventDefault();
-          void changeHp(input.closest<HTMLElement>('.hp-change')!, 'damage');
-        }
+      // After damage or healing (here or in the stat block panel): show the new HP on the card
+      window.addEventListener(HP_CHANGED_EVENT, (e) => {
+        const entry = (e as CustomEvent<{ entry: HpEntry }>).detail.entry;
+        const display = document.querySelector<HTMLElement>(`.initiative-card[data-entry-id="${CSS.escape(entry.id)}"] [data-hp-display]`);
+        if (!display) return;
+        // Down to or up from 0 changes more than the number (death saves, dead/unconscious)
+        if (entry.hp === 0 || /^0(\/|$)/.test(display.textContent!.trim())) return window.location.reload();
+        display.textContent = formatHp(entry);
+        display.classList.remove('hp-flash-damage', 'hp-flash-heal');
+        void display.offsetWidth;
+        display.classList.add((e as CustomEvent<{ kind: string }>).detail.kind === 'damage' ? 'hp-flash-damage' : 'hp-flash-heal');
       });
       // "From the bestiary" (monsters) and NPCs with a stat block hand over to the quick add dialog
       document.addEventListener('change', (e) => {
@@ -2140,43 +2144,6 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         document.getElementById('closeModalBtn')?.click();
         openQuickAdd(creature, { npcName: select.id === 'npcSelect' ? option.dataset.name : undefined, onAdded: () => window.location.reload() });
       });
-    }
-
-    async function changeHp(box: HTMLElement, kind: 'damage' | 'heal') {
-      const input = box.querySelector<HTMLInputElement>('.hp-amount')!;
-      const amount = parseInt(input.value, 10);
-      if (!Number.isInteger(amount) || amount <= 0) {
-        input.focus();
-        return;
-      }
-      box.querySelectorAll('button').forEach((b) => (b.disabled = true));
-      try {
-        const res = await fetch(`/api/initiative/${box.dataset.entryId}/hp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, amount }) });
-        const entry = await res.json();
-        if (!res.ok) throw new Error(entry.error ?? 'Could not change HP');
-        input.value = '';
-        const card = box.closest<HTMLElement>('.initiative-card')!;
-        const display = card.querySelector<HTMLElement>('[data-hp-display]');
-        const before = display?.textContent ?? '';
-        // Down to or up from 0 changes more than the number (death saves, dead/unconscious)
-        if (entry.hp === 0 || /^0(\/|$)/.test(before.trim())) return window.location.reload();
-        if (display) {
-          display.textContent = entry.maxHp !== null ? `${entry.hp}/${entry.maxHp}` : String(entry.hp);
-          if (entry.tempHp > 0) {
-            const temp = document.createElement('span');
-            temp.style.color = 'var(--accent)';
-            temp.textContent = ` (+${entry.tempHp})`;
-            display.append(temp);
-          }
-          display.classList.remove('hp-flash-damage', 'hp-flash-heal');
-          void display.offsetWidth;
-          display.classList.add(kind === 'damage' ? 'hp-flash-damage' : 'hp-flash-heal');
-        }
-      } catch (err) {
-        window.arandorConfirm?.(err instanceof Error ? err.message : 'Could not change HP', { confirmLabel: 'OK' });
-      } finally {
-        box.querySelectorAll('button').forEach((b) => (b.disabled = false));
-      }
     }
 
     document.addEventListener('astro:page-load', wireBestiary);

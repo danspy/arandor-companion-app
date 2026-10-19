@@ -99,3 +99,6 @@
 /* Rows without a stat block keep its place, so HP and buttons line up down the tracker */
 .statblock-slot { display: inline-block; width: 2.25rem; flex: none; }
 @media (max-width: 639px) { .statblock-slot { display: none; } }
+.sb-panel-hp { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.75rem; margin-bottom: 0.9rem; padding: 0.6rem 0.75rem; background: var(--bg-surface); border: 1px solid var(--border-gold); }
+.sb-panel-hp b { font-size: 1.15rem; color: var(--text-strong); min-width: 4rem; }
+.sb-panel-hp .hp-change { margin-left: auto; }

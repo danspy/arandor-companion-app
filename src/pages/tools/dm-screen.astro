@@ -481,6 +481,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
   <script>
     import { toggleStatBlock } from '../../lib/statblock-panel';
+    import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
     // Store current state
     let currentState = {
@@ -1004,7 +1005,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     let initiatives = [];
     
     // Fetch combat state and initiatives
+    // A refresh that started before a damage/heal here must not show the old HP again
+    let hpChangedAt = 0;
     async function loadCombatData() {
+      const startedAt = Date.now();
       try {
         const [combatResponse, initiativeResponse] = await Promise.all([
           fetch('/api/combat-state'),
@@ -1018,7 +1022,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           updateButtonStates();
         }
         
-        if (initiativeResponse.ok) {
+        if (initiativeResponse.ok && startedAt >= hpChangedAt) {
           initiatives = await initiativeResponse.json();
           updateInitiativePreview();
         }
@@ -1030,8 +1034,21 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     // Update initiative preview (current and next turns)
     // Combatants added from the bestiary open their stat block in a side panel (see below)
     const statBlockButton = (c) => c.creatureId
-      ? `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId)}" data-name="${escapeHtml(c.name)}">Stat block</button>`
+      ? `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId)}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}">Stat block</button>`
       : '';
+    // HP with a damage/heal field (see lib/hp-control)
+    const hpLine = (c) => c.hp === null || c.hp === undefined
+      ? ''
+      : `<div class="dm-turn-hp mt-2 flex flex-wrap items-center gap-2"><span class="t-faint text-xs">HP</span> <b class="t-body-text text-sm" data-hp-of="${escapeHtml(c.id)}">${escapeHtml(formatHp(c))}</b> ${hpControlHtml(c.id, c.name)}</div>`;
+    // The preview is redrawn every few seconds: only when it changed, and never while a number
+    // is being typed into its damage field
+    function setPreview(el, html) {
+      if (el.dataset.html === html) return;
+      const typing = el.querySelector('.hp-amount');
+      if (typing && (typing.value || document.activeElement === typing)) return;
+      el.dataset.html = html;
+      el.innerHTML = html;
+    }
 
     function updateInitiativePreview() {
       const preview = document.getElementById('initiativePreview');
@@ -1059,12 +1076,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         const typeColor = currentCombatant.type === 'character' ? 't-badge t-badge-green' :
                          currentCombatant.type === 'npc' ? 't-badge t-badge-accent' :
                          't-badge t-badge-red';
-        currentContent.innerHTML = `
+        setPreview(currentContent, `
           <span class="t-body-text font-semibold">${escapeHtml(currentCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${currentCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${currentCombatant.type}</span>
           ${statBlockButton(currentCombatant)}
-        `;
+          ${hpLine(currentCombatant)}
+        `);
       }
       
       // Update next turn display
@@ -1072,12 +1090,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         const typeColor = nextCombatant.type === 'character' ? 't-badge t-badge-green' :
                          nextCombatant.type === 'npc' ? 't-badge t-badge-accent' :
                          't-badge t-badge-red';
-        nextContent.innerHTML = `
+        setPreview(nextContent, `
           <span class="t-body-text font-semibold">${escapeHtml(nextCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${nextCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${nextCombatant.type}</span>
           ${statBlockButton(nextCombatant)}
-        `;
+          ${hpLine(nextCombatant)}
+        `);
       }
     }
     
@@ -1565,7 +1584,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     // Stat block buttons in the turn preview (redrawn every few seconds, so delegated)
     document.addEventListener('click', (e) => {
       const btn = e.target.closest?.('.statblock-btn');
-      if (btn && document.getElementById('initiativePreview')) toggleStatBlock(btn.dataset.creatureId, btn.dataset.name);
+      if (btn && document.getElementById('initiativePreview')) toggleStatBlock(btn.dataset.creatureId, btn.dataset.name, btn.dataset.entryId);
+    });
+    wireHpControls();
+    // After damage/healing (preview or panel): refresh, so a combatant at 0 shows right away
+    window.addEventListener(HP_CHANGED_EVENT, () => {
+      hpChangedAt = Date.now();
+      if (document.getElementById('initiativePreview')) loadCombatData();
     });
     
     // Cleanup before navigation

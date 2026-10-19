@@ -2,6 +2,7 @@
 // so the fight stays in view while you read and roll.
 
 import { renderStatBlock } from './statblock-view';
+import { formatHp, hpControlHtml, wireHpControls, type HpEntry } from './hp-control';
 import type { CreatureData } from './statblock';
 
 let panel: HTMLElement | null = null;
@@ -31,8 +32,11 @@ export function closeStatBlock() {
   current = null;
 }
 
-/** Opens (or, called again for the same combatant, closes) the stat block of a creature. */
-export async function toggleStatBlock(creatureId: string, combatantName: string) {
+/**
+ * Opens (or, called again for the same combatant, closes) the stat block of a creature. With
+ * the combatant's initiative entry, its HP and a damage/heal field sit at the top.
+ */
+export async function toggleStatBlock(creatureId: string, combatantName: string, entryId?: string) {
   const p = ensurePanel();
   const key = `${creatureId}|${combatantName}`;
   if (current === key && p.classList.contains('is-open')) return closeStatBlock();
@@ -43,7 +47,10 @@ export async function toggleStatBlock(creatureId: string, combatantName: string)
   // Wide screens make room for it (see statblock.css), so the fight stays in view
   document.documentElement.classList.add('sb-panel-open');
   try {
-    const res = await fetch(`/api/creatures/${encodeURIComponent(creatureId)}`, { cache: 'no-store' });
+    const [res, entryRes] = await Promise.all([
+      fetch(`/api/creatures/${encodeURIComponent(creatureId)}`, { cache: 'no-store' }),
+      entryId ? fetch(`/api/initiative/${encodeURIComponent(entryId)}`, { cache: 'no-store' }) : Promise.resolve(null),
+    ]);
     if (current !== key) return;
     if (!res.ok) throw new Error(res.status === 404 ? 'This stat block was deleted.' : 'Could not load the stat block.');
     const creature = (await res.json()) as CreatureData & { id: string };
@@ -66,7 +73,21 @@ export async function toggleStatBlock(creatureId: string, combatantName: string)
     close.addEventListener('click', closeStatBlock);
     links.append(open, close);
     bar.append(who, links);
-    p.replaceChildren(bar, renderStatBlock(creature, { rollerName: combatantName, showNotes: true }));
+    const parts: Node[] = [bar];
+    const entry = entryRes?.ok ? ((await entryRes.json()) as HpEntry) : null;
+    if (entry && entry.hp !== null) {
+      // This combatant's HP, with damage and healing right here
+      wireHpControls();
+      const hp = document.createElement('div');
+      hp.className = 'sb-panel-hp';
+      hp.innerHTML = `<span class="t-label">HP</span> <b></b> ${hpControlHtml(entry.id, combatantName)}`;
+      const value = hp.querySelector('b')!;
+      value.dataset.hpOf = entry.id;
+      value.textContent = formatHp(entry);
+      parts.push(hp);
+    }
+    parts.push(renderStatBlock(creature, { rollerName: combatantName, showNotes: true }));
+    p.replaceChildren(...parts);
   } catch (err) {
     p.replaceChildren(document.createTextNode(err instanceof Error ? err.message : 'Could not load the stat block.'));
   }

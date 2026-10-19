@@ -227,8 +227,24 @@ test.describe('Bestiary on a test server', () => {
     for (const e of added) await context.request.put(`/api/initiative/${e.id}`, { data: { ...e, initiative: 99 } });
     await context.request.post('/api/combat-state', { data: { action: 'new-fight' } }); // round 1, first in order
     await page.goto('/tools/dm-screen');
-    await page.locator('#currentTurnContent .statblock-btn').click();
-    await expect(page.locator('.sb-panel.is-open .sb-name')).toHaveText('Goblin Warrior');
+    const current = page.locator('#currentTurnContent');
+    await expect(current.locator('.statblock-btn')).toBeVisible(); // loaded
+    const who = (await current.locator('.font-semibold').first().innerText()).trim();
+    // Damage from the turn preview…
+    await current.getByLabel(`Damage or healing for ${who}`).fill('4');
+    await current.getByRole('button', { name: `Damage ${who}` }).click();
+    const afterDamage = '8/12'; // every goblin is at 12 here
+    await expect(current.locator('[data-hp-of]')).toHaveText(afterDamage);
+    // …and healing from the stat block panel, which shows the same combatant's HP
+    await current.locator('.statblock-btn').click();
+    const dmPanel = page.locator('.sb-panel.is-open');
+    await expect(dmPanel.locator('.sb-name')).toHaveText('Goblin Warrior');
+    await expect(dmPanel.locator('[data-hp-of]')).toHaveText(afterDamage);
+    await dmPanel.getByLabel(`Damage or healing for ${who}`).fill('2');
+    await dmPanel.getByRole('button', { name: `Heal ${who}` }).click();
+    const healed = '10/12';
+    await expect(dmPanel.locator('[data-hp-of]')).toHaveText(healed);
+    await expect(current.locator('[data-hp-of]')).toHaveText(healed);
 
     // Clean up
     await context.request.put('/api/combat-state', { data: { status: 'stopped' } });
