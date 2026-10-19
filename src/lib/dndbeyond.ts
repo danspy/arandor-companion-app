@@ -6,7 +6,7 @@
  * HP syncs all go through these functions. Checked against real sheets in e2e/dndbeyond.spec.ts.
  */
 
-import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetAttack, type SheetSkill, type SheetSpellcasting } from './character-sheet';
+import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetAttack, type SheetFeature, type SheetItem, type SheetSkill, type SheetSpellcasting } from './character-sheet';
 
 export interface DnDBeyondHPData {
   hp?: number;
@@ -474,6 +474,55 @@ function spellAttacks(data: any, modifiers: any[], mods: Record<Ability, number>
   return attacks;
 }
 
+const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", apos: "'", nbsp: ' ' };
+
+/** D&D Beyond description HTML → one line of plain text, at most `max` characters. */
+export function plainText(html: string, max = 300): string {
+  const text = String(html || '')
+    .replace(/<[^>]*(>|$)/g, ' ')
+    .replace(/\{\{[^}]*\}\}/g, '…')
+    .replace(/&(#?\w+);/g, (m, e) => ENTITIES[e] ?? m)
+    .replace(/[<>]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max - 1);
+  return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), max / 2)).trimEnd()}…`;
+}
+
+// Builder bookkeeping rather than something a player looks up at the table
+const SKIP_FEATURE = /Ability Score (Improvement|Increase)|^Core .+ Traits$|Subclass$|^Proficiencies$|^Hit Points$|^Creature Type$|^Size$|^Speed$|^Languages$/;
+
+function features(data: any): SheetFeature[] {
+  const d = data?.data || {};
+  const out: SheetFeature[] = [];
+  const seen = new Set<string>();
+  const add = (rawName: string, source: string, html: string) => {
+    const name = String(rawName || '').replace(/^\d+:\s*/, '');
+    if (!name || SKIP_FEATURE.test(name) || seen.has(name)) return;
+    seen.add(name);
+    out.push({ name, source, description: plainText(html) });
+  };
+  for (const c of d.classes || []) {
+    for (const f of c.classFeatures || []) {
+      if ((f.definition?.requiredLevel ?? 0) <= c.level) add(f.definition?.name, c.definition?.name || 'Class', f.definition?.description || f.definition?.snippet);
+    }
+  }
+  for (const t of d.race?.racialTraits || []) add(t.definition?.name, d.race?.fullName || 'Species', t.definition?.description || t.definition?.snippet);
+  for (const f of d.feats || []) add(f.definition?.name, 'Feat', f.definition?.description || f.definition?.snippet);
+  return out;
+}
+
+function inventory(data: any): SheetItem[] {
+  const d = data?.data || {};
+  return (d.inventory || []).map((i: any) => ({
+    name: (d.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === ITEM_ENTITY && String(c.valueId) === String(i.id))?.value || i.definition?.name || 'Item',
+    quantity: i.quantity || 1,
+    equipped: !!i.equipped,
+    attuned: !!i.isAttuned,
+  })).sort((a: SheetItem, b: SheetItem) => Number(b.equipped) - Number(a.equipped) || a.name.localeCompare(b.name));
+}
+
 export function buildSheet(data: any): CharacterSheet {
   const scores = abilityScores(data);
   const mods = Object.fromEntries(ABILITY_KEYS.map((a, i) => [a, abilityModifier(scores[ABILITY_NAMES[i]])])) as Record<Ability, number>;
@@ -515,7 +564,7 @@ export function buildSheet(data: any): CharacterSheet {
     skills,
     spellcasting: spellcasting(data, modifiers, mods, prof),
     attacks: [...weaponAttacks(data, modifiers, mods, prof), ...spellAttacks(data, modifiers, mods, prof)],
-    features: [],
-    inventory: [],
+    features: features(data),
+    inventory: inventory(data),
   };
 }

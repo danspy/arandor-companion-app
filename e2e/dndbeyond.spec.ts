@@ -75,3 +75,27 @@ test.describe('D&D Beyond sheet', () => {
     });
   }
 });
+
+test.describe('D&D Beyond features and inventory', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  test('features are short plain text', () => {
+    const { features } = buildSheet(load('moronur'));
+    const names = features.map((f) => f.name);
+    expect(names).toContain('Stunning Strike');
+    expect(names).toContain('Tough');
+    expect(names).not.toContain('Ability Score Improvement');
+    for (const f of features) {
+      expect(f.description, f.name).not.toMatch(/[<>]|&amp;|\{\{/);
+      expect(f.description.length, f.name).toBeLessThanOrEqual(300);
+    }
+  });
+
+  test('inventory lists equipped items first, with attunement', () => {
+    const { inventory } = buildSheet(load('alvar'));
+    expect(inventory.find((i) => i.name === 'Ring of the Ram')).toMatchObject({ equipped: true, attuned: true });
+    expect(inventory.find((i) => i.name === 'Potion of Healing')).toMatchObject({ equipped: false });
+    const firstUnequipped = inventory.findIndex((i) => !i.equipped);
+    expect(inventory.slice(firstUnequipped).every((i) => !i.equipped)).toBe(true);
+  });
+});
