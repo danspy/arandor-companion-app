@@ -38,7 +38,8 @@ All are reached through **Tools** in the menu (shown when logged in).
   - **damage / heal**;
   - **conditions:** Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Invisible,
     Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious, Concentration, and
-    Exhaustion 1–6. They show as tags on the row for everyone, players included;
+    Exhaustion 1–6. They show as tags on the row for everyone, players included, and on the
+    player display (turn order and *Now acting*);
   - the **stat block** with working roll buttons, or *Link a stat block from the bestiary* for a
     combatant without one.
   The pencil still opens the full edit dialog (name, type, linked character …).
@@ -176,7 +177,7 @@ The layout adapts to what is shown:
 | Timer and/or initiative added | They float as see-through panels on the right, over the location or portraits |
 | Only timer and/or initiative | Centred over the blurred campaign image |
 
-The turn order always shows the round and whose turn it is, with who is up next. While combat
+The turn order always shows the round and whose turn it is, with who is up next. Conditions (Poisoned, Prone, Exhaustion 2 …) appear as small tags under a combatant's name and under *Now acting*. While combat
 is paused or stopped the same combatant stays highlighted, labelled *Combat paused* or *Combat
 stopped*.
 
