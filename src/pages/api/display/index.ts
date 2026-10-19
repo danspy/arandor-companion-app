@@ -14,12 +14,14 @@ export const GET: APIRoute = async ({ request }) => {
     const screen = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     const campaign = await db.select({ heroImageUrl: CampaignProgress.heroImageUrl }).from(CampaignProgress).limit(1).get();
 
-    const location = screen?.currentLocationId
+    // Hidden on the DM screen = never sent to the display
+    const location = screen?.currentLocationId && !screen.locationHidden
       ? await db.select({ name: Location.name, type: Location.type, region: Location.region, imageUrl: Location.imageUrl })
           .from(Location).where(eq(Location.id, screen.currentLocationId)).get()
       : undefined;
 
-    const npcIds = (screen?.spotlightNpcIds ?? []) as string[];
+    const hiddenNpcIds = new Set((screen?.hiddenNpcIds ?? []) as string[]);
+    const npcIds = ((screen?.spotlightNpcIds ?? []) as string[]).filter((id) => !hiddenNpcIds.has(id));
     const npcRows = npcIds.length
       ? await db.select({ id: NPC.id, name: NPC.name, race: NPC.race, occupation: NPC.occupation, avatarUrl: NPC.avatarUrl })
           .from(NPC).where(inArray(NPC.id, npcIds))

@@ -58,8 +58,12 @@ about 2 seconds.
 
 - **Player display link** with *Copy* and *Open* buttons. Open it on the screen your players
   see.
-- **Location:** pick a location to show its image and name full screen.
-- **NPC spotlight:** add one or more NPCs to show their portraits; remove them with ×.
+- **Location:** pick a location to show its image and name full screen. **Hide from players**
+  takes it off the display but keeps it selected; **Show to players** brings it back. It stays
+  hidden when you switch to another location, so you can set up the next scene unseen.
+- **NPC spotlight:** add one or more NPCs to show their portraits; remove them with ×. The eye
+  button hides one NPC from the display without removing it (dimmed, marked *Hidden*). Newly
+  added NPCs start visible.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server
@@ -67,7 +71,8 @@ about 2 seconds.
 - **Hide screen:** shows a wallpaper (upload an image or give a URL) instead of the content,
   e.g. during breaks. Uploaded wallpapers are saved as files (older ones were stored inside the
   screen settings, which made every display refresh download them again).
-- **Clear player display** removes location, NPCs and initiative at once.
+- **Clear player display** removes location, NPCs and initiative at once and resets the
+  hidden marks.
 
 ## Player display
 
