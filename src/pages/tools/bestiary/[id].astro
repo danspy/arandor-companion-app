@@ -1,0 +1,85 @@
+---
+// One stat block, with roll buttons, "Add to fight", and the named NPCs that use it (DM/admin only).
+import Layout from '../../../layouts/Layout.astro';
+import { getUserRole, isAuthenticated } from '../../../lib/auth';
+import { db, Creature, NPC, eq, inArray } from '@/db';
+import '../../../styles/statblock.css';
+
+const userRole = await getUserRole(Astro.cookies);
+const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+if (!isAuthenticated(Astro.cookies) || !canEdit) return Astro.redirect('/login');
+
+const creature = await db.select().from(Creature).where(eq(Creature.id, Astro.params.id!)).get();
+if (!creature) return Astro.redirect('/tools/bestiary');
+const npcIds = creature.npcIds as string[];
+const npcs = npcIds.length ? await db.select({ id: NPC.id, name: NPC.name }).from(NPC).where(inArray(NPC.id, npcIds)) : [];
+const quick = { id: creature.id, name: creature.name, ac: creature.ac, hp: creature.hp, hpFormula: creature.hpFormula, initiative: creature.initiative };
+---
+
+<Layout title={`${creature.name} · Bestiary`}>
+  <div class="mb-4">
+    <a href="/tools/bestiary" class="t-link text-sm">← Bestiary</a>
+  </div>
+
+  <div class="t-panel p-6">
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+      <button type="button" id="addToFight" class="t-btn-primary" data-creature={JSON.stringify(quick)}>Add to fight</button>
+      <a href={`/tools/bestiary/${creature.id}/edit`} class="t-btn-secondary">Edit</a>
+      <button type="button" id="deleteCreature" class="t-btn-secondary" style="color:var(--danger);" data-name={creature.name} data-id={creature.id}>Delete</button>
+      <p id="addedStatus" class="t-body-text text-sm basis-full" role="status" hidden></p>
+    </div>
+
+    <div id="statblock" data-creature={JSON.stringify(creature)}></div>
+
+    {npcs.length > 0 && (
+      <section class="mt-6 pt-4" style="border-top:1px solid var(--border-gold);">
+        <h2 class="t-label mb-2">Used by</h2>
+        <ul class="flex flex-wrap gap-3">
+          {npcs.map((n) => (
+            <li class="t-row px-3 py-2 flex items-center gap-3">
+              <a href={`/npcs/${n.id}`} class="t-link">{n.name}</a>
+              <button type="button" class="t-link text-sm npc-add" data-npc={n.name}>Add to fight</button>
+            </li>
+          ))}
+        </ul>
+      </section>
+    )}
+  </div>
+</Layout>
+
+<script>
+  import { renderStatBlock } from '../../../lib/statblock-view';
+  import { openQuickAdd } from '../../../lib/quick-add';
+
+  function init() {
+    const host = document.getElementById('statblock');
+    if (!host) return;
+    const block = renderStatBlock(JSON.parse(host.dataset.creature!), { showNotes: true });
+    block.classList.add('is-wide');
+    host.replaceChildren(block);
+
+    const addButton = document.getElementById('addToFight') as HTMLButtonElement;
+    const creature = JSON.parse(addButton.dataset.creature!);
+    const status = document.getElementById('addedStatus') as HTMLElement;
+    const showAdded = (count: number, name: string) => {
+      const link = document.createElement('a');
+      link.href = '/tools/initiative';
+      link.className = 't-link';
+      link.textContent = 'Open the initiative tracker →';
+      status.replaceChildren(`${count > 1 ? `${count} × ` : ''}${name} added to the fight. `, link);
+      status.hidden = false;
+    };
+    addButton.addEventListener('click', () => openQuickAdd(creature, { onAdded: (n) => showAdded(n, creature.name) }));
+    document.querySelectorAll<HTMLButtonElement>('.npc-add').forEach((b) =>
+      b.addEventListener('click', () => openQuickAdd(creature, { npcName: b.dataset.npc, onAdded: () => showAdded(1, b.dataset.npc!) }))
+    );
+
+    const del = document.getElementById('deleteCreature') as HTMLButtonElement;
+    del.addEventListener('click', async () => {
+      if (!(await window.arandorConfirm(`Delete "${del.dataset.name}"?`, { detail: 'Combatants added from it stay in the fight, without the stat block.', confirmLabel: 'Delete', danger: true }))) return;
+      const res = await fetch(`/api/creatures/${del.dataset.id}`, { method: 'DELETE' });
+      if (res.ok) window.location.href = '/tools/bestiary';
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

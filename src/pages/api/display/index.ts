@@ -67,6 +67,7 @@ export const GET: APIRoute = async ({ request }) => {
           health: healthStatus(e),
           isStable: e.type === 'character' && e.hp === 0 ? e.isStable : false,
           isCurrent: e.id === current?.id,
+          conditions: (e.conditions ?? []) as string[],
         })),
       };
     }

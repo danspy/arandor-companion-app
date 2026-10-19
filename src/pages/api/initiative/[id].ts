@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from '@/db';
+import { TAG_LIMITS, cleanConditions } from '../../../lib/conditions';
 import { requireDungeonmasterOrAdmin, requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 import { ownedCharacters, preserveTurn, redactEntry } from '../../../lib/combat';
@@ -104,6 +105,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
+      // The stat block link stays unless the request changes it (the edit form doesn't send it)
+      creatureId: body.creatureId !== undefined ? (typeof body.creatureId === 'string' && body.creatureId ? body.creatureId : null) : existing.creatureId,
+      // Conditions are kept unless the request sends them (the edit form doesn't)
+      conditions: body.conditions !== undefined ? (cleanConditions(body.conditions) ?? existing.conditions) : existing.conditions,
       isActive: body.isActive !== undefined ? body.isActive : true,
       updatedAt: now,
     };
@@ -164,5 +169,61 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+};
+
+// PATCH - Change some fields of one combatant (the quick edit in the side panel; DM/admin).
+// Only the fields sent change. A new initiative or in-combat flag keeps the turn where it is.
+export const PATCH: APIRoute = async ({ params, request, cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const existing = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, params.id!)).get();
+    if (!existing) return json({ error: 'Initiative entry not found' }, 404);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object') return json({ error: 'Invalid JSON' }, 400);
+
+    const update: Partial<typeof InitiativeTracker.$inferInsert> = {};
+    const int = (key: 'initiative' | 'hp' | 'maxHp' | 'tempHp' | 'ac', min: number, max: number, nullable: boolean) => {
+      if (!(key in body)) return null;
+      const v = body[key];
+      if (v === null || v === '') {
+        if (!nullable) return `${key} is required`;
+        update[key] = null as never;
+        return null;
+      }
+      const n = Number(v);
+      if (!Number.isInteger(n) || n < min || n > max) return `${key} must be a whole number from ${min} to ${max}`;
+      update[key] = n as never;
+      return null;
+    };
+    const problem = int('initiative', -20, 99, false) ?? int('hp', 0, 100000, true) ?? int('maxHp', 0, 100000, true) ?? int('tempHp', 0, 100000, true) ?? int('ac', 0, 50, true);
+    if (problem) return json({ error: problem }, 400);
+    if ('notes' in body) {
+      if (body.notes !== null && typeof body.notes !== 'string') return json({ error: 'notes must be text' }, 400);
+      update.notes = body.notes?.trim() || null;
+    }
+    if ('isActive' in body) update.isActive = !!body.isActive;
+    if ('conditions' in body) {
+      const conditions = cleanConditions(body.conditions);
+      if (!conditions) return json({ error: `Conditions are a list of tags: at most ${TAG_LIMITS.count}, each at most ${TAG_LIMITS.length} characters` }, 400);
+      update.conditions = conditions;
+    }
+    if ('creatureId' in body) {
+      if (body.creatureId !== null && typeof body.creatureId !== 'string') return json({ error: 'creatureId must be text or null' }, 400);
+      update.creatureId = body.creatureId || null;
+    }
+    if (update.hp !== undefined && update.hp !== null && update.hp > 0) Object.assign(update, { deathSaveSuccesses: 0, deathSaveFailures: 0, isStable: false });
+    if (!Object.keys(update).length) return json(existing);
+    update.updatedAt = new Date();
+
+    const reorders = update.initiative !== undefined || update.isActive !== undefined;
+    const apply = () => db.update(InitiativeTracker).set(update).where(eq(InitiativeTracker.id, existing.id));
+    await (reorders ? preserveTurn(apply) : apply());
+    return json(await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, existing.id)).get());
+  } catch (error) {
+    console.error('Error updating initiative entry:', error);
+    return json({ error: 'Failed to update initiative entry' }, 500);
   }
 };

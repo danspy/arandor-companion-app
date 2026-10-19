@@ -1,0 +1,69 @@
+---
+// One SRD 5.2 stat block (read-only), with rolls, "Add to fight" and "Copy to my bestiary".
+import Layout from '../../../../layouts/Layout.astro';
+import { getUserRole, isAuthenticated } from '../../../../lib/auth';
+import { db, Creature, eq } from '@/db';
+import { SRD_ATTRIBUTION, srdCreature } from '../../../../lib/srd';
+import '../../../../styles/statblock.css';
+
+const userRole = await getUserRole(Astro.cookies);
+if (!isAuthenticated(Astro.cookies) || !(userRole === 'admin' || userRole === 'dungeonmaster')) return Astro.redirect('/login');
+const creature = srdCreature(Astro.params.key!);
+if (!creature) return Astro.redirect('/tools/bestiary?tab=srd');
+const copy = await db.select({ id: Creature.id }).from(Creature).where(eq(Creature.srdKey, creature.key)).get();
+---
+
+<Layout title={`${creature.name} · SRD 5.2 · Bestiary`}>
+  <div class="mb-4"><a href="/tools/bestiary?tab=srd" class="t-link text-sm">← SRD 5.2</a></div>
+
+  <div class="t-panel p-6">
+    <div class="flex flex-wrap items-center gap-3 mb-5">
+      <button type="button" id="srdAdd" class="t-btn-primary" data-key={creature.key}>Add to fight</button>
+      {copy
+        ? <a href={`/tools/bestiary/${copy.id}`} class="t-btn-secondary">Open my copy</a>
+        : <button type="button" id="srdCopy" class="t-btn-secondary" data-key={creature.key}>Copy to my bestiary</button>}
+      <p class="t-faint text-xs basis-full">A copy can be edited and linked to your NPCs; fights always use your copy.</p>
+      <p id="addedStatus" class="t-body-text text-sm basis-full" role="status" hidden></p>
+    </div>
+    <div id="statblock" data-creature={JSON.stringify(creature)}></div>
+    <p class="t-faint text-xs mt-6">{SRD_ATTRIBUTION}</p>
+  </div>
+</Layout>
+
+<script>
+  import { renderStatBlock } from '../../../../lib/statblock-view';
+  import { openQuickAdd } from '../../../../lib/quick-add';
+
+  const ownCopy = async (key: string) => {
+    const res = await fetch('/api/creatures/from-srd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) });
+    if (!res.ok) throw new Error('Could not copy');
+    return res.json();
+  };
+
+  function init() {
+    const host = document.getElementById('statblock');
+    if (!host) return;
+    const block = renderStatBlock({ npcIds: [], sourceText: null, ...JSON.parse(host.dataset.creature!) }, { showNotes: true });
+    block.classList.add('is-wide');
+    host.replaceChildren(block);
+
+    const add = document.getElementById('srdAdd') as HTMLButtonElement;
+    add.addEventListener('click', async () => {
+      const creature = await ownCopy(add.dataset.key!);
+      openQuickAdd(creature, {
+        onAdded: (n) => {
+          const status = document.getElementById('addedStatus')!;
+          const link = Object.assign(document.createElement('a'), { href: '/tools/initiative', className: 't-link', textContent: 'Open the initiative tracker →' });
+          status.replaceChildren(`${n > 1 ? `${n} × ` : ''}${creature.name} added to the fight. `, link);
+          status.hidden = false;
+        },
+      });
+    });
+    const copy = document.getElementById('srdCopy') as HTMLButtonElement | null;
+    copy?.addEventListener('click', async () => {
+      const creature = await ownCopy(copy.dataset.key!);
+      window.location.href = `/tools/bestiary/${creature.id}/edit`;
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

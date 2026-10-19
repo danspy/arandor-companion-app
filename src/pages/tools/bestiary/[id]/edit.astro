@@ -1,0 +1,20 @@
+---
+// Edit a bestiary creature (DM/admin only).
+import Layout from '../../../../layouts/Layout.astro';
+import CreatureEditor from '../../../../components/CreatureEditor.astro';
+import { getUserRole, isAuthenticated } from '../../../../lib/auth';
+import { db, Creature, NPC, eq } from '@/db';
+import '../../../../styles/statblock.css';
+
+const userRole = await getUserRole(Astro.cookies);
+if (!isAuthenticated(Astro.cookies) || !(userRole === 'admin' || userRole === 'dungeonmaster')) return Astro.redirect('/login');
+const creature = await db.select().from(Creature).where(eq(Creature.id, Astro.params.id!)).get();
+if (!creature) return Astro.redirect('/tools/bestiary');
+const npcs = (await db.select({ id: NPC.id, name: NPC.name }).from(NPC)).sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<Layout title={`Edit ${creature.name} · Bestiary`}>
+  <div class="mb-4"><a href={`/tools/bestiary/${creature.id}`} class="t-link text-sm">← {creature.name}</a></div>
+  <h1 class="font-display italic font-semibold text-3xl mb-6" style="color:var(--gold);">Edit {creature.name}</h1>
+  <CreatureEditor creature={creature} npcs={npcs} openPaste={false} />
+</Layout>

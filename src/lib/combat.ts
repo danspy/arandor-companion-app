@@ -100,6 +100,9 @@ export async function advanceTurn(action: TurnAction): Promise<CombatStateRow | 
   return setCombatState({ status: 'active', currentTurnIndex: index, currentRound: round });
 }
 
+// Damage and healing arithmetic lives in ./hp (no database, so tests can import it)
+export { applyHpChange, type HpChange } from './hp';
+
 // ── What players may see ──────────────────────────────────────────────────────
 
 export type HealthStatus = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
@@ -159,6 +162,7 @@ export function redactEntry(entry: InitiativeEntry, owned: OwnedCharacters) {
     deathSaveSuccesses: own || entry.hp === 0 ? entry.deathSaveSuccesses : 0,
     deathSaveFailures: own || entry.hp === 0 ? entry.deathSaveFailures : 0,
     isStable: entry.isStable,
+    conditions: entry.conditions ?? [], // visible at the table anyway
     isOwn: own,
   };
 }

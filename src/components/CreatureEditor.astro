@@ -1,0 +1,325 @@
+---
+// Bestiary editor: paste a stat block from D&D Beyond or fill in the form; a live preview shows
+// the stat block as it will look. The form is built in the browser from the creature's data.
+import { DETAIL_LABELS, SECTION_TITLES } from '../lib/statblock';
+
+interface Props {
+  creature: (Record<string, unknown> & { id?: string }) | null;
+  npcs: { id: string; name: string }[];
+  openPaste: boolean;
+}
+const { creature, npcs, openPaste } = Astro.props;
+---
+
+<div id="creatureEditor" class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]" data-creature={JSON.stringify(creature)} data-npcs={JSON.stringify(npcs)}>
+  <form id="creatureForm" class="space-y-6" novalidate>
+    <details id="pasteBox" class="t-panel p-5" open={openPaste}>
+      <summary class="t-section-h text-lg cursor-pointer">Paste from D&amp;D Beyond</summary>
+      <p class="t-muted text-sm mt-3 mb-3">
+        On the monster's page, select the stat block from its name down to the last action, copy it, and paste it
+        here. <em>Read</em> fills in the form; check it in the preview, then save.
+      </p>
+      <textarea id="pasteText" class="t-input w-full px-3 py-2 font-mono text-xs" rows="10" placeholder="Goblin Warrior&#10;Small Fey (Goblinoid), Chaotic Neutral&#10;AC 15 Initiative +2 (12)&#10;…"></textarea>
+      <div class="flex flex-wrap items-center gap-3 mt-3">
+        <button type="button" id="pasteRead" class="t-btn-primary">Read</button>
+        <p id="pasteResult" class="text-sm" role="status"></p>
+      </div>
+    </details>
+
+    <section class="t-panel p-5 space-y-4">
+      <h2 class="t-section-h text-lg">Basics</h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <label class="ce-field sm:col-span-2"><span class="t-label">Name</span><input name="name" class="t-input px-3 py-2" maxlength="80" required /></label>
+        <label class="ce-field sm:col-span-2"><span class="t-label">Type</span><input name="typeLine" class="t-input px-3 py-2" placeholder="Small Fey (Goblinoid), Chaotic Neutral" /></label>
+        <label class="ce-field"><span class="t-label">AC</span><input name="ac" type="number" min="0" max="50" class="t-input px-3 py-2" /></label>
+        <label class="ce-field"><span class="t-label">AC note</span><input name="acNote" class="t-input px-3 py-2" placeholder="e.g. natural armor" /></label>
+        <label class="ce-field"><span class="t-label">HP (average)</span><input name="hp" type="number" min="0" class="t-input px-3 py-2" /></label>
+        <label class="ce-field"><span class="t-label">HP dice</span><input name="hpFormula" class="t-input px-3 py-2" placeholder="3d6" /></label>
+        <label class="ce-field"><span class="t-label">Initiative bonus</span><input name="initiative" type="number" min="-10" max="30" class="t-input px-3 py-2" placeholder="Dex modifier" /></label>
+        <label class="ce-field"><span class="t-label">Speed</span><input name="speed" class="t-input px-3 py-2" placeholder="30 ft." /></label>
+        <label class="ce-field"><span class="t-label">CR</span><input name="cr" class="t-input px-3 py-2" placeholder="1/4" /></label>
+        <label class="ce-field"><span class="t-label">XP</span><input name="xp" type="number" min="0" class="t-input px-3 py-2" /></label>
+      </div>
+    </section>
+
+    <section class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-3">Abilities</h2>
+      <p class="t-faint text-xs mb-3">The modifier follows the score; set the save only where it differs (proficiency).</p>
+      <div id="abilityRows" class="ce-abilities"></div>
+    </section>
+
+    <section class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-3">Details</h2>
+      <datalist id="detailLabels">{DETAIL_LABELS.map((l) => <option value={l} />)}</datalist>
+      <div id="detailRows" class="space-y-2"></div>
+      <button type="button" id="addDetail" class="t-link text-sm mt-2">+ Add a line (Skills, Senses, Languages, …)</button>
+    </section>
+
+    <section class="t-panel p-5">
+      <h2 class="t-section-h text-lg mb-1">Traits and actions</h2>
+      <p class="t-faint text-xs mb-3">Write attacks like the book ("Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage.") and they become roll buttons.</p>
+      <datalist id="sectionTitles">{SECTION_TITLES.map((t) => <option value={t} />)}</datalist>
+      <div id="sectionList" class="space-y-5"></div>
+      <button type="button" id="addSection" class="t-link text-sm mt-3">+ Add a section</button>
+    </section>
+
+    <section class="t-panel p-5 space-y-4">
+      <h2 class="t-section-h text-lg">Used by NPCs</h2>
+      <p class="t-faint text-xs">Named NPCs with these stats (e.g. Kimbal Laradan uses "Scout"). Adding them to a fight fills in these numbers.</p>
+      <div id="npcChips" class="flex flex-wrap gap-2"></div>
+      <select id="npcPick" class="t-input px-3 py-2 w-full" aria-label="Add an NPC"></select>
+      <label class="ce-field"><span class="t-label">DM notes</span><textarea name="notes" rows="4" class="t-input px-3 py-2"></textarea></label>
+    </section>
+
+    <div class="flex flex-wrap items-center gap-3">
+      <button type="submit" class="t-btn-primary">Save</button>
+      <a id="cancelEdit" href="/tools/bestiary" class="t-btn-secondary">Cancel</a>
+      <p id="saveError" class="text-sm" style="color:var(--danger);" role="alert"></p>
+    </div>
+  </form>
+
+  <aside class="xl:sticky xl:top-4 self-start">
+    <div class="t-panel p-5">
+      <p class="t-label mb-3">Preview</p>
+      <div id="creaturePreview"></div>
+    </div>
+  </aside>
+</div>
+
+<style is:global>
+  .ce-field { display: grid; gap: 0.3rem; }
+  .ce-abilities { display: grid; grid-template-columns: auto repeat(3, minmax(0, 1fr)); gap: 0.4rem 0.6rem; align-items: center; }
+  .ce-abilities .t-input { padding: 0.35rem 0.5rem; text-align: center; min-width: 0; }
+  .ce-row { display: grid; grid-template-columns: minmax(0, 10rem) minmax(0, 1fr) 2.25rem; gap: 0.5rem; align-items: start; }
+  .ce-section { border-left: 2px solid var(--border-gold); padding-left: 0.9rem; }
+  .ce-entry { display: grid; gap: 0.4rem; padding: 0.6rem; background: var(--bg-surface); border: 1px solid var(--border); }
+  .ce-entry-head { display: grid; grid-template-columns: minmax(0, 1fr) 2.25rem; gap: 0.5rem; }
+  .ce-chip { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.2rem 0.3rem 0.2rem 0.6rem; border: 1px solid var(--border-gold); font-size: 0.85rem; }
+  @media (max-width: 640px) { .ce-row { grid-template-columns: minmax(0, 1fr) 2.25rem; } .ce-row > :nth-child(2) { grid-column: 1; } }
+</style>
+
+<script>
+  import { ABILITIES, ABILITY_NAMES, abilityMod, emptyCreature, importStatBlock, type CreatureData, type StatSection } from '../lib/statblock';
+  import { renderStatBlock } from '../lib/statblock-view';
+
+  function init() {
+    const root = document.getElementById('creatureEditor');
+    if (!root) return;
+    const form = document.getElementById('creatureForm') as HTMLFormElement;
+    const stored = JSON.parse(root.dataset.creature!) as (CreatureData & { id: string }) | null;
+    const npcs = JSON.parse(root.dataset.npcs!) as { id: string; name: string }[];
+    const id = stored?.id ?? null;
+    let c: CreatureData = stored ? { ...emptyCreature(), ...stored } : emptyCreature();
+    if (id) (document.getElementById('cancelEdit') as HTMLAnchorElement).href = `/tools/bestiary/${id}`;
+
+    const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, text?: string) => {
+      const e = document.createElement(tag);
+      if (className) e.className = className;
+      if (text !== undefined) e.textContent = text;
+      return e;
+    };
+    const input = (value: string, attrs: Record<string, string> = {}, tag: 'input' | 'textarea' = 'input') => {
+      const i = el(tag, 't-input px-3 py-2') as HTMLInputElement;
+      i.value = value;
+      for (const [k, v] of Object.entries(attrs)) i.setAttribute(k, v);
+      i.addEventListener('input', changed);
+      return i;
+    };
+    const removeButton = (label: string, onClick: () => void) => {
+      const b = el('button', 't-icon-btn t-icon-btn-danger', '✕');
+      b.type = 'button';
+      b.title = label;
+      b.setAttribute('aria-label', label);
+      b.addEventListener('click', () => {
+        onClick();
+        render();
+      });
+      return b;
+    };
+
+    // ── Form ⇄ data ──
+    const SIMPLE = ['name', 'typeLine', 'acNote', 'hpFormula', 'speed', 'cr', 'notes'] as const;
+    const NUMBERS = ['ac', 'hp', 'initiative', 'xp'] as const;
+
+    function render() {
+      for (const k of SIMPLE) (form.elements.namedItem(k) as HTMLInputElement).value = c[k] ?? '';
+      for (const k of NUMBERS) (form.elements.namedItem(k) as HTMLInputElement).value = c[k] === null ? '' : String(c[k]);
+
+      const abilities = document.getElementById('abilityRows')!;
+      abilities.replaceChildren(el('span'), el('span', 't-faint text-xs text-center', 'Score'), el('span', 't-faint text-xs text-center', 'Mod'), el('span', 't-faint text-xs text-center', 'Save'));
+      for (const a of ABILITIES) {
+        const s = c.abilities[a];
+        const score = input(s ? String(s.score) : '', { type: 'number', min: '0', max: '40', 'aria-label': `${ABILITY_NAMES[a]} score`, 'data-ability': a, 'data-part': 'score' });
+        const mod = input(s ? String(s.mod) : '', { type: 'number', 'aria-label': `${ABILITY_NAMES[a]} modifier`, 'data-ability': a, 'data-part': 'mod' });
+        const save = input(s ? String(s.save) : '', { type: 'number', 'aria-label': `${ABILITY_NAMES[a]} save`, 'data-ability': a, 'data-part': 'save' });
+        // Score typed: modifier (and an unchanged save) follow
+        score.addEventListener('input', () => {
+          const n = parseInt(score.value, 10);
+          if (Number.isNaN(n)) return;
+          if (save.value === '' || save.value === mod.value) save.value = String(abilityMod(n));
+          mod.value = String(abilityMod(n));
+          changed();
+        });
+        abilities.append(el('b', 'text-sm', ABILITY_NAMES[a]), score, mod, save);
+      }
+
+      const details = document.getElementById('detailRows')!;
+      details.replaceChildren(
+        ...c.details.map((d, i) => {
+          const row = el('div', 'ce-row');
+          row.append(
+            input(d.label, { list: 'detailLabels', 'aria-label': 'Label', 'data-detail': String(i), 'data-part': 'label' }),
+            input(d.text, { 'aria-label': `${d.label || 'Detail'} text`, 'data-detail': String(i), 'data-part': 'text' }),
+            removeButton(`Remove ${d.label || 'line'}`, () => c.details.splice(i, 1))
+          );
+          return row;
+        })
+      );
+
+      const sections = document.getElementById('sectionList')!;
+      sections.replaceChildren(...c.sections.map(renderSection));
+
+      const chips = document.getElementById('npcChips')!;
+      chips.replaceChildren(
+        ...c.npcIds.map((nid) => {
+          const chip = el('span', 'ce-chip', npcs.find((n) => n.id === nid)?.name ?? 'Unknown NPC');
+          chip.append(removeButton('Remove', () => (c.npcIds = c.npcIds.filter((x) => x !== nid))));
+          return chip;
+        })
+      );
+      const pick = document.getElementById('npcPick') as HTMLSelectElement;
+      pick.replaceChildren(el('option', '', '+ Add an NPC'), ...npcs.filter((n) => !c.npcIds.includes(n.id)).map((n) => Object.assign(el('option', '', n.name), { value: n.id })));
+      pick.options[0].value = '';
+      preview();
+    }
+
+    function renderSection(section: StatSection, si: number) {
+      const wrap = el('div', 'ce-section space-y-2');
+      const head = el('div', 'ce-entry-head');
+      head.append(input(section.title, { list: 'sectionTitles', 'aria-label': 'Section title', 'data-section': String(si), 'data-part': 'title' }), removeButton(`Remove the section ${section.title}`, () => c.sections.splice(si, 1)));
+      wrap.append(head);
+      wrap.append(input(section.intro ?? '', { rows: '2', placeholder: 'Intro (optional), e.g. Legendary Action Uses: 3 …', 'aria-label': `${section.title} intro`, 'data-section': String(si), 'data-part': 'intro' }, 'textarea'));
+      section.entries.forEach((e, ei) => {
+        const box = el('div', 'ce-entry');
+        const eh = el('div', 'ce-entry-head');
+        eh.append(input(e.name, { placeholder: 'Name, e.g. Scimitar', 'aria-label': 'Name', 'data-section': String(si), 'data-entry': String(ei), 'data-part': 'name' }), removeButton(`Remove ${e.name || 'entry'}`, () => section.entries.splice(ei, 1)));
+        box.append(eh, input(e.text, { rows: String(Math.min(8, Math.max(2, Math.ceil(e.text.length / 70)))), 'aria-label': `${e.name || 'Entry'} text`, 'data-section': String(si), 'data-entry': String(ei), 'data-part': 'text' }, 'textarea'));
+        wrap.append(box);
+      });
+      const add = el('button', 't-link text-sm', `+ Add to ${section.title || 'this section'}`);
+      add.type = 'button';
+      add.addEventListener('click', () => {
+        section.entries.push({ name: '', text: '' });
+        render();
+      });
+      wrap.append(add);
+      return wrap;
+    }
+
+    // Read every input back into the data (cheap: a few dozen fields)
+    function collect() {
+      const val = (k: string) => (form.elements.namedItem(k) as HTMLInputElement).value.trim();
+      for (const k of SIMPLE) c[k] = val(k) || null;
+      for (const k of NUMBERS) c[k] = val(k) === '' ? null : Number(val(k));
+      c.name = val('name');
+      const abilities: CreatureData['abilities'] = {};
+      for (const a of ABILITIES) {
+        const get = (part: string) => (form.querySelector(`[data-ability="${a}"][data-part="${part}"]`) as HTMLInputElement).value.trim();
+        if (get('score') === '') continue;
+        const score = Number(get('score'));
+        const mod = get('mod') === '' ? abilityMod(score) : Number(get('mod'));
+        abilities[a] = { score, mod, save: get('save') === '' ? mod : Number(get('save')) };
+      }
+      c.abilities = abilities;
+      form.querySelectorAll<HTMLInputElement>('[data-detail]').forEach((i) => {
+        (c.details[Number(i.dataset.detail)] as any)[i.dataset.part!] = i.value;
+      });
+      form.querySelectorAll<HTMLInputElement>('[data-section]').forEach((i) => {
+        const s = c.sections[Number(i.dataset.section)];
+        if (i.dataset.entry !== undefined) (s.entries[Number(i.dataset.entry)] as any)[i.dataset.part!] = i.value;
+        else (s as any)[i.dataset.part!] = i.value;
+      });
+    }
+
+    let previewTimer = 0;
+    function changed() {
+      clearTimeout(previewTimer);
+      previewTimer = window.setTimeout(() => {
+        collect();
+        preview();
+      }, 200);
+    }
+    function preview() {
+      const host = document.getElementById('creaturePreview')!;
+      host.replaceChildren(c.name || c.sections.length ? renderStatBlock({ ...c, name: c.name || 'Unnamed' }) : el('p', 't-faint text-sm', 'Paste a stat block or fill in the form.'));
+    }
+    form.querySelectorAll('input[name], textarea[name]').forEach((i) => i.addEventListener('input', changed));
+
+    // ── Adding rows ──
+    document.getElementById('addDetail')!.addEventListener('click', () => {
+      collect();
+      c.details.push({ label: '', text: '' });
+      render();
+    });
+    document.getElementById('addSection')!.addEventListener('click', () => {
+      collect();
+      const used = new Set(c.sections.map((s) => s.title));
+      c.sections.push({ title: ['Traits', 'Actions', 'Bonus Actions', 'Reactions', 'Legendary Actions'].find((t) => !used.has(t)) ?? '', entries: [{ name: '', text: '' }] });
+      render();
+    });
+    (document.getElementById('npcPick') as HTMLSelectElement).addEventListener('change', (e) => {
+      const v = (e.target as HTMLSelectElement).value;
+      if (!v) return;
+      collect();
+      c.npcIds.push(v);
+      render();
+    });
+    // Remove buttons change the data first; read the rest of the form before they re-render
+    form.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('.t-icon-btn-danger')) collect();
+    }, true);
+
+    // ── Paste import ──
+    document.getElementById('pasteRead')!.addEventListener('click', () => {
+      const text = (document.getElementById('pasteText') as HTMLTextAreaElement).value;
+      const result = document.getElementById('pasteResult')!;
+      if (!text.trim()) {
+        result.textContent = 'Paste a stat block first.';
+        return;
+      }
+      collect();
+      const { creature, unread } = importStatBlock(text);
+      // Keep what only the app knows: the NPC links and earlier notes
+      const notes = [c.notes, creature.notes].filter(Boolean).join('\n\n') || null;
+      c = { ...creature, npcIds: c.npcIds, notes };
+      render();
+      const actions = c.sections.reduce((n, s) => n + s.entries.length, 0);
+      result.style.color = unread.length ? 'var(--danger)' : 'var(--text-muted)';
+      result.textContent = `Read ${c.name}: ${Object.keys(c.abilities).length}/6 abilities, ${c.details.length} details, ${actions} traits and actions.` +
+        (unread.length ? ` ${unread.length} line(s) couldn't be placed and were put into the DM notes.` : '');
+    });
+
+    // ── Save ──
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      collect();
+      const error = document.getElementById('saveError')!;
+      error.textContent = '';
+      if (!c.name) {
+        error.textContent = 'The creature needs a name.';
+        return;
+      }
+      const body = { ...c, sections: c.sections.map((s) => ({ ...s, entries: s.entries.filter((x) => x.name.trim() || x.text.trim()) })) };
+      const res = await fetch(id ? `/api/creatures/${id}` : '/api/creatures', { method: id ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const saved = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        error.textContent = saved.error ?? 'Could not save.';
+        return;
+      }
+      window.location.href = `/tools/bestiary/${saved.id ?? id}`;
+    });
+
+    render();
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

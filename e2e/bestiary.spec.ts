@@ -1,0 +1,439 @@
+import { test, expect, type Page, type BrowserContext } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { attackParts, findRolls, importStatBlock, nextCopyNumbers, validateCreature } from '../src/lib/statblock';
+import { applyHpChange } from '../src/lib/hp';
+import { cleanConditions, tagKind } from '../src/lib/conditions';
+import { generateNpc, proficiencyBonus, ROLES, SPECIES } from '../src/lib/npc-generator';
+import srdData from '../src/data/srd-2024-creatures.json' with { type: 'json' };
+
+// Bestiary (phase A): paste import, stat blocks, rolls, quick add, damage/heal.
+// The logged-in tests change the initiative tracker and the bestiary, so they only run against
+// a test server with a copy of the data and two accounts (never dev, preview or live data):
+//   E2E_DM / E2E_DM_PASSWORD (dungeonmaster)   E2E_PLAYER / E2E_PLAYER_PASSWORD (player)
+
+const fixture = (name: string) => readFileSync(new URL(`./fixtures/statblocks/${name}.txt`, import.meta.url), 'utf8');
+
+test.describe('Stat block import', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  test('reads a 2024 goblin with its ability table cell by cell', () => {
+    const { creature: c, unread } = importStatBlock(fixture('goblin-warrior'));
+    expect(unread).toEqual([]);
+    expect(c).toMatchObject({ name: 'Goblin Warrior', typeLine: 'Small Fey (Goblinoid), Chaotic Neutral', ac: 15, initiative: 2, hp: 10, hpFormula: '3d6', speed: '30 ft.', cr: '1/4', xp: 50 });
+    expect(c.abilities).toEqual({
+      str: { score: 8, mod: -1, save: -1 }, dex: { score: 15, mod: 2, save: 2 }, con: { score: 10, mod: 0, save: 0 },
+      int: { score: 10, mod: 0, save: 0 }, wis: { score: 8, mod: -1, save: -1 }, cha: { score: 8, mod: -1, save: -1 },
+    });
+    expect(c.details.map((d) => d.label)).toEqual(['Skills', 'Gear', 'Senses', 'Languages']);
+    expect(c.sections.map((s) => [s.title, s.entries.map((e) => e.name)])).toEqual([['Actions', ['Scimitar', 'Shortbow']], ['Bonus Actions', ['Nimble Escape']]]);
+  });
+
+  test('reads a dragon: saves, legendary actions with intro, recharge, spell lists', () => {
+    const { creature: c, unread } = importStatBlock(fixture('adult-red-dragon'));
+    expect(unread).toEqual([]);
+    expect(c).toMatchObject({ ac: 19, initiative: 12, hp: 256, hpFormula: '19d12 + 133', cr: '17', xp: 18000 });
+    expect(c.abilities.dex).toEqual({ score: 10, mod: 0, save: 6 });
+    const legendary = c.sections.find((s) => s.title === 'Legendary Actions')!;
+    expect(legendary.intro).toMatch(/^Legendary Action Uses: 3/);
+    expect(legendary.entries.map((e) => e.name)).toEqual(['Commanding Presence', 'Fiery Rays', 'Pounce']);
+    const actions = c.sections.find((s) => s.title === 'Actions')!.entries;
+    expect(actions.map((e) => e.name)).toEqual(['Multiattack', 'Rend', 'Fire Breath (Recharge 5–6)', 'Spellcasting']);
+    expect(actions[3].text.split('\n')).toHaveLength(3); // spell lists stay with Spellcasting
+  });
+
+  test('reads a mage pasted with Windows line ends; reactions and per-day names', () => {
+    const { creature: c, unread } = importStatBlock(fixture('mage'));
+    expect(unread).toEqual([]);
+    expect(c.typeLine).toBe('Medium or Small Humanoid (Wizard), Neutral');
+    expect(c.abilities.int).toEqual({ score: 17, mod: 3, save: 6 });
+    expect(c.sections.map((s) => s.title)).toEqual(['Actions', 'Bonus Actions', 'Reactions']);
+    expect(c.sections[2].entries[0].name).toBe('Protective Magic (3/Day)');
+  });
+
+  test('lines it cannot place are reported and kept in the notes', () => {
+    const { creature, unread } = importStatBlock(`${fixture('goblin-warrior').replace('Speed 30 ft.', 'Speed 30 ft.\nHabitat Forest, Grassland')}`);
+    expect(unread).toEqual(['Habitat Forest, Grassland']);
+    expect(creature.notes).toContain('Habitat Forest, Grassland');
+  });
+
+  test('finds the rolls in action text', () => {
+    const scimitar = 'Melee Attack Roll: +4, reach 5 ft. Hit: 5 (1d6 + 2) Slashing damage, plus 2 (1d4) Slashing damage if the attack roll had Advantage.';
+    expect(findRolls(scimitar).map((r) => [r.kind, r.label, r.expr, !!r.conditional])).toEqual([
+      ['attack', 'To hit', '1d20+4', false], ['damage', 'Slashing', '1d6+2', false], ['damage', 'Slashing', '1d4', true],
+    ]);
+    expect(attackParts(scimitar)).toEqual([{ label: 'To hit', expr: '1d20+4' }, { label: 'Slashing', expr: '1d6+2' }]);
+    expect(attackParts('Melee Attack Roll: +14, reach 10 ft. Hit: 13 (1d10 + 8) Slashing damage plus 5 (2d4) Fire damage.')).toEqual([
+      { label: 'To hit', expr: '1d20+14' }, { label: 'Slashing', expr: '1d10+8' }, { label: 'Fire', expr: '2d4' },
+    ]);
+    expect(attackParts('Melee Attack Roll: −1, reach 5 ft. Hit: 1 (1d4 − 1) Bludgeoning damage.')).toEqual([{ label: 'To hit', expr: '1d20-1' }, { label: 'Bludgeoning', expr: '1d4-1' }]);
+    expect(attackParts('The dragon makes three Rend attacks.')).toBeNull();
+    expect(findRolls('(spell save DC 21, +13 to hit with spell attacks)')[0]).toMatchObject({ kind: 'attack', label: 'Spell attack', expr: '1d20+13' });
+    expect(findRolls('Failure: 59 (17d6) Fire damage. Success: Half damage.')[0]).toMatchObject({ kind: 'damage', label: 'Fire', expr: '17d6' });
+    expect(findRolls('The troll regains 15 (3d10) Hit Points.')[0]).toMatchObject({ kind: 'dice', expr: '3d10' });
+  });
+
+  test('damage takes temp HP first and stops at 0; healing stops at max', () => {
+    expect(applyHpChange({ hp: 10, maxHp: 10, tempHp: 5 }, 'damage', 7)).toEqual({ hp: 8, tempHp: 0, resetDeathSaves: false });
+    expect(applyHpChange({ hp: 4, maxHp: 10, tempHp: 0 }, 'damage', 9)).toEqual({ hp: 0, tempHp: 0, resetDeathSaves: false });
+    expect(applyHpChange({ hp: 4, maxHp: 10, tempHp: 3 }, 'heal', 20)).toEqual({ hp: 10, tempHp: 3, resetDeathSaves: true });
+    expect(applyHpChange({ hp: 0, maxHp: null, tempHp: null }, 'heal', 6)).toEqual({ hp: 6, tempHp: 0, resetDeathSaves: true });
+  });
+
+  test('conditions, spells/effects and own tags are kept tidy', () => {
+    expect(cleanConditions(['Cursed by Runara', 'Hexed', 'Exhaustion 1', 'Poisoned', 'Exhaustion 3', 'hexed', ' Cursed  by Runara '])).toEqual(
+      ['Poisoned', 'Hexed', 'Exhaustion 3', 'Cursed by Runara']); // "hexed" is Hexed again
+    expect(cleanConditions(['x'.repeat(33)])).toBeNull();
+    expect(cleanConditions(Array.from({ length: 21 }, (_, i) => `Tag ${i}`))).toBeNull();
+    expect(cleanConditions('Poisoned')).toBeNull();
+    expect([tagKind('Poisoned'), tagKind('Exhaustion 2'), tagKind("Hunter's Mark"), tagKind('Cursed')]).toEqual(['condition', 'condition', 'effect', 'custom']);
+  });
+
+  test('numbers copies after the ones already in the fight', () => {
+    expect(nextCopyNumbers('Goblin', [], 3)).toEqual(['Goblin 1', 'Goblin 2', 'Goblin 3']);
+    expect(nextCopyNumbers('Goblin', ['Goblin 1', 'Goblin 4', 'Thalia'], 2)).toEqual(['Goblin 5', 'Goblin 6']);
+    expect(nextCopyNumbers('Ogre', [], 1)).toEqual(['Ogre']);
+  });
+
+  test('validation cleans what it stores and explains what it refuses', () => {
+    const ok = validateCreature({ ...importStatBlock(fixture('goblin-warrior')).creature, extra: 'ignored' });
+    expect(ok.ok && ok.creature.name).toBe('Goblin Warrior');
+    expect(validateCreature({ name: '' })).toEqual({ ok: false, error: 'The creature needs a name' });
+    expect(validateCreature({ name: 'X', ac: 99 })).toMatchObject({ ok: false, error: expect.stringContaining('AC') });
+    expect(validateCreature({ name: 'X', sections: [{ title: 'Actions', entries: [{ name: '', text: 'nameless' }] }] })).toMatchObject({ ok: false });
+    expect(validateCreature({ name: 'X', sections: [{ title: 'Actions', entries: [{ name: 'Bite', text: 'x'.repeat(5001) }] }] })).toMatchObject({ ok: false, error: expect.stringContaining('too long') });
+  });
+});
+
+test.describe('Generic NPCs and the SRD library', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  test('the generator follows the player rules', () => {
+    expect([1, 4, 5, 8, 9, 12, 13, 16, 17, 20].map(proficiencyBonus)).toEqual([2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
+    const archer = generateNpc({ species: 'Elf', role: 'Archer', level: 5 });
+    expect(archer).toMatchObject({ name: 'Elf Archer (level 5)', typeLine: 'Medium Humanoid (Elf), level 5 Archer', ac: 15, hp: 44, hpFormula: '5d10 + 10', initiative: 3 });
+    expect(archer.abilities.dex).toEqual({ score: 17, mod: 3, save: 6 }); // +2 at level 4, proficient
+    const actions = archer.sections.find((x) => x.title === 'Actions')!.entries;
+    expect(actions.map((e) => e.name)).toEqual(['Multiattack', 'Longbow', 'Shortsword']);
+    expect(attackParts(actions[1].text)).toEqual([{ label: 'To hit', expr: '1d20+8' }, { label: 'Piercing', expr: '1d8+3' }]);
+    expect(archer.details.find((d) => d.label === 'Senses')!.text).toBe('Darkvision 60 ft.; Passive Perception 14');
+
+    const dwarf = generateNpc({ species: 'Dwarf', role: 'Warrior', level: 1 });
+    expect(dwarf).toMatchObject({ ac: 18, hp: 13 }); // 10 + Con 2 + Dwarven Toughness 1
+    expect(generateNpc({ species: 'Dwarf', role: 'Warrior', level: 11 }).sections[1].entries[0].text).toContain('three Longsword attacks');
+    const rogue = generateNpc({ species: 'Halfling', role: 'Rogue', level: 7 });
+    expect(rogue.sections[0].entries[0].text).toContain('14 (4d6)'); // Sneak Attack
+    const mage = generateNpc({ species: 'Human', role: 'Mage', level: 11 });
+    expect(mage.sections.find((x) => x.title === 'Actions')!.entries[0].text).toContain('(3d10) Fire damage');
+    expect(generateNpc({ species: 'Dragonborn', role: 'Priest', level: 5, ancestry: 'Cold' }).details).toContainEqual({ label: 'Resistances', text: 'Cold' });
+
+    // Every combination is a valid stat block whose attacks roll
+    for (const species of SPECIES) for (const role of ROLES) for (const level of [1, 4, 5, 11, 20]) {
+      const c = generateNpc({ species, role, level });
+      expect(validateCreature(c).ok, `${species} ${role} ${level}`).toBe(true);
+      for (const x of c.sections) for (const e of x.entries) if (/Attack Roll:/.test(e.text)) expect(attackParts(e.text)!.length, `${species} ${role} ${level} ${e.name}`).toBeGreaterThan(1);
+    }
+  });
+
+  test('the SRD 5.2 library is complete and valid', () => {
+    const { creatures, license } = srdData as { creatures: any[]; license: string };
+    expect(license).toContain('CC-BY-4.0');
+    expect(creatures).toHaveLength(331);
+    for (const c of creatures) expect(validateCreature(c).ok, c.name).toBe(true);
+    const guard = creatures.find((c) => c.name === 'Guard');
+    expect(guard).toMatchObject({ key: 'guard', typeLine: 'Medium or Small Humanoid, Neutral', ac: 16, hp: 11, cr: '1/8' });
+    expect(attackParts(guard.sections[0].entries[0].text)).toEqual([{ label: 'To hit', expr: '1d20+3' }, { label: 'Piercing', expr: '1d6+1' }]);
+    const dragon = creatures.find((c) => c.name === 'Adult Red Dragon');
+    expect(dragon.sections.map((x: any) => x.title)).toEqual(['Traits', 'Actions', 'Legendary Actions']);
+    expect(dragon.sections[1].entries.map((e: any) => e.name)).toContain('Fire Breath (Recharge 5–6)');
+  });
+});
+
+// ── Against a test server ────────────────────────────────────────────────────
+
+const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
+const PLAYER = process.env.E2E_PLAYER, PLAYER_PASSWORD = process.env.E2E_PLAYER_PASSWORD;
+
+async function login(context: BrowserContext, username: string, password: string) {
+  const res = await context.request.post('/api/auth/login', { data: { username, password } });
+  expect(res.ok(), `login as ${username}`).toBe(true);
+}
+
+// Dice land on chosen values (reduced motion uses crypto.getRandomValues: n gives n)
+async function fixDice(page: Page, values: number[]) {
+  await page.evaluate((vals) => {
+    (window as any).__dice = [...vals];
+    const real = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = ((arr: Uint32Array) => {
+      const q = (window as any).__dice as number[];
+      if (arr instanceof Uint32Array && arr.length === 1 && q.length) {
+        arr[0] = q.shift()! - 1;
+        return arr;
+      }
+      return real(arr);
+    }) as typeof crypto.getRandomValues;
+  }, values);
+}
+
+test.describe('Bestiary on a test server', () => {
+  test.skip(!DM || !DM_PASSWORD || !PLAYER || !PLAYER_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD and E2E_PLAYER/E2E_PLAYER_PASSWORD (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'Desktop flow');
+  test.describe.configure({ mode: 'serial' });
+
+  test('access: stat blocks are for the DM only and never reach players', async ({ browser, request }) => {
+    expect((await request.get('/api/creatures')).status()).toBe(401);
+    const player = await browser.newContext();
+    await login(player, PLAYER!, PLAYER_PASSWORD!);
+    expect((await player.request.get('/api/creatures')).status()).toBe(403);
+    expect((await player.request.post('/api/creatures', { data: { name: 'Sneaky' } })).status()).toBe(403);
+    const page = await player.newPage();
+    await page.goto('/tools/bestiary');
+    expect(new URL(page.url()).pathname).not.toContain('/tools/bestiary'); // sent away (login → home)
+
+    const dm = await browser.newContext();
+    await login(dm, DM!, DM_PASSWORD!);
+    const created = await dm.request.post('/api/creatures', { data: importStatBlock(fixture('goblin-warrior')).creature });
+    expect(created.status()).toBe(201);
+    const { id } = await created.json();
+    const bad = await dm.request.put(`/api/creatures/${id}`, { data: { name: 'Goblin', ac: 99 } });
+    expect(bad.status()).toBe(400);
+    expect((await bad.json()).error).toContain('AC');
+
+    // A combatant from it: the player view has no creatureId, and players can't damage it
+    const entry = await (await dm.request.post('/api/initiative', { data: { name: 'Test Goblin', initiative: 12, type: 'monster', hp: 10, maxHp: 10, creatureId: id } })).json();
+    expect(entry.creatureId).toBe(id);
+    const seen = await (await player.request.get('/api/initiative')).json();
+    const mine = seen.find((e: any) => e.id === entry.id);
+    expect(mine).toBeTruthy();
+    expect(mine).not.toHaveProperty('creatureId');
+    expect((await player.request.post(`/api/initiative/${entry.id}/hp`, { data: { kind: 'damage', amount: 3 } })).status()).toBe(403);
+    // Editing the entry in the tracker form (which doesn't send creatureId) keeps the link
+    const edited = await (await dm.request.put(`/api/initiative/${entry.id}`, { data: { name: 'Test Goblin', initiative: 13, type: 'monster', hp: 10, maxHp: 10 } })).json();
+    expect(edited.creatureId).toBe(id);
+    // Deleting the stat block keeps the combatant, without the link
+    expect((await dm.request.delete(`/api/creatures/${id}`)).ok()).toBe(true);
+    const after = await (await dm.request.get(`/api/initiative/${entry.id}`)).json();
+    expect(after.creatureId).toBeNull();
+    await dm.request.delete(`/api/initiative/${entry.id}`);
+    await player.close();
+    await dm.close();
+  });
+
+  test('quick edit in the side panel: fields, conditions, linking a stat block, new order', async ({ browser }) => {
+    const dm = await browser.newContext({ viewport: { width: 1440, height: 950 } });
+    await login(dm, DM!, DM_PASSWORD!);
+    const bandit = await (await dm.request.post('/api/creatures/from-srd', { data: { key: 'bandit' } })).json();
+    const e = await (await dm.request.post('/api/initiative', { data: { name: 'Quick Edit Bandit', initiative: 15, type: 'monster', hp: 11, maxHp: 11, ac: 12 } })).json();
+    expect(e.conditions).toEqual([]);
+
+    // API: partial updates, checked; players can't use it but see conditions
+    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { conditions: ['x'.repeat(33)] } })).status()).toBe(400);
+    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { ac: 99 } })).status()).toBe(400);
+    const player = await browser.newContext();
+    await login(player, PLAYER!, PLAYER_PASSWORD!);
+    expect((await player.request.patch(`/api/initiative/${e.id}`, { data: { ac: 1 } })).status()).toBe(403);
+
+    const page = await dm.newPage();
+    await page.goto('/tools/initiative');
+    const card = page.locator(`.initiative-card[data-entry-id="${e.id}"]`);
+    await card.locator('h3').click();
+    const panel = page.locator('.sb-panel.is-open');
+    await expect(panel.locator('.sb-panel-who')).toHaveText('Quick Edit Bandit');
+    await expect(card).toHaveClass(/is-selected/);
+
+    await panel.locator('[data-field=ac]').fill('14');
+    await panel.locator('[data-field=ac]').press('Tab');
+    await expect(card.locator('[data-ac-display]')).toHaveText('14');
+    await panel.getByRole('button', { name: 'Poisoned' }).click();
+    await expect(card.locator('[data-conditions]')).toHaveText('Poisoned');
+    await panel.locator('.cp-exhaustion select').selectOption('2');
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Exhaustion 2']);
+    // A spell effect and an own tag (Enter adds it), in their own colour
+    await panel.getByRole('button', { name: 'Hexed' }).click();
+    await panel.getByLabel('Add your own tag').fill('Cursed by Runara');
+    await panel.getByLabel('Add your own tag').press('Enter');
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Hexed', 'Exhaustion 2', 'Cursed by Runara']);
+    await expect(card.locator('.cond-chip.is-effect')).toHaveText('Hexed');
+    await expect(card.locator('.cond-chip.is-custom')).toHaveText('Cursed by Runara');
+    await panel.getByRole('button', { name: 'Remove Cursed by Runara' }).click();
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Hexed', 'Exhaustion 2']);
+    const seen = (await (await player.request.get('/api/initiative')).json()).find((x: any) => x.id === e.id);
+    expect(seen.conditions).toEqual(['Poisoned', 'Hexed', 'Exhaustion 2']);
+
+    // Link a stat block: it appears in the panel (the page reloads, the panel opens again)
+    await panel.locator('.cp-link select').selectOption(bandit.id);
+    await panel.getByRole('button', { name: 'Link' }).click();
+    await expect(page.locator('.sb-panel.is-open .sb-name')).toHaveText('Bandit');
+
+    // New initiative: new order, and the panel is back for the same combatant
+    await page.locator('.sb-panel.is-open [data-field=initiative]').fill('99');
+    await page.locator('.sb-panel.is-open [data-field=initiative]').press('Tab');
+    await expect(page.locator('.initiative-card').first()).toHaveAttribute('data-entry-id', e.id);
+    await expect(page.locator('.sb-panel.is-open .sb-panel-who')).toHaveText('Quick Edit Bandit');
+
+    await dm.request.delete(`/api/initiative/${e.id}`);
+    await dm.request.delete(`/api/creatures/${bandit.id}`);
+    await player.close();
+    await dm.close();
+  });
+
+  test('linking an NPC to a stat block reaches its combatants already in the fight', async ({ browser }) => {
+    const dm = await browser.newContext();
+    await login(dm, DM!, DM_PASSWORD!);
+    const name = `E2E Tirael ${Date.now()}`;
+    const npc = await (await dm.request.post('/api/npcs', { data: { name, race: 'Elf', description: 'Test NPC', relationship: 'neutral' } })).json();
+    // In the fight before it has a stat block (added by name, like the tracker's form does)
+    const before = await (await dm.request.post('/api/initiative', { data: { name, initiative: 12, type: 'npc', hp: 30, maxHp: 30 } })).json();
+    expect(before.creatureId).toBeNull();
+    const entry = async (id: string) => (await (await dm.request.get(`/api/initiative/${id}`)).json()).creatureId;
+
+    // Linked when the stat block is saved with the NPC…
+    const creature = await (await dm.request.post('/api/creatures', { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [npc.id] } })).json();
+    expect(await entry(before.id)).toBe(creature.id);
+    // …unlinked when the NPC is taken off, linked again when it's put back
+    await dm.request.put(`/api/creatures/${creature.id}`, { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [] } });
+    expect(await entry(before.id)).toBeNull();
+    await dm.request.put(`/api/creatures/${creature.id}`, { data: { name: 'Human Mage (level 13)', hp: 70, npcIds: [npc.id] } });
+    expect(await entry(before.id)).toBe(creature.id);
+    // HP stays as it was
+    expect((await (await dm.request.get(`/api/initiative/${before.id}`)).json()).hp).toBe(30);
+    // Added by name later: linked right away
+    const later = await (await dm.request.post('/api/initiative', { data: { name, initiative: 5, type: 'npc', hp: 30, maxHp: 30 } })).json();
+    expect(later.creatureId).toBe(creature.id);
+
+    for (const e of [before, later]) await dm.request.delete(`/api/initiative/${e.id}`);
+    await dm.request.delete(`/api/creatures/${creature.id}`);
+    await dm.request.delete(`/api/npcs/${npc.id}`);
+    await dm.close();
+  });
+
+  test('SRD library: one copy per creature, used for fights; generator saves a stat block', async ({ browser }) => {
+    const player = await browser.newContext();
+    await login(player, PLAYER!, PLAYER_PASSWORD!);
+    expect((await player.request.post('/api/creatures/from-srd', { data: { key: 'guard' } })).status()).toBe(403);
+    await player.close();
+
+    const context = await browser.newContext();
+    await login(context, DM!, DM_PASSWORD!);
+    const first = await context.request.post('/api/creatures/from-srd', { data: { key: 'guard' } });
+    const copy = await first.json();
+    expect(copy).toMatchObject({ name: 'Guard', srdKey: 'guard', ac: 16 });
+    const again = await (await context.request.post('/api/creatures/from-srd', { data: { key: 'guard' } })).json();
+    expect(again.id).toBe(copy.id); // the same copy, edits included
+    expect((await context.request.post('/api/creatures/from-srd', { data: { key: 'no-such-thing' } })).status()).toBe(404);
+
+    const page = await context.newPage();
+    await page.goto('/tools/bestiary?tab=srd');
+    await expect(page.locator('#creatureList li')).toHaveCount(331);
+    await page.locator('#typeFilter').selectOption('humanoid');
+    await page.locator('#crFilter').selectOption('0-1');
+    await expect(page.locator('#creatureList li:not([hidden])', { hasText: 'Guard' })).toContainText('in my bestiary');
+    await page.goto('/tools/bestiary/srd/guard');
+    await expect(page.getByRole('link', { name: 'Open my copy' })).toHaveAttribute('href', `/tools/bestiary/${copy.id}`);
+    await expect(page.locator('.statblock .sb-attack')).toContainText('Spear');
+
+    await page.goto('/tools/bestiary/generate');
+    await page.locator('select[name=species]').selectOption('Orc');
+    await page.locator('input[value=Warrior]').check();
+    await page.locator('input[name=level]').fill('5');
+    await expect(page.locator('#genPreview .sb-name')).toHaveText('Orc Warrior (level 5)');
+    await page.getByRole('button', { name: 'Save to my bestiary' }).click();
+    await page.waitForURL(/\/tools\/bestiary\/[0-9a-f-]{36}$/);
+    await expect(page.locator('.statblock')).toContainText('Relentless Endurance');
+    const generatedId = page.url().split('/').pop()!;
+
+    await context.request.delete(`/api/creatures/${copy.id}`);
+    await context.request.delete(`/api/creatures/${generatedId}`);
+    await context.close();
+  });
+
+  test('paste, save, roll, quick add, stat block in the fight, damage and heal', async ({ browser }) => {
+    test.setTimeout(90_000);
+    const context = await browser.newContext({ reducedMotion: 'reduce' });
+    await login(context, DM!, DM_PASSWORD!);
+    const page = await context.newPage();
+    const before = new Set(((await (await context.request.get('/api/initiative')).json()) as any[]).map((e) => e.id));
+
+    // Paste and save
+    await page.goto('/tools/bestiary/new');
+    await page.locator('#pasteText').fill(fixture('goblin-warrior'));
+    await page.getByRole('button', { name: 'Read' }).click();
+    await expect(page.locator('#pasteResult')).toContainText('Read Goblin Warrior: 6/6 abilities, 4 details, 3 traits and actions');
+    await expect(page.locator('#creaturePreview .sb-name')).toHaveText('Goblin Warrior');
+    await page.getByRole('button', { name: 'Save' }).click();
+    await page.waitForURL(/\/tools\/bestiary\/[0-9a-f-]{36}$/);
+    const creatureId = page.url().split('/').pop()!;
+
+    // Attack with fixed dice: d6 first, then the d20 (the fallback rolls by die size) → 17+4, 3+2
+    await fixDice(page, [3, 17]);
+    await page.locator('.statblock .sb-attack', { hasText: 'Scimitar' }).click();
+    const banner = page.locator('#dice-result-banner .dice-banner-card');
+    await expect(banner).toContainText('Goblin Warrior · Scimitar');
+    await expect(banner).toContainText('To hit');
+    await expect(banner).toContainText('21');
+    await expect(banner).toContainText('Slashing');
+    await banner.click();
+
+    // Quick add 3 with overridden HP
+    await page.getByRole('button', { name: 'Add to fight' }).first().click();
+    const dialog = page.getByRole('dialog', { name: /Add Goblin Warrior to initiative/ });
+    await dialog.getByLabel('How many').fill('3');
+    await expect(dialog.locator('.qa-roll')).toHaveCount(3);
+    await dialog.getByLabel('HP each').fill('12');
+    await dialog.getByRole('button', { name: 'Add' }).click();
+    await expect(page.locator('#addedStatus')).toContainText('3 × Goblin Warrior added to the fight');
+    const added = ((await (await context.request.get('/api/initiative')).json()) as any[]).filter((e) => !before.has(e.id));
+    expect(added.map((e) => e.name).sort()).toEqual(expect.arrayContaining([expect.stringMatching(/^Goblin Warrior \d+$/)]));
+    expect(added).toHaveLength(3);
+    for (const e of added) {
+      expect(e).toMatchObject({ type: 'monster', hp: 12, maxHp: 12, ac: 15, creatureId });
+      expect(e.initiative).toBeGreaterThanOrEqual(3);
+      expect(e.initiative).toBeLessThanOrEqual(22);
+    }
+
+    // In the tracker: stat block panel with rolls, then damage and heal
+    await page.goto('/tools/initiative');
+    const card = page.locator(`.initiative-card[data-entry-id="${added[0].id}"]`);
+    await card.getByRole('button', { name: `Stat block of ${added[0].name}` }).click();
+    const panel = page.locator('.sb-panel.is-open');
+    await expect(panel.locator('.sb-name')).toHaveText('Goblin Warrior');
+    await expect(panel.locator('.sb-panel-who')).toHaveText(added[0].name);
+    await panel.getByRole('button', { name: 'Close the panel' }).click();
+    await expect(page.locator('.sb-panel.is-open')).toHaveCount(0);
+
+    await card.getByLabel(`Damage or healing for ${added[0].name}`).fill('5');
+    await card.getByRole('button', { name: `Damage ${added[0].name}` }).click();
+    await expect(card.locator('[data-hp-display]')).toHaveText('7/12');
+    await card.getByLabel(`Damage or healing for ${added[0].name}`).fill('20');
+    await card.getByRole('button', { name: `Heal ${added[0].name}` }).click();
+    await expect(card.locator('[data-hp-display]')).toHaveText('12/12');
+
+    // DM screen: the combatant whose turn it is has its stat block one click away
+    for (const e of added) await context.request.put(`/api/initiative/${e.id}`, { data: { ...e, initiative: 99 } });
+    await context.request.post('/api/combat-state', { data: { action: 'new-fight' } }); // round 1, first in order
+    await page.goto('/tools/dm-screen');
+    const current = page.locator('#currentTurnContent');
+    await expect(current.locator('.statblock-btn')).toBeVisible(); // loaded
+    const who = (await current.locator('.font-semibold').first().innerText()).trim();
+    // Damage from the turn preview…
+    await current.getByLabel(`Damage or healing for ${who}`).fill('4');
+    await current.getByRole('button', { name: `Damage ${who}` }).click();
+    const afterDamage = '8/12'; // every goblin is at 12 here
+    await expect(current.locator('[data-hp-of]')).toHaveText(afterDamage);
+    // …and healing from the stat block panel, which shows the same combatant's HP
+    await current.locator('.statblock-btn').click();
+    const dmPanel = page.locator('.sb-panel.is-open');
+    await expect(dmPanel.locator('.sb-name')).toHaveText('Goblin Warrior');
+    await expect(dmPanel.locator('[data-hp-of]')).toHaveText(afterDamage);
+    await dmPanel.getByLabel(`Damage or healing for ${who}`).fill('2');
+    await dmPanel.getByRole('button', { name: `Heal ${who}` }).click();
+    const healed = '10/12';
+    await expect(dmPanel.locator('[data-hp-of]')).toHaveText(healed);
+    await expect(current.locator('[data-hp-of]')).toHaveText(healed);
+
+    // Clean up
+    await context.request.put('/api/combat-state', { data: { status: 'stopped' } });
+    for (const e of added) await context.request.delete(`/api/initiative/${e.id}`);
+    await context.request.delete(`/api/creatures/${creatureId}`);
+    await context.close();
+  });
+});

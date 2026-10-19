@@ -1,0 +1,18 @@
+---
+// New bestiary creature: paste from D&D Beyond or fill in the form (DM/admin only).
+import Layout from '../../../layouts/Layout.astro';
+import CreatureEditor from '../../../components/CreatureEditor.astro';
+import { getUserRole, isAuthenticated } from '../../../lib/auth';
+import { db, NPC } from '@/db';
+import '../../../styles/statblock.css';
+
+const userRole = await getUserRole(Astro.cookies);
+if (!isAuthenticated(Astro.cookies) || !(userRole === 'admin' || userRole === 'dungeonmaster')) return Astro.redirect('/login');
+const npcs = (await db.select({ id: NPC.id, name: NPC.name }).from(NPC)).sort((a, b) => a.name.localeCompare(b.name));
+---
+
+<Layout title="New creature · Bestiary">
+  <div class="mb-4"><a href="/tools/bestiary" class="t-link text-sm">← Bestiary</a></div>
+  <h1 class="font-display italic font-semibold text-3xl mb-6" style="color:var(--gold);">New creature</h1>
+  <CreatureEditor creature={null} npcs={npcs} openPaste={true} />
+</Layout>

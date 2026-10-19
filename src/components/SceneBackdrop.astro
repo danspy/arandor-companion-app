@@ -22,7 +22,7 @@ const image = own || ((await db.select({ url: CampaignProgress.heroImageUrl }).f
     position: absolute;
     top: calc(-2rem - 60px);
     left: 50%;
-    width: 100vw;
+    width: var(--page-w, 100vw); /* narrower while a side panel pushes the page */
     height: min(75vh, 46rem);
     transform: translateX(-50%);
     z-index: -1;

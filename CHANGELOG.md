@@ -2,6 +2,23 @@ What's new in the Arandor Companion App, newest first.
 
 ## October 2026
 
+### Bestiary
+- Stat blocks for monsters and NPCs, only for the DM: paste them from D&D Beyond (2024 Monster
+  Manual) or type in your own, with a live preview
+- Every number in a stat block rolls: attacks roll to hit and damage at once (a natural 20
+  doubles the damage dice), plus saves, checks, skills, recharge and initiative
+- Add monsters to a fight in one go: how many, average or your own HP, initiative rolled for
+  each; NPCs with a stat block too
+- The stat block opens next to the fight from the initiative tracker and the DM screen
+- Damage and healing buttons on every combatant (players: on their own characters), also on
+  the DM screen and next to an open stat block
+- Click a combatant in the initiative tracker for a side panel: quick edit of initiative, HP,
+  AC and notes, damage/heal, conditions, spell effects like Hexed or Hunter's Mark and your own
+  tags (shown on the tracker and the player display), and its stat block
+- All 331 creatures of the free 2024 rules (SRD 5.2) ready to use, from guards and bandits to
+  dragons
+- Generate generic NPCs: species, role and level 1–20, computed with the player rules
+
 ### Dice: saved rolls
 - Save your own rolls, like a weapon attack with to hit and damage, under *My rolls* on the
   dice roller page; they are on your account and one tap away in the dice button everywhere

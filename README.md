@@ -71,3 +71,11 @@ ISC
 ## Acknowledgments
 
 Inspired by [arandor.info](https://arandor.info/). Built for our table.
+
+## Credits
+
+The bestiary's SRD library (`src/data/srd-2024-creatures.json`) includes material from the
+System Reference Document 5.2 ("SRD 5.2") by Wizards of the Coast LLC, available at
+https://www.dndbeyond.com/srd. The SRD 5.2 is licensed under the Creative Commons Attribution
+4.0 International License (https://creativecommons.org/licenses/by/4.0/legalcode). The data was
+taken from the Open5e API and converted (`scripts/import-srd.mjs`).

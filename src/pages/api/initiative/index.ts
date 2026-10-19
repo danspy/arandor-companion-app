@@ -3,6 +3,8 @@ import { db, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 import { getEntries, ownedCharacters, preserveTurn, redactEntry, setCombatState } from '../../../lib/combat';
+import { creatureIdForNpcName } from '../../../lib/creature-links';
+import { cleanConditions } from '../../../lib/conditions';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
@@ -61,6 +63,10 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const id = crypto.randomUUID();
     const now = new Date();
+    // An NPC added by name gets the stat block it uses, if it has one
+    const creatureId = typeof body.creatureId === 'string' && body.creatureId
+      ? body.creatureId
+      : type === 'npc' ? await creatureIdForNpcName(body.name) : null;
     
     await preserveTurn(() => db.insert(InitiativeTracker).values({
       id,
@@ -73,6 +79,8 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
+      creatureId,
+      conditions: cleanConditions(body.conditions) ?? [],
       isActive: body.isActive !== undefined ? body.isActive : true,
       deathSaveSuccesses: 0,
       deathSaveFailures: 0,

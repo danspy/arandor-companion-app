@@ -1,0 +1,122 @@
+---
+// Generate a generic NPC stat block: species × role × level (DM/admin only).
+import Layout from '../../../layouts/Layout.astro';
+import { getUserRole, isAuthenticated } from '../../../lib/auth';
+import { db, NPC } from '@/db';
+import { DRACONIC_DAMAGE, ROLES, SPECIES } from '../../../lib/npc-generator';
+import '../../../styles/statblock.css';
+
+const userRole = await getUserRole(Astro.cookies);
+if (!isAuthenticated(Astro.cookies) || !(userRole === 'admin' || userRole === 'dungeonmaster')) return Astro.redirect('/login');
+const npcs = (await db.select({ id: NPC.id, name: NPC.name }).from(NPC)).sort((a, b) => a.name.localeCompare(b.name));
+const ROLE_HINTS: Record<string, string> = {
+  Commoner: 'villagers, merchants, servants', Warrior: 'guards, soldiers, knights', Archer: 'scouts, hunters, rangers',
+  Rogue: 'thieves, spies, assassins', Mage: 'wizards, scholars, court mages', Priest: 'clerics, acolytes, healers',
+};
+---
+
+<Layout title="Generate NPC · Bestiary">
+  <div class="mb-4"><a href="/tools/bestiary" class="t-link text-sm">← Bestiary</a></div>
+  <h1 class="font-display italic font-semibold text-3xl mb-2" style="color:var(--gold);">Generate an NPC</h1>
+  <p class="t-muted text-sm mb-6">A generic stat block from species, role and level, following the player rules. Save it, adjust it like any stat block, and link it to your NPCs.</p>
+
+  <div class="grid gap-6 xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
+    <form id="genForm" class="t-panel p-5 space-y-4 self-start" novalidate>
+      <label class="ge-field"><span class="t-label">Species</span>
+        <select name="species" class="t-input px-3 py-2">{SPECIES.map((s) => <option>{s}</option>)}</select>
+      </label>
+      <label class="ge-field" id="ancestryField" hidden><span class="t-label">Draconic ancestry</span>
+        <select name="ancestry" class="t-input px-3 py-2">{DRACONIC_DAMAGE.map((d) => <option>{d}</option>)}</select>
+      </label>
+      <fieldset class="ge-field">
+        <legend class="t-label mb-2">Role</legend>
+        <div class="ge-roles">
+          {ROLES.map((r, i) => (
+            <label class="ge-role"><input type="radio" name="role" value={r} checked={i === 1} /><span><b>{r}</b><span class="t-faint text-xs">{ROLE_HINTS[r]}</span></span></label>
+          ))}
+        </div>
+      </fieldset>
+      <label class="ge-field"><span class="t-label">Level <b id="levelValue" class="t-body-text">3</b></span>
+        <input name="level" type="range" min="1" max="20" value="3" aria-label="Level" />
+      </label>
+      <label class="ge-field"><span class="t-label">Name</span>
+        <input name="name" class="t-input px-3 py-2" maxlength="80" />
+      </label>
+      <label class="ge-field"><span class="t-label">Use for NPC (optional)</span>
+        <select name="npc" class="t-input px-3 py-2">
+          <option value="">-- none --</option>
+          {npcs.map((n) => <option value={n.id}>{n.name}</option>)}
+        </select>
+      </label>
+      <div class="flex flex-wrap items-center gap-3 pt-2">
+        <button type="submit" class="t-btn-primary">Save to my bestiary</button>
+        <p id="genError" class="text-sm" style="color:var(--danger);" role="alert"></p>
+      </div>
+    </form>
+
+    <div class="t-panel p-5">
+      <p class="t-label mb-3">Preview</p>
+      <div id="genPreview"></div>
+    </div>
+  </div>
+</Layout>
+
+<style>
+  .ge-field { display: grid; gap: 0.35rem; border: 0; padding: 0; margin: 0; }
+  .ge-field[hidden] { display: none; }
+  .ge-roles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem; }
+  .ge-role { display: flex; align-items: flex-start; gap: 0.5rem; padding: 0.45rem 0.6rem; border: 1px solid var(--border); cursor: pointer; }
+  .ge-role:has(input:checked) { border-color: var(--gold); background: var(--accent-dim); }
+  .ge-role > span { display: grid; line-height: 1.25; }
+  .ge-role input { margin-top: 0.2rem; accent-color: var(--accent); }
+  input[type='range'] { accent-color: var(--accent); }
+</style>
+
+<script>
+  import { defaultNpcName, generateNpc, type NpcOptions } from '../../../lib/npc-generator';
+  import { renderStatBlock } from '../../../lib/statblock-view';
+
+  function init() {
+    const form = document.getElementById('genForm') as HTMLFormElement | null;
+    if (!form) return;
+    const field = <T extends HTMLElement>(name: string) => form.elements.namedItem(name) as unknown as T;
+    const nameInput = field<HTMLInputElement>('name');
+    let nameEdited = false;
+    nameInput.addEventListener('input', () => (nameEdited = nameInput.value.trim() !== ''));
+
+    const options = (): NpcOptions => ({
+      species: field<HTMLSelectElement>('species').value as NpcOptions['species'],
+      role: (form.querySelector('input[name="role"]:checked') as HTMLInputElement).value as NpcOptions['role'],
+      level: Number(field<HTMLInputElement>('level').value),
+      ancestry: field<HTMLSelectElement>('ancestry').value as NpcOptions['ancestry'],
+    });
+    const update = () => {
+      const o = options();
+      (document.getElementById('levelValue') as HTMLElement).textContent = String(o.level);
+      (document.getElementById('ancestryField') as HTMLElement).hidden = o.species !== 'Dragonborn';
+      if (!nameEdited) nameInput.value = defaultNpcName(o);
+      const c = generateNpc(o);
+      c.name = nameInput.value.trim() || c.name;
+      document.getElementById('genPreview')!.replaceChildren(renderStatBlock(c));
+    };
+    form.addEventListener('input', update);
+    form.addEventListener('change', update);
+    update();
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const c = generateNpc(options());
+      c.name = nameInput.value.trim() || c.name;
+      const npc = field<HTMLSelectElement>('npc').value;
+      if (npc) c.npcIds = [npc];
+      const res = await fetch('/api/creatures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(c) });
+      const saved = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        (document.getElementById('genError') as HTMLElement).textContent = saved.error ?? 'Could not save.';
+        return;
+      }
+      window.location.href = `/tools/bestiary/${saved.id}`;
+    });
+  }
+  document.addEventListener('astro:page-load', init);
+</script>

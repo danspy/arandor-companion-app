@@ -58,6 +58,7 @@ import '../styles/global.css';
             <canvas class="dsp-now-sparks" id="nowSparks" aria-hidden="true"></canvas>
             <p class="dsp-now-label" id="nowLabel">Now acting</p>
             <p class="dsp-now-name" id="nowName"></p>
+            <p class="dsp-conds dsp-now-conds" id="nowConds"></p>
             <p class="dsp-now-next" id="nowNext"></p>
           </div>
           <ol class="dsp-ledger" id="ledger"></ol>
@@ -377,7 +378,15 @@ import '../styles/global.css';
         font-family: var(--font-display); font-weight: 700; font-size: 2em; line-height: 1;
         font-variant-numeric: lining-nums; text-align: center; color: var(--gold);
       }
-      .dsp-row-name { font-size: 1.25em; font-weight: 500; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dsp-row-who { min-width: 0; }
+      .dsp-row-name { display: block; font-size: 1.25em; font-weight: 500; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      /* Conditions (set by the DM in the tracker's side panel) */
+      .dsp-conds { display: flex; flex-wrap: wrap; gap: .3em; margin: .2em 0 0; }
+      .dsp-conds:empty { display: none; }
+      .dsp-cond { font-size: .72em; line-height: 1.5; padding: 0 .5em; color: var(--gold); border: 1px solid var(--border-gold); background: rgba(12, 9, 6, .45); }
+      /* Spells/effects and the DM's own tags in violet, official conditions in gold */
+      .dsp-cond.is-effect, .dsp-cond.is-custom { color: #e2d3ff; border-color: #8b6cc4; background: rgba(60, 38, 98, .55); }
+      .dsp-now-conds { position: relative; margin: 0 0 .45rem; font-size: 1.05rem; }
       .dsp-row.is-current { background: linear-gradient(to right, rgba(201, 144, 50, .2), rgba(201, 144, 50, .03)); }
       .dsp-row.is-current .dsp-row-name { color: #fff3dc; }
       .dsp-row.is-past { opacity: .62; }
@@ -480,6 +489,7 @@ import '../styles/global.css';
 
     <script>
       import { startSparks } from '../lib/sparks';
+      import { tagKind } from '../lib/conditions';
 
       type Health = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
       interface DisplayState {
@@ -491,7 +501,7 @@ import '../styles/global.css';
         initiative: null | {
           status: 'active' | 'paused' | 'stopped';
           round: number;
-          entries: { id: string; name: string; initiative: number; type: string; health: Health; isStable: boolean; isCurrent: boolean }[];
+          entries: { id: string; name: string; initiative: number; type: string; health: Health; isStable: boolean; isCurrent: boolean; conditions?: string[] }[];
         };
         timer: null | { status: 'running' | 'paused' | 'stopped'; duration: number; startedAt: number | null; pausedAt: number | null };
       }
@@ -908,6 +918,7 @@ import '../styles/global.css';
             nameEl.classList.add('is-new');
           }
           now.toggleAttribute('data-paused', ini.status !== 'active');
+          renderConditions($('nowConds'), cur.conditions);
           $('nowLabel').textContent = { active: 'Now acting', paused: 'Combat paused', stopped: 'Combat stopped' }[ini.status] ?? 'Now acting';
           // Next living combatant
           const next = [...entries.slice(curIndex + 1), ...entries.slice(0, curIndex)].find((e) => e.health !== 'dead');
@@ -943,10 +954,16 @@ import '../styles/global.css';
           const init = document.createElement('span');
           init.className = 'dsp-row-init';
           init.textContent = String(e.initiative);
+          const who = document.createElement('div');
+          who.className = 'dsp-row-who';
           const name = document.createElement('span');
           name.className = 'dsp-row-name';
           name.textContent = e.name;
-          li.append(init, name);
+          const conds = document.createElement('p');
+          conds.className = 'dsp-conds';
+          renderConditions(conds, e.conditions);
+          who.append(name, conds);
+          li.append(init, who);
 
           if (e.health) {
             const h = e.health === 'unconscious' && e.isStable ? 'stable' : e.health;
@@ -959,6 +976,10 @@ import '../styles/global.css';
           ledger.appendChild(li);
         });
         ledger.querySelector('.is-current')?.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });
+      }
+
+      function renderConditions(box: HTMLElement, conditions: string[] | undefined) {
+        box.replaceChildren(...(conditions ?? []).map((c) => Object.assign(document.createElement('span'), { className: `dsp-cond is-${tagKind(c)}`, textContent: c })));
       }
 
       // ── Timer (runs on the server's clock) ────────────────────────────
