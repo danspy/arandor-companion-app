@@ -372,6 +372,85 @@ test.describe('Music player', () => {
     await expect.poll(() => paused(page)).toBe(false);
   });
 
+  // ── YouTube (real youtube.com; desktop Chromium only) ──
+  // YouTube refuses to embed into a page whose origin is a bare IP (error 150 for every video),
+  // so these tests open the test server as localhost instead of 127.0.0.1.
+  test.describe('YouTube', () => {
+    test.skip(({ isMobile }) => isMobile, 'Desktop Chromium only');
+    test.skip(!!E.CI_OFFLINE, 'Needs youtube.com (CI_OFFLINE is set)');
+    test.use({ baseURL: async ({ baseURL }, use) => use(baseURL?.replace('//127.0.0.1', '//localhost')) });
+
+    const ytState = (page: import('@playwright/test').Page) => page.evaluate(() => window.__music.getState());
+    const ytVideo = { id: 'yt-rick', kind: 'youtube_video', title: 'Never Gonna', ref: 'dQw4w9WgXcQ' };
+    /** The YouTube track at queue index `i` is current and playing past `sec` seconds. */
+    const ytPlaying = (page: import('@playwright/test').Page, sec: number, i = 0) =>
+      expect.poll(async () => { const s = await ytState(page); return s.index === i && s.playing && s.position > sec; }, { timeout: 20_000 }).toBe(true);
+
+    test('tile while a video plays, audio after next', async ({ page }) => {
+      await start(page, [ytVideo, ...asQueue(playlist.tracks).slice(0, 1)]);
+      const frame = page.locator('#music-yt-tile iframe');
+      await expect(frame).toBeVisible({ timeout: 20_000 });
+      const box = await frame.boundingBox();
+      expect(box!.width).toBeGreaterThanOrEqual(200);
+      expect(box!.height).toBeGreaterThanOrEqual(200);
+      await expect(page.locator('#music-title')).toHaveText('Never Gonna');
+      await ytPlaying(page, 1);
+
+      // ▾ shrinks the tile to its minimum, never below 200×200 and never hidden
+      await page.getByRole('button', { name: 'Shrink video' }).click();
+      const small = await frame.boundingBox();
+      expect(small!.width).toBeGreaterThanOrEqual(200);
+      expect(small!.height).toBeGreaterThanOrEqual(200);
+      expect(small!.width * small!.height).toBeLessThan(box!.width * box!.height);
+      await page.getByRole('button', { name: 'Enlarge video' }).click();
+
+      // Navigation keeps the same iframe playing (Chromium moves it with moveBefore)
+      await frame.evaluate((f) => { f.dataset.e2e = 'first'; });
+      const t1 = (await ytState(page)).position;
+      await navTo(page, '/characters', false);
+      await navTo(page, '/npcs', false);
+      await expect(page.locator('#music-yt-tile iframe[data-e2e="first"]')).toBeVisible();
+      await ytPlaying(page, t1 + 1);
+
+      await page.getByRole('button', { name: 'Next track' }).click();
+      await expect(page.locator('#music-title')).toHaveText('Rain');
+      await expect(page.locator('#music-yt-tile')).toBeHidden();
+      await expect(page.locator('#music-yt-tile iframe')).toHaveCount(0);
+      await expect.poll(() => paused(page)).toBe(false);
+      expect((await ytState(page)).youtubeVisible).toBe(false);
+    });
+
+    test('resumes where it was when the iframe reloads', async ({ page }) => {
+      await start(page, [ytVideo]);
+      await ytPlaying(page, 4);
+      const t1 = (await ytState(page)).position;
+      // What Firefox/WebKit do on a page swap without moveBefore(): detach and re-attach the
+      // persisted element, which reloads the iframe inside it.
+      await page.evaluate(() => {
+        const tile = document.getElementById('music-yt-tile')!;
+        tile.querySelector('iframe')!.dataset.e2e = 'old';
+        const parent = tile.parentNode!, next = tile.nextSibling;
+        document.documentElement.appendChild(tile);
+        parent.insertBefore(tile, next);
+        document.dispatchEvent(new Event('astro:after-swap'));
+      });
+      await expect(page.locator('#music-yt-tile iframe:not([data-e2e="old"])')).toHaveCount(1, { timeout: 20_000 });
+      await ytPlaying(page, 0);
+      const t2 = (await ytState(page)).position;
+      expect(t2).toBeGreaterThanOrEqual(t1 - 1);
+      expect(t2).toBeLessThan(t1 + 10);
+    });
+
+    test('unplayable video is skipped', async ({ page }) => {
+      const broken = { id: 'yt-broken', kind: 'youtube_video', title: 'Broken', ref: 'xxxxxxxxxxx' };
+      await start(page, [broken, ...asQueue(playlist.tracks).slice(0, 1)]);
+      await expect(page.locator('#arandor-toasts')).toContainText('Skipped: Broken (not playable)', { timeout: 20_000 });
+      await expect(page.locator('#music-title')).toHaveText('Rain');
+      await expect(page.locator('#music-yt-tile')).toBeHidden();
+      await expect.poll(() => paused(page)).toBe(false);
+    });
+  });
+
   test('restores paused', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (e) => errors.push(e.message));

@@ -1,12 +1,21 @@
 ---
-// Site-wide music player: the <audio> element, the (later) YouTube tile and the mini bar.
+// Site-wide music player: the <audio> element, the YouTube video tile and the mini bar.
 // Persisted across ClientRouter page changes so playback never stops. All logic lives in
 // src/lib/music/player.ts; this component only renders the store's state.
 ---
 
 <div id="music-root" class="music-root" transition:persist>
   <audio id="music-audio" preload="metadata"></audio>
-  <div id="music-yt-tile" class="music-yt-tile" hidden></div>
+  <!-- YouTube's terms forbid hidden playback: the video stays visible (≥ 200×200) while a YouTube track is current -->
+  <div id="music-yt-tile" class="music-yt-tile t-panel" role="region" aria-label="YouTube video" hidden>
+    <div class="music-yt-head">
+      <span class="t-label-sm">YouTube</span>
+      <button type="button" id="music-yt-size" class="music-btn" aria-label="Shrink video" title="Shrink video">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+    </div>
+    <div id="music-yt-frame" class="music-yt-frame"></div>
+  </div>
 
   <div id="music-panel" class="music-panel t-panel" role="region" aria-label="Music queue and options" hidden>
     <div class="music-seek-row">
@@ -150,7 +159,20 @@
   .music-queue .music-q-n { flex: none; width: 1.5rem; color: var(--text-faint); font-variant-numeric: tabular-nums; }
   .music-queue .music-q-t { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 
-  .music-yt-tile { width: 200px; height: 200px; background: #000; border: 1px solid var(--border-gold); }
+  .music-yt-tile {
+    display: flex;
+    flex-direction: column;
+    padding: 0 4px 4px;
+    background-color: var(--bg-raised);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  }
+  .music-yt-head { display: flex; align-items: center; justify-content: space-between; height: 28px; padding-left: 6px; }
+  /* YouTube's minimum player size is 200×200; ▾ shrinks to exactly that, never smaller or hidden */
+  /* 16:9 where it fits; root max-width (100vw − 100px) minus the tile padding */
+  .music-yt-frame { width: max(200px, min(356px, calc(100vw - 108px))); height: 200px; background: #000; }
+  .music-yt-tile.is-small .music-yt-frame { width: 200px; height: 200px; }
+  .music-yt-tile.is-small #music-yt-size svg { transform: rotate(180deg); }
+  .music-yt-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
 
   /* Installed app: above the bottom dock, clear of the dice seal that pokes ~23px above it. */
   @media (display-mode: standalone) and (max-width: 1024px) {
@@ -179,6 +201,8 @@
   const REPEAT_NEXT = { off: 'all', all: 'one', one: 'off' } as const;
   const REPEAT_LABEL = { off: 'Repeat: off', all: 'Repeat: all', one: 'Repeat: this track' } as const;
 
+  const YT_SMALL_KEY = 'arandor.music.ytSmall'; // per-viewer convenience only
+
   let seeking = false;
   let queueKey = '';
 
@@ -198,8 +222,8 @@
 
     const cur = s.queue[s.index];
     const title = $('music-title')!;
-    title.textContent = cur?.title ?? '';
-    title.title = cur?.title ?? '';
+    title.textContent = s.videoTitle ?? cur?.title ?? '';
+    title.title = title.textContent;
 
     const toggle = $('music-toggle')!;
     toggle.classList.toggle('is-playing', s.playing);
@@ -267,6 +291,22 @@
       $('music-expand')!.setAttribute('aria-expanded', String(!panel.hidden));
       queueKey = '';
       if (!panel.hidden) renderPanel(music.getState());
+    });
+    const tile = $('music-yt-tile')!;
+    let small = false;
+    try { small = localStorage.getItem(YT_SMALL_KEY) === '1'; } catch { /* storage blocked */ }
+    const sizeTile = () => {
+      tile.classList.toggle('is-small', small);
+      const label = small ? 'Enlarge video' : 'Shrink video';
+      const btn = $('music-yt-size')!;
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    };
+    sizeTile();
+    $('music-yt-size')!.addEventListener('click', () => {
+      small = !small;
+      try { localStorage.setItem(YT_SMALL_KEY, small ? '1' : '0'); } catch { /* storage blocked */ }
+      sizeTile();
     });
     $('music-shuffle')!.addEventListener('click', () => music.setShuffle(!music.getState().shuffle));
     $('music-repeat')!.addEventListener('click', () => music.setRepeat(REPEAT_NEXT[music.getState().repeat]));

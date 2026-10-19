@@ -6,6 +6,7 @@
 // #music-root it survives page changes; after a full page load it is rebuilt from
 // localStorage `arandor.music` and comes back paused (never autoplays).
 import { createAudioBackend, type MusicBackend } from './audio-backend';
+import { createYouTubeBackend } from './youtube-backend';
 
 export type QueueTrack = { id: string; kind: 'file' | 'youtube_video' | 'youtube_playlist'; title: string; ref: string };
 
@@ -19,7 +20,10 @@ export type MusicState = {
   volume: number;
   shuffle: boolean;
   repeat: 'off' | 'all' | 'one';
+  /** True while the current track is a YouTube one: its video tile is shown. */
   youtubeVisible: boolean;
+  /** Inside a YouTube playlist track: the title of the video playing now, else null. */
+  videoTitle: string | null;
 };
 
 export type RepeatMode = MusicState['repeat'];
@@ -95,6 +99,7 @@ function createStore(): MusicStore {
     shuffle: saved.shuffle === true,
     repeat: saved.repeat === 'all' || saved.repeat === 'one' ? saved.repeat : 'off',
     youtubeVisible: false,
+    videoTitle: null,
   };
 
   let original: QueueTrack[] = []; // the playlist's own order, for switching shuffle off
@@ -105,6 +110,7 @@ function createStore(): MusicStore {
   let touched = false; // set by any user action; a late restore must not overwrite it
   let restorePending = true; // until the saved state is checked, don't overwrite it
   let backend: MusicBackend | null = null;
+  let backendKind: 'file' | 'youtube' | null = null;
 
   // ── Events + persistence ──
   let lastTimeEmit = 0;
@@ -122,6 +128,7 @@ function createStore(): MusicStore {
     if (timeTimer) { clearTimeout(timeTimer); timeTimer = null; }
     lastTimeEmit = Date.now();
     save();
+    playbackState();
     document.dispatchEvent(new CustomEvent(MUSIC_STATE_EVENT, { detail: getState() }));
   }
 
@@ -136,15 +143,17 @@ function createStore(): MusicStore {
   }
 
   // ── Backend ──
-  function audioEl(): HTMLAudioElement | null {
-    return document.getElementById('music-audio') as HTMLAudioElement | null;
-  }
+  const kindOf = (t: QueueTrack): 'file' | 'youtube' => (t.kind === 'file' ? 'file' : 'youtube');
 
-  function fileBackend(): MusicBackend | null {
-    if (backend) return backend;
-    const el = audioEl();
+  /** The backend for a track: reuses the current one if it plays this kind, else drops it
+   *  (so an <audio> never keeps playing under a YouTube video, or the other way round). */
+  function backendFor(t: QueueTrack): MusicBackend | null {
+    const kind = kindOf(t);
+    if (backend && backendKind === kind) return backend;
+    dropBackend();
+    const el = document.getElementById(kind === 'file' ? 'music-audio' : 'music-yt-frame');
     if (!el) return null;
-    const b = createAudioBackend(el);
+    const b = kind === 'file' ? createAudioBackend(el as HTMLAudioElement) : createYouTubeBackend(el);
     b.setVolume(state.volume);
     b.onTime = (pos, dur) => {
       if (b !== backend || loading) return;
@@ -161,13 +170,23 @@ function createStore(): MusicStore {
       wantPlay = p;
       emit();
     };
+    b.onTitle = (title) => {
+      if (b !== backend || state.videoTitle === title) return;
+      state.videoTitle = title;
+      const t = state.queue[state.index];
+      if (t) mediaSession(t);
+      emit();
+    };
     backend = b;
+    backendKind = kind;
     return b;
   }
 
   function dropBackend() {
-    backend?.destroy();
+    const b = backend;
     backend = null;
+    backendKind = null;
+    b?.destroy();
   }
 
   // ── Loading tracks ──
@@ -179,17 +198,18 @@ function createStore(): MusicStore {
     state.playing = autoplay;
     state.position = at;
     state.duration = 0;
+    state.videoTitle = null;
+    state.youtubeVisible = kindOf(t) === 'youtube'; // the tile must be shown before its player is built
     mediaSession(t);
     emit();
-    // YouTube tracks get their own backend in a later step; until then they are not playable.
-    const b = t.kind === 'file' ? fileBackend() : null;
-    if (!b) {
+    const b = backendFor(t);
+    if (!b) { // no player element on this page
       queueMicrotask(() => { if (seq === loadSeq) skipBroken(); });
       return;
     }
     loading++;
     try {
-      await b.load(t, at);
+      await b.load(t, at, autoplay);
     } finally {
       loading--;
     }
@@ -236,7 +256,7 @@ function createStore(): MusicStore {
     if (!ms) return;
     try {
       ms.metadata = new MediaMetadata({
-        title: t.title,
+        title: state.videoTitle ?? t.title,
         artist: state.source?.name ?? 'Arandor',
         album: 'Arandor',
         artwork: [
@@ -249,6 +269,15 @@ function createStore(): MusicStore {
       ms.setActionHandler('nexttrack', () => store.next());
       ms.setActionHandler('previoustrack', () => store.prev());
     } catch { /* not supported here */ }
+  }
+
+  // YouTube has no media element the browser could read play/pause from, so say it directly.
+  function playbackState() {
+    const ms = typeof navigator !== 'undefined' ? navigator.mediaSession : undefined;
+    if (!ms) return;
+    try {
+      ms.playbackState = !state.queue.length ? 'none' : state.playing ? 'playing' : 'paused';
+    } catch { /* ignore */ }
   }
 
   function clearMediaSession() {
@@ -268,7 +297,7 @@ function createStore(): MusicStore {
     dropBackend();
     failed = new Set();
     original = [];
-    Object.assign(state, { source: null, queue: [], index: 0, playing: false, position: 0, duration: 0, youtubeVisible: false });
+    Object.assign(state, { source: null, queue: [], index: 0, playing: false, position: 0, duration: 0, youtubeVisible: false, videoTitle: null });
     clearMediaSession();
     emit();
   }
@@ -300,7 +329,8 @@ function createStore(): MusicStore {
     play() {
       if (!state.queue.length) return;
       touched = true;
-      const b = state.queue[state.index]?.kind === 'file' ? fileBackend() : backend;
+      const cur = state.queue[state.index];
+      const b = backend && cur && backendKind === kindOf(cur) ? backend : null;
       if (!b) return void loadCurrent(true, state.position);
       wantPlay = true;
       state.playing = true;

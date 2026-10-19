@@ -3,8 +3,10 @@
 import type { QueueTrack } from './player';
 
 export interface MusicBackend {
-  /** Loads a track (paused) and, once its metadata is known, jumps to `at` seconds. */
-  load(t: QueueTrack, at?: number): Promise<void>;
+  /** Loads a track and, once its metadata is known, jumps to `at` seconds. The store calls
+   *  play() afterwards when it wants playback; `autoplay` only hints that it will (YouTube then
+   *  uses loadVideoById instead of cueVideoById). Resolves (never rejects) when done or failed. */
+  load(t: QueueTrack, at?: number, autoplay?: boolean): Promise<void>;
   play(): Promise<void> | void;
   pause(): void;
   seek(s: number): void;
@@ -19,6 +21,8 @@ export interface MusicBackend {
   onTime: (position: number, duration: number) => void;
   /** Called when playback starts or stops by itself (e.g. headset button, OS controls). */
   onPlaying?: (playing: boolean) => void;
+  /** Title of the entry now playing inside a list track (YouTube playlist). */
+  onTitle?: (title: string) => void;
   /** Within one track that is itself a list (YouTube playlist): go to its next/previous entry.
    *  Returns false when there is none, so the queue moves on instead. */
   nextInList?(): boolean;
