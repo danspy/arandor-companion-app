@@ -262,4 +262,25 @@ test.describe('Music API', () => {
     expect((await player2.request.put(`/api/music/playlists/${p.id}/order`, { data: { trackIds: [] } })).status()).toBe(404);
     expect((await request.delete(`/api/music/tracks/${t.id}`)).status()).toBe(401);
   });
+
+  test('uploads: audio is served with its MIME type and Range support', async () => {
+    const p = await (await create(player, { name: uname(), visibility: 'public' })).json();
+    const up = await player.request.post(`/api/music/playlists/${p.id}/tracks`, {
+      multipart: { file: { name: 'Rain.wav', mimeType: 'audio/wav', buffer: wav(2) } },
+    });
+    expect(up.status()).toBe(201);
+    const ref = (await up.json()).results[0].track.ref as string;
+
+    const full = await player.request.get(ref);
+    expect(full.status()).toBe(200);
+    expect(full.headers()['content-type']).toBe('audio/wav');
+    expect(full.headers()['accept-ranges']).toBe('bytes');
+    const size = (await full.body()).length;
+
+    const part = await player.request.get(ref, { headers: { Range: 'bytes=0-99' } });
+    expect(part.status()).toBe(206);
+    expect(part.headers()['content-type']).toBe('audio/wav');
+    expect(part.headers()['content-range']).toBe(`bytes 0-99/${size}`);
+    expect((await part.body()).length).toBe(100);
+  });
 });

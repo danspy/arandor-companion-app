@@ -2,8 +2,9 @@ import type { APIRoute } from 'astro';
 import { readFile, stat } from 'node:fs/promises';
 import { createReadStream } from 'node:fs';
 import { join, resolve, sep } from 'node:path';
+import { AUDIO_MIME } from '@/lib/music/formats';
 
-// Simple MIME type mapping for common image and video formats
+// Simple MIME type mapping for common image, video and audio formats
 const MIME_TYPES: Record<string, string> = {
   // Images
   'jpg': 'image/jpeg',
@@ -27,6 +28,10 @@ const MIME_TYPES: Record<string, string> = {
   'm4v': 'video/x-m4v',
   '3gp': 'video/3gpp',
   '3g2': 'video/3gpp2',
+  // Audio (music player). .webm stays video/webm above: location videos use it,
+  // and browsers play audio-only webm from a video/webm response.
+  ...AUDIO_MIME,
+  'webm': 'video/webm',
 };
 
 function getMimeType(filename: string): string {
@@ -34,8 +39,8 @@ function getMimeType(filename: string): string {
   return MIME_TYPES[ext] || 'application/octet-stream';
 }
 
-function isVideoMimeType(mimeType: string): boolean {
-  return mimeType.startsWith('video/');
+function isStreamable(mimeType: string): boolean {
+  return mimeType.startsWith('video/') || mimeType.startsWith('audio/');
 }
 
 export const GET: APIRoute = async ({ params, request }) => {
@@ -76,7 +81,7 @@ export const GET: APIRoute = async ({ params, request }) => {
       // Handle Range requests for video streaming (required for mobile browsers)
       const rangeHeader = request.headers.get('range');
       
-      if (rangeHeader && isVideoMimeType(mimeType)) {
+      if (rangeHeader && isStreamable(mimeType)) {
         // Parse Range header (format: "bytes=start-end")
         // Note: This handles standard ranges (e.g., "bytes=0-1023", "bytes=1024-")
         // Suffix ranges (e.g., "bytes=-500") are not common for video streaming
@@ -136,7 +141,7 @@ export const GET: APIRoute = async ({ params, request }) => {
         headers: {
           'Content-Type': mimeType,
           'Content-Length': fileSize.toString(),
-          'Accept-Ranges': isVideoMimeType(mimeType) ? 'bytes' : 'none',
+          'Accept-Ranges': isStreamable(mimeType) ? 'bytes' : 'none',
           'Cache-Control': 'public, max-age=31536000, immutable'
         }
       });
