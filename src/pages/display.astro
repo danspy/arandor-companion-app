@@ -583,7 +583,6 @@ import '../styles/global.css';
         if (!ini) { setSparks($<HTMLCanvasElement>('nowSparks'), false); currentId = null; return; }
 
         $('round').textContent = String(ini.round);
-        $('roundBox').hidden = ini.status === 'stopped';
 
         const entries = ini.entries;
         const curIndex = entries.findIndex((e) => e.isCurrent);
@@ -598,8 +597,8 @@ import '../styles/global.css';
             void nameEl.offsetWidth; // restart the entrance animation
             nameEl.classList.add('is-new');
           }
-          now.toggleAttribute('data-paused', ini.status === 'paused');
-          $('nowLabel').textContent = ini.status === 'paused' ? 'Combat paused' : 'Now acting';
+          now.toggleAttribute('data-paused', ini.status !== 'active');
+          $('nowLabel').textContent = { active: 'Now acting', paused: 'Combat paused', stopped: 'Combat stopped' }[ini.status] ?? 'Now acting';
           // Next living combatant
           const next = [...entries.slice(curIndex + 1), ...entries.slice(0, curIndex)].find((e) => e.health !== 'dead');
           const nextEl = $('nowNext');

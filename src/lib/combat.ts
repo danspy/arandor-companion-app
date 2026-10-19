@@ -36,9 +36,11 @@ export async function setCombatState(update: Partial<Omit<CombatStateRow, 'id'>>
   return getCombatState();
 }
 
-/** The entry whose turn it is, or null when combat is stopped or nobody is active. */
+/**
+ * The entry whose turn it is, or null when nobody is active. Also while paused or stopped:
+ * the round and turn are kept then (fights can span sessions), so the display still shows them.
+ */
 export function currentEntry(entries: InitiativeEntry[], state: CombatStateRow): InitiativeEntry | null {
-  if (state.status === 'stopped') return null;
   const active = entries.filter((e) => e.isActive);
   return active[state.currentTurnIndex] ?? null;
 }

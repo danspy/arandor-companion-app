@@ -84,6 +84,10 @@ The layout adapts to what is shown:
 | Location or NPCs + initiative | Content left (60 %), initiative right (40 %) |
 | All three | Location and NPCs stacked left (60 %), initiative right (40 %) |
 
+The turn order always shows the round and whose turn it is, with who is up next. While combat
+is paused or stopped the same combatant stays highlighted, labelled *Combat paused* or *Combat
+stopped*.
+
 Players never see exact HP of others on the display, only the health status above. With
 nothing selected it shows *Awaiting DM…*.
 
@@ -106,7 +110,7 @@ and picks up again on its own.
 |---|---|
 | Display does not change | Reload it; make sure it shows the URL from the *Copy* button |
 | Location shows no picture | The location needs an image (Locations page → edit) |
-| Initiative missing on the display | *Initiative* switched on in the DM screen, entries exist, combat not stopped |
+| Initiative missing on the display | *Initiative* switched on in the DM screen and the combatants marked active in the tracker |
 | Redirected to login on the DM screen | Your account needs the DM or admin role |
 
 ## Dice
