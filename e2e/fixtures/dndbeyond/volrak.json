@@ -1,0 +1,1119 @@
+{
+"data": {
+"id": 155156547,
+"name": "Volrak",
+"baseHitPoints": 99,
+"bonusHitPoints": null,
+"overrideHitPoints": null,
+"removedHitPoints": 0,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 15
+},
+{
+"id": 2,
+"name": null,
+"value": 13
+},
+{
+"id": 3,
+"name": null,
+"value": 14
+},
+{
+"id": 4,
+"name": null,
+"value": 8
+},
+{
+"id": 5,
+"name": null,
+"value": 10
+},
+{
+"id": 6,
+"name": null,
+"value": 12
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 13,
+"isStartingClass": true,
+"definition": {
+"name": "Barbarian",
+"hitDice": 12
+},
+"subclassDefinition": {
+"name": "Path of the Berserker"
+}
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "set-base",
+"subType": "darkvision",
+"value": 120,
+"fixedValue": 120,
+"statId": null,
+"componentId": 13856152,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 668550506,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Darkvision",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "orc",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 8,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Orc",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "giant",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 4,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Giant",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 3727547,
+"componentTypeId": 306912077,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 3727547,
+"componentTypeId": 306912077,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "set",
+"subType": "unarmored-armor-class",
+"value": null,
+"fixedValue": null,
+"statId": 3,
+"componentId": 10292151,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Unarmored Armor Class",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "dexterity-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292153,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Dexterity Saving Throws",
+"restriction": " unless you are Incapacitated."
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292155,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "perception",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292156,
+"componentTypeId": 12168134,
+"entityId": 14,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Perception",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "extra-attacks",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 10292158,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Extra Attacks",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "speed",
+"value": 10,
+"fixedValue": 10,
+"statId": null,
+"componentId": 10292159,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Speed",
+"restriction": "while you aren’t wearing Heavy armor."
+},
+{
+"type": "advantage",
+"subType": "initiative",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292160,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Initiative",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "athletics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Athletics",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "intimidation",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 17,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Intimidation",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "strength-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Strength Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "constitution-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Constitution Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "martial-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Martial Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "medium-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Medium Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "shields",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292173,
+"componentTypeId": 12168134,
+"entityId": 4,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Shields",
+"restriction": ""
+}
+],
+"background": [
+{
+"type": "proficiency",
+"subType": "acrobatics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 12,
+"componentTypeId": 1669830167,
+"entityId": 3,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Acrobatics",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "survival",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 12,
+"componentTypeId": 1669830167,
+"entityId": 15,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Survival",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "playing-card-set",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 12,
+"componentTypeId": 1669830167,
+"entityId": 122,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Playing Card Set",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "vehicles-land",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 12,
+"componentTypeId": 1669830167,
+"entityId": 178,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Vehicles (Land)",
+"restriction": ""
+}
+],
+"item": [
+{
+"type": "damage",
+"subType": "lightning",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 9228807,
+"componentTypeId": 112130694,
+"entityId": 8,
+"entityTypeId": 349597128,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Lightning",
+"restriction": "DC 13 Dexterity saving throw; the target and each other creature in a 5-foot-wide Line take 4d6 Lightning damage on a failed save or half as much on a success"
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 11149390,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "resistance",
+"subType": "acid",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 12022730,
+"componentTypeId": 112130694,
+"entityId": 5,
+"entityTypeId": 349597128,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Acid",
+"restriction": ""
+}
+],
+"feat": [
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "dexterity-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789094,
+"componentTypeId": 1088085227,
+"entityId": 2,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dexterity Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "dexterity-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789094,
+"componentTypeId": 1088085227,
+"entityId": 2,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dexterity Score",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-glaive",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": 2,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Glaive)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-glaive-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Glaive, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-glaive-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": 200,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Glaive, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "cleave-greataxe",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": 21,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Cleave (Greataxe)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "cleave-greataxe-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Cleave (Greataxe, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "cleave-greataxe-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789105,
+"componentTypeId": 1088085227,
+"entityId": 201,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Cleave (Greataxe, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "topple-battleaxe",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789106,
+"componentTypeId": 1088085227,
+"entityId": 19,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Topple (Battleaxe)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "topple-battleaxe-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789106,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Topple (Battleaxe, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "topple-battleaxe-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789106,
+"componentTypeId": 1088085227,
+"entityId": 199,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Topple (Battleaxe, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789107,
+"componentTypeId": 1088085227,
+"entityId": 8,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789107,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789107,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789107,
+"componentTypeId": 1088085227,
+"entityId": 195,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789107,
+"componentTypeId": 1088085227,
+"entityId": 215,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Wooden)",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [
+{
+"id": 930384559,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 9228807,
+"name": "Javelin of Lightning",
+"canAttune": false
+}
+},
+{
+"id": 954190658,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 11149390,
+"name": "Family Glaive of House Belmont",
+"canAttune": false
+}
+},
+{
+"id": 1094680884,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 12022730,
+"name": "Volraks Bracers of Obsidian Fury",
+"canAttune": false
+}
+},
+{
+"id": 903891417,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 2,
+"name": "Glaive",
+"canAttune": false
+}
+},
+{
+"id": 904711870,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 7,
+"name": "Handaxe",
+"canAttune": false
+}
+},
+{
+"id": 904711871,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 7,
+"name": "Handaxe",
+"canAttune": false
+}
+},
+{
+"id": 904711872,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 7,
+"name": "Handaxe",
+"canAttune": false
+}
+},
+{
+"id": 904711869,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 21,
+"name": "Greataxe",
+"canAttune": false
+}
+},
+{
+"id": 903891034,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 38,
+"name": "Clothes, Common",
+"canAttune": false
+}
+},
+{
+"id": 904711881,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 38,
+"name": "Clothes, Common",
+"canAttune": false
+}
+},
+{
+"id": 904711868,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 399,
+"name": "Backpack",
+"canAttune": false
+}
+},
+{
+"id": 904711873,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 7,
+"name": "Handaxe",
+"canAttune": false
+}
+},
+{
+"id": 1105684824,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 267,
+"name": "Pearl",
+"canAttune": false
+}
+},
+{
+"id": 904711875,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 393,
+"name": "Oil",
+"canAttune": false
+}
+},
+{
+"id": 904711876,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 411,
+"name": "Rations",
+"canAttune": false
+}
+},
+{
+"id": 904711877,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 415,
+"name": "Rope",
+"canAttune": false
+}
+},
+{
+"id": 904711874,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 420,
+"name": "Bedroll",
+"canAttune": false
+}
+},
+{
+"id": 904711878,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 434,
+"name": "Tinderbox",
+"canAttune": false
+}
+},
+{
+"id": 904711879,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 437,
+"name": "Torch",
+"canAttune": false
+}
+},
+{
+"id": 904711880,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 442,
+"name": "Waterskin",
+"canAttune": false
+}
+}
+],
+"feats": [
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789093,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789094,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789105,
+"name": "Weapon Mastery"
+}
+},
+{
+"definition": {
+"id": 1789106,
+"name": "4: Weapon Mastery"
+}
+},
+{
+"definition": {
+"id": 1789107,
+"name": "10: Weapon Mastery"
+}
+},
+{
+"definition": {
+"id": 2048517,
+"name": "Dark Bargain"
+}
+}
+]
+}
+}

@@ -177,7 +177,7 @@ const heroBg = npc.relationship === 'ally'
   function initializeDetailPage() {
     document.getElementById('editNPC')?.addEventListener('click', () => {
       const id = document.getElementById('editNPC')?.getAttribute('data-id');
-      if (id) window.location.href = `/npcs?edit=${id}`;
+      if (id) window.arandorGoTo(`/npcs?edit=${id}`);
     });
     document.getElementById('deleteNPC')?.addEventListener('click', async () => {
       const id = document.getElementById('deleteNPC')?.getAttribute('data-id');
@@ -186,7 +186,7 @@ const heroBg = npc.relationship === 'ally'
         try {
           const response = await fetch(`/api/npcs/${id}`, { method: 'DELETE' });
           if (response.ok) {
-            window.location.href = '/npcs';
+            window.arandorGoTo('/npcs');
           } else {
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
             alert(`Failed to delete NPC: ${error.error || response.statusText}`);

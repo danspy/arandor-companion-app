@@ -62,7 +62,7 @@ const copy = await db.select({ id: Creature.id }).from(Creature).where(eq(Creatu
     const copy = document.getElementById('srdCopy') as HTMLButtonElement | null;
     copy?.addEventListener('click', async () => {
       const creature = await ownCopy(copy.dataset.key!);
-      window.location.href = `/tools/bestiary/${creature.id}/edit`;
+      window.arandorGoTo(`/tools/bestiary/${creature.id}/edit`);
     });
   }
   document.addEventListener('astro:page-load', init);

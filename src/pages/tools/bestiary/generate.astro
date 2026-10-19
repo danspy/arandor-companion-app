@@ -115,7 +115,7 @@ const ROLE_HINTS: Record<string, string> = {
         (document.getElementById('genError') as HTMLElement).textContent = saved.error ?? 'Could not save.';
         return;
       }
-      window.location.href = `/tools/bestiary/${saved.id}`;
+      window.arandorGoTo(`/tools/bestiary/${saved.id}`);
     });
   }
   document.addEventListener('astro:page-load', init);

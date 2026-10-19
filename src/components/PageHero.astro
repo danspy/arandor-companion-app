@@ -251,7 +251,7 @@ const hasActions = Astro.slots.has('actions');
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ heroImageUrl }),
           });
-          if (response.ok) { window.location.reload(); }
+          if (response.ok) { window.arandorSoftReload(); }
           else { alert('Failed to update hero image'); }
         } catch (error) {
           console.error('Error updating hero image:', error);

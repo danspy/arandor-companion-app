@@ -1,0 +1,1578 @@
+{
+"data": {
+"id": 88666715,
+"name": "Sinatah Liadon",
+"baseHitPoints": 65,
+"bonusHitPoints": null,
+"overrideHitPoints": null,
+"removedHitPoints": 0,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 8
+},
+{
+"id": 2,
+"name": null,
+"value": 13
+},
+{
+"id": 3,
+"name": null,
+"value": 12
+},
+{
+"id": 4,
+"name": null,
+"value": 10
+},
+{
+"id": 5,
+"name": null,
+"value": 14
+},
+{
+"id": 6,
+"name": null,
+"value": 15
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": 12
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 10,
+"isStartingClass": true,
+"definition": {
+"name": "Warlock",
+"hitDice": 8
+},
+"subclassDefinition": {
+"name": "Fiend Patron"
+}
+},
+{
+"level": 3,
+"isStartingClass": false,
+"definition": {
+"name": "Sorcerer",
+"hitDice": 6
+},
+"subclassDefinition": {
+"name": "Wild Magic Sorcery"
+}
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "set-base",
+"subType": "darkvision",
+"value": 60,
+"fixedValue": 60,
+"statId": null,
+"componentId": 13856109,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 668550506,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Darkvision",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856111,
+"componentTypeId": 1960452172,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": "Made to avoid or end the Charmed condition"
+},
+{
+"type": "proficiency",
+"subType": "survival",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856112,
+"componentTypeId": 1960452172,
+"entityId": 15,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Survival",
+"restriction": ""
+},
+{
+"type": "immunity",
+"subType": "magical-sleep",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856113,
+"componentTypeId": 1960452172,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magical Sleep",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856116,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "elvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856116,
+"componentTypeId": 1960452172,
+"entityId": 3,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Elvish",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "draconic",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856116,
+"componentTypeId": 1960452172,
+"entityId": 11,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Draconic",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "innate-speed-walking",
+"value": 35,
+"fixedValue": 35,
+"statId": null,
+"componentId": 3727513,
+"componentTypeId": 306912077,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Innate Speed (Walking)",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "charisma-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 3727523,
+"componentTypeId": 306912077,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 3727523,
+"componentTypeId": 306912077,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "proficiency",
+"subType": "constitution-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292347,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Constitution Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "charisma-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292347,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-sorcerer-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292347,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Sorcerer Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-sorcerer-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292347,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Sorcerer Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292347,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292352,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "wisdom-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "charisma-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "history",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 7,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "History",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "investigation",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 8,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Investigation",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292367,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "resistance",
+"subType": "necrotic",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292968,
+"componentTypeId": 12168134,
+"entityId": 4,
+"entityTypeId": 349597128,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Necrotic",
+"restriction": ""
+},
+{
+"type": "eldritch-blast",
+"subType": "bonus-damage",
+"value": null,
+"fixedValue": null,
+"statId": 6,
+"componentId": 4496869,
+"componentTypeId": 258900837,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Bonus Damage",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "sorcerer-spell-save-dc",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 4496858,
+"componentTypeId": 258900837,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sorcerer Spell Save DC",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "spell-attacks",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 4496858,
+"componentTypeId": 258900837,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Spell Attacks",
+"restriction": "Advantage on Sorcerer Spell Attacks"
+}
+],
+"background": [
+{
+"type": "proficiency",
+"subType": "religion",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 34,
+"componentTypeId": 1669830167,
+"entityId": 10,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Religion",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "draconic",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 34,
+"componentTypeId": 1669830167,
+"entityId": 11,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Draconic",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "arcana",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 34,
+"componentTypeId": 1669830167,
+"entityId": 6,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Arcana",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "celestial",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 34,
+"componentTypeId": 1669830167,
+"entityId": 10,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Celestial",
+"restriction": ""
+}
+],
+"item": [
+{
+"type": "advantage",
+"subType": "stealth",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 4587,
+"componentTypeId": 112130694,
+"entityId": 5,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Stealth",
+"restriction": "Sound Only"
+},
+{
+"type": "bonus",
+"subType": "armor-class",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 5096,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Armor Class",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 5269,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "resistance",
+"subType": "cold",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 9229096,
+"componentTypeId": 112130694,
+"entityId": 6,
+"entityTypeId": 349597128,
+"requiresAttunement": true,
+"isGranted": true,
+"friendlySubtypeName": "Cold",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 5257,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "armor-class",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 9228474,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": true,
+"isGranted": true,
+"friendlySubtypeName": "Armor Class",
+"restriction": ""
+},
+{
+"type": "resistance",
+"subType": "fire",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 9228474,
+"componentTypeId": 112130694,
+"entityId": 7,
+"entityTypeId": 349597128,
+"requiresAttunement": true,
+"isGranted": true,
+"friendlySubtypeName": "Fire",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 9228474,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": true,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": "against the breath weapons of Dragons"
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 10832508,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+}
+],
+"feat": [
+{
+"type": "advantage",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 50,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": "made to maintain your concentration on a spell when you take damage"
+},
+{
+"type": "bonus",
+"subType": "charisma-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "charisma-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "charisma-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789133,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789134,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789174,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "intelligence-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 26,
+"componentTypeId": 1088085227,
+"entityId": 4,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Intelligence Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 27,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 27,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "expertise",
+"subType": "perception",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789174,
+"componentTypeId": 1088085227,
+"entityId": 14,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Perception",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1874753,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [
+{
+"id": 463131438,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 4587,
+"name": "Boots of Elvenkind",
+"canAttune": false
+}
+},
+{
+"id": 439448001,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 4768,
+"name": "Staff of the Python",
+"canAttune": true
+}
+},
+{
+"id": 923779660,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 5096,
+"name": "Studded Leather, +1",
+"canAttune": false
+}
+},
+{
+"id": 524639491,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 5257,
+"name": "Sling, +1",
+"canAttune": false
+}
+},
+{
+"id": 923782435,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 5269,
+"name": "Dagger, +2",
+"canAttune": false
+}
+},
+{
+"id": 759145274,
+"equipped": true,
+"isAttuned": true,
+"definition": {
+"id": 9229096,
+"name": "Staff of Frost",
+"canAttune": true
+}
+},
+{
+"id": 943598615,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 9229193,
+"name": "Wand of Secrets",
+"canAttune": false
+}
+},
+{
+"id": 906390705,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832508,
+"name": "Sinatahs Bow of Fog",
+"canAttune": false
+}
+},
+{
+"id": 396633997,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 20,
+"name": "Backpack",
+"canAttune": false
+}
+},
+{
+"id": 925229163,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 36,
+"name": "Chest",
+"canAttune": false
+}
+},
+{
+"id": 764256254,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 407,
+"name": "Quiver",
+"canAttune": false
+}
+},
+{
+"id": 711038896,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 538,
+"name": "Component Pouch",
+"canAttune": false
+}
+},
+{
+"id": 725032171,
+"equipped": true,
+"isAttuned": true,
+"definition": {
+"id": 4611,
+"name": "Cube of Force",
+"canAttune": true
+}
+},
+{
+"id": 439447902,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 4803,
+"name": "Wind Fan",
+"canAttune": false
+}
+},
+{
+"id": 459756798,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 4838,
+"name": "Figurine of Wondrous Power (Silver Raven)",
+"canAttune": false
+}
+},
+{
+"id": 923712422,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 9228421,
+"name": "Deck of Many Things",
+"canAttune": false
+}
+},
+{
+"id": 925229164,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 10,
+"name": "Leather",
+"canAttune": false
+}
+},
+{
+"id": 925229166,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 3,
+"name": "Dagger",
+"canAttune": false
+}
+},
+{
+"id": 925229167,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 3,
+"name": "Dagger",
+"canAttune": false
+}
+},
+{
+"id": 925229165,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 13,
+"name": "Sickle",
+"canAttune": false
+}
+},
+{
+"id": 396633999,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 11,
+"name": "Ink Pen",
+"canAttune": false
+}
+},
+{
+"id": 396634000,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 12,
+"name": "Parchment (one sheet)",
+"canAttune": false
+}
+},
+{
+"id": 925229187,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 38,
+"name": "Clothes, Common",
+"canAttune": false
+}
+},
+{
+"id": 459723077,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 71,
+"name": "Potion of Healing",
+"canAttune": false
+}
+},
+{
+"id": 459714449,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 83,
+"name": "Signal Whistle",
+"canAttune": false
+}
+},
+{
+"id": 463092879,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 106,
+"name": "Cartographer's Tools",
+"canAttune": false
+}
+},
+{
+"id": 441421308,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 111,
+"name": "Leatherworker's Tools",
+"canAttune": false
+}
+},
+{
+"id": 529339907,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 188,
+"name": "Saddle, Riding",
+"canAttune": false
+}
+},
+{
+"id": 396634001,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 211,
+"name": "Little Bag of Sand",
+"canAttune": false
+}
+},
+{
+"id": 396634002,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 212,
+"name": "Small Knife",
+"canAttune": false
+}
+},
+{
+"id": 925229171,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 395,
+"name": "Parchment",
+"canAttune": false
+}
+},
+{
+"id": 925229176,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 434,
+"name": "Tinderbox",
+"canAttune": false
+}
+},
+{
+"id": 925229169,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 439,
+"name": "Book",
+"canAttune": false
+}
+},
+{
+"id": 925229170,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 439,
+"name": "Book",
+"canAttune": false
+}
+},
+{
+"id": 724654234,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 476,
+"name": "Glass Bottle",
+"canAttune": false
+}
+},
+{
+"id": 925229174,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 496,
+"name": "Lamp",
+"canAttune": false
+}
+},
+{
+"id": 925229172,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 502,
+"name": "Ink Pen",
+"canAttune": false
+}
+},
+{
+"id": 774662009,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 9228474,
+"name": "Dragon Scale Mail (Red)",
+"canAttune": true
+}
+},
+{
+"id": 925229177,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 43,
+"name": "Crowbar",
+"canAttune": false
+}
+},
+{
+"id": 925229178,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 47,
+"name": "Hammer",
+"canAttune": false
+}
+},
+{
+"id": 925229181,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 50,
+"name": "Holy Water (flask)",
+"canAttune": false
+}
+},
+{
+"id": 925229182,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 60,
+"name": "Manacles",
+"canAttune": false
+}
+},
+{
+"id": 925229183,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 62,
+"name": "Mirror, Steel",
+"canAttune": false
+}
+},
+{
+"id": 925229184,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 63,
+"name": "Oil (flask)",
+"canAttune": false
+}
+},
+{
+"id": 925229185,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 90,
+"name": "Tinderbox",
+"canAttune": false
+}
+},
+{
+"id": 925229186,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 91,
+"name": "Torch",
+"canAttune": false
+}
+},
+{
+"id": 925229179,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 206,
+"name": "Stake (Wooden)",
+"canAttune": false
+}
+},
+{
+"id": 925229180,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 213,
+"name": "Holy Symbol",
+"canAttune": false
+}
+},
+{
+"id": 439424261,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 1,
+"name": "Arrows",
+"canAttune": false
+}
+},
+{
+"id": 396633998,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 9,
+"name": "Ink (1 ounce bottle)",
+"canAttune": false
+}
+},
+{
+"id": 441420642,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 50,
+"name": "Holy Water (flask)",
+"canAttune": false
+}
+},
+{
+"id": 659405273,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 255,
+"name": "Diamond",
+"canAttune": false
+}
+},
+{
+"id": 459653020,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 280,
+"name": "Obsidian",
+"canAttune": false
+}
+},
+{
+"id": 685296460,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 281,
+"name": "Tiger Eye",
+"canAttune": false
+}
+},
+{
+"id": 925229175,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 393,
+"name": "Oil",
+"canAttune": false
+}
+},
+{
+"id": 925229173,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 503,
+"name": "Ink",
+"canAttune": false
+}
+},
+{
+"id": 925229168,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 526,
+"name": "Orb",
+"canAttune": false
+}
+}
+],
+"feats": [
+{
+"definition": {
+"id": 26,
+"name": "Keen Mind"
+}
+},
+{
+"definition": {
+"id": 27,
+"name": "Lightly Armored"
+}
+},
+{
+"definition": {
+"id": 50,
+"name": "War Caster"
+}
+},
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789093,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789133,
+"name": "Elemental Adept"
+}
+},
+{
+"definition": {
+"id": 1789134,
+"name": "Elemental Adept"
+}
+},
+{
+"definition": {
+"id": 1789174,
+"name": "Observant"
+}
+},
+{
+"definition": {
+"id": 1874753,
+"name": "Fey Touched"
+}
+},
+{
+"definition": {
+"id": 2048517,
+"name": "Dark Bargain"
+}
+}
+]
+}
+}

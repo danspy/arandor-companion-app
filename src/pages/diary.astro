@@ -794,7 +794,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       });
 
       if (response.ok) {
-        window.location.reload();
+        window.arandorSoftReload();
       } else {
         alert('Failed to save entry. Please try again.');
       }
@@ -959,7 +959,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           });
 
           if (response.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to delete entry. Please try again.');
           }

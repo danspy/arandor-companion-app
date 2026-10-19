@@ -276,7 +276,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         });
 
         if (response.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to save quest. Please try again.');
         }
@@ -354,7 +354,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         });
 
         if (updateResponse.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to complete quest. Please try again.');
         }
@@ -379,7 +379,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         });
 
         if (updateResponse.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Unable to mark quest as failed. Please try again.');
         }
@@ -404,7 +404,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         });
 
         if (updateResponse.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to reactivate quest. Please try again.');
         }
@@ -425,7 +425,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           });
 
           if (response.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to delete quest. Please try again.');
           }

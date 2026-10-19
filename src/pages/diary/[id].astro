@@ -543,7 +543,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
     editBtn?.addEventListener('click', () => {
       const id = editBtn.getAttribute('data-id');
       if (id) {
-        window.location.href = `/diary?edit=${id}`;
+        window.arandorGoTo(`/diary?edit=${id}`);
       }
     });
     
@@ -558,7 +558,7 @@ const galleryUrls: string[] = Array.isArray(entry.galleryUrls) ? entry.galleryUr
         });
         
         if (response.ok) {
-          window.location.href = '/diary';
+          window.arandorGoTo('/diary');
         } else {
           const error = await response.json().catch(() => ({ error: 'Unknown error' }));
           showError(`Failed to delete entry: ${error.error || response.statusText}`);

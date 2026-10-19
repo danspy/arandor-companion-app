@@ -222,7 +222,7 @@ const npcRelBadge = (rel: string) =>
   function initializeDetailPage() {
     document.getElementById('editLocation')?.addEventListener('click', () => {
       const id = document.getElementById('editLocation')?.getAttribute('data-id');
-      if (id) window.location.href = `/locations?edit=${id}`;
+      if (id) window.arandorGoTo(`/locations?edit=${id}`);
     });
     document.getElementById('deleteLocation')?.addEventListener('click', async () => {
       const id = document.getElementById('deleteLocation')?.getAttribute('data-id');
@@ -231,7 +231,7 @@ const npcRelBadge = (rel: string) =>
         try {
           const response = await fetch(`/api/locations/${id}`, { method: 'DELETE' });
           if (response.ok) {
-            window.location.href = '/locations';
+            window.arandorGoTo('/locations');
           } else {
             const error = await response.json().catch(() => ({ error: 'Unknown error' }));
             alert(`Failed to delete location: ${error.error || response.statusText}`);

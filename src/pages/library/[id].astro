@@ -139,7 +139,7 @@ const renderedContent = renderMarkdown(entry.content);
     editBtn?.addEventListener('click', () => {
       const entryId = editBtn.getAttribute('data-id');
       if (entryId) {
-        window.location.href = `/library/docs?edit=${entryId}`;
+        window.arandorGoTo(`/library/docs?edit=${entryId}`);
       }
     });
     
@@ -154,7 +154,7 @@ const renderedContent = renderMarkdown(entry.content);
           });
           
           if (response.ok) {
-            window.location.href = '/library/docs';
+            window.arandorGoTo('/library/docs');
           } else {
             alert('Failed to delete entry. Please try again.');
           }

@@ -316,7 +316,7 @@ const { creature, npcs, openPaste } = Astro.props;
         error.textContent = saved.error ?? 'Could not save.';
         return;
       }
-      window.location.href = `/tools/bestiary/${saved.id ?? id}`;
+      window.arandorGoTo(`/tools/bestiary/${saved.id ?? id}`);
     });
 
     render();
