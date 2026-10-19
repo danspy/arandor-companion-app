@@ -382,6 +382,20 @@ test.describe('Music player', () => {
     expect(await paused(page)).toBe(true);
   });
 
+  test('mini bar shows a display-only progress line', async ({ page }) => {
+    await start(page);
+    const fill = page.locator('#music-bar #music-progress-fill');
+    await expect(page.locator('#music-bar #music-progress')).toBeVisible();
+    const frac = async () => fill.evaluate((e: HTMLElement) => Number(/scaleX\(([\d.e-]+)\)/.exec(e.style.transform)?.[1] ?? NaN));
+    await expect.poll(frac).toBeGreaterThan(0);
+    const a = await frac();
+    await page.waitForTimeout(1500);
+    expect(await frac()).toBeGreaterThan(a);
+    await page.screenshot({ path: `${process.env.SHOT_DIR ?? '/tmp'}/minibar-${test.info().project.name}.png` });
+    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await expect(page.locator('#music-bar')).toBeHidden();
+  });
+
   test('skips unplayable', async ({ page }) => {
     const missing = { id: 'missing', kind: 'file', title: 'Ghost', ref: '/uploads/music/nope.wav' };
     await start(page, [missing, ...asQueue(playlist.tracks).slice(0, 1)]);
@@ -905,6 +919,48 @@ test.describe('DM screen music', () => {
       await expect(dp.locator('#music-root')).toHaveCount(0);
     } finally {
       await dm.request.delete(`/api/music/playlists/${id}`);
+      await dm.close();
+    }
+  });
+
+  test('seek row follows the selected playlist and seeks', async ({ browser }) => {
+    const dm = await browser.newContext();
+    await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+    const ids: string[] = [];
+    try {
+      for (const n of ['A', 'B']) {
+        const res = await dm.request.post('/api/music/playlists', { data: { name: `E2E seek${n} ${Date.now()}` } });
+        const id = (await res.json()).playlist?.id ?? (await res.json()).id;
+        ids.push(id);
+        const up = await dm.request.post(`/api/music/playlists/${id}/tracks`, {
+          multipart: { file: { name: `Seek${n}.wav`, mimeType: 'audio/wav', buffer: wav(20) } },
+        });
+        expect(up.status()).toBe(201);
+      }
+      const page = await dm.newPage();
+      await page.goto('/tools/dm-screen');
+      const panel = page.locator('#dm-music');
+      const row = panel.locator('#dmm-seek-row');
+      await expect(row).toBeHidden();
+      await panel.locator('#dmm-select').selectOption(ids[0]);
+      await panel.locator('[data-dmm-play]').first().click();
+      await expect(row).toBeVisible();
+      const pos = panel.locator('#dmm-pos');
+      await expect(pos).not.toHaveText('0:00');
+      const t0 = await pos.textContent();
+      await expect(pos).not.toHaveText(t0!, { timeout: 3000 });
+      await expect(panel.locator('#dmm-dur')).toHaveText('0:20');
+      await page.screenshot({ path: `${process.env.SHOT_DIR ?? '/tmp'}/dmscreen-${test.info().project.name}.png` });
+      const seek = panel.getByRole('slider', { name: 'Seek' });
+      await seek.evaluate((e: HTMLInputElement) => { e.value = '10'; e.dispatchEvent(new Event('change', { bubbles: true })); });
+      await expect.poll(() => page.evaluate(() => window.__music.getState().position)).toBeGreaterThanOrEqual(9.5);
+      await panel.locator('#dmm-select').selectOption(ids[1]);
+      await expect(panel.locator('[data-dmm-row]')).toHaveCount(1);
+      await expect(row).toBeHidden();
+      await panel.locator('#dmm-select').selectOption(ids[0]);
+      await expect(row).toBeVisible();
+    } finally {
+      for (const id of ids) await dm.request.delete(`/api/music/playlists/${id}`);
       await dm.close();
     }
   });

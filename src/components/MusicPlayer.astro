@@ -55,6 +55,7 @@
     <button type="button" id="music-close" class="music-btn" aria-label="Stop and close player" title="Stop and close">
       <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
     </button>
+    <div id="music-progress" class="music-progress" hidden aria-hidden="true"><div id="music-progress-fill" class="music-progress-fill"></div></div>
   </div>
 </div>
 
@@ -86,6 +87,9 @@
     background-color: var(--bg-raised);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
+  /* Display-only progress line along the bottom edge (same look as the dashboard panel's) */
+  .music-progress { position: absolute; left: 0; right: 0; bottom: 0; height: 2px; background: var(--accent-dim); pointer-events: none; }
+  .music-progress-fill { height: 100%; width: 100%; background: var(--gold); transform-origin: left; transform: scaleX(0); transition: transform 0.25s linear; }
   .music-title {
     flex: 1 1 auto;
     min-width: 0;
@@ -185,19 +189,14 @@
     html.pwa-dock-tucked .music-root { --music-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .music-root { transition: none; }
+    .music-root, .music-progress-fill { transition: none; }
   }
 </style>
 
 <script>
-  import { music, MUSIC_STATE_EVENT, type MusicState } from '../lib/music/player';
+  import { music, MUSIC_STATE_EVENT, fmtTime as fmt, type MusicState } from '../lib/music/player';
 
   const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T | null;
-  const fmt = (s: number) => {
-    s = Math.max(0, Math.floor(s || 0));
-    const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = String(s % 60).padStart(2, '0');
-    return h ? `${h}:${String(m).padStart(2, '0')}:${sec}` : `${m}:${sec}`;
-  };
   const REPEAT_NEXT = { off: 'all', all: 'one', one: 'off' } as const;
   const REPEAT_LABEL = { off: 'Repeat: off', all: 'Repeat: all', one: 'Repeat: this track' } as const;
 
@@ -218,6 +217,7 @@
       expand.setAttribute('aria-expanded', 'false');
     }
     $('music-yt-tile')!.hidden = !s.youtubeVisible;
+    renderProgress(empty ? null : s);
     if (empty) return;
 
     const cur = s.queue[s.index];
@@ -234,6 +234,21 @@
     if (document.activeElement !== vol) vol.value = String(s.volume);
 
     if (!panel.hidden) renderPanel(s);
+  }
+
+  function renderProgress(s: MusicState | null) {
+    const bar = $('music-progress');
+    const fill = $('music-progress-fill');
+    if (!bar || !fill) return;
+    const show = !!s && s.duration > 0;
+    if (bar.hidden === show) bar.hidden = !show;
+    // Reset when hidden so the fill does not sweep backwards when the bar reappears
+    const v = show ? Math.min(1, Math.max(0, s!.position / s!.duration)) : 0;
+    const t = `scaleX(${v})`;
+    if (fill.style.transform !== t) {
+      if (!show) fill.style.transition = 'none'; else fill.style.transition = '';
+      fill.style.transform = t;
+    }
   }
 
   function renderPanel(s: MusicState) {

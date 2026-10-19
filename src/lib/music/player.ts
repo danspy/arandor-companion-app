@@ -56,6 +56,13 @@ declare global {
   }
 }
 
+/** m:ss (h:mm:ss from an hour up) */
+export function fmtTime(sec: number): string {
+  const s = Math.max(0, Math.floor(sec || 0));
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), ss = String(s % 60).padStart(2, '0');
+  return h ? `${h}:${String(m).padStart(2, '0')}:${ss}` : `${m}:${ss}`;
+}
+
 export const MUSIC_STATE_EVENT = 'music:state';
 const STORAGE_KEY = 'arandor.music';
 const TIME_EMIT_MS = 250; // time updates: at most 4 events per second

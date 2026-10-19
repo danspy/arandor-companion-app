@@ -1,6 +1,6 @@
 // DM screen music panel: pick a playlist, see its tracks, play from a row, transport controls.
 // Reads the playlist API and drives the global store (player.ts); writes nothing to /api/dm-screen.
-import { music, MUSIC_STATE_EVENT, type MusicState, type QueueTrack, type RepeatMode } from './player';
+import { music, MUSIC_STATE_EVENT, fmtTime, type MusicState, type QueueTrack, type RepeatMode } from './player';
 
 type Summary = { id: string; name: string; visibility: string; isSiteDefault: boolean; ownerId: string; ownerName: string; trackCount: number; canEdit: boolean };
 
@@ -62,7 +62,13 @@ export function mountMusicPicker(host: HTMLElement): void {
   const list = el('ul', { id: 'dmm-tracks', class: 'space-y-1 max-h-64 overflow-y-auto' });
   const empty = el('p', { class: 't-faint text-xs', text: 'Pick a playlist to see its tracks.' });
   const controls = el('div', { class: 'flex items-center gap-2' }, prevBtn, toggleBtn, nextBtn, shuffleBtn, repeatBtn);
-  host.replaceChildren(select, controls, empty, list);
+  const posLabel = el('span', { id: 'dmm-pos', class: 't-faint text-xs tabular-nums', text: '0:00' });
+  const durLabel = el('span', { id: 'dmm-dur', class: 't-faint text-xs tabular-nums', text: '0:00' });
+  const seek = el('input', { id: 'dmm-seek', type: 'range', min: '0', max: '0', step: '0.1', value: '0', 'aria-label': 'Seek', class: 'flex-1 min-w-0', style: 'accent-color: var(--gold)' }) as HTMLInputElement;
+  const seekRow = el('div', { id: 'dmm-seek-row', class: 'flex items-center gap-2' }, posLabel, seek, durLabel);
+  seekRow.hidden = true;
+  let seeking = false;
+  host.replaceChildren(select, controls, seekRow, empty, list);
 
   function renderRows() {
     list.replaceChildren();
@@ -85,6 +91,21 @@ export function mountMusicPicker(host: HTMLElement): void {
       if (cur) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
       row.style.outline = cur ? '1px solid var(--accent, currentColor)' : '';
     });
+    // Seek row: only while the playing source is the selected playlist and the duration is known
+    const showSeek = here && s.duration > 0;
+    if (seekRow.hidden === showSeek) seekRow.hidden = !showSeek;
+    if (showSeek) {
+      const max = String(s.duration);
+      if (seek.max !== max) seek.max = max;
+      if (!seeking) {
+        const v = String(s.position);
+        if (seek.value !== v) seek.value = v;
+        const p = fmtTime(s.position);
+        if (posLabel.textContent !== p) posLabel.textContent = p;
+      }
+      const d = fmtTime(s.duration);
+      if (durLabel.textContent !== d) durLabel.textContent = d;
+    }
     const label = s.playing ? 'Pause' : 'Play';
     toggleBtn.setAttribute('aria-label', label); toggleBtn.title = label;
     toggleBtn.replaceChildren(icon(s.playing ? PAUSE : PLAY));
@@ -101,6 +122,8 @@ export function mountMusicPicker(host: HTMLElement): void {
     if (!s.queue.length && selected && tracks.length) music.playPlaylist({ id: selected.id, name: selected.name, tracks }, 0);
     else music.toggle();
   });
+  seek.addEventListener('input', () => { seeking = true; posLabel.textContent = fmtTime(Number(seek.value)); });
+  seek.addEventListener('change', () => { seeking = false; music.seek(Number(seek.value)); });
   prevBtn.addEventListener('click', () => music.prev());
   nextBtn.addEventListener('click', () => music.next());
   shuffleBtn.addEventListener('click', () => music.setShuffle(!music.getState().shuffle));
