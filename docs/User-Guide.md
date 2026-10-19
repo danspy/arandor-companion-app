@@ -111,11 +111,29 @@ diary appearances. DMs can complete, fail, reactivate, edit and delete a quest f
   the dice roll; your selection stays for the next roll.
 - **Reset** clears the dice, the modifier, and any dice still on screen.
 - **Press and hold** the button to roll a d20 straight away.
+- **Type a roll** at the bottom of the panel: `1d20+5`, `2d6+1d4+3`, `1d20-1d4`, or German
+  `1W20+5`. Dice d4, d6, d8, d10, d12, d20 and d100, up to 50 per roll. A typo is explained
+  instead of rolled.
+- **My rolls** (when logged in): your saved rolls, one tap each. The **Normal / Adv / Dis**
+  switch above them gives the next roll advantage or disadvantage on its d20 and then goes back
+  to *Normal*.
 - 3D dice tumble across the page; the result card shows the total, each die, and highlights a
-  natural 20 or a critical fail. Tap the card to close it.
+  natural 20 or a critical fail. A saved roll with several parts shows each part on its own
+  line ("To hit 17", "Slashing 9"). Tap the card to close it.
 
 **Dice roller page** (`/tools/dice-roller`): the same with more room, and a history of your
 last rolls (kept in your browser; *Clear history* empties it).
+
+**My rolls** (dice roller page, logged in): save the rolls you make all the time, kept on your
+account so they are on every device. *New roll* opens the editor: a name and 1–4 rolls, each
+with a label, e.g. **Longsword**: *To hit* `1d20+5`, *Slashing* `1d8+3`. Each roll is checked
+as you type. Edit (✎), move (↑ ↓) and delete (✕) them in the list; *Save as preset* next to the
+current dice selection starts a new one from it. Up to 30 per person.
+
+- All dice of a saved roll are thrown at once.
+- Advantage/disadvantage applies to the first part that is a single d20 (the attack or check).
+- When that d20 shows a natural 20, the dice of the parts after it are rolled once more and
+  added (critical hit; the extra dice are shown in green). Bonuses are not doubled.
 
 With *reduce motion* switched on in your device settings, dice are rolled without animation.
 

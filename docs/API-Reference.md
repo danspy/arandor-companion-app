@@ -21,6 +21,8 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 | `/api/auth/login` | POST | `{username, password}` → sets the `session` cookie | public |
 | `/api/auth/logout` | POST | Clears the cookie | public |
 | `/api/profile` | GET | Own profile | login |
+| `/api/dice-presets` | GET | Own saved dice rolls (`[{ id, name, parts: [{ label, expr }] }]`) | login |
+| `/api/dice-presets` | PUT | Replace own list (max 30 presets, 1–4 parts, every roll checked and stored as e.g. `1d20+5`); 400 with a readable `error` | login |
 | `/api/profile` | PUT | Update own `firstName`, `profileImageUrl`, `characterIds`, `favoritePages` (max 4); password change with `currentPassword` + `newPassword` (min. 6 chars) | login |
 | `/api/users` | GET, POST | List users / create a user (username ≥ 3, password ≥ 6, role) | admin |
 | `/api/users/[id]` | GET, PUT, DELETE | Read / change role, name, password (`adminPasswordReset: true` skips the current password) / delete. The user `admin` cannot be deleted | admin |

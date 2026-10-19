@@ -2,6 +2,13 @@ What's new in the Arandor Companion App, newest first.
 
 ## October 2026
 
+### Dice: saved rolls
+- Save your own rolls, like a weapon attack with to hit and damage, under *My rolls* on the
+  dice roller page; they are on your account and one tap away in the dice button everywhere
+- Advantage or disadvantage for the next saved roll; a natural 20 on the attack doubles the
+  damage dice automatically
+- Type any roll, e.g. `2d6+1d4+3` or `1W20+5`, in the dice button or on the dice roller page
+
 ### DM screen and player display
 - Put party characters in the spotlight, not just NPCs: one list with both, their portraits
   look the same on the display

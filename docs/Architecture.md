@@ -114,6 +114,14 @@ button (`DiceFab.astro`) and `/tools/dice-roller` call `roll()`; each finished r
 the browser (last 20) and announced as a `arandor:dice-roll` event, which the result banner
 shows. Without WebGL or with reduced motion, rolls fall back to plain random numbers.
 
+Written rolls and presets: `src/lib/dice-notation.ts` (pure, used in the browser and by
+`/api/dice-presets`) parses `2d6+1d4+3` and checks preset lists. `rollParts()` in `dice.ts`
+rolls one or more labelled parts in a single throw, applies advantage to the first lone-d20 part
+and, on a natural 20 there, throws the later parts' dice again (`box.add`, so the first dice stay
+on the table). Results carry `parts`; dice are handed back to the parts by type. Presets live in
+`User.dicePresets`; the dice button loads them each time its panel opens, and the roller page
+announces changes with `arandor:dice-presets-changed`.
+
 ## The world map
 
 See [World map](World-Map.md).

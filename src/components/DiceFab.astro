@@ -11,6 +11,7 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     <span class="dice-banner-formula"></span>
     <span class="dice-banner-total"></span>
     <span class="dice-banner-detail"></span>
+    <span class="dice-banner-parts"></span>
     <span class="dice-banner-crit"></span>
   </button>
 </div>
@@ -21,6 +22,20 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
       <span class="t-section-h text-base">Roll the dice</span>
       <a href="/tools/dice-roller" class="t-link text-xs">Full roller →</a>
     </div>
+
+    <!-- The logged-in user's saved rolls (loaded from /api/dice-presets when the panel opens) -->
+    <section id="dice-fab-presets" class="dice-presets mb-3" hidden>
+      <div class="flex items-center justify-between gap-2 mb-2">
+        <span class="t-label">My rolls</span>
+        <div class="dice-mode" role="group" aria-label="Advantage for the next roll">
+          <button type="button" data-mode="normal" aria-pressed="true">Normal</button>
+          <button type="button" data-mode="advantage" aria-pressed="false" title="Advantage on the d20">Adv</button>
+          <button type="button" data-mode="disadvantage" aria-pressed="false" title="Disadvantage on the d20">Dis</button>
+        </div>
+      </div>
+      <div id="dice-fab-preset-list" class="dice-preset-list"></div>
+      <a id="dice-fab-presets-empty" href="/tools/dice-roller#my-rolls" class="t-link text-xs" hidden>Save your first roll (e.g. your weapon attack) →</a>
+    </section>
 
     <div class="grid grid-cols-3 gap-2 mb-3">
       <button type="button" class="dice-quick" data-quick="normal">d20</button>
@@ -47,6 +62,12 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
       <button type="button" id="dice-fab-roll" class="t-btn-primary flex-1 justify-center py-2" disabled>Roll</button>
     </div>
     <p id="dice-fab-formula" class="t-faint text-xs mt-2 text-center min-h-4"></p>
+
+    <form id="dice-fab-typed" class="flex gap-2 mt-2" novalidate>
+      <input id="dice-fab-expr" class="t-input dice-expr" placeholder="Type a roll, e.g. 2d6+3" aria-label="Type a roll" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" />
+      <button type="submit" class="t-btn-secondary text-sm px-3">Roll</button>
+    </form>
+    <p id="dice-fab-expr-error" class="dice-expr-error text-xs mt-1" hidden></p>
   </div>
 
   <button
@@ -114,6 +135,15 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   }
   .dice-banner-detail { font-size: 0.75rem; color: var(--text-faint); }
   .dice-banner-detail s { opacity: 0.6; }
+  /* Several parts (presets): one line each, "To hit 17 · Slashing 9" */
+  .dice-banner-parts { display: grid; grid-template-columns: auto auto; column-gap: 1rem; align-items: baseline; margin-top: 0.15rem; }
+  .dice-banner-parts:empty { display: none; }
+  .dice-banner-part-label { justify-self: end; font-size: 0.8rem; color: var(--text-muted); }
+  .dice-banner-part-total { justify-self: start; font-family: 'Cormorant Garamond', Georgia, serif; font-size: 2.4rem; font-weight: 700; line-height: 1.05; color: var(--gold); }
+  .dice-banner-part-detail { grid-column: 1 / -1; justify-self: center; font-size: 0.7rem; color: var(--text-faint); margin: -0.1rem 0 0.35rem; }
+  .dice-banner-part-detail s { opacity: 0.6; }
+  .dice-banner-part-detail b { color: #10b981; font-weight: 600; }
+  .dice-banner-total[hidden] { display: none; }
   .dice-banner-crit { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; }
   .dice-banner-crit:empty { display: none; }
 
@@ -223,6 +253,26 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   .dice-step { width: 2rem; padding-inline: 0; }
   .dice-mod { width: 3.25rem; padding: 0.4rem 0.25rem; text-align: center; }
 
+  /* My rolls */
+  .dice-presets[hidden], .dice-expr-error[hidden] { display: none; }
+  .dice-preset-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; }
+  .dice-preset {
+    display: flex; flex-direction: column; align-items: flex-start; gap: 0.1rem; min-width: 0;
+    padding: 0.45rem 0.6rem; text-align: left;
+    background: var(--bg-surface); border: 1px solid var(--border-gold); border-radius: 2px;
+    cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  }
+  .dice-preset:hover { border-color: var(--gold); background: var(--accent-dim); }
+  .dice-preset:active { transform: scale(0.97); }
+  .dice-preset-name { max-width: 100%; font-size: 0.85rem; font-weight: 600; color: var(--gold); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dice-preset-formula { max-width: 100%; font-size: 0.7rem; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dice-mode { display: inline-flex; border: 1px solid var(--border-gold); border-radius: 2px; overflow: hidden; }
+  .dice-mode button { padding: 0.2rem 0.5rem; font-size: 0.7rem; font-weight: 600; color: var(--text-muted); background: none; cursor: pointer; }
+  .dice-mode button + button { border-left: 1px solid var(--border-gold); }
+  .dice-mode button[aria-pressed='true'] { color: var(--on-gold, #1a1208); background: var(--gold); }
+  .dice-expr { flex: 1; min-width: 0; padding: 0.4rem 0.6rem; font-size: 0.85rem; }
+  .dice-expr-error { color: var(--danger, #ef4444); }
+
   .dice-pick-count {
     position: absolute;
     top: -0.5rem;
@@ -300,10 +350,13 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
 </style>
 
 <script>
+  import { parseRoll, formatRoll, type DicePreset } from '../lib/dice-notation';
   import {
     DIE_TYPES,
     ROLL_EVENT,
+    PRESETS_CHANGED_EVENT,
     roll,
+    rollParts,
     warmUp,
     clearTable,
     formatSelection,
@@ -325,7 +378,15 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   const formulaEl = document.getElementById('dice-fab-formula') as HTMLParagraphElement;
   const bannerCard = document.querySelector('#dice-result-banner .dice-banner-card') as HTMLButtonElement;
 
+  const presetsSection = document.getElementById('dice-fab-presets') as HTMLElement;
+  const presetList = document.getElementById('dice-fab-preset-list') as HTMLDivElement;
+  const presetsEmpty = document.getElementById('dice-fab-presets-empty') as HTMLAnchorElement;
+  const typedForm = document.getElementById('dice-fab-typed') as HTMLFormElement;
+  const exprInput = document.getElementById('dice-fab-expr') as HTMLInputElement;
+  const exprError = document.getElementById('dice-fab-expr-error') as HTMLParagraphElement;
+
   const selection: DiceSelection = {};
+  let presetMode: RollMode = 'normal';
   let bannerTimer: ReturnType<typeof setTimeout> | null = null;
 
   const modifier = () => parseInt(modInput.value || '0') || 0;
@@ -339,8 +400,100 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
   function setOpen(open: boolean) {
     panel.hidden = !open;
     fab.setAttribute('aria-expanded', String(open));
-    if (open) warmUp();
+    if (open) {
+      warmUp();
+      void loadPresets();
+    }
   }
+
+  // ── My rolls ──
+  // Shown from memory at once, refreshed from the server each time the panel opens (presets
+  // may have been edited on another device or on the dice roller page). Logged out: hidden.
+  let presets: DicePreset[] | null = null;
+
+  async function loadPresets() {
+    renderPresets();
+    try {
+      const res = await fetch('/api/dice-presets', { cache: 'no-store' });
+      presets = res.ok ? ((await res.json()) as DicePreset[]) : null;
+    } catch {
+      // offline: keep what we had
+    }
+    renderPresets();
+  }
+
+  function renderPresets() {
+    presetsSection.hidden = presets === null;
+    if (!presets) return;
+    presetsEmpty.hidden = presets.length > 0;
+    presetList.replaceChildren(
+      ...presets.map((p) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'dice-preset';
+        btn.title = p.parts.map((part) => [part.label, part.expr].filter(Boolean).join(' ')).join(' · ');
+        const name = document.createElement('span');
+        name.className = 'dice-preset-name';
+        name.textContent = p.name;
+        const formula = document.createElement('span');
+        formula.className = 'dice-preset-formula';
+        formula.textContent = p.parts.map((part) => part.expr).join(' · ');
+        btn.append(name, formula);
+        btn.addEventListener('click', () => {
+          setOpen(false);
+          const mode = presetMode;
+          setPresetMode('normal'); // advantage is for one roll, not for the rest of the evening
+          void doRollParts(p.parts, mode, p.name);
+        });
+        return btn;
+      })
+    );
+  }
+
+  function setPresetMode(mode: RollMode) {
+    presetMode = mode;
+    for (const b of presetsSection.querySelectorAll<HTMLButtonElement>('.dice-mode button')) {
+      b.setAttribute('aria-pressed', String(b.dataset.mode === mode));
+    }
+  }
+  for (const b of presetsSection.querySelectorAll<HTMLButtonElement>('.dice-mode button')) {
+    b.addEventListener('click', () => setPresetMode(b.dataset.mode as RollMode));
+  }
+  window.addEventListener(PRESETS_CHANGED_EVENT, (e) => {
+    presets = (e as CustomEvent<DicePreset[]>).detail;
+    renderPresets();
+  });
+
+  async function doRollParts(parts: DicePreset['parts'], mode: RollMode = 'normal', name?: string) {
+    fab.classList.add('is-rolling');
+    try {
+      await rollParts(parts, { mode, name });
+    } finally {
+      fab.classList.remove('is-rolling');
+    }
+  }
+
+  // ── Typed roll ──
+  function checkTyped() {
+    const text = exprInput.value.trim();
+    const parsed = text ? parseRoll(text) : null;
+    exprError.hidden = !parsed || parsed.ok;
+    if (parsed && !parsed.ok) exprError.textContent = parsed.error;
+    return parsed;
+  }
+  exprInput.addEventListener('input', () => {
+    if (!exprError.hidden) checkTyped();
+  });
+  typedForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const parsed = checkTyped();
+    if (!parsed?.ok) {
+      if (!parsed) exprInput.focus();
+      return;
+    }
+    setOpen(false);
+    void doRollParts([{ label: '', expr: formatRoll(parsed.roll) }]);
+  });
 
   function renderSelection() {
     for (const btn of panel.querySelectorAll<HTMLButtonElement>('.dice-pick[data-die]')) {
@@ -389,19 +542,31 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     const detail = bannerCard.querySelector('.dice-banner-detail') as HTMLSpanElement;
     const crit = bannerCard.querySelector('.dice-banner-crit') as HTMLSpanElement;
 
+    const partsEl = bannerCard.querySelector('.dice-banner-parts') as HTMLSpanElement;
+    const multi = !!r.parts && r.parts.length > 1;
+
     formula.textContent = r.formula;
     total.textContent = String(r.total);
-    detail.innerHTML = '';
-    if (r.dice.length > 1 || r.modifier !== 0) {
-      r.dice.forEach((d, i) => {
-        if (i > 0) detail.append(' + ');
-        const el = document.createElement(d.dropped ? 's' : 'span');
-        el.textContent = String(d.value);
-        detail.append(el);
+    total.hidden = multi;
+    detail.replaceChildren(...(multi ? [] : diceDetail(r, 0)));
+    partsEl.replaceChildren();
+    if (multi) {
+      r.parts!.forEach((p, i) => {
+        const label = document.createElement('span');
+        label.className = 'dice-banner-part-label';
+        label.textContent = p.label || p.formula;
+        const value = document.createElement('span');
+        value.className = 'dice-banner-part-total';
+        value.textContent = String(p.total);
+        const small = document.createElement('span');
+        small.className = 'dice-banner-part-detail';
+        small.append(...diceDetail(r, i));
+        partsEl.append(label, value, small);
       });
-      if (r.modifier !== 0) detail.append(` ${r.modifier > 0 ? '+' : '−'} ${Math.abs(r.modifier)}`);
     }
-    crit.textContent = r.crit === 'success' ? 'Natural 20!' : r.crit === 'fail' ? 'Critical fail' : '';
+    crit.textContent = r.critDoubled
+      ? 'Critical hit! Damage dice doubled'
+      : r.crit === 'success' ? 'Natural 20!' : r.crit === 'fail' ? 'Critical fail' : '';
 
     // Restart the entrance animation.
     bannerCard.hidden = true;
@@ -415,7 +580,24 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     }
 
     if (bannerTimer) clearTimeout(bannerTimer);
-    bannerTimer = setTimeout(() => (bannerCard.hidden = true), r.crit ? 6000 : 4500);
+    // Several parts take longer to read
+    bannerTimer = setTimeout(() => (bannerCard.hidden = true), r.crit || multi ? 6500 : 4500);
+  }
+
+  // "4 + 3 + 2" for one part: dropped dice struck through, a critical hit's extra dice in green
+  function diceDetail(r: RollRecord, part: number): Node[] {
+    const dice = r.parts ? r.dice.filter((d) => (d.part ?? 0) === part) : r.dice;
+    const modifier = r.parts ? r.parts[part].modifier : r.modifier;
+    if (dice.length <= 1 && modifier === 0) return [];
+    const out: Node[] = [];
+    dice.forEach((d, i) => {
+      if (i > 0 || d.negative) out.push(document.createTextNode(d.negative ? ' − ' : ' + '));
+      const el = document.createElement(d.dropped ? 's' : d.bonus ? 'b' : 'span');
+      el.textContent = String(d.value);
+      out.push(el);
+    });
+    if (modifier !== 0) out.push(document.createTextNode(` ${modifier > 0 ? '+' : '−'} ${Math.abs(modifier)}`));
+    return out;
   }
 
   bannerCard.addEventListener('click', () => (bannerCard.hidden = true));
