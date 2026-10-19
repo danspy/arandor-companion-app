@@ -10,7 +10,8 @@ interface Props {
 
 const { playlist, canEdit } = Astro.props;
 const tracks = playlist?.tracks ?? [];
-const show = !!playlist && (tracks.length > 0 || canEdit);
+// Hidden while the site playlist is empty, or when an admin/DM switched it off on Tools → Music.
+const show = !!playlist && playlist.showOnDashboard && tracks.length > 0;
 const data = playlist
   ? { id: playlist.id, name: playlist.name, tracks: tracks.map((t) => ({ id: t.id, kind: t.kind, title: t.title, ref: t.ref })) }
   : null;
@@ -23,7 +24,7 @@ const data = playlist
         <svg class="tm-h-icon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18V5l12-2v13" /><circle cx="6" cy="18" r="3" /><circle cx="18" cy="16" r="3" /></svg>
         Tavern music
       </h2>
-      <span class="tm-name t-muted">{tracks.length > 0 ? `${playlist.name} · ${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}` : 'No tracks yet'}</span>
+      <span class="tm-name t-muted">{`${playlist.name} · ${tracks.length} ${tracks.length === 1 ? 'track' : 'tracks'}`}</span>
       <div class="tm-actions">
         {tracks.length > 0 && (
           <>

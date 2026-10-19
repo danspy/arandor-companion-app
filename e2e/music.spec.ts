@@ -1213,23 +1213,79 @@ test.describe('Dashboard music', () => {
     await Promise.all([admin, dm].map((c) => c?.close()));
   });
 
-  test('empty site playlist: visitors see no panel, a dm sees it with Edit', async ({ browser }) => {
+  test('empty site playlist: nobody sees the panel, not even a dm', async ({ browser }) => {
     // The site playlist must be empty for this test; existing tracks are not deleted (they could be real data)
     test.skip(originalIds.length > 0, 'Site playlist already has tracks');
     const visitor = await browser.newContext();
     const vp = await visitor.newPage();
     await vp.goto('/');
     await expect(vp.locator('h1').first()).toBeVisible();
-    await expect(vp.getByText('Tavern music')).toHaveCount(0);
+    await expect(vp.locator('#tavern-music')).toHaveCount(0);
     await visitor.close();
 
     const page = await dm.newPage();
     await page.goto('/');
-    const panel = page.locator('#tavern-music');
-    await expect(panel).toContainText('Tavern music');
-    await expect(panel).toContainText('No tracks yet');
-    await expect(panel.getByRole('link', { name: 'Edit' })).toHaveAttribute('href', `/tools/music?playlist=${siteId}`);
+    await expect(page.locator('h1').first()).toBeVisible();
+    await expect(page.locator('#tavern-music')).toHaveCount(0);
     await page.close();
+  });
+
+  test('show on dashboard: admins and dms can switch the panel off and on', async ({ browser }) => {
+    const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
+      multipart: { file: { name: 'Toggle.wav', mimeType: 'audio/wav', buffer: wav(5) } },
+    });
+    expect(res.status()).toBe(201);
+    added.push((await res.json()).results[0].track.id);
+    const visitor = await browser.newContext();
+    try {
+      // API rules: only booleans, only the site playlist, only its editors
+      expect((await dm.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: 'no' } })).status()).toBe(400);
+      const own = await (await dm.request.post('/api/music/playlists', { data: { name: `E2E toggle ${Date.now()}`, visibility: 'public' } })).json();
+      expect((await dm.request.patch(`/api/music/playlists/${own.id}`, { data: { showOnDashboard: false } })).status()).toBe(400);
+      await dm.request.delete(`/api/music/playlists/${own.id}`);
+      const player = await browser.newContext();
+      await login(player, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+      expect((await player.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: false } })).status()).toBe(403);
+      await player.close();
+
+      // dm switches it off on Tools → Music; the dashboard hides the panel for everyone
+      const page = await dm.newPage();
+      await page.goto(`/tools/music?playlist=${siteId}`);
+      const box = page.locator('#mp-dashboard');
+      await expect(box).toBeVisible();
+      await expect(box).toBeChecked();
+      await box.uncheck();
+      await expect.poll(async () => (await (await admin.request.get(`/api/music/playlists/${siteId}`)).json()).showOnDashboard).toBe(false);
+      await page.reload();
+      await expect(page.locator('#mp-dashboard')).not.toBeChecked();
+
+      const vp = await visitor.newPage();
+      await vp.goto('/');
+      await expect(vp.locator('h1').first()).toBeVisible();
+      await expect(vp.locator('#tavern-music')).toHaveCount(0);
+      await page.goto('/');
+      await expect(page.locator('h1').first()).toBeVisible();
+      await expect(page.locator('#tavern-music')).toHaveCount(0);
+
+      // and on again
+      await page.goto(`/tools/music?playlist=${siteId}`);
+      await page.locator('#mp-dashboard').check();
+      await expect.poll(async () => (await (await admin.request.get(`/api/music/playlists/${siteId}`)).json()).showOnDashboard).toBe(true);
+      await vp.goto('/');
+      await expect(vp.locator('#tavern-music')).toBeVisible();
+
+      // other playlists have no such switch
+      const mine = await (await dm.request.post('/api/music/playlists', { data: { name: `E2E noswitch ${Date.now()}` } })).json();
+      await page.goto(`/tools/music?playlist=${mine.id}`);
+      await expect(page.locator('#mp-name')).toBeVisible();
+      await expect(page.locator('#mp-dashboard-row')).toBeHidden();
+      await dm.request.delete(`/api/music/playlists/${mine.id}`);
+      await page.close();
+    } finally {
+      await admin.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: true } });
+      await visitor.close();
+      await removeAll(added.splice(0));
+    }
   });
 
   test('visitor plays the site playlist from the dashboard', async ({ browser }) => {

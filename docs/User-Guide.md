@@ -106,7 +106,8 @@ diary appearances. DMs can complete, fail, reactivate, edit and delete a quest f
 
 ## Music
 
-**Tavern music** on the dashboard plays the site playlist. It works without a login. Press
+**Tavern music** on the dashboard plays the site playlist. It works without a login. It appears
+only while the site playlist has tracks and is switched on for the dashboard. Press
 **Play** (or **Shuffle**) to start; open **Tracks** to start from a song. While it plays the
 strip glows softly, an equalizer moves next to the current title, and the button reads
 **Pause**; when you pause it, it reads **Resume** and a thin line shows how far the song is.
