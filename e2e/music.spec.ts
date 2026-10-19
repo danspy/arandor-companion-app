@@ -498,3 +498,185 @@ test.describe('Music player', () => {
     expect(errors).toEqual([]);
   });
 });
+
+// ── Tools → Music page (UI), desktop and Pixel 5 ─────────────────────────────
+test.describe('Music page', () => {
+  test.skip(!haveAccounts, 'Needs the E2E_* accounts (test server only)');
+  test.describe.configure({ mode: 'serial' });
+
+  const V = 'dQw4w9WgXcQ', L = 'PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG';
+  let admin: BrowserContext;
+  const created: string[] = [];
+  let name = '';
+  let id = '';
+
+  test.beforeAll(async ({ browser }) => {
+    admin = await browser.newContext();
+    await login(admin, E.E2E_ADMIN!, E.E2E_ADMIN_PASSWORD!);
+  });
+
+  test.afterAll(async () => {
+    for (const pid of created) await admin.request.delete(`/api/music/playlists/${pid}`);
+    await admin?.close();
+  });
+
+  const titles = (page: import('@playwright/test').Page) => page.locator('#mp-tracks .mp-title');
+
+  test('player creates a playlist and uploads a file', async ({ page, context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    await page.goto('/tools');
+    await expect(page.locator('a[href="/tools/music"]')).toContainText('Playlists from your files and YouTube');
+    await page.goto('/tools/music');
+    name = `E2E page ${Date.now()}`;
+    await page.locator('#mp-new-name').fill(name);
+    await page.locator('#mp-new-create').click();
+    await expect(page.locator('#mp-name')).toHaveText(name);
+    await expect(page).toHaveURL(/[?&]playlist=/);
+    id = new URL(page.url()).searchParams.get('playlist')!;
+    created.push(id);
+    await expect(page.locator('[data-group="mine"] .mp-item', { hasText: name })).toBeVisible();
+
+    await page.locator('#mp-file').setInputFiles({ name: 'Rain.wav', mimeType: 'audio/wav', buffer: wav(3) });
+    await expect(page.locator('#mp-uploads li', { hasText: 'Rain.wav' })).toContainText('Added');
+    await expect(titles(page)).toHaveText(['Rain']);
+
+    await page.locator('#mp-file').setInputFiles({ name: 'notes.txt', mimeType: 'text/plain', buffer: Buffer.from('hi') });
+    await expect(page.locator('#mp-uploads li', { hasText: 'notes.txt' })).toContainText('Unsupported format');
+    await expect(titles(page)).toHaveText(['Rain']);
+
+    // ▶ on a row plays the playlist from there; the row is marked as current
+    await page.locator('#mp-tracks li').first().getByRole('button', { name: 'Play Rain' }).click();
+    await expect(page.locator('#mp-tracks li').first()).toHaveAttribute('aria-current', 'true');
+    await expect(page.locator('#music-title')).toHaveText('Rain');
+    await page.evaluate(() => window.__music.stop());
+  });
+
+  test('YouTube links, with the two-choice prompt', async ({ page, context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${id}`);
+    await expect(page.locator('#mp-name')).toHaveText(name);
+    await page.locator('#mp-yt-url').fill(`https://youtu.be/${V}`);
+    await page.locator('#mp-yt-title').fill('Tavern Ambience');
+    await page.locator('#mp-yt-add').click();
+    await expect(titles(page)).toHaveText(['Rain', 'Tavern Ambience']);
+
+    await page.locator('#mp-yt-url').fill(`https://www.youtube.com/watch?v=${V}&list=${L}`);
+    await page.locator('#mp-yt-title').fill('Boss Theme');
+    await page.locator('#mp-yt-add').click();
+    const choice = page.locator('#mp-yt-choice');
+    await expect(choice).toBeVisible();
+    await expect(choice).toContainText('This video or the whole playlist?');
+    await choice.getByRole('button', { name: 'The whole playlist' }).click();
+    await expect(titles(page)).toHaveText(['Rain', 'Tavern Ambience', 'Boss Theme']);
+    await expect(choice).toBeHidden();
+    const tracks = (await (await context.request.get(`/api/music/playlists/${id}`)).json()).tracks;
+    expect(tracks.map((t: any) => [t.kind, t.ref])).toEqual([['file', expect.any(String)], ['youtube_video', V], ['youtube_playlist', L]]);
+  });
+
+  test('drag to reorder persists after reload', async ({ page, context, isMobile }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${id}`);
+    await expect(titles(page)).toHaveText(['Rain', 'Tavern Ambience', 'Boss Theme']);
+    await page.locator('#mp-tracks').scrollIntoViewIfNeeded();
+    const handle = page.locator('#mp-tracks li', { hasText: 'Boss Theme' }).locator('.mp-handle');
+    const from = (await handle.boundingBox())!;
+    const to = (await page.locator('#mp-tracks li').first().boundingBox())!;
+    const saved = page.waitForResponse((r) => r.url().endsWith(`/api/music/playlists/${id}/order`) && r.request().method() === 'PUT');
+    const x = from.x + from.width / 2;
+    if (isMobile) {
+      // A real touch drag (touch pointer events), as on a phone
+      const cdp = await context.newCDPSession(page);
+      const touch = (type: string, y?: number) => cdp.send('Input.dispatchTouchEvent', { type, touchPoints: y === undefined ? [] : [{ x, y }] });
+      await touch('touchStart', from.y + from.height / 2);
+      for (let i = 1; i <= 12; i++) await touch('touchMove', from.y + from.height / 2 + ((to.y + 4 - from.y - from.height / 2) * i) / 12);
+      await touch('touchEnd');
+    } else {
+      await page.mouse.move(x, from.y + from.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(x, to.y + 4, { steps: 12 });
+      await page.mouse.up();
+    }
+    expect((await saved).ok()).toBe(true);
+    await expect(titles(page)).toHaveText(['Boss Theme', 'Rain', 'Tavern Ambience']);
+    await page.reload();
+    await expect(titles(page)).toHaveText(['Boss Theme', 'Rain', 'Tavern Ambience']);
+  });
+
+  test('made public, player2 sees it without edit controls', async ({ page, context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${id}`);
+    const saved = page.waitForResponse((r) => r.url().endsWith(`/api/music/playlists/${id}`) && r.request().method() === 'PATCH');
+    await page.locator('#mp-public').check();
+    expect((await saved).ok()).toBe(true);
+
+    await login(context, E.E2E_PLAYER2!, E.E2E_PLAYER2_PASSWORD!);
+    await page.goto('/tools/music');
+    const item = page.locator('[data-group="public"] .mp-item', { hasText: name });
+    await expect(item).toBeVisible();
+    await item.click();
+    await expect(page.locator('#mp-name')).toHaveText(name);
+    await expect(titles(page)).toHaveText(['Boss Theme', 'Rain', 'Tavern Ambience']);
+    await expect(page.locator('#mp-play')).toBeVisible();
+    await expect(page.locator('#mp-edit')).toBeHidden();
+    await expect(page.locator('#mp-tracks .mp-handle')).toHaveCount(0);
+    await expect(page.locator('#mp-tracks .mp-del')).toHaveCount(0);
+    await expect(page.locator('[data-group="others"]')).toHaveCount(0);
+  });
+
+  test('site playlist: DM edits it, only admin can make a site playlist', async ({ page, context }) => {
+    const site = (await (await context.request.get('/api/music/site')).json()).playlist;
+    await login(context, E.E2E_DM!, E.E2E_DM_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${site.id}`);
+    await expect(page.locator('#mp-name')).toHaveText(site.name);
+    await expect(page.locator('#mp-edit')).toBeVisible();
+    await expect(page.locator('#mp-public')).toBeDisabled();
+    await expect(page.locator('#mp-public')).toBeChecked();
+    await expect(page.locator('#mp-delete')).toBeHidden();
+    await expect(page.locator('#mp-site')).toBeHidden();
+
+    // a private playlist of player2: only the admin sees it, under "All others"
+    const p2 = await browserlessCreate(context);
+    created.push(p2.id);
+    await login(context, E.E2E_ADMIN!, E.E2E_ADMIN_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${id}`);
+    await expect(page.locator('#mp-name')).toHaveText(name);
+    await expect(page.locator('#mp-site')).toBeVisible();
+    await expect(page.locator('#mp-delete')).toBeVisible();
+    await expect(page.locator('[data-group="others"] .mp-item', { hasText: p2.name })).toBeVisible();
+    await page.goto(`/tools/music?playlist=${site.id}`);
+    await expect(page.locator('#mp-name')).toHaveText(site.name);
+    await expect(page.locator('#mp-site')).toBeHidden();
+  });
+
+  async function browserlessCreate(context: BrowserContext) {
+    await login(context, E.E2E_PLAYER2!, E.E2E_PLAYER2_PASSWORD!);
+    const res = await context.request.post('/api/music/playlists', { data: { name: `E2E private ${Date.now()}`, visibility: 'private' } });
+    expect(res.status()).toBe(201);
+    return res.json();
+  }
+
+  test('rename, delete track, delete playlist', async ({ page, context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    await page.goto(`/tools/music?playlist=${id}`);
+    await page.locator('#mp-tracks li', { hasText: 'Rain' }).locator('.mp-title').click();
+    const input = page.locator('#mp-tracks input.mp-rename');
+    await input.fill('Heavy Rain');
+    await input.press('Enter');
+    await expect(titles(page)).toHaveText(['Boss Theme', 'Heavy Rain', 'Tavern Ambience']);
+
+    await page.locator('#mp-name').click();
+    await page.locator('#mp-name-input').fill(`${name} 2`);
+    await page.locator('#mp-name-input').press('Enter');
+    await expect(page.locator('#mp-name')).toHaveText(`${name} 2`);
+    await expect(page.locator('[data-group="mine"] .mp-item', { hasText: `${name} 2` })).toBeVisible();
+
+    await page.locator('#mp-tracks li', { hasText: 'Tavern Ambience' }).locator('.mp-del').click();
+    await page.locator('[data-confirm]').click();
+    await expect(titles(page)).toHaveText(['Boss Theme', 'Heavy Rain']);
+
+    await page.locator('#mp-delete').click();
+    await page.locator('[data-confirm]').click();
+    await expect(page.locator('.mp-item', { hasText: `${name} 2` })).toHaveCount(0);
+    expect((await context.request.get(`/api/music/playlists/${id}`)).status()).toBe(404);
+  });
+});

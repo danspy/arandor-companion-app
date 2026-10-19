@@ -25,7 +25,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     heroImageUrl={heroImageUrl}
     pageName="tools"
     canEditHero={canEdit}
-    subtitle="Dice, initiative and the DM screen for the game table."
+    subtitle="Dice, initiative, music and the DM screen for the game table."
   />
 
 
@@ -96,6 +96,25 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </div>
         </div>
       </a>
+
+    <!-- Music Card -->
+    <a href="/tools/music" class="t-panel p-6 t-tool-card block">
+      <div class="flex items-start gap-4">
+        <div class="t-inset p-3 w-fit rounded-xs mb-0">
+          <svg class="w-6 h-6" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"></path>
+          </svg>
+        </div>
+        <div class="flex-1">
+          <h2 class="t-section-h text-lg mb-1">
+            Music
+          </h2>
+          <p class="t-muted text-sm">
+            Playlists from your files and YouTube
+          </p>
+        </div>
+      </div>
+    </a>
 
     <!-- DM Screen Card (DM/Admin Only) -->
     {canEdit && (
