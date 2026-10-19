@@ -55,6 +55,17 @@ test.describe('Character sheet on the server', () => {
     const dmView = await (await dm.request.get(`/api/characters/${CHARACTER}`)).json();
     expect(dmView.sheet.inventory.length).toBeGreaterThan(0);
   });
+
+  test('D&D Beyond wins over ability scores edited by hand', async ({ browser }) => {
+    const dm = await browser.newContext();
+    expect((await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } })).ok()).toBe(true);
+    const synced = await (await dm.request.post('/api/characters/sync', { data: { characterId: CHARACTER } })).json();
+    const edited = await dm.request.put(`/api/characters/${CHARACTER}`, { data: { ...synced, stats: { ...synced.stats, dexterity: 3 } } });
+    expect((await edited.json()).statsManuallyEdited).toBe(true);
+    const again = await (await dm.request.post('/api/characters/sync', { data: { characterId: CHARACTER } })).json();
+    expect(again.stats).toEqual(synced.stats);
+    expect(again.statsManuallyEdited).toBe(false);
+  });
 });
 
 test.describe('Character sheet page', () => {

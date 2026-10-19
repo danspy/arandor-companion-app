@@ -16,6 +16,7 @@ interface Props {
     deathSaveSuccesses: number;
     deathSaveFailures: number;
     isStable: boolean;
+    dndbeyondUrl?: string | null;
   }>;
   myCharacterIds?: string[];
 }
@@ -55,7 +56,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
         const hp = hpInfo(c.hp, c.maxHp);
         const stats = (c.stats ?? null) as Record<string, number> | null;
         return (
-          <div class:list={['party-card', { 'is-mine': myCharacterIds.includes(c.id) }]} tabindex="0" role="button" aria-label={`${c.name}${myCharacterIds.includes(c.id) ? ' (your character)' : ''}: show stats`} data-party-card>
+          <div class:list={['party-card', { 'is-mine': myCharacterIds.includes(c.id) }]} tabindex="0" role="button" aria-label={`${c.name}${myCharacterIds.includes(c.id) ? ' (your character)' : ''}: show stats`} data-party-card data-sync-id={c.dndbeyondUrl ? c.id : undefined}>
             <div class="party-inner">
               <div class="party-face party-front">
                 {c.avatarUrl ? (
@@ -240,6 +241,14 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
 </style>
 
 <script>
+  import { autoSyncCharacters } from '../../lib/auto-sync';
+
+  // HP and stats come from D&D Beyond: refresh them in the background (at most every 15 minutes)
+  document.addEventListener('astro:page-load', () => {
+    const ids = [...document.querySelectorAll<HTMLElement>('[data-party-card][data-sync-id]')].map((c) => c.dataset.syncId!);
+    void autoSyncCharacters(ids);
+  });
+
   // Touch devices have no hover: tap flips the card (links on the back still work).
   document.addEventListener('astro:page-load', () => {
     for (const card of document.querySelectorAll<HTMLElement>('[data-party-card]')) {

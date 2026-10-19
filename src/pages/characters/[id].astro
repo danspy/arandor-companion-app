@@ -59,19 +59,14 @@ const fullSheet = (character.sheet as CharacterSheet | null) ?? null;
 const canSeePrivate = canSeePrivateSheet(character, currentUser, userRole);
 const stats = (character.stats ?? {}) as Record<string, number | undefined>;
 
-const shouldAutoSync = character.dndbeyondUrl &&
-  canEdit &&
-  (!character.lastSyncedAt ||
-   (new Date().getTime() - new Date(character.lastSyncedAt).getTime()) > 24 * 60 * 60 * 1000);
+const shouldAutoSync = !!character.dndbeyondUrl;
 
-// What a sync can change on this page: after an auto-sync the page only refreshes if one of these did
-const syncedFields = (c: typeof character) => JSON.stringify([c.name, c.race, c.class, c.level, c.avatarUrl, c.hp, c.maxHp, c.tempHp, c.stats, c.background, c.alignment]);
 
 ---
 
 <Layout title={character.name}>
   <SceneBackdrop imageUrl={character.avatarUrl} />
-  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-character-name={character.name} data-auto-sync={shouldAutoSync ? character.id : undefined} data-synced-fields={syncedFields(character)}>
+  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-character-name={character.name} data-auto-sync={shouldAutoSync ? character.id : undefined}>
 
     <!-- Nav row -->
     <div class="flex items-center justify-between mb-6">
@@ -288,39 +283,7 @@ const syncedFields = (c: typeof character) => JSON.stringify([c.name, c.race, c.
   import { wireCharacterRolls } from '../../lib/character-rolls';
   wireCharacterRolls();
 
-  const SYNC_ICON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
-
-  // Once a day the owner's visit pulls fresh data from D&D Beyond in the background.
-  // The page only refreshes (softly, without a reload, so music keeps playing) when something changed.
-  async function autoSyncCharacter() {
-    const page = document.getElementById('character-page');
-    const characterId = page?.dataset.autoSync;
-    if (!page || !characterId) return;
-    const toast = document.createElement('div');
-    toast.className = 't-toast';
-    toast.innerHTML = `<svg class="w-4 h-4 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${SYNC_ICON}</svg><span>Syncing from D&D Beyond…</span>`;
-    document.body.appendChild(toast);
-    const done = (ok: boolean, text: string) => {
-      toast.className = `t-toast ${ok ? 't-toast-success' : 't-toast-error'}`;
-      toast.textContent = text;
-      setTimeout(() => toast.remove(), 2500);
-    };
-    try {
-      const response = await fetch('/api/characters/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId }),
-      });
-      if (!response.ok) return done(false, 'Auto-sync failed');
-      const c = await response.json();
-      const fresh = JSON.stringify([c.name, c.race, c.class, c.level, c.avatarUrl, c.hp, c.maxHp, c.tempHp, c.stats, c.background, c.alignment]);
-      done(true, 'Synced with D&D Beyond');
-      // Still on this character? Then show the new data.
-      if (fresh !== page.dataset.syncedFields && page.isConnected) await window.arandorSoftReload();
-    } catch {
-      done(false, 'Auto-sync error');
-    }
-  }
+  import { autoSyncCharacters } from '../../lib/auto-sync';
 
   function initializeDetailPage() {
     const deleteBtn = document.getElementById('deleteCharacter');
@@ -399,6 +362,8 @@ const syncedFields = (c: typeof character) => JSON.stringify([c.name, c.race, c.
   document.addEventListener('astro:page-load', () => {
     if (!document.getElementById('character-page')) return;
     initializeDetailPage();
-    void autoSyncCharacter();
+    // HP, stats and sheet come from D&D Beyond: refreshed in the background (at most every 15 minutes)
+    const id = document.getElementById('character-page')?.dataset.autoSync;
+    if (id) void autoSyncCharacters([id]);
   });
 </script>

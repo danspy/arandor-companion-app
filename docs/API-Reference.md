@@ -49,13 +49,13 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 
 | Endpoint | Method | Purpose | Access |
 |---|---|---|---|
-| `/api/characters` | GET / POST | List / create (`assignToUser: true` makes you the owner) | public / player+ |
-| `/api/characters/[id]` | GET / PUT, DELETE | Read / update, delete. Changing ability scores sets `statsManuallyEdited` | public / player+ and owner |
+| `/api/characters` | GET / POST | List / create (`assignToUser: true` makes you the owner); rows never include `sheet` | public / player+ |
+| `/api/characters/[id]` | GET / PUT, DELETE | Read / update, delete. `sheet` holds only its public part unless you are the player, DM or admin. Changing the D&D Beyond URL clears `sheet` | public / player+ and owner |
 | `/api/characters/available` | GET | Characters not assigned to another user (Profile page) | login |
 | `/api/characters/dndbeyond` | POST `{url}` | Read a D&D Beyond character (auto-fill in the form) | player+ |
-| `/api/characters/sync` | POST `{characterId}` | Full sync: level, HP, ability scores (unless edited by hand) | player+ and owner |
+| `/api/characters/sync` | POST `{characterId}` | Full sync from D&D Beyond (the truth): level, HP, ability scores, `sheet` | player+ and owner |
 | `/api/characters/sync-hp` | POST `{characterId}` | HP and death saves only | player+ and owner |
-| `/api/characters/auto-sync` | POST `{characterId}` | Light sync (name, level, class, race), at most once per 24 h | public |
+| `/api/characters/auto-sync` | POST `{characterId}` | The same full sync, at most once per 15 min per character; answers only `{success, updated}` | public |
 
 See [D&D Beyond sync](DnD-Beyond-Sync.md).
 
