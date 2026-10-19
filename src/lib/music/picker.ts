@@ -33,12 +33,13 @@ const REPEAT = 'M17 2l4 4-4 4M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4M21 13v2a3 3 
 const NEXT_REPEAT: Record<RepeatMode, RepeatMode> = { off: 'all', all: 'one', one: 'off' };
 const REPEAT_LABEL: Record<RepeatMode, string> = { off: 'Repeat: off', all: 'Repeat: all', one: 'Repeat: one track' };
 
-async function getJson(url: string): Promise<{ ok: boolean; data: any }> {
+/** `status` is 0 when the server could not be reached. */
+async function getJson(url: string): Promise<{ ok: boolean; status: number; data: any }> {
   try {
     const res = await fetch(url);
-    return { ok: res.ok, data: await res.json().catch(() => null) };
+    return { ok: res.ok, status: res.status, data: await res.json().catch(() => null) };
   } catch {
-    return { ok: false, data: { error: 'No connection to the server' } };
+    return { ok: false, status: 0, data: { error: 'No connection to the server' } };
   }
 }
 const fail = (r: { data: any }) => window.alert(r.data?.error || 'Something went wrong. Try again.');
@@ -150,7 +151,9 @@ export function mountMusicPicker(host: HTMLElement): void {
     const r = await getJson(`/api/music/playlists/${encodeURIComponent(id)}`);
     if (seq !== loadSeq) return;
     if (!r.ok) {
-      if (quiet) { select.value = ''; savePick(''); return; }
+      // Forget the remembered pick only when the playlist is gone (or no longer visible);
+      // a server hiccup or lost connection keeps it for the next visit.
+      if (quiet) { select.value = ''; if (r.status === 404) savePick(''); return; }
       fail(r); return;
     }
     const pl = r.data?.playlist ?? r.data;
@@ -180,7 +183,7 @@ export function mountMusicPicker(host: HTMLElement): void {
     // Restore the remembered playlist (no playback); drop it if it is no longer listed
     const saved = loadPick();
     if (saved && !select.value) {
-      if (all.some((p) => p.id === saved)) { select.value = saved; await choose(saved, true); }
+      if ([...select.options].some((o) => o.value === saved)) { select.value = saved; await choose(saved, true); }
       else savePick('');
     }
     sync(music.getState());

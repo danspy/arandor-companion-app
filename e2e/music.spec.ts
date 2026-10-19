@@ -1458,6 +1458,24 @@ test.describe('DM screen music', () => {
       await expect(panel.locator('[data-dmm-row]')).toHaveCount(1);
       expect(await page.evaluate(() => window.__music.getState().playing)).toBe(false);
 
+      // 1b. the playlist request fails once (server error): empty state, but the pick is kept
+      let failed = 0;
+      await page.route(`**/api/music/playlists/${id}`, (r) => {
+        if (r.request().method() === 'GET' && !failed++) return r.fulfill({ status: 500, contentType: 'application/json', body: '{"error":"boom"}' });
+        return r.fallback();
+      });
+      const failedRes = page.waitForResponse((r) => r.url().endsWith(`/api/music/playlists/${id}`));
+      await page.reload();
+      expect((await failedRes).status()).toBe(500);
+      await page.waitForTimeout(300); // let the page handle the failed response
+      await expect(sel).toHaveValue('');
+      await expect(panel.locator('[data-dmm-row]')).toHaveCount(0);
+      expect(await page.evaluate((k) => localStorage.getItem(k), `arandor.music.dmPick.${me}`)).toBe(id);
+      await page.unroute(`**/api/music/playlists/${id}`);
+      await page.reload();
+      await expect(sel).toHaveValue(id);
+      await expect(panel.locator('[data-dmm-row]')).toHaveCount(1);
+
       // 2. ClientRouter navigation away and back
       await page.locator('[data-testid="desktop-nav"] a[href="/tools"]').click();
       await expect(page).toHaveURL(/\/tools$/);

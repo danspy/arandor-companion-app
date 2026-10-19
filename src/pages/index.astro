@@ -101,7 +101,8 @@ const latestLibraryEntries = libraryEntries.slice().sort((a, b) => {
 }).slice(0, 8);
 
 const isLoggedIn = !!userRole;
-const sitePlaylist = await loadSitePlaylist();
+// Never let the music player break the home page (e.g. music tables missing)
+const sitePlaylist = await loadSitePlaylist().catch((e) => { console.error(e); return null; });
 
 const latestEntry = latestEntries[0] ?? null;
 const earlierEntries = latestEntries.slice(1);
