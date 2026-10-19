@@ -2,6 +2,8 @@
 // One DiceBox instance renders into a full-viewport overlay (#dice-overlay),
 // so dice tumble over the whole page wherever the roll was started.
 
+import { formatRoll, isD20Check, parseRoll, type ParsedRoll, type RollPart } from './dice-notation';
+
 export const DIE_TYPES = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'] as const;
 export type DieType = (typeof DIE_TYPES)[number];
 export type DiceSelection = Partial<Record<DieType, number>>;
@@ -11,6 +13,18 @@ export interface DieResult {
   sides: number;
   value: number;
   dropped?: boolean;
+  part?: number; // index into RollRecord.parts
+  negative?: boolean; // subtracted ("1d20-1d4")
+  bonus?: boolean; // extra damage die from a critical hit
+}
+
+/** One labelled part of a multi-part roll, e.g. "To hit 1d20+5" or "Slashing 1d8+3". */
+export interface PartResult {
+  label: string;
+  formula: string;
+  modifier: number;
+  total: number;
+  crit: 'success' | 'fail' | null;
 }
 
 export interface RollRecord {
@@ -21,10 +35,15 @@ export interface RollRecord {
   mode: RollMode;
   crit: 'success' | 'fail' | null;
   timestamp: number;
+  name?: string; // preset name
+  parts?: PartResult[]; // written rolls and presets; total/modifier/crit above are the first part's
+  critDoubled?: boolean; // a critical hit doubled the damage dice
 }
 
 export const ROLL_EVENT = 'arandor:dice-roll';
 export const HISTORY_CLEARED_EVENT = 'arandor:dice-history-cleared';
+/** Fired with the new list when the user's saved rolls change (detail: DicePreset[]). */
+export const PRESETS_CHANGED_EVENT = 'arandor:dice-presets-changed';
 
 const HISTORY_KEY = 'arandor-dice-history';
 const HISTORY_LIMIT = 20;
@@ -177,7 +196,8 @@ function normaliseResults(raw: any[]): DieResult[] {
   });
 }
 
-async function physicalRoll(selection: DiceSelection): Promise<DieResult[]> {
+// add: throw these dice onto the table without clearing it (bonus dice of a critical hit)
+async function physicalRoll(selection: DiceSelection, add = false): Promise<DieResult[]> {
   if (prefersReducedMotion()) return fallbackRoll(selection);
 
   const box = await getDiceBox();
@@ -188,7 +208,7 @@ async function physicalRoll(selection: DiceSelection): Promise<DieResult[]> {
   overlay.classList.add('is-rolling');
   overlay.style.opacity = '1';
   box.resizeWorld();
-  await box.clear();
+  if (!add) await box.clear();
 
   const notation = DIE_TYPES.filter((d) => (selection[d] ?? 0) > 0).map((d) => ({
     qty: selection[d],
@@ -198,7 +218,7 @@ async function physicalRoll(selection: DiceSelection): Promise<DieResult[]> {
 
   const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('timeout')), SETTLE_TIMEOUT_MS));
   try {
-    const raw = await Promise.race([box.roll(notation), timeout]);
+    const raw = await Promise.race([add ? box.add(notation) : box.roll(notation), timeout]);
     return normaliseResults(raw);
   } catch {
     console.warn('DiceBox roll timed out, using fallback');
@@ -279,6 +299,115 @@ export async function roll(
       mode,
       crit,
       timestamp: Date.now(),
+    };
+    pushHistory(record);
+    window.dispatchEvent(new CustomEvent<RollRecord>(ROLL_EVENT, { detail: record }));
+    return record;
+  } finally {
+    rolling = false;
+  }
+}
+
+// ── Written rolls and presets ──────────────────────────────────────────────
+
+function addDice(selection: DiceSelection, roll: ParsedRoll, times = 1) {
+  for (const d of roll.dice) {
+    const die = `d${d.sides}` as DieType;
+    selection[die] = (selection[die] ?? 0) + d.count * times;
+  }
+}
+
+/** Hands thrown dice out to the terms that asked for them (dice of one type are interchangeable). */
+function takeDice(pool: Map<number, DieResult[]>, sides: number, count: number): DieResult[] {
+  return (pool.get(sides) ?? []).splice(0, count);
+}
+
+function poolOf(dice: DieResult[]): Map<number, DieResult[]> {
+  const pool = new Map<number, DieResult[]>();
+  for (const d of dice) pool.set(d.sides, [...(pool.get(d.sides) ?? []), d]);
+  return pool;
+}
+
+/**
+ * Roll one or more labelled parts in a single throw, e.g. a preset
+ * [{ label: 'To hit', expr: '1d20+5' }, { label: 'Slashing', expr: '1d8+3' }] or a typed "3d6+2".
+ * Advantage/disadvantage applies to the first part that is a lone d20 (the attack or check).
+ * When that part rolls a natural 20, the dice of the parts after it are rolled a second time
+ * and added (critical hit). Resolves with null if a roll is running or a part can't be read.
+ */
+export async function rollParts(
+  parts: RollPart[],
+  { mode = 'normal', name }: { mode?: RollMode; name?: string } = {}
+): Promise<RollRecord | null> {
+  if (rolling || parts.length === 0) return null;
+  const parsed: ParsedRoll[] = [];
+  for (const p of parts) {
+    const r = parseRoll(p.expr);
+    if (!r.ok) return null;
+    parsed.push(r.roll);
+  }
+  const check = parsed.findIndex(isD20Check);
+  const effectiveMode: RollMode = check >= 0 ? mode : 'normal';
+
+  rolling = true;
+  try {
+    const selection: DiceSelection = {};
+    parsed.forEach((r, i) => addDice(selection, r, i === check && effectiveMode !== 'normal' ? 2 : 1));
+    const pool = poolOf(await physicalRoll(selection));
+
+    const dice: DieResult[] = [];
+    const results: PartResult[] = parsed.map((r, i) => {
+      const mine: DieResult[] = [];
+      for (const term of r.dice) {
+        const n = i === check && effectiveMode !== 'normal' ? 2 : term.count;
+        for (const d of takeDice(pool, term.sides, n)) mine.push({ ...d, part: i, negative: term.sign < 0 || undefined });
+      }
+      let crit: PartResult['crit'] = null;
+      if (i === check) {
+        if (mine.length === 2) {
+          const [a, b] = mine;
+          const keepFirst = effectiveMode === 'advantage' ? a.value >= b.value : a.value <= b.value;
+          (keepFirst ? b : a).dropped = true;
+        }
+        const kept = mine.find((d) => !d.dropped)!;
+        crit = kept.value === 20 ? 'success' : kept.value === 1 ? 'fail' : null;
+      }
+      dice.push(...mine);
+      const sum = mine.filter((d) => !d.dropped).reduce((s, d) => s + (d.negative ? -d.value : d.value), 0);
+      const formula = formatRoll(r) + (i === check && effectiveMode !== 'normal' ? (effectiveMode === 'advantage' ? ' (adv)' : ' (dis)') : '');
+      return { label: parts[i].label, formula, modifier: r.modifier, total: sum + r.modifier, crit };
+    });
+
+    // Critical hit: the damage dice once more, thrown onto the table next to the first ones
+    let critDoubled = false;
+    if (check >= 0 && results[check].crit === 'success' && parsed.slice(check + 1).some((r) => r.dice.length)) {
+      const extra: DiceSelection = {};
+      parsed.slice(check + 1).forEach((r) => addDice(extra, r));
+      const bonusPool = poolOf(await physicalRoll(extra, true));
+      parsed.forEach((r, i) => {
+        if (i <= check) return;
+        for (const term of r.dice) {
+          for (const d of takeDice(bonusPool, term.sides, term.count)) {
+            dice.push({ ...d, part: i, negative: term.sign < 0 || undefined, bonus: true });
+            results[i].total += term.sign < 0 ? -d.value : d.value;
+          }
+        }
+      });
+      critDoubled = true;
+    }
+
+    const first = results[0];
+    const record: RollRecord = {
+      formula: name ?? results.map((r) => r.formula).join(', '),
+      dice,
+      modifier: first.modifier,
+      total: first.total,
+      mode: effectiveMode,
+      crit: check >= 0 ? results[check].crit : null,
+      timestamp: Date.now(),
+      name,
+      parts: results,
+      critDoubled: critDoubled || undefined,
     };
     pushHistory(record);
     window.dispatchEvent(new CustomEvent<RollRecord>(ROLL_EVENT, { detail: record }));

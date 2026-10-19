@@ -1,13 +1,16 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
-import { getUserRole } from '../../lib/auth';
+import { getUserRole, isAuthenticated } from '../../lib/auth';
+import { PRESET_LIMITS } from '../../lib/dice-notation';
 import { db, PageSettings, eq } from '@/db';
 
 // Dice roller is public; only editing the hero image needs a role
 const userRole = await getUserRole(Astro.cookies);
 
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
+// Saved rolls belong to an account
+const isLoggedIn = isAuthenticated(Astro.cookies);
 
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dice-roller'));
@@ -27,6 +30,44 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   <!-- Dice Roller Interface -->
   <div class="mx-auto">
+    <!-- My rolls: the user's saved presets (also in the dice button on every page) -->
+    {isLoggedIn && (
+      <section id="my-rolls" class="t-panel p-6 mb-6" data-max-presets={PRESET_LIMITS.presets} data-max-parts={PRESET_LIMITS.parts}>
+        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <h2 class="t-section-h text-xl">My rolls</h2>
+          <div class="flex flex-wrap items-center gap-3">
+            <div class="roller-mode" role="group" aria-label="Advantage for the next roll">
+              <button type="button" data-mode="normal" aria-pressed="true">Normal</button>
+              <button type="button" data-mode="advantage" aria-pressed="false" title="Advantage on the d20">Advantage</button>
+              <button type="button" data-mode="disadvantage" aria-pressed="false" title="Disadvantage on the d20">Disadvantage</button>
+            </div>
+            <button type="button" id="newPresetButton" class="t-btn-primary text-sm">New roll</button>
+          </div>
+        </div>
+        <p class="t-muted text-sm mb-4">
+          Save the rolls you make all the time, like a weapon attack with to hit and damage. They are
+          also in the dice button on every page. A natural 20 on the to-hit roll doubles the damage dice.
+        </p>
+        <div id="presetList" class="space-y-2"></div>
+        <p id="presetEmpty" class="t-faint text-center py-4" hidden>No saved rolls yet</p>
+
+        <!-- Editor (new or existing preset) -->
+        <form id="presetEditor" class="t-inset p-4 mt-4" hidden novalidate>
+          <h3 id="presetEditorTitle" class="t-body-text font-semibold mb-3">New roll</h3>
+          <label for="presetName" class="t-label block mb-1">Name</label>
+          <input id="presetName" class="t-input w-full px-3 py-2 mb-4" maxlength={PRESET_LIMITS.name} placeholder="e.g. Longsword" autocomplete="off" />
+          <div class="preset-parts-head t-label mb-1" aria-hidden="true"><span>Label</span><span>Roll</span></div>
+          <div id="presetParts" class="space-y-2"></div>
+          <button type="button" id="addPartButton" class="t-link text-sm mt-2">+ Add a roll (e.g. damage)</button>
+          <p id="presetError" class="text-sm mt-3" style="color:var(--danger);" hidden></p>
+          <div class="flex flex-wrap gap-3 mt-4">
+            <button type="submit" class="t-btn-primary">Save</button>
+            <button type="button" id="cancelPresetButton" class="t-btn-secondary">Cancel</button>
+          </div>
+        </form>
+      </section>
+    )}
+
     <!-- Dice Selection -->
     <div class="t-panel p-6 mb-6">
       <h2 class="t-section-h text-xl mb-4">Select Dice</h2>
@@ -167,9 +208,24 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
       <!-- Current Selection Display -->
       <div id="currentSelection" class="mt-4 t-inset p-4 rounded-xs hidden">
-        <p class="t-body-text text-sm font-medium mb-2">Current Selection:</p>
-        <p id="selectionText" class="text-lg font-bold" style="color:var(--accent);"></p>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p class="t-body-text text-sm font-medium mb-2">Current Selection:</p>
+            <p id="selectionText" class="text-lg font-bold" style="color:var(--accent);"></p>
+          </div>
+          {isLoggedIn && <button type="button" id="saveSelectionButton" class="t-btn-secondary text-sm">Save as preset</button>}
+        </div>
       </div>
+
+      <!-- Typed roll -->
+      <form id="typedRoll" class="flex flex-wrap items-start gap-3 mt-6" novalidate>
+        <label for="typedExpr" class="t-body-text text-sm font-medium pt-2">Or type a roll:</label>
+        <div class="flex-1 min-w-[12rem]">
+          <input id="typedExpr" class="t-input w-full px-3 py-2" placeholder="e.g. 2d6+1d4+3" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="go" />
+          <p id="typedError" class="text-sm mt-1" style="color:var(--danger);" hidden></p>
+        </div>
+        <button type="submit" class="t-btn-secondary">Roll</button>
+      </form>
     </div>
 
     <!-- Roll Result -->
@@ -243,6 +299,17 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     to   { opacity: 1; transform: translateY(0); }
   }
 
+  .roller-mode { display: inline-flex; border: 1px solid var(--border-gold); border-radius: 2px; overflow: hidden; }
+  .roller-mode button { padding: .35rem .7rem; font-size: .8rem; font-weight: 600; color: var(--text-muted); background: none; cursor: pointer; }
+  .roller-mode button + button { border-left: 1px solid var(--border-gold); }
+  .roller-mode button[aria-pressed='true'] { color: var(--on-gold, #1a1208); background: var(--gold); }
+
+  .preset-parts-head, :global(.preset-part) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr) 2.25rem; gap: .5rem; align-items: start; }
+  .preset-parts-head span:last-child { grid-column: 2; }
+  :global(.preset-part-check) { grid-column: 2; font-size: .75rem; margin-top: -.25rem; }
+
+  .part-result { display: grid; grid-template-columns: auto auto; column-gap: 1.25rem; align-items: baseline; justify-content: center; }
+
   .dice-chip {
     display: inline-flex;
     flex-direction: column;
@@ -256,11 +323,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 </style>
 
 <script>
+  import { parseRoll, formatRoll, type DicePreset, type RollPart } from '../../lib/dice-notation';
   import {
     DIE_TYPES,
     ROLL_EVENT,
     HISTORY_CLEARED_EVENT,
+    PRESETS_CHANGED_EVENT,
     roll,
+    rollParts,
     warmUp,
     getHistory,
     clearHistory,
@@ -331,16 +401,34 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     });
 
     function showResults(r: RollRecord) {
-      resultBreakdown.textContent =
-        r.dice.map((d) => `d${d.sides}: ${d.value}${d.dropped ? ' (dropped)' : ''}`).join(', ') +
-        (r.modifier !== 0 ? ` ${r.modifier > 0 ? '+' : ''}${r.modifier}` : '');
+      const multi = !!r.parts && r.parts.length > 1;
+      resultBreakdown.textContent = multi
+        ? r.formula
+        : r.dice.map((d) => `${d.negative ? '−' : ''}d${d.sides}: ${d.value}${d.dropped ? ' (dropped)' : ''}`).join(', ') +
+          (r.modifier !== 0 ? ` ${r.modifier > 0 ? '+' : ''}${r.modifier}` : '');
 
-      totalResult.textContent = String(r.total);
+      // Presets: one line per part ("To hit 17", "Slashing 9")
+      totalResult.replaceChildren();
+      if (multi) {
+        const grid = document.createElement('div');
+        grid.className = 'part-result';
+        for (const part of r.parts!) {
+          const label = document.createElement('span');
+          label.className = 't-muted text-base font-normal text-right';
+          label.textContent = part.label || part.formula;
+          const value = document.createElement('span');
+          value.textContent = String(part.total);
+          grid.append(label, value);
+        }
+        totalResult.append(grid);
+      } else {
+        totalResult.textContent = String(r.total);
+      }
       totalResult.className = 'text-6xl font-bold mb-1';
       critBadge.classList.add('hidden');
       if (r.crit === 'success') {
         totalResult.classList.add('critical-success');
-        critBadge.textContent = 'Natural 20!';
+        critBadge.textContent = r.critDoubled ? 'Critical hit! Damage dice doubled' : 'Natural 20!';
         critBadge.className = 't-badge t-badge-green text-sm font-bold';
       } else if (r.crit === 'fail') {
         totalResult.classList.add('critical-fail');
@@ -351,9 +439,11 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
       diceChips.innerHTML = '';
       for (const d of r.dice) {
         const chip = document.createElement('div');
-        chip.className = `dice-chip t-badge text-sm ${d.sides === 20 ? 't-badge-accent' : d.sides === 100 ? 't-badge-gold' : ''}`;
+        chip.className = `dice-chip t-badge text-sm ${d.sides === 20 ? 't-badge-accent' : d.sides === 100 ? 't-badge-gold' : ''} ${d.bonus ? 't-badge-green' : ''}`;
         if (d.dropped) chip.style.opacity = '0.4';
-        chip.innerHTML = `<span class="text-xs opacity-60">d${d.sides}</span><span class="text-xl font-bold">${d.value}</span>`;
+        const partLabel = multi ? r.parts![d.part ?? 0].label : '';
+        chip.title = [partLabel, d.bonus ? 'critical hit' : '', d.negative ? 'subtracted' : ''].filter(Boolean).join(', ');
+        chip.innerHTML = `<span class="text-xs opacity-60">${d.negative ? '−' : ''}d${d.sides}</span><span class="text-xl font-bold">${d.value}</span>`;
         diceChips.append(chip);
       }
 
@@ -396,7 +486,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
             <span class="t-body-text font-medium"></span>
             <span class="t-faint text-sm ml-2">${new Date(r.timestamp).toLocaleTimeString()}</span>
           </div>
-          <div class="text-right"><div class="text-2xl font-bold" style="color:var(--gold);">${r.total}</div></div>`;
+          <div class="text-right"><div class="text-2xl font-bold" style="color:var(--gold);">${r.parts && r.parts.length > 1 ? r.parts.map((p) => p.total).join(' · ') : r.total}</div></div>`;
         (row.querySelector('.t-body-text') as HTMLSpanElement).textContent = r.formula;
         rollHistoryEl.append(row);
       }
@@ -414,6 +504,243 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     modifierInput.addEventListener('input', updateSelectionDisplay);
     updateSelectionDisplay();
     updateHistoryDisplay();
+
+    // ── Typed roll ──
+    const typedForm = document.getElementById('typedRoll') as HTMLFormElement;
+    const typedExpr = document.getElementById('typedExpr') as HTMLInputElement;
+    const typedError = document.getElementById('typedError') as HTMLParagraphElement;
+    typedForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const parsed = parseRoll(typedExpr.value);
+      typedError.hidden = parsed.ok;
+      if (!parsed.ok) {
+        typedError.textContent = parsed.error;
+        return;
+      }
+      await doRollParts([{ label: '', expr: formatRoll(parsed.roll) }]);
+    });
+    typedExpr.addEventListener('input', () => (typedError.hidden = true));
+
+    async function doRollParts(parts: RollPart[], mode: RollMode = 'normal', name?: string) {
+      const record = await rollParts(parts, { mode, name });
+      if (record) {
+        showResults(record);
+        rollResult.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }
+
+    // The current dice selection as a written roll ("2d6+1d8+3") for "Save as preset"
+    const selectionExpr = () => {
+      const dice = DIE_TYPES.filter((d) => (diceSelection[d] ?? 0) > 0).map((d) => `${diceSelection[d]}${d}`).join('+');
+      const mod = modifier();
+      return dice ? dice + (mod > 0 ? `+${mod}` : mod < 0 ? `${mod}` : '') : '';
+    };
+    initMyRolls(doRollParts, selectionExpr);
+  }
+
+  // ── My rolls (logged in only) ─────────────────────────────────────────────
+  function initMyRolls(rollPreset: (parts: RollPart[], mode: RollMode, name: string) => Promise<void>, currentSelection: () => string) {
+    const section = document.getElementById('my-rolls');
+    if (!section) return;
+    const maxPresets = Number(section.dataset.maxPresets);
+    const maxParts = Number(section.dataset.maxParts);
+    const list = document.getElementById('presetList') as HTMLDivElement;
+    const empty = document.getElementById('presetEmpty') as HTMLParagraphElement;
+    const newButton = document.getElementById('newPresetButton') as HTMLButtonElement;
+    const editor = document.getElementById('presetEditor') as HTMLFormElement;
+    const editorTitle = document.getElementById('presetEditorTitle') as HTMLHeadingElement;
+    const nameInput = document.getElementById('presetName') as HTMLInputElement;
+    const partsEl = document.getElementById('presetParts') as HTMLDivElement;
+    const addPartButton = document.getElementById('addPartButton') as HTMLButtonElement;
+    const errorEl = document.getElementById('presetError') as HTMLParagraphElement;
+    const cancelButton = document.getElementById('cancelPresetButton') as HTMLButtonElement;
+    const saveSelectionButton = document.getElementById('saveSelectionButton') as HTMLButtonElement | null;
+
+    let presets: DicePreset[] = [];
+    let editingId: string | null = null;
+    let mode: RollMode = 'normal';
+
+    const setMode = (m: RollMode) => {
+      mode = m;
+      section.querySelectorAll<HTMLButtonElement>('.roller-mode button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === m)));
+    };
+    section.querySelectorAll<HTMLButtonElement>('.roller-mode button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode as RollMode)));
+
+    async function save(next: DicePreset[]): Promise<boolean> {
+      try {
+        const res = await fetch('/api/dice-presets', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) });
+        const body = await res.json();
+        if (!res.ok) {
+          errorEl.textContent = body.error ?? 'Could not save';
+          errorEl.hidden = false;
+          return false;
+        }
+        presets = body;
+        window.dispatchEvent(new CustomEvent(PRESETS_CHANGED_EVENT, { detail: presets }));
+        render();
+        return true;
+      } catch {
+        errorEl.textContent = 'Could not save (offline?)';
+        errorEl.hidden = false;
+        return false;
+      }
+    }
+
+    function iconButton(label: string, text: string, onClick: () => void, danger = false) {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = `t-icon-btn${danger ? ' t-icon-btn-danger' : ''}`;
+      b.title = label;
+      b.setAttribute('aria-label', label);
+      b.textContent = text;
+      b.addEventListener('click', onClick);
+      return b;
+    }
+
+    function render() {
+      empty.hidden = presets.length > 0;
+      newButton.disabled = presets.length >= maxPresets;
+      list.replaceChildren(
+        ...presets.map((p, i) => {
+          const row = document.createElement('div');
+          row.className = 't-row p-3 flex flex-wrap items-center gap-3';
+          const info = document.createElement('div');
+          info.className = 'flex-1 min-w-[10rem]';
+          const name = document.createElement('p');
+          name.className = 't-body-text font-medium';
+          name.textContent = p.name;
+          const parts = document.createElement('p');
+          parts.className = 't-muted text-sm';
+          parts.textContent = p.parts.map((part) => [part.label, part.expr].filter(Boolean).join(' ')).join(' · ');
+          info.append(name, parts);
+          const rollButton = document.createElement('button');
+          rollButton.type = 'button';
+          rollButton.className = 't-btn-primary text-sm';
+          rollButton.textContent = 'Roll';
+          rollButton.addEventListener('click', async () => {
+            const m = mode;
+            setMode('normal');
+            await rollPreset(p.parts, m, p.name);
+          });
+          const actions = document.createElement('div');
+          actions.className = 'flex items-center gap-1';
+          const up = iconButton(`Move ${p.name} up`, '↑', () => move(i, -1));
+          const down = iconButton(`Move ${p.name} down`, '↓', () => move(i, 1));
+          up.disabled = i === 0;
+          down.disabled = i === presets.length - 1;
+          actions.append(
+            rollButton,
+            iconButton(`Edit ${p.name}`, '✎', () => openEditor(p)),
+            up,
+            down,
+            iconButton(`Delete ${p.name}`, '✕', async () => {
+              if (await window.arandorConfirm(`Delete "${p.name}"?`, { confirmLabel: 'Delete', danger: true })) await save(presets.filter((x) => x.id !== p.id));
+            }, true)
+          );
+          row.append(info, actions);
+          return row;
+        })
+      );
+    }
+
+    function move(i: number, by: number) {
+      const next = [...presets];
+      const [p] = next.splice(i, 1);
+      next.splice(i + by, 0, p);
+      void save(next);
+    }
+
+    // ── Editor ──
+    function partRow(part: RollPart) {
+      const row = document.createElement('div');
+      row.className = 'preset-part';
+      const label = document.createElement('input');
+      label.className = 't-input px-3 py-2 part-label';
+      label.placeholder = 'e.g. To hit';
+      label.maxLength = 24;
+      label.value = part.label;
+      label.setAttribute('aria-label', 'Label');
+      const expr = document.createElement('input');
+      expr.className = 't-input px-3 py-2 part-expr';
+      expr.placeholder = 'e.g. 1d20+5';
+      expr.value = part.expr;
+      expr.autocapitalize = 'off';
+      expr.spellcheck = false;
+      expr.setAttribute('aria-label', 'Roll');
+      const remove = iconButton('Remove this roll', '✕', () => {
+        row.remove();
+        updateParts();
+      }, true);
+      const check = document.createElement('p');
+      check.className = 'preset-part-check';
+      const update = () => {
+        const parsed = expr.value.trim() ? parseRoll(expr.value) : null;
+        check.textContent = !parsed ? '' : parsed.ok ? `= ${formatRoll(parsed.roll)}` : parsed.error;
+        check.style.color = parsed && !parsed.ok ? 'var(--danger)' : 'var(--text-faint)';
+      };
+      expr.addEventListener('input', update);
+      update();
+      row.append(label, expr, remove, check);
+      return row;
+    }
+
+    function updateParts() {
+      const rows = partsEl.querySelectorAll('.preset-part');
+      addPartButton.hidden = rows.length >= maxParts;
+      rows.forEach((r) => ((r.querySelector('.t-icon-btn') as HTMLButtonElement).disabled = rows.length === 1));
+    }
+
+    function openEditor(preset?: DicePreset, parts?: RollPart[]) {
+      editingId = preset?.id ?? null;
+      editorTitle.textContent = preset ? `Edit "${preset.name}"` : 'New roll';
+      nameInput.value = preset?.name ?? '';
+      partsEl.replaceChildren(...(preset?.parts ?? parts ?? [{ label: 'To hit', expr: '' }, { label: 'Damage', expr: '' }]).map(partRow));
+      updateParts();
+      errorEl.hidden = true;
+      editor.hidden = false;
+      editor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      nameInput.focus({ preventScroll: true });
+    }
+
+    newButton.addEventListener('click', () => openEditor());
+    saveSelectionButton?.addEventListener('click', () => {
+      if (presets.length >= maxPresets) return;
+      const expr = currentSelection();
+      openEditor(undefined, [{ label: '', expr }]);
+    });
+    addPartButton.addEventListener('click', () => {
+      partsEl.append(partRow({ label: '', expr: '' }));
+      updateParts();
+    });
+    cancelButton.addEventListener('click', () => (editor.hidden = true));
+
+    editor.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      // Empty rows are left out; the server checks everything again
+      const parts = [...partsEl.querySelectorAll('.preset-part')]
+        .map((r) => ({ label: (r.querySelector('.part-label') as HTMLInputElement).value.trim(), expr: (r.querySelector('.part-expr') as HTMLInputElement).value.trim() }))
+        .filter((p) => p.expr);
+      const name = nameInput.value.trim();
+      const problem = !name ? 'Give the roll a name' : !parts.length ? 'Add at least one roll' : parts.map((p) => parseRoll(p.expr)).find((r) => !r.ok);
+      if (problem) {
+        errorEl.textContent = typeof problem === 'string' ? problem : (problem as { error: string }).error;
+        errorEl.hidden = false;
+        return;
+      }
+      const preset: DicePreset = { id: editingId ?? crypto.randomUUID(), name, parts };
+      const next = editingId ? presets.map((p) => (p.id === editingId ? preset : p)) : [...presets, preset];
+      if (await save(next)) editor.hidden = true;
+    });
+
+    void (async () => {
+      try {
+        const res = await fetch('/api/dice-presets', { cache: 'no-store' });
+        if (res.ok) presets = await res.json();
+      } catch {
+        // offline: nothing to show
+      }
+      render();
+    })();
   }
 
   document.addEventListener('astro:page-load', initDiceRollerPage);

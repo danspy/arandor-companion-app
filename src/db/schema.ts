@@ -133,6 +133,7 @@ export const User = sqliteTable('User', {
   profileImageUrl: text('profileImageUrl'), // Profile image URL
   characterIds: jsonArray('characterIds'), // Array of character IDs this user plays
   favoritePages: jsonArray('favoritePages'), // Array of favorite/quickstart page IDs (max 3)
+  dicePresets: jsonArray('dicePresets'), // Saved dice rolls: { id, name, parts: [{ label, expr }] } (see lib/dice-notation)
   createdAt: now('createdAt'),
 });
 
