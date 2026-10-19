@@ -1,0 +1,101 @@
+/* Bestiary stat block (src/lib/statblock-view.ts), in the 2024 Monster Manual's order and
+   rhythm, in the app's colours. Every number that can be rolled is a button. */
+
+.statblock { color: var(--text-body); font-size: 0.95rem; line-height: 1.5; }
+.statblock p { margin: 0; }
+
+.sb-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; padding-bottom: 0.6rem; border-bottom: 1px solid var(--border-gold); }
+.sb-name { margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.9rem; line-height: 1.05; color: var(--gold); }
+.sb-type { margin-top: 0.2rem !important; font-style: italic; color: var(--text-muted); font-size: 0.9rem; }
+
+.sb-mode { display: inline-flex; flex: none; border: 1px solid var(--border-gold); border-radius: 2px; overflow: hidden; }
+.sb-mode button { padding: 0.2rem 0.55rem; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); background: none; cursor: pointer; }
+.sb-mode button + button { border-left: 1px solid var(--border-gold); }
+.sb-mode button[aria-pressed='true'] { color: var(--on-gold); background: var(--gold); }
+
+.sb-core { padding: 0.6rem 0; border-bottom: 1px solid var(--border-gold); }
+.sb-pair { display: flex; flex-wrap: wrap; column-gap: 1.5rem; }
+.sb-line b { color: var(--text-strong); font-weight: 700; }
+
+.sb-abilities { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.25rem 1rem; padding: 0.6rem 0; border-bottom: 1px solid var(--border-gold); }
+.sb-ability-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.sb-ability-table th, .sb-ability-table td { padding: 0.15rem 0.3rem; text-align: center; }
+.sb-ability-table tr:first-child th { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-faint); }
+.sb-ability-table tr + tr { border-top: 1px solid var(--border); }
+.sb-ability-table th:first-child { text-align: left; color: var(--text-strong); font-weight: 700; }
+.sb-score { color: var(--text-strong); font-weight: 600; }
+
+.sb-details { padding: 0.6rem 0; display: grid; gap: 0.15rem; }
+
+.sb-section { padding-top: 0.75rem; }
+.sb-section-title { margin: 0 0 0.4rem; padding-bottom: 0.2rem; border-bottom: 1px solid var(--border-gold); font-family: var(--font-display); font-weight: 600; font-size: 1.25rem; color: var(--gold); }
+.sb-entry + .sb-entry, .sb-section > .sb-text + .sb-entry { margin-top: 0.45rem; }
+.sb-entry .sb-text + .sb-text { margin-top: 0.2rem; padding-left: 0.75rem; }
+.sb-entry-name { font-weight: 700; font-style: italic; color: var(--text-strong); }
+.sb-runin { font-style: italic; color: var(--text-muted); }
+.sb-notes-text { white-space: pre-line; color: var(--text-muted); }
+
+/* Roll buttons: look like the number they are, with a dotted gold underline */
+.sb-roll {
+  display: inline; padding: 0 0.1rem; margin: 0; font: inherit; color: var(--gold);
+  background: none; border: 0; border-bottom: 1px dotted var(--gold); border-radius: 0; cursor: pointer;
+}
+.sb-roll:hover, .sb-roll:focus-visible { background: var(--accent-dim); outline: none; }
+.sb-roll:active { transform: translateY(1px); }
+.sb-roll.is-proficient { font-weight: 700; }
+.sb-roll.is-conditional { color: var(--text-muted); border-bottom-color: var(--text-faint); }
+.sb-roll.sb-attack { border-bottom: 0; color: var(--gold); font-style: italic; font-weight: 700; padding: 0.05rem 0.35rem 0.05rem 0.2rem; border: 1px solid var(--border-gold); border-radius: 2px; }
+.sb-roll.sb-attack:hover { background: var(--accent-dim); border-color: var(--gold); }
+.sb-dice-icon { font-style: normal; margin-right: 0.25rem; }
+.sb-recharge { font-size: 0.8rem; margin-left: 0.15rem; }
+
+@media (min-width: 900px) {
+  /* Wide pages: two columns like the book (the side panels stay one column) */
+  .statblock.is-wide { column-count: 2; column-gap: 2rem; }
+  .statblock.is-wide .sb-head, .statblock.is-wide .sb-core, .statblock.is-wide .sb-abilities, .statblock.is-wide .sb-entry { break-inside: avoid; }
+  .statblock.is-wide .sb-head { column-span: all; }
+  .statblock.is-wide .sb-section-title { break-after: avoid; }
+}
+
+/* ── Quick add dialog (src/lib/quick-add.ts) ── */
+.qa-overlay { position: fixed; inset: 0; z-index: 10010; display: flex; align-items: center; justify-content: center; padding: 1rem; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(4px); }
+.qa-panel { width: min(32rem, 100%); max-height: 90dvh; overflow-y: auto; padding: 1.5rem; }
+.qa-title { margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.6rem; color: var(--gold); }
+.qa-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr)); gap: 0.75rem; margin-bottom: 1rem; }
+.qa-grid .qa-field:first-child { grid-column: 1 / -1; }
+.qa-field { display: grid; gap: 0.3rem; }
+.qa-rolls-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 0.4rem; }
+.qa-rolls { display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: 0.4rem 0.75rem; }
+.qa-roll { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.qa-roll-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.9rem; }
+.qa-roll input { width: 4.5rem; text-align: center; }
+.qa-error { margin-top: 0.75rem; color: var(--danger); }
+.qa-error[hidden] { display: none; }
+
+/* ── Stat block side panel (initiative tracker, DM screen) ── */
+.sb-panel {
+  position: fixed; top: 0; right: 0; bottom: 0; z-index: 10000;
+  width: min(30rem, 100vw); overflow-y: auto; overscroll-behavior: contain;
+  padding: 1rem 1.25rem 2rem; background: var(--bg-raised); border-left: 1px solid var(--border-gold);
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.5);
+  transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.sb-panel.is-open { transform: none; }
+.sb-panel-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
+.sb-panel-who { font-size: 0.8rem; color: var(--text-muted); }
+@media (prefers-reduced-motion: reduce) { .sb-panel { transition: none; } }
+
+/* ── Damage / heal on the initiative tracker ── */
+.hp-amount { width: 4rem; padding: 0.25rem 0.4rem; text-align: center; font-size: 0.85rem; }
+.hp-change-btn { min-width: 2rem; font-size: 1.1rem; font-weight: 700; line-height: 1; }
+.hp-flash-damage { animation: hp-flash 0.9s ease; --flash: var(--danger); }
+.hp-flash-heal { animation: hp-flash 0.9s ease; --flash: var(--success); }
+@keyframes hp-flash { 0% { color: var(--flash); text-shadow: 0 0 10px var(--flash); } 100% { color: inherit; text-shadow: none; } }
+@media (prefers-reduced-motion: reduce) { .hp-flash-damage, .hp-flash-heal { animation: none; } }
+/* Wide screens: the page moves over so the panel sits next to the fight, not on top of it */
+@media (min-width: 1100px) {
+  html.sb-panel-open body { padding-right: min(30rem, 100vw); transition: padding-right 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+}
+/* Rows without a stat block keep its place, so HP and buttons line up down the tracker */
+.statblock-slot { display: inline-block; width: 2.25rem; flex: none; }
+@media (max-width: 639px) { .statblock-slot { display: none; } }

@@ -1,14 +1,15 @@
 # Combat and DM tools
 
-Three tools work together at the table:
+These tools work together at the table:
 
 | Tool | URL | Who |
 |---|---|---|
 | Initiative tracker | `/tools/initiative` | Everyone logged in; only DM/admin can run combat |
+| Bestiary | `/tools/bestiary` | DM and admin |
 | DM screen (control panel) | `/tools/dm-screen` | DM and admin |
 | Player display | `/display` | Anyone with the link, no login (meant for a TV or second screen) |
 
-All three are reached through **Tools** in the menu (shown when logged in).
+All are reached through **Tools** in the menu (shown when logged in).
 
 ## Initiative tracker
 
@@ -25,6 +26,13 @@ All three are reached through **Tools** in the menu (shown when logged in).
 - **Add combatants:** name, initiative, type (character, NPC, monster, other), linked character
   or NPC, HP / max HP / temp HP, AC, notes, active flag. For monsters you can enter a **count**:
   each monster gets its own entry with its own rolled initiative.
+- **From the bestiary:** with type *Monster*, *From the bestiary* opens the quick add (see
+  [Bestiary](#bestiary)); an NPC that has a stat block does the same under its own name.
+- **Damage / Heal:** type a number next to a combatant's HP and press **−** (or Enter) for
+  damage, **+** for healing. Damage takes temp HP first, then HP, down to 0; healing goes up to
+  max HP and clears death saves. Characters' records follow.
+- **Stat block** (book icon) on combatants added from the bestiary: opens their stat block in
+  a panel at the right (on wide screens next to the list), with working roll buttons.
 - **Sync HP** from D&D Beyond for all characters. While combat is active this also happens
   automatically every 10 seconds; see [D&D Beyond sync](DnD-Beyond-Sync.md). With the tracker
   and the DM screen both open, they share one sync instead of each asking D&D Beyond.
@@ -35,7 +43,7 @@ All three are reached through **Tools** in the menu (shown when logged in).
 
 - See the turn order, the round and whose turn it is.
 - Your own character shows exact HP, and you can update its **HP, temp HP and death saves**
-  yourself. The change is saved to your character too.
+  yourself, or use **− / +** for damage and healing. The change is saved to your character too.
 - Other combatants only show a health status. Exact HP, AC and DM notes of others are never
   sent to players' browsers:
 
@@ -50,6 +58,33 @@ All three are reached through **Tools** in the menu (shown when logged in).
 
 The tracker refreshes every 2 seconds for everyone. While combat runs, logged-in users also see
 a **Combat active** banner on the dashboard that links to the tracker.
+
+## Bestiary
+
+Stat blocks for monsters and named NPCs, for DM and admin only: players never receive them,
+not even through the API, and a combatant's link to its stat block is left out of their view.
+
+- **Paste from D&D Beyond:** on a monster's page (2024 Monster Manual layout), select the stat
+  block from its name to the last action, copy, paste it into *New creature* and press **Read**.
+  The form fills in and a live preview shows the result; lines that can't be placed are listed
+  and kept in the DM notes. Then *Save*.
+- **New creature by hand:** the same form (numbers, abilities with saves, detail lines, and
+  sections such as Traits, Actions, Bonus Actions, Reactions, Legendary Actions). Write attacks
+  like the book and they become roll buttons.
+- **Used by NPCs:** link named NPCs (e.g. Kimbal Laradan → "Scout"). Adding them to a fight from
+  the tracker or the stat block page uses these numbers.
+- **The stat block** (`/tools/bestiary/<id>`): every number rolls with the 3D dice:
+  - an attack's name rolls to hit plus its damage in one throw (a natural 20 doubles the damage
+    dice); damage that only applies sometimes ("… if the attack roll had Advantage") has its own
+    button, as does any other damage in the text;
+  - ability modifiers and saves, skills, initiative, hit dice, *Recharge* (d6) and spell attack
+    bonuses;
+  - **Normal / Adv / Dis** gives the next d20 roll advantage or disadvantage;
+  - the result card names who rolled ("Goblin Warrior 2 · Scimitar").
+- **Add to fight** (stat block page, bestiary list, tracker): how many, HP each (the average,
+  which you can override), and each copy's initiative rolled as d20 + its bonus (shown, editable,
+  *Reroll*). Copies are numbered after those already in the fight ("Goblin Warrior 5, 6").
+- Deleting a stat block keeps combatants that came from it, without the link.
 
 ## DM screen
 
@@ -76,6 +111,8 @@ about 2 seconds.
   timer back as they were. Hidden entries stay hidden even when focused. On the display, removed or hidden portraits fade out, the others glide to their
   new place and size, and new ones rise in last. Portraits and the place name also glide (never
   jump) when the location, timer or turn order appears or goes.
+- **Turn preview:** the current and next combatant have a **Stat block** link when they came
+  from the bestiary.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server

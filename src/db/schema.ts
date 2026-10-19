@@ -185,11 +185,37 @@ export const InitiativeTracker = sqliteTable('InitiativeTracker', {
   tempHp: integer('tempHp'), // Temporary HP
   ac: integer('ac'), // Armor Class
   notes: text('notes'),
+  creatureId: text('creatureId'), // Creature (bestiary stat block) it was added from; DM only
   isActive: bool('isActive').notNull().default(true), // Whether this entry is in current combat
   // Death saves (when HP = 0)
   deathSaveSuccesses: integer('deathSaveSuccesses').notNull().default(0), // 0-3
   deathSaveFailures: integer('deathSaveFailures').notNull().default(0), // 0-3
   isStable: bool('isStable').notNull().default(false), // Whether character is stable at 0 HP
+  createdAt: now('createdAt'),
+  updatedAt: now('updatedAt'),
+});
+
+// Bestiary: stat blocks for monsters and named NPCs (DM/admin only, never sent to players).
+// Numbers the app works with are columns; the descriptive parts keep their text word for word
+// (see src/lib/statblock.ts for the shapes and the D&D Beyond paste import).
+export const Creature = sqliteTable('Creature', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  typeLine: text('typeLine'), // "Small Fey (Goblinoid), Chaotic Neutral"
+  ac: integer('ac'),
+  acNote: text('acNote'), // e.g. "natural armor"
+  hp: integer('hp'), // average
+  hpFormula: text('hpFormula'), // "3d6"
+  initiative: integer('initiative'), // bonus
+  speed: text('speed'),
+  abilities: json<Record<string, { score: number; mod: number; save: number }>>('abilities').notNull().default({}),
+  details: jsonArray('details'), // [{ label: 'Senses', text: 'Darkvision 60 ft.; Passive Perception 9' }]
+  sections: jsonArray('sections'), // [{ title: 'Actions', intro?, entries: [{ name, text }] }]
+  cr: text('cr'), // "1/4"
+  xp: integer('xp'),
+  npcIds: jsonArray('npcIds'), // named NPCs that use this stat block
+  notes: text('notes'), // DM notes
+  sourceText: text('sourceText'), // the pasted stat block, as pasted
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });

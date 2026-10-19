@@ -73,6 +73,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
+      creatureId: typeof body.creatureId === 'string' && body.creatureId ? body.creatureId : null,
       isActive: body.isActive !== undefined ? body.isActive : true,
       deathSaveSuccesses: 0,
       deathSaveFailures: 0,

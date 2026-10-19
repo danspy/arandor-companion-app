@@ -99,7 +99,7 @@ diary appearances. DMs can complete, fail, reactivate, edit and delete a quest f
 
 - **Calendar**: game sessions and the calendar subscription; see [Calendar](Calendar.md).
 - **Dice roller**: see [Dice](#dice).
-- **Initiative tracker** and, for DMs, the **DM screen**: see
+- **Initiative tracker** and, for DMs, the **DM screen** and the **Bestiary**: see
   [Combat and DM tools](DM-Tools.md).
 
 ## Dice

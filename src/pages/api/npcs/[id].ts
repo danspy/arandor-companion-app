@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, NPC, eq } from '@/db';
+import { db, Creature, NPC, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 
 export const GET: APIRoute = async ({ params }) => {
@@ -68,6 +68,12 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
 
   try {
     await db.delete(NPC).where(eq(NPC.id, params.id!));
+    // Stat blocks it used no longer list it
+    for (const c of await db.select({ id: Creature.id, npcIds: Creature.npcIds }).from(Creature)) {
+      if (c.npcIds.includes(params.id!)) {
+        await db.update(Creature).set({ npcIds: c.npcIds.filter((id: string) => id !== params.id) }).where(eq(Creature.id, c.id));
+      }
+    }
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

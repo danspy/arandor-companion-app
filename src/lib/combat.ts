@@ -100,6 +100,9 @@ export async function advanceTurn(action: TurnAction): Promise<CombatStateRow | 
   return setCombatState({ status: 'active', currentTurnIndex: index, currentRound: round });
 }
 
+// Damage and healing arithmetic lives in ./hp (no database, so tests can import it)
+export { applyHpChange, type HpChange } from './hp';
+
 // ── What players may see ──────────────────────────────────────────────────────
 
 export type HealthStatus = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;

@@ -21,7 +21,8 @@ things, and for the calendar, tools, profile and private notes.
 | Create characters | | ✓ | ✓ | ✓ |
 | Edit, delete, sync a character | | own or unowned | own or unowned | all |
 | Initiative tracker: view; update own character's HP and death saves | | ✓ | ✓ | ✓ |
-| Run combat (initiative tracker), DM screen | | | ✓ | ✓ |
+| Initiative tracker: damage/heal own character | | ✓ | ✓ | ✓ |
+| Run combat (initiative tracker), DM screen, bestiary (stat blocks) | | | ✓ | ✓ |
 | Quests, factions, campaign level/progress | | | ✓ | ✓ |
 | Change page header images | | | ✓ | ✓ |
 | Map edit mode (drag pins) | | | ✓ | ✓ |

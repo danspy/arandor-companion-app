@@ -5,6 +5,7 @@ import Button from '../../components/Button.astro';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
+import '../../styles/statblock.css';
 
 // DM Screen is only accessible to DM/Admin
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -479,6 +480,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
   </style>
 
   <script>
+    import { toggleStatBlock } from '../../lib/statblock-panel';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
     // Store current state
     let currentState = {
@@ -1026,6 +1028,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     }
     
     // Update initiative preview (current and next turns)
+    // Combatants added from the bestiary open their stat block in a side panel (see below)
+    const statBlockButton = (c) => c.creatureId
+      ? `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId)}" data-name="${escapeHtml(c.name)}">Stat block</button>`
+      : '';
+
     function updateInitiativePreview() {
       const preview = document.getElementById('initiativePreview');
       const currentContent = document.getElementById('currentTurnContent');
@@ -1056,6 +1063,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <span class="t-body-text font-semibold">${escapeHtml(currentCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${currentCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${currentCombatant.type}</span>
+          ${statBlockButton(currentCombatant)}
         `;
       }
       
@@ -1068,6 +1076,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           <span class="t-body-text font-semibold">${escapeHtml(nextCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${nextCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${nextCombatant.type}</span>
+          ${statBlockButton(nextCombatant)}
         `;
       }
     }
@@ -1553,6 +1562,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
     // Runs on the first load and after every client-side navigation (ClientRouter)
     document.addEventListener('astro:page-load', initialize);
+    // Stat block buttons in the turn preview (redrawn every few seconds, so delegated)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.statblock-btn');
+      if (btn && document.getElementById('initiativePreview')) toggleStatBlock(btn.dataset.creatureId, btn.dataset.name);
+    });
     
     // Cleanup before navigation
     document.addEventListener('astro:before-preparation', cleanup);

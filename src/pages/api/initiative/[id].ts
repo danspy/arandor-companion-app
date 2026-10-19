@@ -104,6 +104,8 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
+      // The stat block link stays unless the request changes it (the edit form doesn't send it)
+      creatureId: body.creatureId !== undefined ? (typeof body.creatureId === 'string' && body.creatureId ? body.creatureId : null) : existing.creatureId,
       isActive: body.isActive !== undefined ? body.isActive : true,
       updatedAt: now,
     };
