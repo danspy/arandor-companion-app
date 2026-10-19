@@ -793,6 +793,66 @@ test.describe('Dashboard music', () => {
     await removeAll(added.splice(0));
     expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
   });
+
+  test('panel shows whether the site playlist is playing, paused or idle', async ({ browser }) => {
+    for (const name of ['State One.wav', 'State Two.wav']) {
+      const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
+        multipart: { file: { name, mimeType: 'audio/wav', buffer: wav(20) } },
+      });
+      expect(res.status()).toBe(201);
+      added.push((await res.json()).results[0].track.id);
+    }
+    const tracks = await siteTracks();
+    const visitor = await browser.newContext();
+    try {
+      const page = await visitor.newPage();
+      await page.goto('/');
+      const panel = page.locator('#tavern-music');
+      const main = panel.locator('[data-tm-play]');
+      const now = panel.locator('[data-tm-now]');
+
+      await expect(panel).toHaveAttribute('data-state', 'idle');
+      await expect(main).toHaveText('Play');
+      await expect(main).toHaveAttribute('aria-label', 'Play');
+      await expect(now).toBeHidden();
+
+      await main.click();
+      await expect(panel).toHaveAttribute('data-state', 'playing');
+      await expect(main).toHaveText('Pause');
+      await expect(main).toHaveAttribute('aria-label', 'Pause');
+      await expect(now).toBeVisible();
+      await expect(now).toContainText(tracks[0].title);
+      await expect(now).not.toContainText('Paused');
+      await expect(panel.locator('[data-tm-row]').first()).toHaveAttribute('aria-current', 'true');
+      await expect(panel.locator('[data-tm-progress]')).toBeVisible();
+
+      await main.click();
+      await expect(panel).toHaveAttribute('data-state', 'paused');
+      await expect(main).toHaveText('Resume');
+      await expect(main).toHaveAttribute('aria-label', 'Resume');
+      await expect(now).toContainText('Paused');
+      await expect(page.evaluate(() => (window as any).__music.getState().playing)).resolves.toBe(false);
+
+      await main.click();
+      await expect(panel).toHaveAttribute('data-state', 'playing');
+      await expect(main).toHaveText('Pause');
+      await expect(now).not.toContainText('Paused');
+
+      // another playlist takes over: the panel goes back to idle
+      await page.evaluate((t) => (window as any).__music.playPlaylist({ id: 'not-the-site', name: 'Other', tracks: [t] }, 0), {
+        id: tracks[1].id, kind: tracks[1].kind, title: 'Other list track', ref: tracks[1].ref,
+      });
+      await expect(page.locator('#music-title')).toHaveText('Other list track');
+      await expect(panel).toHaveAttribute('data-state', 'idle');
+      await expect(main).toHaveText('Play');
+      await expect(now).toBeHidden();
+      await expect(panel.locator('[data-tm-row][aria-current="true"]')).toHaveCount(0);
+    } finally {
+      await visitor.close();
+      await removeAll(added.splice(0));
+      expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
+    }
+  });
 });
 
 test.describe('DM screen music', () => {
