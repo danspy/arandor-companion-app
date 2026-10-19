@@ -16,6 +16,7 @@ import {
   InitiativeTracker,
   CombatState,
   DMScreenState,
+  Playlist,
 } from '../src/db';
 import { hashPassword } from '../src/lib/auth';
 
@@ -174,6 +175,11 @@ export default async function seed() {
 
   await db.insert(DMScreenState).values([
     { id: 'current-dm-screen', currentLocationId: '7', spotlightNpcIds: ['6', '4'], customAssets: [], showInitiativeTracker: true, screenVisible: true, placeholderImageUrl: img('hero') },
+  ]);
+
+  // ── Music: the site playlist (filled by the admin) ───────────────────────
+  await db.insert(Playlist).values([
+    { id: 'site-tavern-music', ownerId: '1', name: 'Tavern music', visibility: 'public', isSiteDefault: true },
   ]);
 
   console.log('Database seeded successfully!');
