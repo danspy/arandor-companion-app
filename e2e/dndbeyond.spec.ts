@@ -43,6 +43,7 @@ test.describe('D&D Beyond import', () => {
 
 // Numbers read off the rendered D&D Beyond sheets (saves, skills, passives, initiative, AC, speed)
 const expected: Record<string, any> = JSON.parse(readFileSync(new URL('./fixtures/dndbeyond/expected-sheets.json', import.meta.url), 'utf8'));
+const expectedAttacks: Record<string, any> = JSON.parse(readFileSync(new URL('./fixtures/dndbeyond/expected-attacks.json', import.meta.url), 'utf8'));
 const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 
 test.describe('D&D Beyond sheet', () => {
@@ -56,6 +57,16 @@ test.describe('D&D Beyond sheet', () => {
       expect([sheet.passivePerception, sheet.passiveInvestigation, sheet.passiveInsight]).toEqual([e.perception, e.investigation, e.insight]);
       expect(sheet.initiative).toBe(e.initiative);
       expect(Object.fromEntries(sheet.skills.map((s) => [s.name, s.bonus]))).toEqual(e.skills);
+    });
+
+    test(`${name}: attacks and spellcasting match`, () => {
+      const sheet = buildSheet(load(name));
+      // Every row the sheet shows is the one D&D Beyond shows, and all of them are there
+      // (except the few the JSON cannot tell us about, listed in _omitted)
+      const omitted = (expectedAttacks._omitted[name] || []).map((r: unknown[]) => r[0]);
+      const shown = sheet.attacks.map((a) => [a.name, a.toHit, a.damage]);
+      expect(shown.sort()).toEqual(expectedAttacks[name].filter((r: unknown[]) => !omitted.includes(r[0])).sort());
+      expect(sheet.spellcasting.map((s) => [s.className, s.saveDc, s.attack])).toEqual(expectedAttacks._spellcasting[name]);
     });
 
     test(`${name}: armor class and speed match`, () => {

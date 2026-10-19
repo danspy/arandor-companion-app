@@ -1,0 +1,241 @@
+{
+ "_source": "Attack rows (to hit, first damage) on the Actions tab of the rendered D&D Beyond sheets, 2026-10-19; spellcasting = [class, save DC, spell attack] from the Spells tab",
+ "moronur": [
+  [
+   "Dart",
+   9,
+   "1d4+4"
+  ],
+  [
+   "Moronurs Left Knuckle",
+   11,
+   "1d10+6"
+  ],
+  [
+   "Moronurs Quarterstaff",
+   12,
+   "1d10+7"
+  ],
+  [
+   "Unarmed Strike",
+   9,
+   "1d10+4"
+  ]
+ ],
+ "volrak": [
+  [
+   "Family Glaive of House Belmont",
+   12,
+   "1d10+7"
+  ],
+  [
+   "Javelin of Lightning",
+   10,
+   "1d6+5"
+  ],
+  [
+   "Unarmed Strike",
+   10,
+   "6"
+  ]
+ ],
+ "sinatah": [
+  [
+   "Aelar‘s Dagger",
+   8,
+   "1d4+3"
+  ],
+  [
+   "Sinatahs Bow of Fog",
+   8,
+   "1d8+3"
+  ],
+  [
+   "Staff of Frost",
+   4,
+   "1d6-1"
+  ],
+  [
+   "Sorcerous Burst",
+   10,
+   "3d8"
+  ],
+  [
+   "Chill Touch",
+   10,
+   "3d10"
+  ],
+  [
+   "Eldritch Blast",
+   10,
+   "1d10+5"
+  ],
+  [
+   "Witch Bolt",
+   10,
+   "2d12"
+  ],
+  [
+   "Scorching Ray",
+   10,
+   "2d6"
+  ],
+  [
+   "Unarmed Strike",
+   4,
+   "0"
+  ]
+ ],
+ "alvar": [
+  [
+   "Alvars Unholy Splinter",
+   7,
+   "1d4+2"
+  ],
+  [
+   "Alvars Warhammer",
+   1,
+   "1d8+1"
+  ],
+  [
+   "Avada Kedavra",
+   10,
+   "4d6"
+  ],
+  [
+   "Scorching Ray",
+   10,
+   "2d6"
+  ],
+  [
+   "Chill Touch",
+   7,
+   "3d10"
+  ],
+  [
+   "Unarmed Strike",
+   4,
+   "0"
+  ]
+ ],
+ "roval": [
+  [
+   "Belmonts Bloodeater",
+   9,
+   "1d8+6"
+  ],
+  [
+   "Javelin",
+   9,
+   "1d6+6"
+  ],
+  [
+   "Vampiric Touch",
+   8,
+   "3d6"
+  ],
+  [
+   "Unarmed Strike",
+   9,
+   "5"
+  ]
+ ],
+ "barum": [
+  [
+   "Quarterstaff",
+   3,
+   "1d6-1"
+  ],
+  [
+   "Fire Bolt",
+   9,
+   "2d10"
+  ],
+  [
+   "Witch Bolt",
+   9,
+   "2d12"
+  ],
+  [
+   "Scorching Ray",
+   9,
+   "2d6"
+  ],
+  [
+   "Unarmed Strike",
+   3,
+   "0"
+  ]
+ ],
+ "morrigan": [
+  [
+   "Chill Touch",
+   9,
+   "2d10"
+  ],
+  [
+   "Unarmed Strike",
+   3,
+   "0"
+  ]
+ ],
+ "_spellcasting": {
+  "sinatah": [
+   [
+    "Warlock",
+    18,
+    10
+   ],
+   [
+    "Sorcerer",
+    19,
+    10
+   ]
+  ],
+  "alvar": [
+   [
+    "Cleric",
+    18,
+    10
+   ],
+   [
+    "Warlock",
+    15,
+    7
+   ]
+  ],
+  "roval": [
+   [
+    "Paladin",
+    16,
+    8
+   ]
+  ],
+  "barum": [
+   [
+    "Wizard",
+    17,
+    9
+   ]
+  ],
+  "morrigan": [
+   [
+    "Wizard",
+    17,
+    9
+   ]
+  ],
+  "moronur": [],
+  "volrak": []
+ },
+ "_omitted": {
+  "alvar": [
+   [
+    "Scorching Ray",
+    10,
+    "2d6"
+   ]
+  ]
+ },
+ "_omitted_reason": "Domain spells (Light Domain) are not in D&D Beyond's character JSON, so the import cannot list them"
+}

@@ -6,7 +6,7 @@
  * HP syncs all go through these functions. Checked against real sheets in e2e/dndbeyond.spec.ts.
  */
 
-import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetSkill } from './character-sheet';
+import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetAttack, type SheetSkill, type SheetSpellcasting } from './character-sheet';
 
 export interface DnDBeyondHPData {
   hp?: number;
@@ -236,9 +236,12 @@ const SKILL_IDS: Record<string, number> = {
 };
 
 // Manual adjustments made on the D&D Beyond sheet (characterValues typeId)
-const VALUE = { acOverride: 1, acMagicBonus: 2, acMiscBonus: 3, skillOverride: 23, skillMiscBonus: 24, skillMagicBonus: 25, saveOverride: 38 } as const;
+const VALUE = { acOverride: 1, acMagicBonus: 2, acMiscBonus: 3, customName: 8, skillOverride: 23, skillMiscBonus: 24, skillMagicBonus: 25, weaponProficiency: 33, saveOverride: 38 } as const;
 const SKILL_ENTITY = '1958004211';
 const STAT_ENTITY = '1472902489';
+const ITEM_ENTITY = '1439493548';
+const SPELL_ENTITY = '435869154';
+const WEAPON_ENTITY = '1782728300';
 
 function characterValue(data: any, typeId: number, valueTypeId?: string, valueId?: number | string): number | null {
   const v = (data?.data?.characterValues || []).find((c: any) => c.typeId === typeId
@@ -339,6 +342,138 @@ function walkingSpeed(data: any, modifiers: any[]): number {
   return speed;
 }
 
+const formatDamage = (dice: string | null, mod: number) =>
+  !dice ? String(mod) : mod === 0 ? dice : `${dice}${mod > 0 ? '+' : ''}${mod}`;
+
+const classLevel = (data: any, name: string) =>
+  (data?.data?.classes || []).find((c: any) => c.definition?.name === name)?.level || 0;
+
+/** Monk Martial Arts die (2024): d6, d8 from level 5, d10 from 11, d12 from 17. */
+const martialArtsDie = (monkLevel: number) =>
+  monkLevel >= 17 ? '1d12' : monkLevel >= 11 ? '1d10' : monkLevel >= 5 ? '1d8' : '1d6';
+
+const dieSize = (dice: string) => Number(dice.split('d')[1]) || 0;
+
+const hasFeat = (data: any, name: string) => (data?.data?.feats || []).some((f: any) => f.definition?.name === name);
+
+/** Equipped weapons and the unarmed strike, the way the sheet's Actions tab shows them. */
+function weaponAttacks(data: any, modifiers: any[], mods: Record<Ability, number>, prof: number): SheetAttack[] {
+  const monkLevel = classLevel(data, 'Monk');
+  const dueling = hasFeat(data, 'Dueling');
+  const proficientIn = (subType: string) => modifiers.some((m) => m.type === 'proficiency' && m.subType === subType);
+  const attacks: SheetAttack[] = [];
+
+  for (const item of data?.data?.inventory || []) {
+    // Staffs and the like carry their weapon stats in weaponBehaviors (a Staff of Frost is a quarterstaff)
+    const d = item.definition?.weaponBehaviors?.[0] ? { ...item.definition, ...item.definition.weaponBehaviors[0] } : item.definition;
+    if (!item.equipped || !d?.damage?.diceString || d.attackType == null) continue;
+    const props: string[] = (d.properties || []).map((p: any) => p.name);
+    const ranged = d.attackType === 2;
+    const monkWeapon = monkLevel > 0 && d.isMonkWeapon;
+    const ability = props.includes('Finesse') || monkWeapon ? Math.max(mods.str, mods.dex) : ranged ? mods.dex : mods.str;
+    const proficient = proficientIn(d.categoryId === 2 ? 'martial-weapons' : 'simple-weapons')
+      || proficientIn(String(d.type || '').toLowerCase().replace(/\s+/g, '-'))
+      || (characterValue(data, VALUE.weaponProficiency, WEAPON_ENTITY, d.baseItemId ?? d.id) ?? 0) >= 3;
+    const magic = (d.grantedModifiers || []).filter((m: any) => m.type === 'bonus' && m.subType === 'magic')
+      .reduce((sum: number, m: any) => sum + valueOf(m), 0);
+    let dice: string = d.damage.diceString;
+    if (monkWeapon && dieSize(martialArtsDie(monkLevel)) > dieSize(dice)) dice = martialArtsDie(monkLevel);
+    const duelingBonus = dueling && !ranged && !props.includes('Two-Handed') ? 2 : 0;
+    const thrown = props.includes('Thrown') || ranged;
+    attacks.push({
+      name: (data.data.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === ITEM_ENTITY && String(c.valueId) === String(item.id))?.value || d.name,
+      kind: 'weapon',
+      range: thrown && d.range ? `${d.range}/${d.longRange || d.range} ft.` : props.includes('Reach') ? '10 ft.' : '5 ft.',
+      toHit: ability + (proficient ? prof : 0) + magic + bonusFor(modifiers, ranged ? 'ranged-weapon-attacks' : 'melee-weapon-attacks', mods) + bonusFor(modifiers, 'weapon-attacks', mods),
+      saveDc: null,
+      damage: formatDamage(dice, ability + magic + duelingBonus),
+      damageType: d.damageType || null,
+      notes: props.join(', '),
+    });
+  }
+
+  const unarmedAbility = monkLevel > 0 ? Math.max(mods.str, mods.dex) : mods.str;
+  attacks.push({
+    name: 'Unarmed Strike', kind: 'unarmed', range: '5 ft.',
+    toHit: unarmedAbility + prof, saveDc: null,
+    damage: monkLevel > 0 ? formatDamage(martialArtsDie(monkLevel), unarmedAbility) : String(1 + unarmedAbility),
+    damageType: 'Bludgeoning', notes: '',
+  });
+  return attacks;
+}
+
+/** Classes that cast spells, with their spellcasting ability (the subclass's for e.g. Eldritch Knight). */
+function spellcastingClasses(data: any): { id: number; name: string; ability: Ability; featureIds: Set<number> }[] {
+  return (data?.data?.classes || []).flatMap((c: any) => {
+    const abilityId = c.definition?.spellCastingAbilityId || c.subclassDefinition?.spellCastingAbilityId;
+    if (!abilityId) return [];
+    return [{ id: c.id, name: c.definition.name, ability: ABILITY_KEYS[abilityId - 1], featureIds: new Set((c.classFeatures || []).map((f: any) => f.definition?.id)) }];
+  });
+}
+
+function spellcasting(data: any, modifiers: any[], mods: Record<Ability, number>, prof: number): SheetSpellcasting[] {
+  return spellcastingClasses(data).map((c) => ({
+    className: c.name,
+    ability: c.ability,
+    saveDc: 8 + prof + mods[c.ability] + bonusFor(modifiers, 'spell-save-dc', mods) + bonusFor(modifiers, `${c.name.toLowerCase()}-spell-save-dc`, mods),
+    attack: prof + mods[c.ability] + bonusFor(modifiers, 'spell-attacks', mods),
+  }));
+}
+
+/** Spells with an attack roll and damage (cantrips scale with character level). */
+function spellAttacks(data: any, modifiers: any[], mods: Record<Ability, number>, prof: number): SheetAttack[] {
+  const d = data?.data || {};
+  const casters = spellcastingClasses(data);
+  const fallback = casters.find((c) => (d.classes || []).find((x: any) => x.id === c.id)?.isStartingClass) ?? casters[0];
+  const level = totalLevel(data);
+  const options = Object.values(d.options || {}).flat().map((o: any) => o?.definition?.name || '');
+  const equippedItems = new Set((d.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.definition?.id));
+
+  const entries: { spell: any; ability: Ability | undefined; className?: string }[] = [];
+  for (const cs of d.classSpells || []) {
+    const c = casters.find((x) => x.id === cs.characterClassId);
+    for (const spell of cs.spells || []) entries.push({ spell, ability: c?.ability, className: c?.name });
+  }
+  for (const [source, list] of Object.entries(d.spells || {})) {
+    for (const spell of (list as any[]) || []) {
+      if (source === 'item' && !equippedItems.has(spell.componentId)) continue;
+      const c = source === 'class' ? casters.find((x) => x.featureIds.has(spell.componentId)) : undefined;
+      const ability = spell.spellCastingAbilityId ? ABILITY_KEYS[spell.spellCastingAbilityId - 1] : (c ?? fallback)?.ability;
+      entries.push({ spell, ability, className: (c ?? (spell.spellCastingAbilityId ? undefined : fallback))?.name });
+    }
+  }
+
+  const attacks: SheetAttack[] = [];
+  const seen = new Set<string>();
+  for (const { spell, ability, className } of entries) {
+    const def = spell.definition;
+    const damage = (def?.modifiers || []).find((m: any) => m.type === 'damage' && m.die?.diceString);
+    if (!def?.attackType || def.asPartOfWeaponAttack || !damage || !ability) continue;
+    const name = (d.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === SPELL_ENTITY && String(c.valueId) === String(spell.id))?.value || def.name;
+    if (seen.has(name)) continue;
+    seen.add(name);
+    let dice: string = damage.die.diceString;
+    if (def.level === 0) {
+      const steps = (damage.atHigherLevels?.higherLevelDefinitions || [])
+        .filter((h: any) => h.level <= level && h.dice?.diceString).sort((a: any, b: any) => b.level - a.level);
+      if (steps[0]) dice = steps[0].dice.diceString;
+    }
+    let mod = damage.die.fixedValue || 0;
+    if (def.name === 'Eldritch Blast' && options.some((o) => o.startsWith('Agonizing Blast'))) mod += mods[ability];
+    if (def.level === 0 && className) mod += bonusFor(modifiers, `${className.toLowerCase()}-cantrip-damage`, mods);
+    attacks.push({
+      name, kind: 'spell',
+      range: def.range?.rangeValue ? `${def.range.rangeValue} ft.` : def.range?.origin || '',
+      toHit: prof + mods[ability] + bonusFor(modifiers, 'spell-attacks', mods),
+      saveDc: null,
+      damage: formatDamage(dice, mod),
+      damageType: damage.friendlySubtypeName || damage.subType || null,
+      notes: def.level === 0 ? 'Cantrip' : `Level ${def.level}${def.concentration ? ', concentration' : ''}`,
+    });
+  }
+  return attacks;
+}
+
 export function buildSheet(data: any): CharacterSheet {
   const scores = abilityScores(data);
   const mods = Object.fromEntries(ABILITY_KEYS.map((a, i) => [a, abilityModifier(scores[ABILITY_NAMES[i]])])) as Record<Ability, number>;
@@ -378,8 +513,8 @@ export function buildSheet(data: any): CharacterSheet {
     passiveInvestigation: passive('investigation'),
     passiveInsight: passive('insight'),
     skills,
-    spellcasting: [],
-    attacks: [],
+    spellcasting: spellcasting(data, modifiers, mods, prof),
+    attacks: [...weaponAttacks(data, modifiers, mods, prof), ...spellAttacks(data, modifiers, mods, prof)],
     features: [],
     inventory: [],
   };
