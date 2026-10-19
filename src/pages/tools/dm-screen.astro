@@ -3,7 +3,8 @@ import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
-import { db, Location, NPC, PageSettings, eq } from '@/db';
+import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
+import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 
 // DM Screen is only accessible to DM/Admin
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -14,9 +15,13 @@ if (!isLoggedIn || !canEdit) {
   return Astro.redirect('/login');
 }
 
-// Fetch all locations and NPCs for selection
+// Fetch all locations, NPCs and characters for selection
 const locations = await db.select().from(Location);
 const npcs = await db.select().from(NPC);
+const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompare(b.name);
+const characters = (await db.select().from(Character)).sort(byName);
+const party = characters.filter((c) => c.isActive);
+const formerParty = characters.filter((c) => !c.isActive);
 
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dm-screen'));
@@ -103,8 +108,15 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         </div>
 
         <div id="locationPreview" class="hidden">
-          <p class="t-body-text text-sm font-medium mb-2">Preview:</p>
-          <div class="rounded-xs overflow-hidden" style="border:2px solid var(--border);">
+          <div class="flex items-center justify-between gap-2 mb-2">
+            <p class="t-body-text text-sm font-medium">Preview: <span id="locationHiddenBadge" class="t-badge ml-1" style="display:none">Hidden from players</span></p>
+            <button type="button" id="toggleLocationHiddenBtn" class="t-btn-secondary text-xs inline-flex items-center gap-1.5" aria-pressed="false">
+              <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-icon-show><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+              <svg class="w-4 h-4 pointer-events-none hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-icon-hide><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+              <span data-label>Hide from players</span>
+            </button>
+          </div>
+          <div id="locationPreviewCard" class="rounded-xs overflow-hidden transition-opacity" style="border:2px solid var(--border);">
             <div id="locationImageContainer" class="t-inset aspect-video flex items-center justify-center">
               <img id="locationImage" class="w-full h-full object-cover hidden" alt="Location" />
               <p id="noLocationImage" class="t-faint">No image available</p>
@@ -120,29 +132,60 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
     <!-- NPC Spotlight Control -->
     <div class="t-panel p-6">
-      <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+      <div class="flex flex-wrap items-center justify-between gap-2 mb-4">
+      <h2 class="t-section-h text-xl flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
         </svg>
-        NPCs in Spotlight
+        Spotlight
       </h2>
+        <div class="flex flex-wrap items-center gap-2">
+        <button type="button" id="toggleAllNpcsHiddenBtn" class="t-btn-secondary text-xs inline-flex items-center gap-1.5 shrink-0" aria-pressed="false">
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-icon-show><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path></svg>
+          <svg class="w-4 h-4 pointer-events-none hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24" data-icon-hide><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+          <span data-label>Hide all</span>
+        </button>
+        <button type="button" id="focusAllBtn" class="t-btn-secondary text-xs inline-flex items-center gap-1.5 shrink-0" title="Show only the spotlight on the display: no location, turn order or timer"><svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="2"></circle><circle cx="12" cy="12" r="3" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg><span>Focus all</span></button>
+        <button type="button" id="clearNpcsBtn" class="t-btn-secondary text-xs shrink-0" title="Remove everyone from the spotlight">Clear</button>
+        </div>
+      </div>
+      <p id="allNpcsHiddenNote" class="t-badge mb-3" style="display:none">Spotlight hidden from players</p>
+
+      <!-- Focus: some spotlight entries on their own, big; everything else waits -->
+      <div id="focusBanner" class="t-row p-3 mb-4 flex items-center justify-between gap-3" style="display:none; border-color: var(--border-gold)">
+        <p class="t-body-text text-sm min-w-0"><span class="font-medium" style="color: var(--gold)">Focus:</span> <span id="focusText"></span></p>
+        <button type="button" id="endFocusBtn" class="t-btn-secondary text-xs shrink-0">End focus</button>
+      </div>
 
       <div class="space-y-4">
         <div>
           <label for="npcSelect" class="t-label block mb-2">
-            Add NPC to Spotlight
+            Add a character or NPC
           </label>
           <div class="flex flex-col lg:flex-row gap-2">
             <select 
               id="npcSelect"
               class="t-input flex-1 px-4 py-2 min-w-0"
             >
-              <option value="">-- Select NPC --</option>
-              {npcs.map(npc => (
-                <option value={npc.id}>
-                  {npc.name} ({npc.occupation || npc.race})
-                </option>
-              ))}
+              <option value="">-- Select --</option>
+              {/* Values are spotlight keys: an NPC's id, or "character:<id>" */}
+              {party.length > 0 && (
+                <optgroup label="Party">
+                  {party.map((c) => <option value={characterKey(c.id)}>{c.name} ({characterSubtitle(c)})</option>)}
+                </optgroup>
+              )}
+              <optgroup label="NPCs">
+                {npcs.map(npc => (
+                  <option value={npc.id}>
+                    {npc.name} ({npcSubtitle(npc)})
+                  </option>
+                ))}
+              </optgroup>
+              {formerParty.length > 0 && (
+                <optgroup label="Former party members">
+                  {formerParty.map((c) => <option value={characterKey(c.id)}>{c.name} ({characterSubtitle(c)})</option>)}
+                </optgroup>
+              )}
             </select>
             <Button variant="primary" size="sm" id="addNpcBtn" class="w-full lg:w-auto lg:shrink-0">
               Add
@@ -151,7 +194,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         </div>
 
         <div id="spotlightNpcList" class="space-y-2">
-          <p class="t-faint text-sm" id="noNpcsMessage">No NPCs in spotlight</p>
+          <p class="t-faint text-sm" id="noNpcsMessage">Nobody in the spotlight</p>
         </div>
       </div>
     </div>
@@ -410,7 +453,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           </Button>
           
           <p class="t-faint text-xs mt-2">
-            This will clear the location, NPCs, and hide the initiative tracker on the player display.
+            This will clear the location and the spotlight, and hide the initiative tracker on the player display.
           </p>
         </div>
       </div>
@@ -436,6 +479,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
   </style>
 
   <script>
+    import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
     // Store current state
     let currentState = {
       currentLocationId: null,
@@ -449,11 +493,15 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       timerStartedAt: null,
       timerPausedAt: null,
       timerStatus: 'stopped',
+      locationHidden: false,
+      hiddenNpcIds: [],
+      npcsHidden: false,
     };
 
     // Store locations and NPCs data
     const locationsData = new Map();
     const npcsData = new Map();
+    const charactersData = new Map();
     
     // Store event handler references for cleanup
     let eventHandlers = new Map();
@@ -467,9 +515,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     // Initialize data maps
     async function initializeData() {
       try {
-        const [locationsResponse, npcsResponse] = await Promise.all([
+        const [locationsResponse, npcsResponse, charactersResponse] = await Promise.all([
           fetch('/api/locations'),
           fetch('/api/npcs'),
+          fetch('/api/characters'),
         ]);
 
         if (locationsResponse.ok) {
@@ -484,6 +533,11 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           npcs.forEach(npc => {
             npcsData.set(npc.id, npc);
           });
+        }
+
+        if (charactersResponse.ok) {
+          const characters = await charactersResponse.json();
+          characters.forEach(c => charactersData.set(c.id, c));
         }
       } catch (error) {
         console.error('Error loading data:', error);
@@ -510,6 +564,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           
           if (locationSelect) locationSelect.value = state.currentLocationId || '';
           if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
+
           if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
           if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
           if (timerMinutesInput && state.timerDuration !== undefined) {
@@ -625,6 +680,23 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       }
     }
 
+    // Show whether the current location is hidden from the player display
+    function updateLocationHiddenUI() {
+      const hidden = !!currentState.locationHidden;
+      const btn = document.getElementById('toggleLocationHiddenBtn');
+      // .t-badge sets display, which beats the `hidden` utility class
+      const badge = document.getElementById('locationHiddenBadge');
+      if (badge) badge.style.display = hidden ? '' : 'none';
+      const card = document.getElementById('locationPreviewCard');
+      if (card) card.style.opacity = hidden ? '0.45' : '';
+      if (btn) {
+        btn.setAttribute('aria-pressed', String(hidden));
+        btn.querySelector('[data-label]').textContent = hidden ? 'Show to players' : 'Hide from players';
+        btn.querySelector('[data-icon-show]')?.classList.toggle('hidden', hidden);
+        btn.querySelector('[data-icon-hide]')?.classList.toggle('hidden', !hidden);
+      }
+    }
+
     // Update location preview
     function updateLocationPreview(locationId) {
       const preview = document.getElementById('locationPreview');
@@ -652,6 +724,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         noImage?.classList.remove('hidden');
       }
 
+      updateLocationHiddenUI();
       if (name) name.textContent = location.name;
       if (info) info.textContent = `${location.type}${location.region ? ' • ' + location.region : ''}`;
     }
@@ -662,6 +735,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const noMessage = document.getElementById('noNpcsMessage');
       
       if (!list) return;
+
+      updateAllNpcsHiddenUI();
+      updateFocusUI();
+      updateNpcOptions(npcIds || []);
 
       // Clear existing NPCs (except the "no NPCs" message)
       const npcElements = list.querySelectorAll('.npc-item');
@@ -674,24 +751,48 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
       noMessage?.classList.add('hidden');
 
+      // Spotlight keys: an NPC's id, or "character:<id>" for a party character
       npcIds.forEach(npcId => {
-        const npc = npcsData.get(npcId);
-        if (!npc) return;
+        const isCharacter = npcId.startsWith(CHARACTER_KEY_PREFIX);
+        const entry = isCharacter ? charactersData.get(npcId.slice(CHARACTER_KEY_PREFIX.length)) : npcsData.get(npcId);
+        if (!entry) return;
+        const subtitle = isCharacter ? characterSubtitle(entry) : npcSubtitle(entry);
 
+        const isHidden = (currentState.hiddenNpcIds || []).includes(npcId);
+        const focus = currentState.focusNpcIds || [];
+        const isFocused = focus.includes(npcId);
+        // Dimmed = not on the display right now
+        const dimmed = isHidden || currentState.npcsHidden || (focus.length > 0 && !isFocused);
         const npcItem = document.createElement('div');
-        npcItem.className = 'npc-item t-row p-3 flex items-center justify-between';
+        npcItem.className = 'npc-item t-row p-3 flex items-center justify-between gap-2';
         npcItem.innerHTML = `
-          <div>
-            <p class="t-body-text font-medium">${escapeHtml(npc.name)}</p>
-            <p class="t-muted text-sm">${escapeHtml(npc.occupation || npc.race)}</p>
+          <div class="min-w-0" style="${dimmed ? 'opacity:.45' : ''}">
+            <p class="t-body-text font-medium">${escapeHtml(entry.name)}${isCharacter ? ' <span class="t-badge ml-1">Party</span>' : ''}${isFocused ? ' <span class="t-badge ml-1" style="color:var(--gold);border-color:var(--border-gold)">Focus</span>' : ''}${isHidden ? ' <span class="t-badge ml-1">Hidden</span>' : ''}</p>
+            <p class="t-muted text-sm">${escapeHtml(subtitle)}</p>
           </div>
-          <button class="remove-npc-btn t-icon-btn t-icon-btn-danger" data-npc-id="${npcId}">
+          <div class="flex items-center gap-1 shrink-0">
+          <button type="button" class="toggle-focus-btn t-icon-btn" data-npc-id="${npcId}" aria-pressed="${isFocused}" title="${isFocused ? 'End focus on this one' : 'Focus: show on the display without location, turn order and timer'}" aria-label="${isFocused ? 'End focus' : 'Focus'}" style="${isFocused ? 'color:var(--gold);border-color:var(--border-gold)' : ''}">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-width="2"></circle><circle cx="12" cy="12" r="3" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 2v3M12 19v3M2 12h3M19 12h3"></path></svg>
+          </button>
+          <button type="button" class="toggle-npc-hidden-btn t-icon-btn" data-npc-id="${npcId}" aria-pressed="${isHidden}" title="${isHidden ? 'Show to players' : 'Hide from players'}" aria-label="${isHidden ? 'Show to players' : 'Hide from players'}">
+            <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">${isHidden ? '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>' : '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>'}</svg>
+          </button>
+          <button class="remove-npc-btn t-icon-btn t-icon-btn-danger" data-npc-id="${npcId}" title="Remove from spotlight" aria-label="Remove from spotlight">
             <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
             </svg>
           </button>
+          </div>
         `;
         list.appendChild(npcItem);
+      });
+
+      document.querySelectorAll('.toggle-focus-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleFocus(btn.getAttribute('data-npc-id')));
+      });
+
+      document.querySelectorAll('.toggle-npc-hidden-btn').forEach(btn => {
+        btn.addEventListener('click', () => toggleNpcHidden(btn.getAttribute('data-npc-id')));
       });
 
       // Add event listeners to remove buttons
@@ -701,6 +802,32 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           removeNpcFromSpotlight(npcId);
         });
       });
+    }
+
+    // The picker only offers characters and NPCs that are not in the spotlight yet. All options
+    // are kept per select element (the page is rebuilt on client-side navigation), each with its
+    // group; groups left empty are dropped.
+    const pickerOptionsBySelect = new WeakMap();
+    function updateNpcOptions(keys) {
+      const select = document.getElementById('npcSelect');
+      if (!select) return;
+      if (!pickerOptionsBySelect.has(select)) {
+        pickerOptionsBySelect.set(select, {
+          placeholder: select.options[0],
+          groups: [...select.querySelectorAll('optgroup')].map((group) => ({ group, options: [...group.children] })),
+        });
+      }
+      const { placeholder, groups } = pickerOptionsBySelect.get(select);
+      const inSpotlight = new Set(keys);
+      const keep = select.value;
+      const shown = groups.flatMap(({ group, options }) => {
+        const available = options.filter((o) => !inSpotlight.has(o.value));
+        group.replaceChildren(...available);
+        return available.length ? [group] : [];
+      });
+      placeholder.textContent = shown.length ? '-- Select --' : '-- Everyone is in the spotlight --';
+      select.replaceChildren(placeholder, ...shown);
+      select.value = shown.some((g) => [...g.children].some((o) => o.value === keep)) ? keep : '';
     }
 
     // Update state on server
@@ -722,6 +849,46 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         console.error('Error updating state:', error);
         return false;
       }
+    }
+
+    // Master switch: hide all spotlight NPCs at once; individual marks are kept for Show all
+    function updateAllNpcsHiddenUI() {
+      const hidden = !!currentState.npcsHidden;
+      const btn = document.getElementById('toggleAllNpcsHiddenBtn');
+      const note = document.getElementById('allNpcsHiddenNote');
+      if (note) note.style.display = hidden ? '' : 'none';
+      if (btn) {
+        btn.setAttribute('aria-pressed', String(hidden));
+        btn.querySelector('[data-label]').textContent = hidden ? 'Show all' : 'Hide all';
+        btn.querySelector('[data-icon-show]')?.classList.toggle('hidden', hidden);
+        btn.querySelector('[data-icon-hide]')?.classList.toggle('hidden', !hidden);
+      }
+    }
+
+    // Focus: the display shows only the focused entries, big, without location, turn order and
+    // timer (they stay set up here and come back when the focus ends)
+    async function toggleFocus(key) {
+      const focus = currentState.focusNpcIds || [];
+      const next = focus.includes(key) ? focus.filter((k) => k !== key) : [...focus, key];
+      if (await updateState({ focusNpcIds: next })) updateNpcList(currentState.spotlightNpcIds);
+    }
+
+    function updateFocusUI() {
+      const focus = currentState.focusNpcIds || [];
+      const banner = document.getElementById('focusBanner');
+      const text = document.getElementById('focusText');
+      if (banner) banner.style.display = focus.length ? '' : 'none';
+      if (text && focus.length) {
+        const names = focus.map((key) => (key.startsWith(CHARACTER_KEY_PREFIX) ? charactersData.get(key.slice(CHARACTER_KEY_PREFIX.length)) : npcsData.get(key))?.name).filter(Boolean);
+        text.textContent = `only ${names.join(', ')} on the display. Location, turn order and timer are paused.`;
+      }
+    }
+
+    // Hide or show one spotlight NPC on the player display (stays in the spotlight list)
+    async function toggleNpcHidden(npcId) {
+      const hidden = currentState.hiddenNpcIds || [];
+      const next = hidden.includes(npcId) ? hidden.filter(id => id !== npcId) : [...hidden, npcId];
+      if (await updateState({ hiddenNpcIds: next })) updateNpcList(currentState.spotlightNpcIds);
     }
 
     // Remove NPC from spotlight
@@ -748,6 +915,48 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       locationSelect?.addEventListener('change', locationChangeHandler);
       eventHandlers.set('locationSelect', locationChangeHandler);
 
+      // Hide/show the location on the player display (it stays selected)
+      const toggleLocationHiddenBtn = document.getElementById('toggleLocationHiddenBtn');
+      const toggleLocationHiddenHandler = async () => {
+        if (await updateState({ locationHidden: !currentState.locationHidden })) updateLocationHiddenUI();
+      };
+      toggleLocationHiddenBtn?.addEventListener('click', toggleLocationHiddenHandler);
+      eventHandlers.set('toggleLocationHiddenBtn', toggleLocationHiddenHandler);
+
+      const toggleAllNpcsHiddenBtn = document.getElementById('toggleAllNpcsHiddenBtn');
+      const toggleAllNpcsHiddenHandler = async () => {
+        if (await updateState({ npcsHidden: !currentState.npcsHidden })) updateNpcList(currentState.spotlightNpcIds);
+      };
+      toggleAllNpcsHiddenBtn?.addEventListener('click', toggleAllNpcsHiddenHandler);
+      eventHandlers.set('toggleAllNpcsHiddenBtn', toggleAllNpcsHiddenHandler);
+
+      // Focus all visible spotlight entries, or end the focus
+      const focusAllBtn = document.getElementById('focusAllBtn');
+      const focusAllHandler = async () => {
+        const visible = (currentState.spotlightNpcIds || []).filter((key) => !(currentState.hiddenNpcIds || []).includes(key));
+        if (!visible.length) return;
+        if (await updateState({ focusNpcIds: visible })) updateNpcList(currentState.spotlightNpcIds);
+      };
+      focusAllBtn?.addEventListener('click', focusAllHandler);
+      eventHandlers.set('focusAllBtn', focusAllHandler);
+
+      const endFocusBtn = document.getElementById('endFocusBtn');
+      const endFocusHandler = async () => {
+        if (await updateState({ focusNpcIds: [] })) updateNpcList(currentState.spotlightNpcIds);
+      };
+      endFocusBtn?.addEventListener('click', endFocusHandler);
+      eventHandlers.set('endFocusBtn', endFocusHandler);
+
+      // Empty the spotlight (the Hide all switch stays as it is, for setting up the next group)
+      const clearNpcsBtn = document.getElementById('clearNpcsBtn');
+      const clearNpcsHandler = async () => {
+        if (!currentState.spotlightNpcIds?.length) return;
+        if (!(await window.arandorConfirm('Clear the spotlight?', { detail: 'Removes all characters and NPCs from the spotlight and the player display.', confirmLabel: 'Clear spotlight' }))) return;
+        if (await updateState({ spotlightNpcIds: [] })) updateNpcList([]);
+      };
+      clearNpcsBtn?.addEventListener('click', clearNpcsHandler);
+      eventHandlers.set('clearNpcsBtn', clearNpcsHandler);
+
       // Add NPC to spotlight
       const addNpcBtn = document.getElementById('addNpcBtn');
       const npcSelect = document.getElementById('npcSelect');
@@ -756,10 +965,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         const npcId = npcSelect?.value;
         if (!npcId) return;
 
-        if (currentState.spotlightNpcIds.includes(npcId)) {
-          alert('This NPC is already in the spotlight');
-          return;
-        }
+        if (currentState.spotlightNpcIds.includes(npcId)) return; // not offered, but the list may be stale
 
         const newNpcIds = [...currentState.spotlightNpcIds, npcId];
         const success = await updateState({ spotlightNpcIds: newNpcIds });
@@ -1029,7 +1235,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Clear all
       const clearAllBtn = document.getElementById('clearAllBtn');
       const clearAllHandler = async () => {
-        if (!(await window.arandorConfirm('Clear the player display?', { detail: 'Removes the location and NPCs and hides the initiative tracker.', confirmLabel: 'Clear display', danger: true }))) {
+        if (!(await window.arandorConfirm('Clear the player display?', { detail: 'Removes the location and everyone in the spotlight, and hides the initiative tracker.', confirmLabel: 'Clear display', danger: true }))) {
           return;
         }
 
@@ -1037,10 +1243,15 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           currentLocationId: null,
           spotlightNpcIds: [],
           showInitiativeTracker: false,
+          locationHidden: false,
+          hiddenNpcIds: [],
+          npcsHidden: false,
+          focusNpcIds: [],
         });
 
         if (success) {
           if (locationSelect) locationSelect.value = '';
+
           if (showInitiativeCheckbox) showInitiativeCheckbox.checked = false;
           updateLocationPreview(null);
           updateNpcList([]);
@@ -1269,6 +1480,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Clear old data
       locationsData.clear();
       npcsData.clear();
+      charactersData.clear();
       
       // Load fresh data
       await initializeData();

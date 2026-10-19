@@ -1,12 +1,16 @@
 import type { APIRoute } from 'astro';
 import { db, DMScreenState, eq } from '@/db';
-import { isAuthenticated, getUserRole } from '../../lib/auth';
+import { getUserRole } from '../../lib/auth';
+import { requireDungeonmasterOrAdmin } from '../../lib/middleware';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
 
-// GET - Fetch current DM Screen state (public - no authentication required)
-// This endpoint is public because the player display page (/display) needs access
-export const GET: APIRoute = async () => {
+// GET - Fetch current DM Screen state (DM/Admin only). The player display reads the public,
+// filtered /api/display instead, so hidden locations and NPCs never reach players.
+export const GET: APIRoute = async ({ cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+
   try {
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     
@@ -28,6 +32,10 @@ export const GET: APIRoute = async () => {
         updatedAt: new Date(),
       });
       state = { 
+        locationHidden: false,
+        hiddenNpcIds: [],
+        npcsHidden: false,
+        focusNpcIds: [],
         id: DM_SCREEN_STATE_ID, 
         currentLocationId: null, 
         spotlightNpcIds: [], 
@@ -95,6 +103,18 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         break;
     }
     delete updates.timerAction;
+
+    // Only entries still in the spotlight can be hidden or focused (removing one also forgets
+    // its marks)
+    const spotlight: string[] = updates.spotlightNpcIds ?? state?.spotlightNpcIds ?? [];
+    const hidden: string[] = updates.hiddenNpcIds ?? state?.hiddenNpcIds ?? [];
+    const focus: string[] = updates.focusNpcIds ?? state?.focusNpcIds ?? [];
+    if (updates.spotlightNpcIds !== undefined || updates.hiddenNpcIds !== undefined) {
+      updates.hiddenNpcIds = hidden.filter((id) => spotlight.includes(id));
+    }
+    if (updates.spotlightNpcIds !== undefined || updates.focusNpcIds !== undefined) {
+      updates.focusNpcIds = focus.filter((id) => spotlight.includes(id));
+    }
     
     // Create if doesn't exist
     if (!state) {
@@ -102,6 +122,10 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         id: DM_SCREEN_STATE_ID,
         currentLocationId: updates.currentLocationId ?? null,
         spotlightNpcIds: updates.spotlightNpcIds ?? [],
+        locationHidden: updates.locationHidden ?? false,
+        hiddenNpcIds: updates.hiddenNpcIds ?? [],
+        npcsHidden: updates.npcsHidden ?? false,
+        focusNpcIds: updates.focusNpcIds ?? [],
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
         screenVisible: updates.screenVisible ?? true,
@@ -119,6 +143,10 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         .set({
           currentLocationId: updates.currentLocationId !== undefined ? updates.currentLocationId : state.currentLocationId,
           spotlightNpcIds: updates.spotlightNpcIds !== undefined ? updates.spotlightNpcIds : state.spotlightNpcIds,
+          locationHidden: updates.locationHidden !== undefined ? !!updates.locationHidden : state.locationHidden,
+          hiddenNpcIds: updates.hiddenNpcIds !== undefined ? updates.hiddenNpcIds : state.hiddenNpcIds,
+          npcsHidden: updates.npcsHidden !== undefined ? !!updates.npcsHidden : state.npcsHidden,
+          focusNpcIds: updates.focusNpcIds !== undefined ? updates.focusNpcIds : state.focusNpcIds,
           customAssets: updates.customAssets !== undefined ? updates.customAssets : state.customAssets,
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
           screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,

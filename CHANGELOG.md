@@ -2,6 +2,18 @@ What's new in the Arandor Companion App, newest first.
 
 ## October 2026
 
+### DM screen and player display
+- Put party characters in the spotlight, not just NPCs: one list with both, their portraits
+  look the same on the display
+- Hide the location or single characters and NPCs from the players without removing them;
+  Hide all / Show all and Clear for the whole spotlight
+- Focus on some of them (or everyone): the display then shows only their portraits, big,
+  without location, turn order or timer, which come back when the focus ends
+- The picker only offers who is not in the spotlight yet
+- Portraits glide smoothly to their new place whenever something changes, keep the location
+  picture visible, and fit any number of characters on any screen; the turn order panel is
+  only as tall as its list
+
 ### Quest pages
 - Every quest has its own page with its diary entries, the NPCs, places and party members
   involved, and its timeline events
