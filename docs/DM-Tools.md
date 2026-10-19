@@ -7,6 +7,7 @@ These tools work together at the table:
 | Initiative tracker | `/tools/initiative` | Everyone logged in; only DM/admin can run combat |
 | Bestiary | `/tools/bestiary` | DM and admin |
 | DM screen (control panel) | `/tools/dm-screen` | DM and admin |
+| Music | `/tools/music` | Everyone logged in (see [Music](#music)) |
 | Player display | `/display` | Anyone with the link, no login (meant for a TV or second screen) |
 
 All are reached through **Tools** in the menu (shown when logged in).
@@ -155,6 +156,61 @@ about 2 seconds.
   screen settings, which made every display refresh download them again).
 - **Clear player display** removes location, NPCs and initiative at once and resets the
   hidden marks.
+- **Music:** a small panel to play table music from the DM screen; see [Music](#music). It
+  only controls the music on your own device and never appears on the player display.
+
+## Music
+
+Music for the table comes from playlists made on **Tools → Music** (`/tools/music`) and plays
+through a player that stays alive while you move between pages. For the player's everyday use
+(mini bar, dashboard strip) see the [User guide](User-Guide.md#music); this section is about
+what a DM needs.
+
+**Playlists.** Every logged-in user can make playlists, *Only me* or *Everyone logged in*.
+Owners and admins edit them; the **site playlist** ("Tavern music", plays on the dashboard
+for everybody, even without a login) can also be edited by DMs. An admin picks it with
+*Make site playlist*; it is always public and cannot be deleted. Deleting a playlist or a track
+also deletes the uploaded files. Who may do what is in
+[Roles and permissions](Roles-and-Permissions.md).
+
+**Adding music** (in the editor, for playlists you may edit):
+
+| Source | How | Notes |
+|---|---|---|
+| Audio files | Drop them on the box or choose them (several at once) | `mp3`, `mpga`, `mpeg`, `m4a`, `aac`, `ogg`, `opus`, `webm`, `flac`, `wav`; **up to 50 MB each**. `.mpga` and `.mpeg` are MP3 files with an unusual name. `.mp2` is not supported. Each file shows its own result, so one bad file does not stop the others |
+| YouTube video | Paste the link, optional title | The title is looked up when you leave it empty |
+| YouTube playlist link | Paste the link | A playlist link is added as one entry (the whole list plays in order). A link that names both a video and a list asks what to add: **This video**, **Whole playlist (one entry)** or **Import as separate tracks** |
+
+*Import as separate tracks* reads the playlist in your browser (a small visible YouTube window
+shows briefly; no API key needed) and adds up to **200** videos as normal tracks, each with its
+YouTube title. It is a **snapshot**: videos added to the YouTube list later do not appear. A
+whole-playlist entry that is already in a playlist has an **Expand into tracks** button which
+does the same import and puts the new tracks where the entry was. Longer lists are cut at 200
+(the message says how many were imported). Private or unavailable YouTube playlists cannot be
+read; you get an error message.
+
+**YouTube tracks** play in a video window beside the mini bar. YouTube's terms say a playing
+player must be visible and at least 200×200 pixels, so the window cannot be hidden or made
+smaller than that while it plays (the ▾ button shrinks it to exactly that size), not even on
+the DM screen. While the music is **paused** the window is hidden and comes back when you press
+Play. Files have no such window, so use uploads when you want music without any picture on the
+screen you share.
+
+**The DM screen panel.** Pick a playlist in the drop-down (the site playlist, your own and
+public ones), press a row's play button to start from that track, and use previous / play-pause
+/ next, shuffle and repeat. While that playlist is the one playing, a **seek row** (position,
+slider, length) lets you jump within the track. The panel remembers your playlist choice in
+this browser, separately for each account (`localStorage` key `arandor.music.dmPick.<userId>`),
+so it is still selected after a reload. Nothing here is sent to the player display.
+
+**Good to know:**
+
+- Playback is per browser tab and device: music started on your laptop does not play on the
+  display. Open `/display` on its own device and play from there if the table should hear it.
+- The mini bar shows a thin progress line along its bottom edge. After a full reload it returns
+  paused, because browsers do not allow music to start by itself; press Play.
+- The world map (`/map`) is part of the same page-to-page navigation as everything else, so
+  music keeps playing there too.
 
 ## Player display
 

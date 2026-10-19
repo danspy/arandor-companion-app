@@ -11,7 +11,7 @@ game table (initiative tracker, DM screen, player display).
 
 - [User guide](User-Guide.md): every page, and the dice
 - [Roles and permissions](Roles-and-Permissions.md): who can see and change what
-- [Combat and DM tools](DM-Tools.md): initiative tracker, DM screen, player display
+- [Combat and DM tools](DM-Tools.md): initiative tracker, DM screen, music, player display
 - [World map](World-Map.md): the journey, and getting places onto the map
 - [D&D Beyond sync](DnD-Beyond-Sync.md): linking character sheets
 - [Calendar](Calendar.md): sessions and subscribing in your calendar app

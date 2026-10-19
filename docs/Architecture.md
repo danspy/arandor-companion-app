@@ -23,7 +23,7 @@ with small `<script>` blocks for interactivity.
 src/
   pages/            one file per URL (Astro file routing)
     api/            JSON endpoints, see API-Reference.md
-    tools/          dice roller, initiative tracker, DM screen
+    tools/          dice roller, initiative tracker, DM screen, music
     library/        docs, timeline, single document
     diary/ characters/ npcs/ locations/   detail pages ([id].astro)
     uploads/        serves uploaded files
@@ -33,6 +33,7 @@ src/
   components/
     dashboard/      the dashboard sections (hero, recap, party, chronicle, quests, factions, stats)
     DiceFab.astro   floating dice button and result banner
+    MusicPlayer.astro  audio element, YouTube tile and mini bar (persisted across pages)
     PWADock.astro   bottom bar and menu of the installed app
     PageHero.astro, SceneBackdrop.astro            page header images
     ConfirmDialog.astro, Button.astro
@@ -41,6 +42,7 @@ src/
     auth.ts         passwords, signed session cookie, current user/role
     middleware.ts   role checks for API routes
     dice.ts         dice engine shared by the dice button and the dice roller page
+    music/          music player: store (player.ts), audio and YouTube backends, editor, DM picker, server helpers
     dndbeyond.ts    reads characters from D&D Beyond
     worldmap/       pixel-art world map: engine, tile world, sprites, heroes
     sparks.ts       ember animation
@@ -93,7 +95,8 @@ There are no websockets. Pages that must stay current poll the API:
 `<ClientRouter />` (Astro view transitions) swaps pages without a full reload. List → detail
 zooms in, detail → list zooms out, moving between main sections slides, everything else fades.
 The nav, footer and the dice button persist across pages (`transition:persist`). Page scripts
-therefore run on `astro:page-load`, not only once. The map page always loads fully.
+therefore run on `astro:page-load`, not only once. The music player (`#music-root`) persists
+as well, so playback continues across pages, including the map.
 
 ## Design system
 
@@ -121,6 +124,18 @@ and, on a natural 20 there, throws the later parts' dice again (`box.add`, so th
 on the table). Results carry `parts`; dice are handed back to the parts by type. Presets live in
 `User.dicePresets`; the dice button loads them each time its panel opens, and the roller page
 announces changes with `arandor:dice-presets-changed`.
+
+## The music player
+
+One store per browser tab (`src/lib/music/player.ts`) owns the queue and all playback. The
+views (mini bar in `MusicPlayer.astro`, Tools → Music, the dashboard strip, the DM screen panel)
+only call its methods and listen for the `music:state` event. Two backends sit behind it: an
+`<audio>` element for uploaded files (`audio-backend.ts`) and the YouTube IFrame player
+(`youtube-backend.ts`). `#music-root` is `transition:persist`, and the map page is an ordinary
+client-side navigation too, so nothing is interrupted. After a full page load the store is
+rebuilt from `localStorage` (`arandor.music`) and comes back paused; it never autoplays.
+Playlist rules (who may view or edit) are in `lib/music/access.ts`, uploads and their limits in
+`lib/music/formats.ts`; see the [API reference](API-Reference.md#music).
 
 ## The world map
 

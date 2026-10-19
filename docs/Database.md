@@ -54,13 +54,17 @@ The schema keeps the encodings of the former Astro DB, so existing databases wor
 | **PageSettings** | Hero banner image per page | `pageName*` (unique), `heroImageUrl` |
 | **User** | Accounts | `username*` (unique), `passwordHash*`, `role*` (`admin`/`dungeonmaster`/`player`), `firstName`, `profileImageUrl`, `characterIds`, `favoritePages` (up to 4 page paths), `dicePresets` (saved dice rolls, see `lib/dice-notation`) |
 | **Playlist** | Music player playlists | `ownerId*` (User), `name*`, `visibility*` (`public`/`private`), `isSiteDefault` (exactly one playlist, "Tavern music", enforced by a partial unique index) |
-| **PlaylistTrack** | Tracks of a playlist (deleted with it) | `playlistId*`, `position*`, `kind*` (`file`/`youtube_video`/`youtube_playlist`), `title*`, `ref*` (upload URL, or YouTube id), `durationSec` |
+| **PlaylistTrack** | Tracks of a playlist (deleted with it) | `playlistId*`, `position*`, `kind*` (`file`/`youtube_video`/`youtube_playlist`), `title*`, `ref*` (upload URL such as `/uploads/music/<uuid>.mp3`, or YouTube video/list id), `durationSec` (unused so far) |
 | **InitiativeTracker** | Combatants of the current fight | `name*`, `initiative*`, `type*` (`character`/`npc`/`monster`/`other`), `characterId`, `hp`, `maxHp`, `tempHp`, `ac`, `notes`, `creatureId` (stat block it came from; DM only), `conditions` (`["Poisoned", "Exhaustion 2"]`), `isActive`, death-save fields, `isStable` |
 | **Creature** | Bestiary stat blocks (DM only) | `name*`, `typeLine`, `ac`, `acNote`, `hp` (average), `hpFormula`, `initiative` (bonus), `speed`, `abilities` (`{ str: { score, mod, save }, … }`), `details` (`[{ label, text }]`), `sections` (`[{ title, intro?, entries: [{ name, text }] }]`), `cr`, `xp`, `npcIds`, `notes`, `sourceText` (as pasted), `srdKey` (copied from the SRD 5.2 library, `src/data/srd-2024-creatures.json`); see `src/lib/statblock.ts` |
 | **CombatState** | The current fight | `currentRound`, `currentTurnIndex`, `status` (`active`/`paused`/`stopped`) |
 | **DMScreenState** | What the player display shows | `currentLocationId`, `spotlightNpcIds` (the spotlight in order: NPC ids, and party characters as `character:<id>`), `hiddenNpcIds` (spotlight entries hidden from players, same keys), `locationHidden`, `npcsHidden` (Hide all), `focusNpcIds` (spotlight entries shown on their own; empty = no focus), `customAssets` (unused), `showInitiativeTracker`, `screenVisible`, `placeholderImageUrl`, `showTimer`, `timerDuration` (s), `timerStartedAt`, `timerPausedAt` (unix), `timerStatus` |
 
 All tables also have `id`; most have `createdAt` and `updatedAt`.
+
+The music tables come from `db/migrations/2026-10-19_music.sql`, which also creates the public
+playlist "Tavern music" (owned by the first admin) as the site playlist. Uploaded audio lives
+in the `music/` folder inside the uploads directory, not in the database.
 
 ## Changing the schema
 
