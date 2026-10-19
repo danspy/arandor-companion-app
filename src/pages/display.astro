@@ -158,8 +158,7 @@ import '../styles/global.css';
         background: linear-gradient(to left, rgba(12, 9, 6, .7) 0, rgba(12, 9, 6, .3) var(--side-w), transparent calc(var(--side-w) + 14rem));
       }
       body[data-side="1"] .dsp-location::after { display: block; }
-      /* A whole (contained) picture is centred in the space left of the panels */
-      body[data-side="1"] .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { width: calc(100% - var(--side-w)); }
+
 
       /* Location: full-bleed art with a slow drift */
       .dsp-location { position: absolute; inset: 0; display: none; }
@@ -440,12 +439,13 @@ import '../styles/global.css';
         body.dsp { overflow-y: auto; }
         .dsp-stage { position: absolute; min-height: 100dvh; display: flex; flex-direction: column; }
         .dsp-scene { position: relative; inset: auto; flex: none; height: 46vh; min-height: 15rem; }
+        /* Nothing else to show: the scene gets the whole screen */
+        body[data-side="0"] .dsp-scene { height: 100dvh; }
         /* With portraits the scene grows with them (the page scrolls) instead of squeezing them */
         body[data-cast="1"] .dsp-scene { height: auto; }
         body:not([data-scene="none"]) .dsp-side { position: relative; inset: auto; width: auto; }
         body[data-side="1"] .dsp-location::after { display: none; }
         body[data-side="1"] .dsp-loc-caption { right: 1rem; }
-        body[data-side="1"] .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { width: 100%; }
         body[data-location="0"] .dsp-scene { min-height: 0; }
         /* Portraits in the page flow; over a location they start below the place name */
         body[data-cast="1"] .dsp-cast, body[data-side="1"] .dsp-cast {
@@ -672,18 +672,11 @@ import '../styles/global.css';
         ledger.querySelector('.is-current')?.scrollIntoView({ block: 'nearest' });
       }
 
-      // Location: a picture far wider or taller than its frame would be cropped heavily, so it
-      // is shown whole over a blurred copy of itself instead.
+      // Location: fills the screen (cover) on landscape screens. In the stacked layout of upright
+      // screens (phones, tablets) the frame is a short strip, so the whole picture is shown over a
+      // blurred copy of itself instead of cropping most of it away.
       function fitLocation() {
-        const frame = $('location');
-        const img = frame.querySelector<HTMLImageElement>('.dsp-loc-layer:last-child img.dsp-loc-img');
-        const side = $('side');
-        const overlay = body.dataset.side === '1' && getComputedStyle(side).position === 'absolute';
-        const { height } = frame.getBoundingClientRect();
-        const width = frame.getBoundingClientRect().width - (overlay ? side.getBoundingClientRect().width : 0);
-        if (!img?.naturalWidth || width <= 0 || !height) { delete frame.dataset.fit; return; }
-        const ratio = (width / height) / (img.naturalWidth / img.naturalHeight);
-        frame.dataset.fit = ratio > 1.6 || ratio < 0.6 ? 'contain' : 'cover';
+        $('location').dataset.fit = flowQuery.matches ? 'contain' : 'cover';
       }
 
       function fitLayout() {

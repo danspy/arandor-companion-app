@@ -97,8 +97,9 @@ bigger; full rows with a shorter last row centred), and the turn order panel is 
 rows and shrinks them until every combatant fits (on very small screens it scrolls, keeping the
 current combatant in view). Over a location the portraits keep to the lower half of the picture
 and only take more rows upward when they would otherwise get too small. Small portraits show
-just the name, set smaller rather than broken mid-word when it is long. A location picture much wider or taller
-than the screen is shown whole over a blurred copy instead of being cropped. On upright
+just the name, set smaller rather than broken mid-word when it is long. The location picture always fills
+the screen; on upright screens, where it gets a short strip, it is shown whole over a blurred
+copy instead. On upright
 screens (phones, tablets) everything stacks in one scrolling column with the timer and whose
 turn it is first, and the scene grows with the portraits instead of shrinking them.
 
