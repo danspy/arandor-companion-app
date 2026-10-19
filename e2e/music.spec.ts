@@ -3,6 +3,17 @@ import { audioFileCheck, MAX_AUDIO_BYTES } from '../src/lib/music/formats';
 import { parseYouTubeUrl, fetchYouTubeTitle } from '../src/lib/music/youtube';
 import { canView, canEdit, canSetSiteDefault } from '../src/lib/music/access';
 
+// Silent 8 kHz mono 8-bit PCM WAV with a 44-byte RIFF header
+export function wav(seconds: number): Buffer {
+  const data = 8000 * seconds;
+  const b = Buffer.alloc(44 + data, 0x80);
+  b.write('RIFF', 0); b.writeUInt32LE(36 + data, 4); b.write('WAVE', 8);
+  b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22);
+  b.writeUInt32LE(8000, 24); b.writeUInt32LE(8000, 28); b.writeUInt16LE(1, 32); b.writeUInt16LE(8, 34);
+  b.write('data', 36); b.writeUInt32LE(data, 40);
+  return b;
+}
+
 test.describe('Music helpers', () => {
   test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
 
@@ -165,5 +176,90 @@ test.describe('Music API', () => {
       await admin.request.post(`/api/music/playlists/${original.id}/site-default`);
     }
     expect((await (await admin.request.get('/api/music/site')).json()).playlist.id).toBe(original.id);
+  });
+
+  test('tracks: upload, YouTube, order, rename, delete', async () => {
+    const p = await (await create(player, { name: uname(), visibility: 'public' })).json();
+    const base = `/api/music/playlists/${p.id}`;
+    const get = async () => (await (await player.request.get(base)).json()).tracks as any[];
+
+    // upload: one good, one bad, in a single request
+    const form = new FormData();
+    form.append('file', new Blob([new Uint8Array(wav(5))], { type: 'audio/wav' }), 'Rain.wav');
+    form.append('file', new Blob(['hi'], { type: 'text/plain' }), 'notes.txt');
+    const up = await player.request.post(`${base}/tracks`, { multipart: form });
+    expect(up.status()).toBe(201);
+    const results = (await up.json()).results;
+    expect(results[0]).toMatchObject({ name: 'Rain.wav', ok: true, track: { title: 'Rain', kind: 'file' } });
+    const wavTrack = results[0].track;
+    expect(wavTrack.ref).toMatch(/^\/uploads\/music\/[0-9a-f-]{36}\.wav$/);
+    expect((await player.request.get(wavTrack.ref)).status()).toBe(200);
+    expect(results[1]).toMatchObject({ name: 'notes.txt', ok: false, error: expect.stringContaining('Unsupported format') });
+
+    const two = await player.request.post(`${base}/tracks`, {
+      multipart: { file: { name: 'Wind.wav', mimeType: 'audio/wav', buffer: wav(1) } },
+    });
+    expect(two.status()).toBe(201);
+
+    // too big
+    const big = await player.request.post(`${base}/tracks`, {
+      multipart: { file: { name: 'big.mp3', mimeType: 'audio/mpeg', buffer: Buffer.alloc(50 * 1024 * 1024 + 1) } },
+    });
+    expect(big.status()).toBe(400);
+    expect((await big.json()).results[0].error).toBe('File is larger than 50 MB');
+
+    // YouTube
+    const V = 'dQw4w9WgXcQ', L = 'PLx0sYbCqOb8TBPRdmBHs5Iftvv9TPboYG';
+    const yt = await player.request.post(`${base}/tracks`, { data: { youtubeUrl: `https://youtu.be/${V}`, title: 'Test video' } });
+    expect(yt.status()).toBe(201);
+    const ytTrack = await yt.json();
+    expect(ytTrack).toMatchObject({ kind: 'youtube_video', ref: V, title: 'Test video' });
+    const both = `https://www.youtube.com/watch?v=${V}&list=${L}`;
+    const need = await player.request.post(`${base}/tracks`, { data: { youtubeUrl: both, title: 'x' } });
+    expect(need.status()).toBe(409);
+    expect((await need.json()).needsMode).toBe(true);
+    const pl = await player.request.post(`${base}/tracks`, { data: { youtubeUrl: both, mode: 'playlist', title: 'Mix' } });
+    expect(pl.status()).toBe(201);
+    expect(await pl.json()).toMatchObject({ kind: 'youtube_playlist', ref: L });
+    expect((await player.request.post(`${base}/tracks`, { data: { youtubeUrl: 'https://example.com' } })).status()).toBe(400);
+
+    // positions increase
+    let tracks = await get();
+    expect(tracks.map((t) => t.position)).toEqual([...tracks.keys()].map((i) => tracks[0].position + i));
+    expect(tracks).toHaveLength(4);
+
+    // order
+    const ids = tracks.map((t) => t.id);
+    const put = (trackIds: string[]) => player.request.put(`${base}/order`, { data: { trackIds } });
+    expect((await put([...ids].reverse())).status()).toBe(200);
+    expect((await get()).map((t) => t.id)).toEqual([...ids].reverse());
+    const current = (await get()).map((t) => t.id);
+    for (const bad of [current.slice(1), [...current.slice(1), 'foreign-id'], [current[0], ...current]]) {
+      expect((await put(bad)).status()).toBe(400);
+      expect((await get()).map((t) => t.id)).toEqual(current);
+    }
+
+    // rename
+    expect((await player2.request.patch(`/api/music/tracks/${ytTrack.id}`, { data: { title: 'Nope' } })).status()).toBe(403);
+    const ren = await player.request.patch(`/api/music/tracks/${ytTrack.id}`, { data: { title: 'Renamed' } });
+    expect(ren.status()).toBe(200);
+    expect((await ren.json()).title).toBe('Renamed');
+    expect((await player.request.patch(`/api/music/tracks/${ytTrack.id}`, { data: { title: '' } })).status()).toBe(400);
+
+    // delete removes the file
+    expect((await player2.request.delete(`/api/music/tracks/${wavTrack.id}`)).status()).toBe(403);
+    expect((await player.request.delete(`/api/music/tracks/${wavTrack.id}`)).status()).toBe(200);
+    expect((await player.request.get(wavTrack.ref)).status()).toBe(404);
+    expect((await get()).map((t) => t.id)).not.toContain(wavTrack.id);
+  });
+
+  test('tracks: private playlist hides tracks, logged-out is 401', async ({ request }) => {
+    const p = await (await create(player, { name: uname(), visibility: 'private' })).json();
+    const t = await (await player.request.post(`/api/music/playlists/${p.id}/tracks`, { data: { youtubeUrl: 'https://youtu.be/dQw4w9WgXcQ', title: 'T' } })).json();
+    expect((await request.post(`/api/music/playlists/${p.id}/tracks`, { data: { youtubeUrl: 'https://youtu.be/dQw4w9WgXcQ' } })).status()).toBe(401);
+    expect((await player2.request.post(`/api/music/playlists/${p.id}/tracks`, { data: { youtubeUrl: 'https://youtu.be/dQw4w9WgXcQ' } })).status()).toBe(404);
+    expect((await player2.request.patch(`/api/music/tracks/${t.id}`, { data: { title: 'x' } })).status()).toBe(404);
+    expect((await player2.request.put(`/api/music/playlists/${p.id}/order`, { data: { trackIds: [] } })).status()).toBe(404);
+    expect((await request.delete(`/api/music/tracks/${t.id}`)).status()).toBe(401);
   });
 });
