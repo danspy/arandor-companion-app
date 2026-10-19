@@ -69,8 +69,9 @@ import '../styles/global.css';
     <p class="dsp-hint" id="hint">Press F for full screen</p>
 
     <style is:global>
-      /* Scale everything with the screen so it reads from across the table */
-      html:has(body.dsp) { font-size: clamp(15px, 1.05vw, 30px); }
+      /* Scale everything with the screen so it reads from across the table. The smaller of
+         width and height decides, so an ultrawide (height-bound) or a 4K TV both fit. */
+      html:has(body.dsp) { font-size: clamp(14px, min(1.05vw, 1.9vh), 44px); }
       body.dsp {
         margin: 0;
         min-height: 100dvh;
@@ -82,6 +83,7 @@ import '../styles/global.css';
         --foe: #df6a48;
         --neutral: #9a8a70;
         --ease: cubic-bezier(.2, .7, .2, 1);
+        --side-w: clamp(22rem, 32vw, 42rem);
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
@@ -94,7 +96,7 @@ import '../styles/global.css';
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="wallpaper"] .dsp-wallpaper,
       body[data-mode="stage"] .dsp-stage,
-      body[data-mode="stage"][data-scene="cast"] .dsp-backdrop {
+      body[data-mode="stage"]:is([data-scene="cast"], [data-scene="none"]) .dsp-backdrop {
         opacity: 1; visibility: visible; transition-delay: 0s;
       }
 
@@ -141,14 +143,21 @@ import '../styles/global.css';
       .dsp-wallpaper img { width: 100%; height: 100%; object-fit: cover; }
 
       /* ── Stage layout ──────────────────────────────────────────────── */
+      /* The scene (location, portraits) always fills the screen. Timer and turn order float
+         over its right side, so a lone timer leaves no empty column. */
       .dsp-stage { z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr); }
-      body[data-scene][data-side="1"]:not([data-scene="none"]) .dsp-stage {
-        grid-template-columns: minmax(0, 1fr) clamp(24rem, 31vw, 40rem);
-      }
       body[data-scene="none"] .dsp-scene { display: none; }
       body[data-side="0"] .dsp-side { display: none; }
 
-      .dsp-scene { position: relative; overflow: hidden; min-height: 0; }
+      .dsp-scene { position: absolute; inset: 0; overflow: hidden; }
+      /* Darken the right edge under the floating panels */
+      .dsp-location::after {
+        content: ''; position: absolute; inset: 0; pointer-events: none; display: none;
+        background: linear-gradient(to left, rgba(12, 9, 6, .7) 0, rgba(12, 9, 6, .3) var(--side-w), transparent calc(var(--side-w) + 14rem));
+      }
+      body[data-side="1"] .dsp-location::after { display: block; }
+      /* A whole (contained) picture is centred in the space left of the panels */
+      body[data-side="1"] .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { width: calc(100% - var(--side-w)); }
 
       /* Location: full-bleed art with a slow drift */
       .dsp-location { position: absolute; inset: 0; display: none; }
@@ -164,6 +173,12 @@ import '../styles/global.css';
         animation: dsp-drift 60s ease-in-out infinite alternate;
         transform-origin: 60% 40%;
       }
+      .dsp-loc-fill { display: none; }
+      .dsp-location[data-fit="contain"] .dsp-loc-fill {
+        display: block; position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+        filter: blur(40px) saturate(1.1) brightness(.45); transform: scale(1.15); animation: none;
+      }
+      .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { object-fit: contain; position: relative; animation-duration: 90s; }
       .dsp-loc-layer.is-painted { display: flex; align-items: center; justify-content: center; }
       .dsp-loc-layer.is-painted::before {
         content: ''; position: absolute; inset: 0;
@@ -186,6 +201,7 @@ import '../styles/global.css';
       }
       /* With portraits along the bottom, the place name moves to the top */
       body[data-cast="1"] .dsp-loc-caption { bottom: auto; top: 2.75rem; }
+      body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + 1.5rem); }
       body[data-cast="1"] .dsp-loc-shade {
         background:
           linear-gradient(to bottom, rgba(12, 9, 6, .85) 0%, transparent 32%),
@@ -199,29 +215,30 @@ import '../styles/global.css';
       .dsp-loc-kind:empty { display: none; }
       .dsp-loc-name {
         margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600;
-        font-size: 5.6rem; line-height: .95; color: var(--text-strong);
+        font-size: min(5.6rem, 11vw); line-height: .95; color: var(--text-strong);
         text-shadow: 0 .15rem 2.5rem rgba(0, 0, 0, .75);
         text-wrap: balance;
       }
-      body[data-side="1"] .dsp-loc-name { font-size: 4.6rem; }
+      body[data-side="1"] .dsp-loc-name { font-size: min(4.6rem, 9vw); }
 
       /* NPC portraits: over the location, or on their own across the backdrop */
       .dsp-cast {
         list-style: none; margin: 0; padding: 0;
         position: absolute; display: none;
-        gap: 1.5rem;
+        flex-wrap: wrap; gap: 1.5rem; align-content: center;
       }
       body[data-cast="1"] .dsp-cast { display: flex; }
       body[data-location="1"] .dsp-cast {
         left: 3.5rem; right: 3.5rem; bottom: 2.5rem; height: 42%;
-        justify-content: flex-end; align-items: flex-end;
+        justify-content: flex-end; align-content: flex-end;
       }
-      body[data-location="0"] .dsp-cast {
-        inset: 3.5rem; justify-content: center; align-items: center; flex-wrap: wrap;
-      }
+      body[data-location="0"] .dsp-cast { inset: 3.5rem; justify-content: center; }
+      body[data-side="1"] .dsp-cast { right: calc(var(--side-w) + 1.5rem); }
+      .dsp-cast > li { display: block; }
       .dsp-portrait {
         position: relative; margin: 0;
-        height: 100%; aspect-ratio: 3 / 4;
+        height: var(--ph, 12rem); width: calc(var(--ph, 12rem) * .75);
+        font-size: clamp(.6rem, calc(var(--ph, 12rem) * .045), 1.1rem);
         background: var(--bg-raised);
         border: 1px solid var(--border-gold);
         box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, .55);
@@ -229,25 +246,22 @@ import '../styles/global.css';
         animation: dsp-rise .9s var(--ease) both;
         animation-delay: calc(var(--i, 0) * 120ms);
       }
-      body[data-location="0"] .dsp-portrait { height: min(70vh, calc((100vw - 10rem) / var(--n, 1) * 4 / 3)); max-height: 78%; }
-      body[data-location="0"][data-side="1"] .dsp-portrait { height: min(62vh, calc((69vw - 10rem) / var(--n, 1) * 4 / 3)); }
-      body[data-location="0"] .dsp-cast[data-many] .dsp-portrait { height: 44%; }
       .dsp-portrait img { width: 100%; height: 100%; object-fit: cover; object-position: center 20%; display: block; }
       .dsp-portrait-mono {
         width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
-        font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 5rem;
+        font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 5em;
         color: var(--gold); background: radial-gradient(ellipse at 50% 35%, #2a1d0c, var(--bg-surface));
       }
       .dsp-portrait figcaption {
         position: absolute; left: 0; right: 0; bottom: 0;
-        padding: 3rem 1rem .9rem;
+        padding: 3em 1em .9em;
         background: linear-gradient(to top, rgba(12, 9, 6, .95) 10%, rgba(12, 9, 6, .6) 55%, transparent);
       }
       .dsp-portrait-name {
         margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600;
-        font-size: 1.7rem; line-height: 1.05; color: var(--text-strong);
+        font-size: 1.7em; line-height: 1.05; color: var(--text-strong);
       }
-      .dsp-portrait-role { margin: .25rem 0 0; font-size: .85rem; color: var(--text-muted); line-height: 1.3; }
+      .dsp-portrait-role { margin: .25em 0 0; font-size: .85em; color: var(--text-muted); line-height: 1.3; }
       /* Gold corner marks, like the app's panels */
       .dsp-portrait::before {
         content: ''; position: absolute; inset: .45rem; pointer-events: none; z-index: 1;
@@ -271,14 +285,20 @@ import '../styles/global.css';
       .dsp-side {
         position: relative; z-index: 1;
         display: flex; flex-direction: column; gap: 1.25rem;
-        padding: 1.75rem 1.75rem 1.75rem 0;
+        padding: 1.75rem;
         min-height: 0;
+      }
+      body:not([data-scene="none"]) .dsp-side { position: absolute; top: 0; right: 0; bottom: 0; width: var(--side-w); box-sizing: border-box; }
+      body:not([data-scene="none"]) .dsp-side .t-panel {
+        background-color: rgba(20, 15, 10, .72);
+        backdrop-filter: blur(14px) saturate(1.1);
+        -webkit-backdrop-filter: blur(14px) saturate(1.1);
       }
       body[data-scene="none"] .dsp-side {
         padding: 2.5rem; width: min(100%, 64rem); justify-self: center;
         background: none;
       }
-      body[data-scene="none"] .dsp-stage { background: radial-gradient(ellipse 90% 60% at 50% 0%, rgba(201, 144, 50, .08), transparent 70%); }
+      body[data-scene="none"] .dsp-side .t-panel { background-color: rgba(20, 15, 10, .78); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
       body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) { justify-content: center; }
 
       .dsp-timer { padding: 1.4rem 1.6rem 1.2rem; text-align: center; flex: none; }
@@ -288,7 +308,7 @@ import '../styles/global.css';
         transition: color .4s ease;
       }
       /* Timer on its own: big, in the middle of the screen */
-      body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) .dsp-timer-time { font-size: 13rem; }
+      body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) .dsp-timer-time { font-size: min(13rem, 24vw, 40vh); }
       body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) .dsp-timer { padding: 3rem 4rem 2.5rem; }
       .dsp-timer-bar { height: 3px; margin: 1rem 0 .7rem; background: var(--border-gold); overflow: hidden; }
       .dsp-timer-bar span { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left; transition: transform .3s linear, background .4s ease; }
@@ -336,20 +356,21 @@ import '../styles/global.css';
       .dsp-ledger { list-style: none; margin: 0; padding: 0 .9rem 0 1rem; overflow-y: auto; scrollbar-width: none; flex: 1; min-height: 0; }
       .dsp-ledger::-webkit-scrollbar { display: none; }
       .dsp-row {
-        display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) auto; align-items: center; gap: .9rem;
-        padding: .55rem .7rem .55rem .6rem;
+        font-size: calc(1rem * var(--fit, 1));
+        display: grid; grid-template-columns: 3.2em minmax(0, 1fr) auto; align-items: center; gap: .9em;
+        padding: .55em .7em .55em .6em;
         border-left: 3px solid var(--kind, var(--neutral));
         transition: background .4s ease, opacity .4s ease;
       }
-      .dsp-row + .dsp-row { margin-top: .3rem; }
+      .dsp-row + .dsp-row { margin-top: .3em; }
       .dsp-row[data-type="character"] { --kind: var(--party); }
       .dsp-row[data-type="npc"] { --kind: var(--ally); }
       .dsp-row[data-type="monster"] { --kind: var(--foe); }
       .dsp-row-init {
-        font-family: var(--font-display); font-weight: 700; font-size: 2rem; line-height: 1;
+        font-family: var(--font-display); font-weight: 700; font-size: 2em; line-height: 1;
         font-variant-numeric: lining-nums; text-align: center; color: var(--gold);
       }
-      .dsp-row-name { font-size: 1.25rem; font-weight: 500; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .dsp-row-name { font-size: 1.25em; font-weight: 500; color: var(--text-strong); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .dsp-row.is-current { background: linear-gradient(to right, rgba(201, 144, 50, .2), rgba(201, 144, 50, .03)); }
       .dsp-row.is-current .dsp-row-name { color: #fff3dc; }
       .dsp-row.is-past { opacity: .62; }
@@ -357,7 +378,7 @@ import '../styles/global.css';
       .dsp-row[data-health="dead"] .dsp-row-name { text-decoration: line-through; text-decoration-color: rgba(242, 232, 213, .5); }
 
       .dsp-health {
-        font-size: .85rem; font-weight: 600; padding: .2rem .6rem; color: #fff7e6; white-space: nowrap;
+        font-size: .85em; font-weight: 600; padding: .2em .6em; color: #fff7e6; white-space: nowrap;
         background: var(--h, #3a3128);
       }
       .dsp-health[data-h="healthy"] { --h: #4d7a3c; }
@@ -382,20 +403,58 @@ import '../styles/global.css';
       .dsp-hint { right: 1rem; bottom: 1rem; color: var(--text-muted); opacity: 0; pointer-events: none; }
       .dsp-hint.is-shown { opacity: 1; }
 
-      /* ── Narrow screens (tablet in portrait): stack instead of side by side ── */
-      @media (max-width: 899px) {
-        html:has(body.dsp) { font-size: 15px; }
-        body.dsp { overflow-y: auto; }
-        .dsp-stage { position: absolute; min-height: 100dvh; }
-        body[data-scene][data-side="1"]:not([data-scene="none"]) .dsp-stage { grid-template-columns: minmax(0, 1fr); grid-template-rows: 60vh auto; }
-        .dsp-side { padding: 1rem; }
-        .dsp-loc-caption { left: 1.5rem; right: 1.5rem; bottom: 1.5rem; }
-        .dsp-loc-name, body[data-side="1"] .dsp-loc-name { font-size: 3rem; }
-        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; height: 40%; gap: .75rem; }
-        body[data-location="0"] .dsp-cast { inset: 1rem; }
-        body[data-location="0"] .dsp-portrait { height: 40vh; }
-        .dsp-idle-title { font-size: 2.6rem; }
+      /* ── Short landscape screens (phone on its side, small laptop) ─────── */
+      @media (max-height: 600px) and (min-aspect-ratio: 1/1) {
+        .dsp-side { gap: .6rem; padding: .75rem; }
+        body[data-scene="none"] .dsp-side { padding: .75rem; }
+        .dsp-timer { padding: .5rem 1rem .5rem; }
+        .dsp-timer-time { font-size: 3rem; }
+        .dsp-timer-bar { margin: .4rem 0 .3rem; }
+        .dsp-timer-status:empty { display: none; }
+        .dsp-turns { padding: .6rem 0 .3rem; }
+        .dsp-turns-title { font-size: 1.2rem; }
+        .dsp-round b { font-size: 1.5rem; }
+        .dsp-now { margin: .4rem 0; padding: .5rem 1rem .6rem; }
+        .dsp-now-name { font-size: 2rem; }
+        .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1rem; }
+        body[data-cast="1"] .dsp-loc-caption { top: 1rem; }
+        .dsp-loc-name, body[data-side="1"] .dsp-loc-name { font-size: 2.2rem; }
+        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; height: 55%; gap: .6rem; }
+        body[data-location="0"] .dsp-cast { inset: 1rem; gap: .6rem; }
+        body[data-side="1"] .dsp-cast, body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + .75rem); }
+        .dsp-idle-title { font-size: 2.4rem; }
       }
+
+      /* ── Portrait screens (phones, tablets upright): one column, page scrolls.
+            Whose turn it is comes first; the scene follows. ─────────────────── */
+      @media (max-aspect-ratio: 1/1), (max-width: 640px) {
+        html:has(body.dsp) { font-size: clamp(15px, 2.3vw, 26px); }
+        body.dsp { overflow-y: auto; }
+        .dsp-stage { position: absolute; min-height: 100dvh; display: flex; flex-direction: column; }
+        .dsp-scene { position: relative; inset: auto; flex: none; height: 46vh; min-height: 15rem; }
+        body:not([data-scene="none"]) .dsp-side { position: relative; inset: auto; width: auto; }
+        body[data-side="1"] .dsp-location::after { display: none; }
+        body[data-side="1"] .dsp-loc-caption, body[data-side="1"] .dsp-cast { right: 1rem; }
+        body[data-side="1"] .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { width: 100%; }
+        body[data-location="0"] .dsp-scene { height: auto; min-height: 0; }
+        body[data-location="0"] .dsp-cast { position: relative; inset: auto; height: 62vh; padding: 1rem; }
+        body[data-location="0"][data-side="0"] .dsp-cast { height: 100dvh; }
+        body[data-turns="1"] .dsp-side { order: -1; }
+        body[data-scene="none"] .dsp-side, .dsp-side { padding: 1rem; width: auto; flex: none; }
+        body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) { flex: 1; }
+        .dsp-turns { flex: none; }
+        .dsp-ledger { overflow: visible; flex: none; }
+        .dsp-timer-time { font-size: min(5.4rem, 20vw); }
+        .dsp-now-name { font-size: min(3.3rem, 11vw); }
+        .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1.25rem; }
+        body[data-cast="1"] .dsp-loc-caption { top: 1.25rem; }
+        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; height: 48%; gap: .6rem; }
+        body[data-location="0"] .dsp-cast { gap: .75rem; }
+        .dsp-idle-title { font-size: min(4.2rem, 11vw); }
+      }
+
+      /* Touch screens have no F key */
+      @media (pointer: coarse) { .dsp-hint { display: none; } }
 
       @media (prefers-reduced-motion: reduce) {
         .dsp-loc-layer img, .dsp-portrait, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
@@ -491,13 +550,72 @@ import '../styles/global.css';
         body.dataset.location = hasLocation ? '1' : '0';
         body.dataset.cast = hasCast ? '1' : '0';
         body.dataset.side = hasSide ? '1' : '0';
+        body.dataset.turns = s.initiative ? '1' : '0';
         setSparks($<HTMLCanvasElement>('idleSparks'), false);
 
         renderLocation(s.location);
         renderCast(s.npcs);
         renderTurns(s.initiative);
         renderTimer();
+        fitLayout();
       }
+
+      // ── Fit to the screen (any size, from phone to 32:9) ──────────────────
+      // Portraits: the largest size at which all of them fit their box, in one row or several.
+      function layoutCast() {
+        const cast = $('cast');
+        const n = cast.children.length;
+        const css = getComputedStyle(cast);
+        const width = cast.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 1;
+        const height = cast.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom) - 1;
+        if (!n || width <= 0 || height <= 0) return;
+        const gap = parseFloat(css.columnGap) || 0;
+        let best = 0;
+        for (let rows = 1; rows <= n; rows++) {
+          const cols = Math.ceil(n / rows);
+          const h = Math.min((height - gap * (rows - 1)) / rows, ((width - gap * (cols - 1)) / cols) * 4 / 3);
+          best = Math.max(best, h);
+        }
+        cast.style.setProperty('--ph', `${Math.floor(best)}px`);
+      }
+
+      // Turn order: shrink the rows until every combatant fits (down to 60 %), then scroll.
+      function fitLedger() {
+        const ledger = $('ledger');
+        if ($('turns').hidden) return;
+        let fit = 1;
+        ledger.style.setProperty('--fit', '1');
+        while (ledger.scrollHeight > ledger.clientHeight + 1 && fit > 0.6) {
+          fit -= 0.05;
+          ledger.style.setProperty('--fit', fit.toFixed(2));
+        }
+        ledger.querySelector('.is-current')?.scrollIntoView({ block: 'nearest' });
+      }
+
+      // Location: a picture far wider or taller than its frame would be cropped heavily, so it
+      // is shown whole over a blurred copy of itself instead.
+      function fitLocation() {
+        const frame = $('location');
+        const img = frame.querySelector<HTMLImageElement>('.dsp-loc-layer:last-child img.dsp-loc-img');
+        const side = $('side');
+        const overlay = body.dataset.side === '1' && getComputedStyle(side).position === 'absolute';
+        const { height } = frame.getBoundingClientRect();
+        const width = frame.getBoundingClientRect().width - (overlay ? side.getBoundingClientRect().width : 0);
+        if (!img?.naturalWidth || width <= 0 || !height) { delete frame.dataset.fit; return; }
+        const ratio = (width / height) / (img.naturalWidth / img.naturalHeight);
+        frame.dataset.fit = ratio > 1.6 || ratio < 0.6 ? 'contain' : 'cover';
+      }
+
+      function fitLayout() {
+        layoutCast();
+        fitLedger();
+        fitLocation();
+      }
+      let fitFrame = 0;
+      new ResizeObserver(() => {
+        cancelAnimationFrame(fitFrame);
+        fitFrame = requestAnimationFrame(fitLayout);
+      }).observe(document.documentElement);
 
       // ── Location: crossfade to the new picture once it has loaded ─────
       let locationKey = '';
@@ -520,12 +638,17 @@ import '../styles/global.css';
           setTimeout(() => { while (layers.firstChild && layers.firstChild !== layer) layers.firstChild.remove(); }, 1600);
         };
         if (loc.imageUrl) {
+          const fill = new Image();
+          fill.alt = '';
+          fill.className = 'dsp-loc-fill';
+          fill.src = loc.imageUrl;
           const img = new Image();
           img.alt = '';
+          img.className = 'dsp-loc-img';
           img.decoding = 'async';
-          img.onload = img.onerror = () => { if (locationKey === key) reveal(); };
+          img.onload = img.onerror = () => { if (locationKey === key) { reveal(); fitLocation(); } };
           img.src = loc.imageUrl;
-          layer.appendChild(img);
+          layer.append(fill, img);
         } else {
           layer.classList.add('is-painted', `place-bg-${loc.type}`);
           reveal();
@@ -540,8 +663,6 @@ import '../styles/global.css';
         castKey = key;
         const cast = $('cast');
         cast.replaceChildren();
-        cast.style.setProperty('--n', String(Math.max(1, Math.min(npcs.length, 4))));
-        cast.toggleAttribute('data-many', npcs.length > 4);
         npcs.forEach((npc, i) => {
           const li = document.createElement('li');
           const fig = document.createElement('figure');
@@ -734,7 +855,7 @@ import '../styles/global.css';
         cursorTimer = window.setTimeout(() => body.classList.add('cursor-idle'), 3000);
       });
 
-      if (!document.fullscreenElement && window.self === window.top) {
+      if (!document.fullscreenElement && window.self === window.top && matchMedia('(pointer: fine)').matches) {
         const hint = $('hint');
         hint.classList.add('is-shown');
         setTimeout(() => hint.classList.remove('is-shown'), 6000);

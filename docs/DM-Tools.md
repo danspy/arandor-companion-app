@@ -72,17 +72,25 @@ about 2 seconds.
 ## Player display
 
 `/display` is a full-screen page without menus. It needs no login, so you can open it on any
-device (TV browser, tablet, old laptop) without signing in there. On small phone screens it
-asks for a larger screen.
+device (TV browser, tablet, phone, old laptop) without signing in there.
+
+It fits any screen, from a phone to a 32:9 ultrawide. Text scales with the smaller side of the
+screen, NPC portraits are sized so all of them fit (in several rows if that makes them
+bigger), and the turn order shrinks its rows until every combatant fits (on very small screens
+it scrolls, keeping the current combatant in view). A location picture much wider or taller
+than the screen is shown whole over a blurred copy instead of being cropped. On upright
+screens (phones, tablets) everything stacks in one scrolling column with the timer and whose
+turn it is first.
 
 The layout adapts to what is shown:
 
-| Shown | Layout |
+| Shown | Layout (landscape screens) |
 |---|---|
-| One thing (location, NPCs or initiative) | Full screen |
-| Location + NPCs | Stacked, half each |
-| Location or NPCs + initiative | Content left (60 %), initiative right (40 %) |
-| All three | Location and NPCs stacked left (60 %), initiative right (40 %) |
+| Location | Full screen |
+| NPCs | Portraits over the blurred campaign image |
+| Location + NPCs | Location full screen, portraits along the bottom |
+| Timer and/or initiative added | They float as see-through panels on the right, over the location or portraits |
+| Only timer and/or initiative | Centred over the blurred campaign image |
 
 The turn order always shows the round and whose turn it is, with who is up next. While combat
 is paused or stopped the same combatant stays highlighted, labelled *Combat paused* or *Combat
