@@ -133,3 +133,8 @@ input.cp-input { text-align: center; }
 .initiative-card.is-clickable { cursor: pointer; }
 .initiative-card.is-clickable:hover { border-color: var(--gold); }
 .initiative-card.is-selected { box-shadow: inset 3px 0 0 var(--gold); }
+.cp-tags { display: grid; gap: 0.4rem; }
+.cp-own { width: 12rem; max-width: 100%; padding: 0.15rem 0.5rem; font-size: 0.8rem; }
+/* Spells/effects and own tags in another colour than the official conditions */
+.cp-chip.is-effect[aria-pressed='true'], .cp-chip.is-custom { color: #f3e9ff; background: #5b3f8c; border-color: #8b6cc4; }
+.cond-chip.is-effect, .cond-chip.is-custom { color: #d9c6ff; border-color: #8b6cc4; }

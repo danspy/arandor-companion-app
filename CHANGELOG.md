@@ -13,8 +13,8 @@ What's new in the Arandor Companion App, newest first.
 - Damage and healing buttons on every combatant (players: on their own characters), also on
   the DM screen and next to an open stat block
 - Click a combatant in the initiative tracker for a side panel: quick edit of initiative, HP,
-  AC and notes, damage/heal, conditions (shown on the tracker and the player display), and its
-  stat block
+  AC and notes, damage/heal, conditions, spell effects like Hexed or Hunter's Mark and your own
+  tags (shown on the tracker and the player display), and its stat block
 - All 331 creatures of the free 2024 rules (SRD 5.2) ready to use, from guards and bandits to
   dragons
 - Generate generic NPCs: species, role and level 1–20, computed with the player rules

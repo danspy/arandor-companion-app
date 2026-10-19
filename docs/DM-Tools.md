@@ -36,10 +36,16 @@ All are reached through **Tools** in the menu (shown when logged in).
   - **quick edit:** initiative, AC, HP, max HP, temp HP, in combat, DM notes; each field is
     saved as soon as you leave it (a new initiative re-sorts the list and the panel opens again);
   - **damage / heal**;
-  - **conditions:** Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated, Invisible,
-    Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious, Concentration, and
-    Exhaustion 1–6. They show as tags on the row for everyone, players included, and on the
-    player display (turn order and *Now acting*);
+  - **conditions** (gold): Blinded, Charmed, Deafened, Frightened, Grappled, Incapacitated,
+    Invisible, Paralyzed, Petrified, Poisoned, Prone, Restrained, Stunned, Unconscious, and
+    Exhaustion 1–6;
+  - **spells and effects** (violet): Concentration, Blessed, Baned, Hexed, Hunter's Mark, Faerie
+    Fire, Guiding Bolt, Hasted, Slowed, Shield of Faith, Sanctuary, Raging, Dodging, Hidden,
+    Inspired;
+  - **own tags** (violet): type anything ("Cursed by Runara") and press Enter; × removes it (up
+    to 20 tags, 32 characters each).
+    All of them show as tags on the row for everyone, players included, and on the player
+    display (turn order and *Now acting*);
   - the **stat block** with working roll buttons, or *Link a stat block from the bestiary* for a
     combatant without one.
   The pencil still opens the full edit dialog (name, type, linked character …).

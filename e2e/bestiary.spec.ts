@@ -2,6 +2,7 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { attackParts, findRolls, importStatBlock, nextCopyNumbers, validateCreature } from '../src/lib/statblock';
 import { applyHpChange } from '../src/lib/hp';
+import { cleanConditions, tagKind } from '../src/lib/conditions';
 import { generateNpc, proficiencyBonus, ROLES, SPECIES } from '../src/lib/npc-generator';
 import srdData from '../src/data/srd-2024-creatures.json' with { type: 'json' };
 
@@ -76,6 +77,15 @@ test.describe('Stat block import', () => {
     expect(applyHpChange({ hp: 4, maxHp: 10, tempHp: 0 }, 'damage', 9)).toEqual({ hp: 0, tempHp: 0, resetDeathSaves: false });
     expect(applyHpChange({ hp: 4, maxHp: 10, tempHp: 3 }, 'heal', 20)).toEqual({ hp: 10, tempHp: 3, resetDeathSaves: true });
     expect(applyHpChange({ hp: 0, maxHp: null, tempHp: null }, 'heal', 6)).toEqual({ hp: 6, tempHp: 0, resetDeathSaves: true });
+  });
+
+  test('conditions, spells/effects and own tags are kept tidy', () => {
+    expect(cleanConditions(['Cursed by Runara', 'Hexed', 'Exhaustion 1', 'Poisoned', 'Exhaustion 3', 'hexed', ' Cursed  by Runara '])).toEqual(
+      ['Poisoned', 'Hexed', 'Exhaustion 3', 'Cursed by Runara']); // "hexed" is Hexed again
+    expect(cleanConditions(['x'.repeat(33)])).toBeNull();
+    expect(cleanConditions(Array.from({ length: 21 }, (_, i) => `Tag ${i}`))).toBeNull();
+    expect(cleanConditions('Poisoned')).toBeNull();
+    expect([tagKind('Poisoned'), tagKind('Exhaustion 2'), tagKind("Hunter's Mark"), tagKind('Cursed')]).toEqual(['condition', 'condition', 'effect', 'custom']);
   });
 
   test('numbers copies after the ones already in the fight', () => {
@@ -216,7 +226,7 @@ test.describe('Bestiary on a test server', () => {
     expect(e.conditions).toEqual([]);
 
     // API: partial updates, checked; players can't use it but see conditions
-    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { conditions: ['Sleepy'] } })).status()).toBe(400);
+    expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { conditions: ['x'.repeat(33)] } })).status()).toBe(400);
     expect((await dm.request.patch(`/api/initiative/${e.id}`, { data: { ac: 99 } })).status()).toBe(400);
     const player = await browser.newContext();
     await login(player, PLAYER!, PLAYER_PASSWORD!);
@@ -237,8 +247,17 @@ test.describe('Bestiary on a test server', () => {
     await expect(card.locator('[data-conditions]')).toHaveText('Poisoned');
     await panel.locator('.cp-exhaustion select').selectOption('2');
     await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Exhaustion 2']);
+    // A spell effect and an own tag (Enter adds it), in their own colour
+    await panel.getByRole('button', { name: 'Hexed' }).click();
+    await panel.getByLabel('Add your own tag').fill('Cursed by Runara');
+    await panel.getByLabel('Add your own tag').press('Enter');
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Hexed', 'Exhaustion 2', 'Cursed by Runara']);
+    await expect(card.locator('.cond-chip.is-effect')).toHaveText('Hexed');
+    await expect(card.locator('.cond-chip.is-custom')).toHaveText('Cursed by Runara');
+    await panel.getByRole('button', { name: 'Remove Cursed by Runara' }).click();
+    await expect(card.locator('[data-conditions] .cond-chip')).toHaveText(['Poisoned', 'Hexed', 'Exhaustion 2']);
     const seen = (await (await player.request.get('/api/initiative')).json()).find((x: any) => x.id === e.id);
-    expect(seen.conditions).toEqual(['Poisoned', 'Exhaustion 2']);
+    expect(seen.conditions).toEqual(['Poisoned', 'Hexed', 'Exhaustion 2']);
 
     // Link a stat block: it appears in the panel (the page reloads, the panel opens again)
     await panel.locator('.cp-link select').selectOption(bandit.id);

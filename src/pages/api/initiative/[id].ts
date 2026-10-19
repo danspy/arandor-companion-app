@@ -1,6 +1,6 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from '@/db';
-import { cleanConditions } from '../../../lib/conditions';
+import { TAG_LIMITS, cleanConditions } from '../../../lib/conditions';
 import { requireDungeonmasterOrAdmin, requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 import { ownedCharacters, preserveTurn, redactEntry } from '../../../lib/combat';
@@ -207,7 +207,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     if ('isActive' in body) update.isActive = !!body.isActive;
     if ('conditions' in body) {
       const conditions = cleanConditions(body.conditions);
-      if (!conditions) return json({ error: 'Unknown condition' }, 400);
+      if (!conditions) return json({ error: `Conditions are a list of tags: at most ${TAG_LIMITS.count}, each at most ${TAG_LIMITS.length} characters` }, 400);
       update.conditions = conditions;
     }
     if ('creatureId' in body) {

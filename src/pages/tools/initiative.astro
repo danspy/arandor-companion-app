@@ -5,6 +5,7 @@ import PageHero from '../../components/PageHero.astro';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, InitiativeTracker, Character, Creature, PageSettings, User, eq } from '@/db';
 import '../../styles/statblock.css';
+import { tagKind } from '../../lib/conditions';
 
 // Initiative tracker is only accessible to logged-in users
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -436,7 +437,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
 
                 <!-- Conditions (everyone sees them; the DM sets them in the side panel) -->
                 <div class="cond-chips mt-1.5" data-conditions aria-label="Conditions">
-                  {((entry as any).conditions ?? []).map((c: string) => <span class="cond-chip">{c}</span>)}
+                  {((entry as any).conditions ?? []).map((c: string) => <span class={`cond-chip is-${tagKind(c)}`}>{c}</span>)}
                 </div>
 
                 <!-- Notes (if present, shown below) -->
@@ -2132,6 +2133,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
     import { COMBATANT_CHANGED_EVENT, PANEL_CLOSED_EVENT, openCombatant, openCombatantId, toggleCombatant, toggleStatBlock, type Combatant } from '../../lib/statblock-panel';
     import { openQuickAdd } from '../../lib/quick-add';
     import { HP_CHANGED_EVENT, formatHp, wireHpControls, type HpEntry } from '../../lib/hp-control';
+    import { tagKind } from '../../lib/conditions';
 
     let wired = false;
     function wireBestiary() {
@@ -2207,7 +2209,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       const box = card.querySelector<HTMLElement>('[data-conditions]');
       if (!box || box.dataset.list === conditions.join('|')) return;
       box.dataset.list = conditions.join('|');
-      box.replaceChildren(...conditions.map((c) => Object.assign(document.createElement('span'), { className: 'cond-chip', textContent: c })));
+      box.replaceChildren(...conditions.map((c) => Object.assign(document.createElement('span'), { className: `cond-chip is-${tagKind(c)}`, textContent: c })));
     }
     // The tracker's refresh loops (main script) update condition tags through this
     (window as any).arandorRenderConditions = renderConditions;

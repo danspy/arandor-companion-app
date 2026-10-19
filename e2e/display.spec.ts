@@ -38,7 +38,7 @@ function displayState({ npcs = 0, pick, location = false, turns = false, timer =
           entries: ['Thalia', 'Borin', 'Grimgar', 'Selene', 'Goblin 1', 'Goblin 2', 'Goblin 3', 'Wolf'].map((name, i) => ({
             id: `e${i}`, name, initiative: 20 - i, type: i < 4 ? 'character' : 'monster',
             health: i < 4 ? null : 'healthy', isStable: false, isCurrent: i === 2,
-            conditions: i === 2 ? ['Poisoned', 'Exhaustion 2'] : i === 4 ? ['Frightened'] : [],
+            conditions: i === 2 ? ['Poisoned', 'Exhaustion 2'] : i === 4 ? ['Frightened', "Hunter's Mark"] : [],
           })),
         }
       : null,
@@ -149,7 +149,8 @@ test.describe('Player display layout', () => {
     await expect(page.locator('#nowConds .dsp-cond')).toHaveText(['Poisoned', 'Exhaustion 2']);
     const rows = page.locator('#ledger .dsp-row');
     await expect(rows.nth(2).locator('.dsp-cond')).toHaveText(['Poisoned', 'Exhaustion 2']);
-    await expect(rows.nth(4).locator('.dsp-cond')).toHaveText(['Frightened']);
+    await expect(rows.nth(4).locator('.dsp-cond')).toHaveText(['Frightened', "Hunter's Mark"]);
+    await expect(rows.nth(4).locator('.dsp-cond.is-effect')).toHaveText("Hunter's Mark");
     await expect(rows.nth(0).locator('.dsp-cond')).toHaveCount(0);
   });
 

@@ -384,6 +384,8 @@ import '../styles/global.css';
       .dsp-conds { display: flex; flex-wrap: wrap; gap: .3em; margin: .2em 0 0; }
       .dsp-conds:empty { display: none; }
       .dsp-cond { font-size: .72em; line-height: 1.5; padding: 0 .5em; color: var(--gold); border: 1px solid var(--border-gold); background: rgba(12, 9, 6, .45); }
+      /* Spells/effects and the DM's own tags in violet, official conditions in gold */
+      .dsp-cond.is-effect, .dsp-cond.is-custom { color: #e2d3ff; border-color: #8b6cc4; background: rgba(60, 38, 98, .55); }
       .dsp-now-conds { position: relative; margin: 0 0 .45rem; font-size: 1.05rem; }
       .dsp-row.is-current { background: linear-gradient(to right, rgba(201, 144, 50, .2), rgba(201, 144, 50, .03)); }
       .dsp-row.is-current .dsp-row-name { color: #fff3dc; }
@@ -487,6 +489,7 @@ import '../styles/global.css';
 
     <script>
       import { startSparks } from '../lib/sparks';
+      import { tagKind } from '../lib/conditions';
 
       type Health = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
       interface DisplayState {
@@ -976,7 +979,7 @@ import '../styles/global.css';
       }
 
       function renderConditions(box: HTMLElement, conditions: string[] | undefined) {
-        box.replaceChildren(...(conditions ?? []).map((c) => Object.assign(document.createElement('span'), { className: 'dsp-cond', textContent: c })));
+        box.replaceChildren(...(conditions ?? []).map((c) => Object.assign(document.createElement('span'), { className: `dsp-cond is-${tagKind(c)}`, textContent: c })));
       }
 
       // ── Timer (runs on the server's clock) ────────────────────────────

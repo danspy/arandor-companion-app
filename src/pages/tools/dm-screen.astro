@@ -481,6 +481,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
   <script>
     import { COMBATANT_CHANGED_EVENT, toggleStatBlock } from '../../lib/statblock-panel';
+    import { tagKind } from '../../lib/conditions';
     import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
     // Store current state
@@ -1037,7 +1038,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     const statBlockButton = (c) =>
       `<button type="button" class="statblock-btn t-link text-xs ml-2" data-creature-id="${escapeHtml(c.creatureId || '')}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}">${c.creatureId ? 'Stat block' : 'Edit'}</button>`;
     const conditionChips = (c) => (c.conditions || []).length
-      ? `<div class="cond-chips mt-1">${c.conditions.map((x) => `<span class="cond-chip">${escapeHtml(x)}</span>`).join('')}</div>`
+      ? `<div class="cond-chips mt-1">${c.conditions.map((x) => `<span class="cond-chip is-${tagKind(x)}">${escapeHtml(x)}</span>`).join('')}</div>`
       : '';
     // HP with a damage/heal field (see lib/hp-control)
     const hpLine = (c) => c.hp === null || c.hp === undefined
