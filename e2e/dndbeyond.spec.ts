@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { abilityScores, calculateHitPoints } from '../src/lib/dndbeyond';
+import { abilityScores, buildSheet, calculateHitPoints } from '../src/lib/dndbeyond';
 
 // D&D Beyond character JSON (trimmed to the fields we read) for the seven linked characters.
 // The expected numbers are what the D&D Beyond character sheet itself shows (checked 2026-10-19).
@@ -39,4 +39,23 @@ test.describe('D&D Beyond import', () => {
     expect(abilityScores(load('barum'))).toEqual({ strength: 9, dexterity: 14, constitution: 15, intelligence: 20, wisdom: 11, charisma: 13 });
     expect(abilityScores(load('morrigan'))).toEqual({ strength: 8, dexterity: 12, constitution: 16, intelligence: 20, wisdom: 14, charisma: 13 });
   });
+});
+
+// Numbers read off the rendered D&D Beyond sheets (saves, skills, passives, initiative, AC, speed)
+const expected: Record<string, any> = JSON.parse(readFileSync(new URL('./fixtures/dndbeyond/expected-sheets.json', import.meta.url), 'utf8'));
+const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
+
+test.describe('D&D Beyond sheet', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  for (const [name, e] of Object.entries(expected)) {
+    test(`${name}: saves, skills, passives and initiative match`, () => {
+      const sheet = buildSheet(load(name));
+      expect(sheet.proficiencyBonus).toBe(e.prof);
+      expect(Object.fromEntries(ABILITIES.map((a) => [a, sheet.saves[a].bonus]))).toEqual(e.saves);
+      expect([sheet.passivePerception, sheet.passiveInvestigation, sheet.passiveInsight]).toEqual([e.perception, e.investigation, e.insight]);
+      expect(sheet.initiative).toBe(e.initiative);
+      expect(Object.fromEntries(sheet.skills.map((s) => [s.name, s.bonus]))).toEqual(e.skills);
+    });
+  }
 });
