@@ -34,7 +34,7 @@ import '../styles/global.css';
         <div class="dsp-location" id="location">
           <div class="dsp-loc-layers" id="locLayers"></div>
           <div class="dsp-loc-shade" aria-hidden="true"></div>
-          <div class="dsp-loc-caption">
+          <div class="dsp-loc-caption" id="locCaption">
             <p class="dsp-loc-kind" id="locKind"></p>
             <h1 class="dsp-loc-name" id="locName"></h1>
           </div>
@@ -83,6 +83,8 @@ import '../styles/global.css';
         --foe: #df6a48;
         --neutral: #9a8a70;
         --ease: cubic-bezier(.2, .7, .2, 1);
+        /* Portraits and the place name gliding to a new layout: starts and ends gently */
+        --ease-move: cubic-bezier(.45, 0, .2, 1);
         --side-w: clamp(22rem, 32vw, 42rem);
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
@@ -197,7 +199,6 @@ import '../styles/global.css';
       }
       .dsp-loc-caption {
         position: absolute; left: 3.5rem; bottom: 3rem; right: 3.5rem;
-        transition: bottom .8s var(--ease);
       }
       /* With portraits along the bottom, the place name moves to the top */
       body[data-cast="1"] .dsp-loc-caption { bottom: auto; top: 2.75rem; }
@@ -222,26 +223,27 @@ import '../styles/global.css';
       body[data-side="1"] .dsp-loc-name { font-size: min(4.6rem, 9vw); }
 
       /* NPC portraits: over the location, or on their own across the backdrop */
+      /* The block is exactly as wide as its columns (--cast-w, set by layoutCast), so rows are
+         balanced and a shorter last row sits centred under the others. */
       .dsp-cast {
         list-style: none; margin: 0; padding: 0;
         position: absolute; display: none;
-        flex-wrap: wrap; gap: 1.5rem; align-content: center;
+        width: var(--cast-w, auto);
+        flex-wrap: wrap; gap: var(--gap, 1.5rem); justify-content: center; align-content: center;
       }
       body[data-cast="1"] .dsp-cast { display: flex; }
-      body[data-location="1"] .dsp-cast {
-        left: 3.5rem; right: 3.5rem; bottom: 2.5rem; height: 42%;
-        justify-content: flex-end; align-content: flex-end;
-      }
-      body[data-location="0"] .dsp-cast { inset: 3.5rem; justify-content: center; }
+      /* Over a location: along the bottom, centred in the free space, growing upward with more rows */
+      body[data-location="1"] .dsp-cast { left: 3.5rem; right: 3.5rem; bottom: 2.5rem; margin: 0 auto; align-content: flex-end; }
+      body[data-location="0"] .dsp-cast { inset: 3.5rem; margin: 0 auto; }
       body[data-side="1"] .dsp-cast { right: calc(var(--side-w) + 1.5rem); }
-      .dsp-cast > li { display: block; transition: opacity .55s var(--ease), transform .55s var(--ease); }
-      /* Only portraits that just joined rise in; the others keep their place (see renderCast) */
-      .dsp-cast > li.is-entering .dsp-portrait { animation: dsp-rise .9s var(--ease) both; animation-delay: calc(var(--i, 0) * 120ms); }
-      .dsp-cast > li.is-leaving { opacity: 0; transform: translateY(1rem) scale(.92); pointer-events: none; }
+      .dsp-cast > li { display: block; }
+      /* Only portraits that just joined rise in; the others glide to their new place (see play) */
+      .dsp-cast > li.is-entering .dsp-portrait { animation: dsp-rise .7s var(--ease) both; animation-delay: calc(var(--enter-delay, 0ms) + var(--i, 0) * 70ms); }
+      .dsp-cast > li.is-leaving { position: absolute; opacity: 0; transform: translateY(1rem) scale(.94); pointer-events: none; transition: opacity .4s ease, transform .4s var(--ease-move); }
       .dsp-portrait {
         position: relative; margin: 0;
         height: var(--ph, 12rem); width: calc(var(--ph, 12rem) * .75);
-        font-size: clamp(.6rem, calc(var(--ph, 12rem) * .045), 1.1rem);
+        font-size: clamp(.55rem, calc(var(--ph, 12rem) * .045), 1.1rem);
         background: var(--bg-raised);
         border: 1px solid var(--border-gold);
         box-shadow: 0 1.5rem 3rem rgba(0, 0, 0, .55);
@@ -261,20 +263,24 @@ import '../styles/global.css';
       .dsp-portrait-name {
         margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600;
         font-size: 1.7em; line-height: 1.05; color: var(--text-strong);
+        overflow-wrap: anywhere; text-wrap: balance;
       }
       .dsp-portrait-role { margin: .25em 0 0; font-size: .85em; color: var(--text-muted); line-height: 1.3; }
-      /* Gold corner marks, like the app's panels */
+      /* Small portraits (many NPCs, small screens): name only, closer to the edge */
+      .dsp-cast[data-compact] .dsp-portrait-role { display: none; }
+      .dsp-cast[data-compact] .dsp-portrait figcaption { padding: 2.5em .9em .9em 1em; } /* clear of the corner marks */
+      /* Gold corner marks, like the app's panels (sized with the portrait) */
       .dsp-portrait::before {
-        content: ''; position: absolute; inset: .45rem; pointer-events: none; z-index: 1;
+        content: ''; position: absolute; inset: .42em; pointer-events: none; z-index: 1;
         background:
-          linear-gradient(var(--gold), var(--gold)) 0 0 / .9rem 2px,
-          linear-gradient(var(--gold), var(--gold)) 0 0 / 2px .9rem,
-          linear-gradient(var(--gold), var(--gold)) 100% 0 / .9rem 2px,
-          linear-gradient(var(--gold), var(--gold)) 100% 0 / 2px .9rem,
-          linear-gradient(var(--gold), var(--gold)) 0 100% / .9rem 2px,
-          linear-gradient(var(--gold), var(--gold)) 0 100% / 2px .9rem,
-          linear-gradient(var(--gold), var(--gold)) 100% 100% / .9rem 2px,
-          linear-gradient(var(--gold), var(--gold)) 100% 100% / 2px .9rem;
+          linear-gradient(var(--gold), var(--gold)) 0 0 / .85em 2px,
+          linear-gradient(var(--gold), var(--gold)) 0 0 / 2px .85em,
+          linear-gradient(var(--gold), var(--gold)) 100% 0 / .85em 2px,
+          linear-gradient(var(--gold), var(--gold)) 100% 0 / 2px .85em,
+          linear-gradient(var(--gold), var(--gold)) 0 100% / .85em 2px,
+          linear-gradient(var(--gold), var(--gold)) 0 100% / 2px .85em,
+          linear-gradient(var(--gold), var(--gold)) 100% 100% / .85em 2px,
+          linear-gradient(var(--gold), var(--gold)) 100% 100% / 2px .85em;
         background-repeat: no-repeat; opacity: .7;
       }
       @keyframes dsp-rise {
@@ -321,7 +327,8 @@ import '../styles/global.css';
       @keyframes dsp-pulse { 50% { opacity: .45; } }
 
       .dsp-side > [hidden] { display: none; }
-      .dsp-turns { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 1.4rem 0 .6rem; }
+      /* As tall as its rows (a long list shrinks it to the screen and fitLedger takes over) */
+      .dsp-turns { flex: 0 1 auto; min-height: 0; display: flex; flex-direction: column; padding: 1.4rem 0 .6rem; }
       .dsp-turns-head { display: flex; align-items: baseline; justify-content: space-between; padding: 0 1.6rem; }
       .dsp-turns-title { margin: 0; font-family: var(--font-display); font-style: italic; font-weight: 600; font-size: 1.6rem; color: var(--gold); }
       .dsp-round { margin: 0; font-size: 1rem; color: var(--text-muted); }
@@ -420,8 +427,8 @@ import '../styles/global.css';
         .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1rem; }
         body[data-cast="1"] .dsp-loc-caption { top: 1rem; }
         .dsp-loc-name, body[data-side="1"] .dsp-loc-name { font-size: 2.2rem; }
-        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; height: 55%; gap: .6rem; }
-        body[data-location="0"] .dsp-cast { inset: 1rem; gap: .6rem; }
+        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; }
+        body[data-location="0"] .dsp-cast { inset: 1rem; }
         body[data-side="1"] .dsp-cast, body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + .75rem); }
         .dsp-idle-title { font-size: 2.4rem; }
       }
@@ -433,13 +440,23 @@ import '../styles/global.css';
         body.dsp { overflow-y: auto; }
         .dsp-stage { position: absolute; min-height: 100dvh; display: flex; flex-direction: column; }
         .dsp-scene { position: relative; inset: auto; flex: none; height: 46vh; min-height: 15rem; }
+        /* With portraits the scene grows with them (the page scrolls) instead of squeezing them */
+        body[data-cast="1"] .dsp-scene { height: auto; }
         body:not([data-scene="none"]) .dsp-side { position: relative; inset: auto; width: auto; }
         body[data-side="1"] .dsp-location::after { display: none; }
-        body[data-side="1"] .dsp-loc-caption, body[data-side="1"] .dsp-cast { right: 1rem; }
+        body[data-side="1"] .dsp-loc-caption { right: 1rem; }
         body[data-side="1"] .dsp-location[data-fit="contain"] .dsp-loc-layer img.dsp-loc-img { width: 100%; }
-        body[data-location="0"] .dsp-scene { height: auto; min-height: 0; }
-        body[data-location="0"] .dsp-cast { position: relative; inset: auto; height: 62vh; padding: 1rem; }
-        body[data-location="0"][data-side="0"] .dsp-cast { height: 100dvh; }
+        body[data-location="0"] .dsp-scene { min-height: 0; }
+        /* Portraits in the page flow; over a location they start below the place name */
+        body[data-cast="1"] .dsp-cast, body[data-side="1"] .dsp-cast {
+          position: relative; inset: auto; margin: 0 auto;
+          padding: var(--cast-top, 1rem) 1rem 1rem; box-sizing: content-box;
+          width: var(--cast-w, calc(100% - 2rem));
+        }
+        body[data-location="1"] .dsp-scene { min-height: 46vh; }
+        body[data-location="1"] .dsp-cast { min-height: calc(46vh - var(--cast-top, 1rem) - 1rem); }
+        body[data-location="0"] .dsp-cast { min-height: calc(62vh - 2rem); }
+        body[data-location="0"][data-side="0"] .dsp-cast { min-height: calc(100dvh - 2rem); }
         body[data-turns="1"] .dsp-side { order: -1; }
         body[data-scene="none"] .dsp-side, .dsp-side { padding: 1rem; width: auto; flex: none; }
         body[data-scene="none"] .dsp-side:has(.dsp-turns[hidden]) { flex: 1; }
@@ -449,8 +466,6 @@ import '../styles/global.css';
         .dsp-now-name { font-size: min(3.3rem, 11vw); }
         .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1.25rem; }
         body[data-cast="1"] .dsp-loc-caption { top: 1.25rem; }
-        body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; height: 48%; gap: .6rem; }
-        body[data-location="0"] .dsp-cast { gap: .75rem; }
         .dsp-idle-title { font-size: min(4.2rem, 11vw); }
       }
 
@@ -459,6 +474,7 @@ import '../styles/global.css';
 
       @media (prefers-reduced-motion: reduce) {
         .dsp-loc-layer img, .dsp-portrait, .dsp-cast > li, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
+        .dsp-cast > li, .dsp-loc-caption { transition: none !important; }
       }
     </style>
 
@@ -539,9 +555,10 @@ import '../styles/global.css';
         }
 
         const hasLocation = !!s.location;
-        const finishCast = renderCast(s.npcs);
+        const before = snapshot();
+        const cast = renderCast(s.npcs);
         // Keep the cast area while removed portraits are still fading out
-        const hasCast = s.npcs.length > 0 || !!$('cast').querySelector('.is-leaving');
+        const hasCast = s.npcs.length > 0 || cast.leaving.length > 0 || !!$('cast').querySelector('.is-leaving');
         const hasSide = !!(s.initiative || s.timer);
         if (!hasLocation && !hasCast && !hasSide) {
           showIdle('Waiting for the DM', 'Scenes, characters and the turn order appear here when the DM shares them.');
@@ -560,26 +577,86 @@ import '../styles/global.css';
         renderTurns(s.initiative);
         renderTimer();
         fitLayout();
-        finishCast();
+        play(before, cast);
       }
 
       // ── Fit to the screen (any size, from phone to 32:9) ──────────────────
-      // Portraits: the largest size at which all of them fit their box, in one row or several.
-      function layoutCast() {
-        const cast = $('cast');
-        const n = cast.children.length;
-        const css = getComputedStyle(cast);
-        const width = cast.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 1;
-        const height = cast.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom) - 1;
-        if (!n || width <= 0 || height <= 0) return;
-        const gap = parseFloat(css.columnGap) || 0;
+      // Portraits: the largest size at which all of them fit their box, in one row or several,
+      // with the gap growing along. Over a location they prefer the lower half of the scene, so
+      // the picture stays visible, and only add rows upward towards the place name when they
+      // would otherwise get smaller than LOC_MIN. On upright screens the scene grows with them
+      // (the page scrolls) rather than shrinking them below a readable size.
+      const GAP = 0.06;      // gap between portraits, relative to their height
+      const LOC_BAND = 0.48; // over a location: preferred share of the scene's height
+      const LOC_MAX = 0.44;  // ...largest portrait
+      const LOC_MIN = 0.22;  // ...smallest portrait before they take more room
+      const flowQuery = window.matchMedia('(max-aspect-ratio: 1/1), (max-width: 640px)');
+
+      // Largest portrait height for n portraits in width × height
+      function fitPortraits(n: number, width: number, height: number) {
         let best = 0;
         for (let rows = 1; rows <= n; rows++) {
           const cols = Math.ceil(n / rows);
-          const h = Math.min((height - gap * (rows - 1)) / rows, ((width - gap * (cols - 1)) / cols) * 4 / 3);
-          best = Math.max(best, h);
+          best = Math.max(best, Math.min(height / (rows + GAP * (rows - 1)), width / (0.75 * cols + GAP * (cols - 1))));
         }
-        cast.style.setProperty('--ph', `${Math.floor(best)}px`);
+        return best;
+      }
+
+      function layoutCast() {
+        const cast = $('cast');
+        const n = castItems.size; // not counting portraits that are fading out
+        if (!n || body.dataset.cast !== '1') return;
+        const rem = parseFloat(getComputedStyle(document.documentElement).fontSize);
+        const flow = flowQuery.matches;
+        const overLocation = body.dataset.location === '1';
+        const sceneH = flow ? window.innerHeight : $('scene').clientHeight;
+        const cap = $('locCaption');
+        const below = overLocation ? cap.offsetTop + cap.offsetHeight + 1.25 * rem : 0;
+
+        // The room: measured with the block at its full width
+        if (flow) cast.style.setProperty('--cast-top', `${overLocation ? Math.round(below) : rem}px`);
+        cast.style.removeProperty('--cast-w');
+        const css = getComputedStyle(cast);
+        const width = cast.clientWidth - parseFloat(css.paddingLeft) - parseFloat(css.paddingRight) - 1;
+        if (width <= 0) return;
+
+        let ph: number;
+        if (flow) {
+          const pref = (overLocation ? 0.42 : body.dataset.side === '1' ? 0.62 : 1) * sceneH - 2 * rem;
+          const min = Math.max(6 * rem, width * 0.28) / 0.75;
+          ph = Math.min(fitPortraits(n, width, pref), overLocation ? sceneH * LOC_MAX : Infinity);
+          if (ph < min) ph = Math.min(min, width / 0.75);
+        } else if (overLocation) {
+          const room = $('scene').clientHeight - parseFloat(css.bottom) - below; // up to the place name
+          ph = Math.min(fitPortraits(n, width, Math.min(room, sceneH * LOC_BAND)), sceneH * LOC_MAX);
+          if (ph < sceneH * LOC_MIN) ph = Math.min(sceneH * LOC_MIN, fitPortraits(n, width, room));
+        } else {
+          const height = cast.clientHeight - parseFloat(css.paddingTop) - parseFloat(css.paddingBottom) - 1;
+          if (height <= 0) return;
+          ph = fitPortraits(n, width, height);
+        }
+        ph = Math.max(1, Math.floor(ph));
+        const gap = Math.floor(ph * GAP);
+        const w = ph * 0.75;
+        // Balanced rows: as few columns as the row count allows (16 → 6·5·5 rather than 7·7·2)
+        let cols = Math.max(1, Math.min(n, Math.floor((width + gap + 0.5) / (w + gap))));
+        cols = Math.ceil(n / Math.ceil(n / cols));
+        cast.style.setProperty('--ph', `${ph}px`);
+        cast.style.setProperty('--gap', `${gap}px`);
+        cast.style.setProperty('--cast-w', `${Math.ceil(cols * w + (cols - 1) * gap) + 1}px`);
+        cast.toggleAttribute('data-compact', ph < 14 * rem);
+        fitNames();
+      }
+
+      // A name with a word too long for its portrait is set smaller (down to 60 %) rather than
+      // broken in the middle of the word; only beyond that does it break.
+      function fitNames() {
+        $('cast').querySelectorAll<HTMLElement>('li:not(.is-leaving) .dsp-portrait-name').forEach((el) => {
+          el.style.fontSize = '';
+          el.style.overflowWrap = 'normal';
+          for (let k = 0.92; el.scrollWidth > el.clientWidth + 1 && k > 0.55; k -= 0.08) el.style.fontSize = `${(1.7 * k).toFixed(2)}em`;
+          el.style.overflowWrap = '';
+        });
       }
 
       // Turn order: shrink the rows until every combatant fits (down to 60 %), then scroll.
@@ -644,26 +721,86 @@ import '../styles/global.css';
           const fill = new Image();
           fill.alt = '';
           fill.className = 'dsp-loc-fill';
+          fill.decoding = 'async';
           fill.src = loc.imageUrl;
           const img = new Image();
           img.alt = '';
           img.className = 'dsp-loc-img';
           img.decoding = 'async';
-          img.onload = img.onerror = () => { if (locationKey === key) { reveal(); fitLocation(); } };
           img.src = loc.imageUrl;
           layer.append(fill, img);
+          // Decoded before it is shown, so a large picture does not stall portraits on the move
+          Promise.allSettled([img.decode(), fill.decode()]).then(() => { if (locationKey === key) { reveal(); fitLocation(); } });
         } else {
           layer.classList.add('is-painted', `place-bg-${loc.type}`);
           reveal();
         }
       }
 
+      // ── Gliding between layouts (FLIP) ──────────────────────────────────
+      // Any change can move the portraits and the place name: NPCs joining or leaving, the
+      // location, timer or turn order appearing or going. render() notes where everything is on
+      // screen first (snapshot), lays out the new state, then starts each element from its old
+      // spot and lets it glide to the new one (play). Leaving portraits fade out where they
+      // stood, the others move once they have started to go, new ones rise in last.
+      function snapshot() {
+        const rects = new Map<HTMLElement, DOMRect>();
+        castItems.forEach((li) => rects.set(li, li.getBoundingClientRect()));
+        const cap = $('locCaption');
+        rects.set(cap, cap.getBoundingClientRect());
+        return rects;
+      }
+
+      function glide(el: HTMLElement, from: DOMRect | undefined, delay: number, scaled: boolean): boolean {
+        // Measure the new spot without a transform left over from an unfinished glide
+        el.style.transition = 'none';
+        el.style.transform = '';
+        const to = el.getBoundingClientRect();
+        if (reduceMotion || !from?.width || !to.width) return false;
+        const dx = from.left - to.left, dy = from.top - to.top, scale = scaled ? from.height / to.height : 1;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.01) return false;
+        el.style.transformOrigin = '0 0';
+        el.style.transform = `translate(${dx}px, ${dy}px)${scaled ? ` scale(${scale})` : ''}`;
+        void el.offsetWidth;
+        // Longer ways take a little longer, so nothing races across the screen
+        const ms = Math.round(Math.min(950, 550 + Math.hypot(dx, dy) * 0.4));
+        el.style.transition = `transform ${ms}ms var(--ease-move) ${delay}ms`;
+        el.style.transform = '';
+        return true;
+      }
+      // A finished glide leaves no inline transition behind (a later layout change must not animate by itself)
+      for (const el of [$('cast'), $('locCaption')]) {
+        el.addEventListener('transitionend', (e) => {
+          const t = e.target as HTMLElement;
+          if (e.propertyName === 'transform' && !t.style.transform && !t.classList.contains('is-leaving')) {
+            t.style.transition = '';
+            t.style.transformOrigin = '';
+          }
+        });
+      }
+
+      function play(before: Map<HTMLElement, DOMRect>, { leaving, entering }: CastChange) {
+        const cast = $('cast');
+        const castRect = cast.getBoundingClientRect();
+        leaving.forEach((li) => {
+          const r = before.get(li)!;
+          Object.assign(li.style, { left: `${r.left - castRect.left - cast.clientLeft}px`, top: `${r.top - castRect.top - cast.clientTop}px` });
+          void li.offsetWidth;
+          li.classList.add('is-leaving');
+        });
+        const delay = leaving.length ? 120 : 0;
+        let moved = false;
+        castItems.forEach((li) => { if (!entering.includes(li)) moved = glide(li, before.get(li), delay, true) || moved; });
+        // Scaled too: the place name is set smaller while the side panel is shown
+        glide($('locCaption'), before.get($('locCaption')), delay, true);
+        if (moved || leaving.length) entering.forEach((li) => li.style.setProperty('--enter-delay', `${delay + 280}ms`));
+      }
+
       // ── NPC portraits ─────────────────────────────────────────────────
-      // Portraits are keyed by NPC: when the spotlight changes, the ones that stay slide to their
-      // new place and size (FLIP), new ones rise in, removed or hidden ones fade out where they
-      // stood. Returns a step to run once the new layout is in place.
+      // Portraits are keyed by NPC, so the ones that stay keep their element (and can glide).
       let castKey = '';
       const castItems = new Map<string, HTMLLIElement>();
+      interface CastChange { leaving: HTMLLIElement[]; entering: HTMLLIElement[] }
 
       function buildPortrait(npc: DisplayState['npcs'][number]): HTMLLIElement {
         const li = document.createElement('li');
@@ -697,35 +834,39 @@ import '../styles/global.css';
         return li;
       }
 
-      function renderCast(npcs: DisplayState['npcs']): () => void {
-        const key = npcs.map((n) => `${n.id}|${n.avatarUrl ?? ''}|${n.name}`).join(',');
-        if (key === castKey) return () => {};
+      // Brings the portraits in line with the spotlight. Leaving ones are taken out of the flow
+      // right away (so the new layout is measured without them) and placed by play().
+      function renderCast(npcs: DisplayState['npcs']): CastChange {
+        const change: CastChange = { leaving: [], entering: [] };
+        const key = npcs.map((n) => `${n.id}|${n.avatarUrl ?? ''}|${n.name}|${n.subtitle}`).join(',');
+        if (key === castKey) return change;
         castKey = key;
         const cast = $('cast');
-        const castRect = cast.getBoundingClientRect();
-        const before = new Map<string, DOMRect>();
-        castItems.forEach((li, id) => before.set(id, li.getBoundingClientRect()));
 
-        // Leaving: take out of the flow at their current spot and fade out
         const wanted = new Set(npcs.map((n) => n.id));
         castItems.forEach((li, id) => {
           if (wanted.has(id)) return;
           castItems.delete(id);
-          const r = before.get(id);
-          if (reduceMotion || !r?.width) { li.remove(); return; }
-          Object.assign(li.style, { position: 'absolute', left: `${r.left - castRect.left}px`, top: `${r.top - castRect.top}px`, transform: '', transition: '' });
+          const r = li.getBoundingClientRect();
+          if (reduceMotion || !r.width) { li.remove(); return; }
+          // Freeze it at its current (possibly mid-glide) size, out of the flow
+          Object.assign(li.style, { transition: '', transform: '', transformOrigin: '', position: 'absolute' });
           li.style.setProperty('--ph', `${r.height}px`);
-          cast.appendChild(li);
-          void li.offsetWidth;
-          li.classList.add('is-leaving');
-          setTimeout(() => {
+          li.classList.remove('is-entering');
+          change.leaving.push(li);
+          // Gone once faded out (or after a while, if the fade never runs, e.g. off screen)
+          let done = false;
+          const remove = () => {
+            if (done) return;
+            done = true;
             li.remove();
+            // The cast area was kept while they faded; let the layout settle without them
             if (state && !cast.querySelector('.is-leaving')) render(state);
-          }, 600);
+          };
+          li.addEventListener('transitionend', (e) => { if (e.target === li && e.propertyName === 'opacity') remove(); });
+          setTimeout(remove, 1500);
         });
 
-        // Staying and new, in spotlight order (leaving ones sit at the end, out of the flow)
-        let entering = 0;
         let prev: HTMLLIElement | null = null;
         for (const npc of npcs) {
           let li = castItems.get(npc.id);
@@ -739,7 +880,8 @@ import '../styles/global.css';
           if (!li) {
             li = buildPortrait(npc);
             li.classList.add('is-entering');
-            li.style.setProperty('--i', String(entering++));
+            li.style.setProperty('--i', String(change.entering.length));
+            change.entering.push(li);
             li.addEventListener('animationend', () => li!.classList.remove('is-entering'), { once: true });
             castItems.set(npc.id, li);
           }
@@ -747,26 +889,7 @@ import '../styles/global.css';
           if (target !== li) cast.insertBefore(li, target);
           prev = li;
         }
-
-        return () => {
-          if (reduceMotion) return;
-          layoutCast();
-          castItems.forEach((li, id) => {
-            const a = before.get(id);
-            if (!a?.width) return;
-            const b = li.getBoundingClientRect();
-            if (!b.width) return;
-            const dx = a.left - b.left, dy = a.top - b.top, scale = a.height / b.height;
-            if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(scale - 1) < 0.01) return;
-            li.style.transition = 'none';
-            li.style.transformOrigin = '0 0';
-            li.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
-            void li.offsetWidth;
-            li.style.transition = 'transform .7s var(--ease)';
-            li.style.transform = '';
-            setTimeout(() => { li.style.transition = ''; li.style.transformOrigin = ''; }, 750);
-          });
-        };
+        return change;
       }
 
       // ── Turn order ────────────────────────────────────────────────────
