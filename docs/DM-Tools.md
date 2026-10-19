@@ -68,6 +68,20 @@ not even through the API, and a combatant's link to its stat block is left out o
   block from its name to the last action, copy, paste it into *New creature* and press **Read**.
   The form fills in and a live preview shows the result; lines that can't be placed are listed
   and kept in the DM notes. Then *Save*.
+- **SRD 5.2 library** (tab *SRD 5.2*): all 331 creatures of the free 2024 rules (SRD 5.2,
+  CC-BY-4.0), from generic NPCs (Commoner, Guard, Bandit, Scout, Spy, Knight, Mage, Priest,
+  Noble, Cultist, Veteran …) to dragons, with search and filters by type and CR. Every stat block
+  rolls. **Add to fight** works straight away; it uses your own copy of the creature (made on
+  first use, marked *in my bestiary*), so its stat block opens in combat and your edits count.
+  **Copy to my bestiary** opens that copy for editing. The data comes from the Open5e API;
+  a few transcription gaps were repaired, so check unusual numbers against the book.
+- **Generate NPC:** a generic stat block from species (Human, Elf, Dwarf, Halfling, Gnome, Orc,
+  Dragonborn, Tiefling, Goliath), role (Commoner, Warrior, Archer, Rogue, Mage, Priest) and level
+  1–20, computed with the player rules: proficiency bonus, HP from the role's hit die and
+  Constitution, the standard array arranged for the role and improved at 4/8/12/16/19, armour,
+  Extra Attack (Warrior/Archer), Sneak Attack (Rogue), cantrip damage and spells by level
+  (Mage/Priest), and the species' traits. A live preview shows it; *Use for NPC* links it right
+  away. Saved, it is an ordinary stat block (type line "level 5 Archer"; no CR).
 - **New creature by hand:** the same form (numbers, abilities with saves, detail lines, and
   sections such as Traits, Actions, Bonus Actions, Reactions, Legendary Actions). Write attacks
   like the book and they become roll buttons.
@@ -111,8 +125,9 @@ about 2 seconds.
   timer back as they were. Hidden entries stay hidden even when focused. On the display, removed or hidden portraits fade out, the others glide to their
   new place and size, and new ones rise in last. Portraits and the place name also glide (never
   jump) when the location, timer or turn order appears or goes.
-- **Turn preview:** the current and next combatant have a **Stat block** link when they came
-  from the bestiary.
+- **Turn preview:** the current and next combatant show their HP with a **damage / heal**
+  field, and a **Stat block** link when they came from the bestiary. The stat block panel shows
+  that combatant's HP with the same field at the top.
 - **Initiative:** show the turn order on the display, with combat controls (start/pause/stop,
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server

@@ -10,7 +10,11 @@ What's new in the Arandor Companion App, newest first.
 - Add monsters to a fight in one go: how many, average or your own HP, initiative rolled for
   each; NPCs with a stat block too
 - The stat block opens next to the fight from the initiative tracker and the DM screen
-- Damage and healing buttons on every combatant (players: on their own characters)
+- Damage and healing buttons on every combatant (players: on their own characters), also on
+  the DM screen and next to an open stat block
+- All 331 creatures of the free 2024 rules (SRD 5.2) ready to use, from guards and bandits to
+  dragons
+- Generate generic NPCs: species, role and level 1–20, computed with the player rules
 
 ### Dice: saved rolls
 - Save your own rolls, like a weapon attack with to hit and damage, under *My rolls* on the

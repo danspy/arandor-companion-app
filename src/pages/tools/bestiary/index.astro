@@ -1,35 +1,67 @@
 ---
-// Bestiary: stat blocks for monsters and named NPCs (DM/admin only).
+// Bestiary: the DM's own stat blocks, and the SRD 5.2 library (DM/admin only).
 import Layout from '../../../layouts/Layout.astro';
 import PageHero from '../../../components/PageHero.astro';
 import { getUserRole, isAuthenticated } from '../../../lib/auth';
 import { db, Creature, NPC, PageSettings, eq } from '@/db';
+import { SRD_ATTRIBUTION, crValue, srdCreatures } from '../../../lib/srd';
 import '../../../styles/statblock.css';
 
 const userRole = await getUserRole(Astro.cookies);
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 if (!isAuthenticated(Astro.cookies) || !canEdit) return Astro.redirect('/login');
 
+const tab = Astro.url.searchParams.get('tab') === 'srd' ? 'srd' : 'mine';
 const creatures = (await db.select().from(Creature)).sort((a, b) => a.name.localeCompare(b.name));
 const npcNames = new Map((await db.select({ id: NPC.id, name: NPC.name }).from(NPC)).map((n) => [n.id, n.name]));
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'bestiary'));
 const heroImageUrl = pageSettings[0]?.heroImageUrl ?? null;
+
+const srd = srdCreatures();
+const copied = new Map(creatures.filter((c) => c.srdKey).map((c) => [c.srdKey!, c.id]));
+// "Small Beast, Unaligned" → "Beast"
+const srdType = (typeLine: string | null) => typeLine?.replace(/,.*$/, '').split(' ').pop() ?? '';
+const srdTypes = [...new Set(srd.map((c) => srdType(c.typeLine)))].sort();
+const CR_BANDS: [string, number, number][] = [['0–1', 0, 1], ['2–4', 2, 4], ['5–10', 5, 10], ['11–16', 11, 16], ['17+', 17, 99]];
+const quick = (c: { id: string; name: string; ac: number | null; hp: number | null; hpFormula: string | null; initiative: number | null }) =>
+  JSON.stringify({ id: c.id, name: c.name, ac: c.ac, hp: c.hp, hpFormula: c.hpFormula, initiative: c.initiative });
 ---
 
 <Layout title="Bestiary">
   <PageHero title="Bestiary" heroImageUrl={heroImageUrl} pageName="bestiary" canEditHero={canEdit} compact subtitle="Stat blocks for your monsters and NPCs. Only you can see them." />
 
+  <nav class="bestiary-tabs mb-4" aria-label="Bestiary">
+    <a href="/tools/bestiary" aria-current={tab === 'mine' ? 'page' : undefined}>My creatures <span class="t-faint">({creatures.length})</span></a>
+    <a href="/tools/bestiary?tab=srd" aria-current={tab === 'srd' ? 'page' : undefined}>SRD 5.2 <span class="t-faint">({srd.length})</span></a>
+  </nav>
+
   <div class="t-panel p-6">
     <div class="flex flex-wrap items-center gap-3 mb-5">
       <input id="creatureSearch" type="search" class="t-input flex-1 min-w-[12rem] px-3 py-2" placeholder="Search by name, type or CR…" aria-label="Search the bestiary" />
-      <a href="/tools/bestiary/new?paste=1" class="t-btn-primary">Paste from D&amp;D Beyond</a>
-      <a href="/tools/bestiary/new" class="t-btn-secondary">New creature</a>
+      {tab === 'srd' ? (
+        <>
+          <select id="typeFilter" class="t-input px-3 py-2" aria-label="Type">
+            <option value="">All types</option>
+            {srdTypes.map((t) => <option value={t.toLowerCase()}>{t}</option>)}
+          </select>
+          <select id="crFilter" class="t-input px-3 py-2" aria-label="Challenge rating">
+            <option value="">Any CR</option>
+            {CR_BANDS.map(([label, lo, hi]) => <option value={`${lo}-${hi}`}>CR {label}</option>)}
+          </select>
+        </>
+      ) : (
+        <>
+          <a href="/tools/bestiary/new?paste=1" class="t-btn-primary">Paste from D&amp;D Beyond</a>
+          <a href="/tools/bestiary/generate" class="t-btn-secondary">Generate NPC</a>
+          <a href="/tools/bestiary/new" class="t-btn-secondary">New creature</a>
+        </>
+      )}
     </div>
 
-    {creatures.length === 0 ? (
+    {tab === 'mine' && (creatures.length === 0 ? (
       <div class="text-center py-10">
         <p class="t-body-text mb-2">No creatures yet.</p>
-        <p class="t-muted text-sm">Copy a stat block on D&amp;D Beyond (select it from the name down to the last action) and paste it here, or type in your own.</p>
+        <p class="t-muted text-sm">Paste a stat block from D&amp;D Beyond, <a class="t-link" href="/tools/bestiary/generate">generate a generic NPC</a>, type in your own, or pick one from the <a class="t-link" href="/tools/bestiary?tab=srd">SRD 5.2</a>.</p>
       </div>
     ) : (
       <ul id="creatureList" class="space-y-2">
@@ -39,48 +71,98 @@ const heroImageUrl = pageSettings[0]?.heroImageUrl ?? null;
             <li class="t-row p-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-search={`${c.name} ${c.typeLine ?? ''} cr ${c.cr ?? ''} ${usedBy.join(' ')}`.toLowerCase()}>
               <a href={`/tools/bestiary/${c.id}`} class="flex-1 min-w-[12rem] group">
                 <p class="t-body-text font-semibold group-hover:underline">{c.name}</p>
-                <p class="t-muted text-sm">{[c.typeLine, usedBy.length ? `used by ${usedBy.join(', ')}` : ''].filter(Boolean).join(' · ')}</p>
+                <p class="t-muted text-sm">{[c.typeLine, usedBy.length ? `used by ${usedBy.join(', ')}` : '', c.srdKey ? 'from the SRD' : ''].filter(Boolean).join(' · ')}</p>
               </a>
               <dl class="flex gap-4 text-sm t-muted">
                 {c.cr && <div><dt class="inline t-faint">CR </dt><dd class="inline t-body-text">{c.cr}</dd></div>}
                 {c.ac !== null && <div><dt class="inline t-faint">AC </dt><dd class="inline t-body-text">{c.ac}</dd></div>}
                 {c.hp !== null && <div><dt class="inline t-faint">HP </dt><dd class="inline t-body-text">{c.hp}</dd></div>}
               </dl>
-              <button type="button" class="t-btn-secondary text-sm quick-add" data-creature={JSON.stringify({ id: c.id, name: c.name, ac: c.ac, hp: c.hp, hpFormula: c.hpFormula, initiative: c.initiative })}>Add to fight</button>
+              <button type="button" class="t-btn-secondary text-sm quick-add" data-creature={quick(c)}>Add to fight</button>
             </li>
           );
         })}
       </ul>
+    ))}
+
+    {tab === 'srd' && (
+      <>
+        <ul id="creatureList" class="space-y-2">
+          {srd.map((c) => (
+            <li class="t-row p-3 flex flex-wrap items-center gap-x-4 gap-y-2" data-search={`${c.name} ${c.typeLine ?? ''} cr ${c.cr ?? ''}`.toLowerCase()} data-type={srdType(c.typeLine).toLowerCase()} data-cr={crValue(c.cr)}>
+              <a href={`/tools/bestiary/srd/${c.key}`} class="flex-1 min-w-[12rem] group">
+                <p class="t-body-text font-semibold group-hover:underline">{c.name}{copied.has(c.key) && <span class="t-badge ml-2">in my bestiary</span>}</p>
+                <p class="t-muted text-sm">{c.typeLine}</p>
+              </a>
+              <dl class="flex gap-4 text-sm t-muted">
+                <div><dt class="inline t-faint">CR </dt><dd class="inline t-body-text">{c.cr}</dd></div>
+                <div><dt class="inline t-faint">AC </dt><dd class="inline t-body-text">{c.ac}</dd></div>
+                <div><dt class="inline t-faint">HP </dt><dd class="inline t-body-text">{c.hp}</dd></div>
+              </dl>
+              <button type="button" class="t-btn-secondary text-sm srd-add" data-key={c.key}>Add to fight</button>
+            </li>
+          ))}
+        </ul>
+        <p class="t-faint text-xs mt-6">{SRD_ATTRIBUTION} Data via the Open5e API; a few entries had transcription gaps that were repaired, so check unusual numbers against the book.</p>
+      </>
     )}
     <p id="noMatches" class="t-faint text-center py-6" hidden>No creature matches.</p>
     <p id="addedStatus" class="t-body-text text-sm mt-4" role="status" hidden></p>
   </div>
 </Layout>
 
+<style>
+  .bestiary-tabs { display: flex; gap: 0.25rem; border-bottom: 1px solid var(--border-gold); }
+  .bestiary-tabs a { padding: 0.5rem 1rem; color: var(--text-muted); border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .bestiary-tabs a:hover { color: var(--text-strong); }
+  .bestiary-tabs a[aria-current='page'] { color: var(--gold); border-bottom-color: var(--gold); }
+</style>
+
 <script>
   import { openQuickAdd } from '../../../lib/quick-add';
 
   function init() {
     const search = document.getElementById('creatureSearch') as HTMLInputElement | null;
-    const list = document.getElementById('creatureList');
     if (!search) return;
-    search.addEventListener('input', () => {
+    const list = document.getElementById('creatureList');
+    const typeFilter = document.getElementById('typeFilter') as HTMLSelectElement | null;
+    const crFilter = document.getElementById('crFilter') as HTMLSelectElement | null;
+    const filter = () => {
       const q = search.value.trim().toLowerCase();
+      const type = typeFilter?.value ?? '';
+      const [lo, hi] = crFilter?.value ? crFilter.value.split('-').map(Number) : [-Infinity, Infinity];
       let shown = 0;
       list?.querySelectorAll<HTMLElement>('li').forEach((li) => {
-        const match = !q || q.split(/\s+/).every((w) => li.dataset.search!.includes(w));
+        const cr = Number(li.dataset.cr ?? 0);
+        const match = (!q || q.split(/\s+/).every((w) => li.dataset.search!.includes(w))) && (!type || li.dataset.type === type) && (li.dataset.cr === undefined || (cr >= lo && cr <= hi) || (lo === 0 && cr < 1));
         li.hidden = !match;
         if (match) shown++;
       });
       (document.getElementById('noMatches') as HTMLElement).hidden = !list || shown > 0;
-    });
+    };
+    search.addEventListener('input', filter);
+    typeFilter?.addEventListener('change', filter);
+    crFilter?.addEventListener('change', filter);
+
     list?.querySelectorAll<HTMLButtonElement>('.quick-add').forEach((b) =>
       b.addEventListener('click', () => {
         const creature = JSON.parse(b.dataset.creature!);
         openQuickAdd(creature, { onAdded: (n) => showAdded(n, creature.name) });
       })
     );
+    // SRD: fights use the DM's own copy (made on first use), so the stat block opens in combat
+    list?.querySelectorAll<HTMLButtonElement>('.srd-add').forEach((b) =>
+      b.addEventListener('click', async () => {
+        b.disabled = true;
+        const res = await fetch('/api/creatures/from-srd', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: b.dataset.key }) });
+        b.disabled = false;
+        if (!res.ok) return;
+        const creature = await res.json();
+        openQuickAdd(creature, { onAdded: (n) => showAdded(n, creature.name) });
+      })
+    );
   }
+
   // "3 × Goblin Warrior added to the fight. Open the initiative tracker →"
   function showAdded(count: number, name: string) {
     const status = document.getElementById('addedStatus') as HTMLElement;

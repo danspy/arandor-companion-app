@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS Creature (
   npcIds text NOT NULL DEFAULT '[]',
   notes text,
   sourceText text,
+  srdKey text,
   createdAt text NOT NULL,
   updatedAt text NOT NULL
 );

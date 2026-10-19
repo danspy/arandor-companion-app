@@ -36,6 +36,16 @@ healing in the tracker make fights faster.
 - Migration: `db/migrations/2026-10-19_bestiary.sql` (`Creature` table,
   `InitiativeTracker.creatureId`).
 
+## Added after the first review (same PR)
+
+- Damage/heal on the DM screen's turn preview and in the stat block panel (`lib/hp-control.ts`).
+- **SRD 5.2 library:** `scripts/import-srd.mjs` converts the 331 SRD 5.2 creatures (CC-BY-4.0,
+  via Open5e) into `src/data/srd-2024-creatures.json` (repairs: "Hit:" in attacks, recharge and
+  per-day limits in names, "Medium or Small" for generic Humanoids, legendary intro; garbled
+  ability scores are left out with a note). Fights use the DM's own copy (`Creature.srdKey`).
+- **Generator** (`lib/npc-generator.ts`): 9 SRD species × 6 roles × level 1–20 with the 2024
+  player rules; saved as an ordinary creature.
+
 ## Later phases
 
 - **B: limited uses.** Per combatant: spell slots, X/Day, recharge state, legendary action and

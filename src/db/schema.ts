@@ -216,6 +216,7 @@ export const Creature = sqliteTable('Creature', {
   npcIds: jsonArray('npcIds'), // named NPCs that use this stat block
   notes: text('notes'), // DM notes
   sourceText: text('sourceText'), // the pasted stat block, as pasted
+  srdKey: text('srdKey'), // copied from the SRD 5.2 library (src/data/srd-2024-creatures.json)
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });

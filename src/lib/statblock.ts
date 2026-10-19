@@ -314,7 +314,7 @@ export function findRolls(text: string): TextRoll[] {
     const after = text.slice(m.index! + m[0].length);
     const type = after.match(/^\s*([A-Z][a-z]+)?\s*damage\b/i);
     // The rest of the clause decides whether this damage only applies sometimes
-    const clause = after.split(/[.;]|,\s*(?:plus|and)\b/)[0];
+    const clause = after.split(/[.;]|,\s*(?:plus|and|or)\b/)[0];
     rolls.push({
       start: m.index!,
       end: m.index! + m[0].length,

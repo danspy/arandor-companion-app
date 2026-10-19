@@ -2,6 +2,8 @@ import { test, expect, type Page, type BrowserContext } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { attackParts, findRolls, importStatBlock, nextCopyNumbers, validateCreature } from '../src/lib/statblock';
 import { applyHpChange } from '../src/lib/hp';
+import { generateNpc, proficiencyBonus, ROLES, SPECIES } from '../src/lib/npc-generator';
+import srdData from '../src/data/srd-2024-creatures.json' with { type: 'json' };
 
 // Bestiary (phase A): paste import, stat blocks, rolls, quick add, damage/heal.
 // The logged-in tests change the initiative tracker and the bestiary, so they only run against
@@ -92,6 +94,50 @@ test.describe('Stat block import', () => {
   });
 });
 
+test.describe('Generic NPCs and the SRD library', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  test('the generator follows the player rules', () => {
+    expect([1, 4, 5, 8, 9, 12, 13, 16, 17, 20].map(proficiencyBonus)).toEqual([2, 2, 3, 3, 4, 4, 5, 5, 6, 6]);
+    const archer = generateNpc({ species: 'Elf', role: 'Archer', level: 5 });
+    expect(archer).toMatchObject({ name: 'Elf Archer (level 5)', typeLine: 'Medium Humanoid (Elf), level 5 Archer', ac: 15, hp: 44, hpFormula: '5d10 + 10', initiative: 3 });
+    expect(archer.abilities.dex).toEqual({ score: 17, mod: 3, save: 6 }); // +2 at level 4, proficient
+    const actions = archer.sections.find((x) => x.title === 'Actions')!.entries;
+    expect(actions.map((e) => e.name)).toEqual(['Multiattack', 'Longbow', 'Shortsword']);
+    expect(attackParts(actions[1].text)).toEqual([{ label: 'To hit', expr: '1d20+8' }, { label: 'Piercing', expr: '1d8+3' }]);
+    expect(archer.details.find((d) => d.label === 'Senses')!.text).toBe('Darkvision 60 ft.; Passive Perception 14');
+
+    const dwarf = generateNpc({ species: 'Dwarf', role: 'Warrior', level: 1 });
+    expect(dwarf).toMatchObject({ ac: 18, hp: 13 }); // 10 + Con 2 + Dwarven Toughness 1
+    expect(generateNpc({ species: 'Dwarf', role: 'Warrior', level: 11 }).sections[1].entries[0].text).toContain('three Longsword attacks');
+    const rogue = generateNpc({ species: 'Halfling', role: 'Rogue', level: 7 });
+    expect(rogue.sections[0].entries[0].text).toContain('14 (4d6)'); // Sneak Attack
+    const mage = generateNpc({ species: 'Human', role: 'Mage', level: 11 });
+    expect(mage.sections.find((x) => x.title === 'Actions')!.entries[0].text).toContain('(3d10) Fire damage');
+    expect(generateNpc({ species: 'Dragonborn', role: 'Priest', level: 5, ancestry: 'Cold' }).details).toContainEqual({ label: 'Resistances', text: 'Cold' });
+
+    // Every combination is a valid stat block whose attacks roll
+    for (const species of SPECIES) for (const role of ROLES) for (const level of [1, 4, 5, 11, 20]) {
+      const c = generateNpc({ species, role, level });
+      expect(validateCreature(c).ok, `${species} ${role} ${level}`).toBe(true);
+      for (const x of c.sections) for (const e of x.entries) if (/Attack Roll:/.test(e.text)) expect(attackParts(e.text)!.length, `${species} ${role} ${level} ${e.name}`).toBeGreaterThan(1);
+    }
+  });
+
+  test('the SRD 5.2 library is complete and valid', () => {
+    const { creatures, license } = srdData as { creatures: any[]; license: string };
+    expect(license).toContain('CC-BY-4.0');
+    expect(creatures).toHaveLength(331);
+    for (const c of creatures) expect(validateCreature(c).ok, c.name).toBe(true);
+    const guard = creatures.find((c) => c.name === 'Guard');
+    expect(guard).toMatchObject({ key: 'guard', typeLine: 'Medium or Small Humanoid, Neutral', ac: 16, hp: 11, cr: '1/8' });
+    expect(attackParts(guard.sections[0].entries[0].text)).toEqual([{ label: 'To hit', expr: '1d20+3' }, { label: 'Piercing', expr: '1d6+1' }]);
+    const dragon = creatures.find((c) => c.name === 'Adult Red Dragon');
+    expect(dragon.sections.map((x: any) => x.title)).toEqual(['Traits', 'Actions', 'Legendary Actions']);
+    expect(dragon.sections[1].entries.map((e: any) => e.name)).toContain('Fire Breath (Recharge 5–6)');
+  });
+});
+
 // ── Against a test server ────────────────────────────────────────────────────
 
 const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
@@ -160,6 +206,46 @@ test.describe('Bestiary on a test server', () => {
     await dm.request.delete(`/api/initiative/${entry.id}`);
     await player.close();
     await dm.close();
+  });
+
+  test('SRD library: one copy per creature, used for fights; generator saves a stat block', async ({ browser }) => {
+    const player = await browser.newContext();
+    await login(player, PLAYER!, PLAYER_PASSWORD!);
+    expect((await player.request.post('/api/creatures/from-srd', { data: { key: 'guard' } })).status()).toBe(403);
+    await player.close();
+
+    const context = await browser.newContext();
+    await login(context, DM!, DM_PASSWORD!);
+    const first = await context.request.post('/api/creatures/from-srd', { data: { key: 'guard' } });
+    const copy = await first.json();
+    expect(copy).toMatchObject({ name: 'Guard', srdKey: 'guard', ac: 16 });
+    const again = await (await context.request.post('/api/creatures/from-srd', { data: { key: 'guard' } })).json();
+    expect(again.id).toBe(copy.id); // the same copy, edits included
+    expect((await context.request.post('/api/creatures/from-srd', { data: { key: 'no-such-thing' } })).status()).toBe(404);
+
+    const page = await context.newPage();
+    await page.goto('/tools/bestiary?tab=srd');
+    await expect(page.locator('#creatureList li')).toHaveCount(331);
+    await page.locator('#typeFilter').selectOption('humanoid');
+    await page.locator('#crFilter').selectOption('0-1');
+    await expect(page.locator('#creatureList li:not([hidden])', { hasText: 'Guard' })).toContainText('in my bestiary');
+    await page.goto('/tools/bestiary/srd/guard');
+    await expect(page.getByRole('link', { name: 'Open my copy' })).toHaveAttribute('href', `/tools/bestiary/${copy.id}`);
+    await expect(page.locator('.statblock .sb-attack')).toContainText('Spear');
+
+    await page.goto('/tools/bestiary/generate');
+    await page.locator('select[name=species]').selectOption('Orc');
+    await page.locator('input[value=Warrior]').check();
+    await page.locator('input[name=level]').fill('5');
+    await expect(page.locator('#genPreview .sb-name')).toHaveText('Orc Warrior (level 5)');
+    await page.getByRole('button', { name: 'Save to my bestiary' }).click();
+    await page.waitForURL(/\/tools\/bestiary\/[0-9a-f-]{36}$/);
+    await expect(page.locator('.statblock')).toContainText('Relentless Endurance');
+    const generatedId = page.url().split('/').pop()!;
+
+    await context.request.delete(`/api/creatures/${copy.id}`);
+    await context.request.delete(`/api/creatures/${generatedId}`);
+    await context.close();
   });
 
   test('paste, save, roll, quick add, stat block in the fight, damage and heal', async ({ browser }) => {

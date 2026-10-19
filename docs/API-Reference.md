@@ -67,6 +67,7 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 | `/api/initiative/[id]` | GET / PUT, DELETE | One combatant (redacted the same way for non-DMs) | login / DM |
 | `/api/initiative/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }`: damage (temp HP first, down to 0) or heal (up to max HP, clears death saves); a character's record follows | DM, or login and owner |
 | `/api/creatures` | GET / POST | Bestiary: summaries by name (`?full=1`: whole stat blocks) / new creature (checked, readable `error` on 400) | DM |
+| `/api/creatures/from-srd` | POST | `{ key }`: the DM's own copy of an SRD 5.2 creature (existing or new) | DM |
 | `/api/creatures/[id]` | GET / PUT, DELETE | One stat block / replace, delete (combatants keep their place, without the link) | DM |
 | `/api/initiative/update-hp` | PUT | A player updates HP, temp HP and death saves of **their own** character's entry | login and owner |
 | `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
