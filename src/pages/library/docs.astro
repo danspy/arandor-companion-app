@@ -2,11 +2,12 @@
 import Layout from '../../layouts/Layout.astro';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
-import { db, LibraryEntry, Location, PageSettings, eq } from '@/db';
+import { db, LibraryEntry, Location, Quest, PageSettings, eq } from '@/db';
 import { isAuthenticated, getUserRole } from '../../lib/auth';
 
 const libraryEntries = await db.select().from(LibraryEntry);
 const locations = await db.select().from(Location);
+const quests = (await db.select().from(Quest)).sort((a, b) => a.title.localeCompare(b.title));
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
 const canEditHero = userRole === 'admin' || userRole === 'dungeonmaster';
@@ -228,6 +229,22 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           </select>
           <p class="t-faint text-xs mt-1">Where was this information found?</p>
         </div>
+
+        <div>
+          <label for="quests" class="t-label block mb-1">Related Quests (optional)</label>
+          <select
+            id="quests"
+            name="quests"
+            multiple
+            size="4"
+            class="t-input px-3 py-2"
+          >
+            {quests.map(quest => (
+              <option value={quest.id}>{quest.title}</option>
+            ))}
+          </select>
+          <p class="t-faint text-xs mt-1">Hold Ctrl/Cmd to select multiple</p>
+        </div>
         
         <div>
           <label for="tags" class="t-label block mb-1">Tags (comma-separated)</label>
@@ -265,6 +282,15 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
 
   // Shared state for editing entry ID
   let editingId: string | null = null;
+
+  // Select the entry's linked quests in the form's Related Quests list
+  function setSelectedQuests(questIds: unknown) {
+    const ids = Array.isArray(questIds) ? questIds : [];
+    const select = document.getElementById('quests') as HTMLSelectElement | null;
+    Array.from(select?.options ?? []).forEach(option => {
+      option.selected = ids.includes(option.value);
+    });
+  }
 
   // Initialize search and filter functionality on page load
   // This ensures it works after Astro View Transitions navigation
@@ -375,12 +401,14 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
     const formData = new FormData(form);
     const tags = (formData.get('tags') as string).split(',').map(t => t.trim()).filter(t => t);
     const locationId = formData.get('location') as string;
+    const questIds = formData.getAll('quests') as string[];
     
     const data = {
       title: formData.get('title'),
       content: formData.get('content'),
       tags,
       locationId: locationId || null,
+      questIds,
     };
 
     try {
@@ -434,6 +462,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
           contentEl.value = entry.content || '';
           tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
           locationEl.value = entry.locationId || '';
+          setSelectedQuests(entry.questIds);
           
           modalTitle.textContent = 'Edit Docs Entry';
           previewDiv?.classList.add('hidden');
@@ -486,6 +515,7 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
         contentEl.value = entry.content || '';
         tagsEl.value = Array.isArray(entry.tags) ? entry.tags.join(', ') : '';
         locationEl.value = entry.locationId || '';
+        setSelectedQuests(entry.questIds);
         
         if (modalTitle) modalTitle.textContent = 'Edit Docs Entry';
         previewDiv?.classList.add('hidden');

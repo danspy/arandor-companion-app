@@ -32,6 +32,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       content: body.content,
       tags: body.tags || [],
       locationId: body.locationId || null,
+      questIds: body.questIds || [],
       createdAt: now,
       updatedAt: now,
     });
