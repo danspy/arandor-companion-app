@@ -5,7 +5,8 @@
 // Changing this file does NOT change the database. Schema changes need a migration
 // (see deploy/README.md) that is applied to preview first, then to live.
 
-import { customType, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { sql } from 'drizzle-orm';
+import { customType, integer, sqliteTable, text, uniqueIndex } from 'drizzle-orm/sqlite-core';
 
 const isISODateString = (value: string) => /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/.test(value);
 
@@ -293,4 +294,28 @@ export const TimelineEntry = sqliteTable('TimelineEntry', {
   questIds: jsonArray('questIds'),
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
+});
+
+// ── Music player ───────────────────────────────────────────────────────────
+export const Playlist = sqliteTable('Playlist', {
+  id: text('id').primaryKey(),
+  ownerId: text('ownerId').notNull(), // User.id
+  name: text('name').notNull(),
+  visibility: text('visibility').notNull().default('private'), // 'public' | 'private'
+  isSiteDefault: bool('isSiteDefault').notNull().default(false), // the one site playlist ("Tavern music")
+  createdAt: now('createdAt'),
+  updatedAt: now('updatedAt'),
+}, (t) => [
+  uniqueIndex('Playlist_one_site').on(t.isSiteDefault).where(sql`isSiteDefault = 1`),
+]);
+
+export const PlaylistTrack = sqliteTable('PlaylistTrack', {
+  id: text('id').primaryKey(),
+  playlistId: text('playlistId').notNull().references(() => Playlist.id, { onDelete: 'cascade' }),
+  position: integer('position').notNull(),
+  kind: text('kind').notNull(), // 'file' | 'youtube_video' | 'youtube_playlist'
+  title: text('title').notNull(),
+  ref: text('ref').notNull(), // upload URL for files, YouTube id for YouTube kinds
+  durationSec: integer('durationSec'),
+  createdAt: now('createdAt'),
 });

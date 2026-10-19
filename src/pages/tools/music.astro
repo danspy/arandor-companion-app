@@ -1,0 +1,209 @@
+---
+// Tools → Music: playlists from uploaded files and YouTube links, played through the global player.
+// The page is rendered once; src/lib/music/editor.ts fills it from /api/music.
+import Layout from '../../layouts/Layout.astro';
+import PageHero from '../../components/PageHero.astro';
+import { getCurrentUser } from '../../lib/auth';
+import { db, PageSettings, eq } from '@/db';
+import { AUDIO_MIME } from '../../lib/music/formats';
+
+const user = await getCurrentUser(Astro.cookies);
+if (!user) return Astro.redirect('/login');
+const role = user.role || 'player';
+const canEditHero = role === 'admin' || role === 'dungeonmaster';
+const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'music'));
+const heroImageUrl = pageSettings[0]?.heroImageUrl ?? null;
+const accept = Object.keys(AUDIO_MIME).map((e) => `.${e}`).join(',');
+const formats = Object.keys(AUDIO_MIME).join(', ');
+---
+
+<Layout title="Music">
+  <PageHero title="Music" heroImageUrl={heroImageUrl} pageName="music" canEditHero={canEditHero} compact subtitle="Playlists for the table, from your own files and YouTube." />
+
+  <div id="mp-root" class="mp-layout" data-user={user.id} data-admin={role === 'admin' ? '1' : ''} data-selected={Astro.url.searchParams.get('playlist') ?? ''}>
+    <aside class="t-panel p-5 mp-aside" aria-label="Playlists">
+      <div id="mp-groups" class="mp-groups">
+        <p class="t-faint text-sm">Loading playlists…</p>
+      </div>
+
+      <form id="mp-new" class="mp-new">
+        <h2 class="t-section-h text-lg mb-2">New playlist</h2>
+        <label class="t-label" for="mp-new-name">Name</label>
+        <input id="mp-new-name" class="t-input px-3 py-2 mb-3" maxlength="80" required placeholder="Tavern evenings" autocomplete="off" />
+        <div class="flex gap-2 items-end">
+          <div class="flex-1">
+            <label class="t-label" for="mp-new-visibility">Who can see it</label>
+            <select id="mp-new-visibility" class="t-input px-3 py-2">
+              <option value="private">Only me</option>
+              <option value="public">Everyone logged in</option>
+            </select>
+          </div>
+          <button id="mp-new-create" type="submit" class="t-btn-primary">Create</button>
+        </div>
+      </form>
+    </aside>
+
+    <section id="mp-detail" class="t-panel p-5 sm:p-6 mp-detail" aria-live="polite">
+      <div id="mp-empty" class="mp-empty">
+        <p class="t-muted">Choose a playlist, or create one to start adding music.</p>
+      </div>
+
+      <div id="mp-view" hidden>
+        <header class="mp-head">
+          <div class="mp-head-text">
+            <h2 id="mp-name" class="t-section-h text-2xl sm:text-3xl mp-name"></h2>
+            <p id="mp-meta" class="t-muted text-sm mt-1"></p>
+          </div>
+          <div class="mp-actions">
+            <button id="mp-play" type="button" class="t-btn-primary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z" /></svg>
+              Play
+            </button>
+            <button id="mp-shuffle" type="button" class="t-btn-secondary">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>
+              Shuffle
+            </button>
+          </div>
+        </header>
+
+        <ol id="mp-tracks" class="mp-tracks" aria-label="Tracks"></ol>
+        <p id="mp-no-tracks" class="t-faint text-sm py-4" hidden>No tracks yet.</p>
+
+        <div id="mp-edit" class="mp-edit" hidden>
+          <div class="mp-add">
+            <label id="mp-drop" class="mp-drop" for="mp-file">
+              <input id="mp-file" type="file" accept={accept} multiple class="sr-only" />
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 16V4M7 9l5-5 5 5M4 20h16" /></svg>
+              <span><strong class="t-strong-text">Drop audio files here</strong> or tap to choose</span>
+              <span class="t-faint text-xs">{formats}, up to 50 MB each</span>
+            </label>
+
+            <form id="mp-yt" class="mp-yt">
+              <label class="t-label" for="mp-yt-url">Add YouTube link</label>
+              <input id="mp-yt-url" class="t-input px-3 py-2 mb-2" type="url" required placeholder="https://www.youtube.com/watch?v=…" autocomplete="off" />
+              <div class="flex gap-2">
+                <input id="mp-yt-title" class="t-input px-3 py-2 flex-1" maxlength="200" placeholder="Title (optional)" aria-label="Title (optional)" autocomplete="off" />
+                <button id="mp-yt-add" type="submit" class="t-btn-secondary">Add</button>
+              </div>
+              <div id="mp-yt-choice" class="mp-yt-choice" role="group" aria-label="What to add from this link" hidden>
+                <p class="text-sm t-body-text mb-2">This link has a playlist. What should be added?</p>
+                <div class="flex flex-wrap gap-2">
+                  <button type="button" class="t-btn-secondary" data-mode="video">This video</button>
+                  <button type="button" class="t-btn-secondary" data-mode="playlist">Whole playlist (one entry)</button>
+                  <button type="button" class="t-btn-secondary" data-mode="import">Import as separate tracks</button>
+                  <button type="button" class="t-btn-ghost" data-mode="">Cancel</button>
+                </div>
+              </div>
+            </form>
+          </div>
+          <ul id="mp-uploads" class="mp-uploads" aria-label="Uploads"></ul>
+
+          <div class="mp-settings">
+            <label class="mp-toggle">
+              <input id="mp-public" type="checkbox" />
+              <span>Public: everyone logged in can see and play it</span>
+            </label>
+            <p id="mp-site-note" class="t-faint text-xs" hidden>The site playlist plays on the dashboard, so it is always public.</p>
+            <div class="mp-settings-buttons">
+              <button id="mp-site" type="button" class="t-btn-secondary" hidden>Make site playlist</button>
+              <button id="mp-delete" type="button" class="t-btn-danger">Delete playlist</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<script>
+  import { initMusicEditor } from '../../lib/music/editor';
+  document.addEventListener('astro:page-load', initMusicEditor);
+</script>
+
+<style is:global>
+  .mp-layout { display: grid; gap: 1.5rem; grid-template-columns: minmax(0, 1fr); align-items: start; padding-bottom: 5rem; }
+  @media (min-width: 1024px) { .mp-layout { grid-template-columns: 20rem minmax(0, 1fr); } }
+
+  .mp-groups { display: flex; flex-direction: column; gap: 1.25rem; }
+  .mp-group h3 { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; font-weight: 500; }
+  .mp-group ul { display: flex; flex-direction: column; gap: 2px; }
+  .mp-item {
+    display: flex; align-items: center; gap: 0.5rem; width: 100%; text-align: left;
+    padding: 0.55rem 0.7rem; border-left: 2px solid transparent; color: var(--text-body);
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+  }
+  .mp-item:hover { background: var(--gold-dim); color: var(--text-strong); }
+  .mp-item[aria-current='true'] { background: var(--accent-dim); border-left-color: var(--gold); color: var(--gold); }
+  .mp-item-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mp-item-name small { display: block; font-size: 0.75rem; color: var(--text-faint); overflow: hidden; text-overflow: ellipsis; }
+  .mp-item[aria-current='true'] .mp-item-name small { color: var(--text-muted); }
+  .mp-item-meta { align-self: center; font-variant-numeric: tabular-nums; font-size: 0.75rem; color: var(--text-faint); white-space: nowrap; }
+  .mp-new { margin-top: 1.5rem; padding-top: 1.25rem; border-top: 1px solid var(--border); }
+
+  .mp-empty { padding: 3rem 0; text-align: center; }
+  .mp-head { display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; justify-content: space-between; padding-bottom: 1rem; border-bottom: 1px solid var(--border-gold); }
+  .mp-head-text { flex: 1 1 16rem; min-width: 0; }
+  .mp-name { overflow-wrap: anywhere; }
+  .mp-name.mp-editable { cursor: text; }
+  .mp-name.mp-editable:hover { text-decoration: underline dotted; text-underline-offset: 6px; }
+  .mp-actions { display: flex; gap: 0.5rem; }
+
+  .mp-tracks { margin: 0.75rem 0 0; }
+  .mp-track {
+    display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.25rem;
+    border-bottom: 1px solid var(--border); background: var(--bg-surface);
+  }
+  .mp-track.mp-dragging { position: relative; z-index: 2; background: var(--bg-raised); box-shadow: 0 6px 20px rgba(0,0,0,0.45); outline: 1px solid var(--border-gold); }
+  .mp-track[aria-current='true'] .mp-title { color: var(--gold); }
+  .mp-track[aria-current='true'] .mp-num { display: none; }
+  .mp-track:not([aria-current='true']) .mp-eq { display: none; }
+  .mp-num { width: 1.5rem; text-align: right; font-size: 0.75rem; color: var(--text-faint); font-variant-numeric: tabular-nums; flex: none; }
+  .mp-eq { width: 1.5rem; display: inline-flex; gap: 2px; align-items: flex-end; justify-content: flex-end; height: 12px; flex: none; }
+  .mp-eq i { width: 3px; background: var(--gold); height: 40%; }
+  .mp-playing .mp-eq i { animation: mp-eq 0.9s ease-in-out infinite alternate; }
+  .mp-eq i:nth-child(2) { animation-delay: -0.3s; height: 80%; }
+  .mp-eq i:nth-child(3) { animation-delay: -0.6s; height: 60%; }
+  @keyframes mp-eq { from { height: 20%; } to { height: 100%; } }
+  @media (prefers-reduced-motion: reduce) { .mp-playing .mp-eq i { animation: none; } }
+  .mp-title { flex: 1; min-width: 0; overflow-wrap: anywhere; color: var(--text-body); padding: 0.25rem 0; }
+  .mp-title.mp-editable { cursor: text; }
+  .mp-title.mp-editable:hover { color: var(--text-strong); text-decoration: underline dotted; text-underline-offset: 4px; }
+  .mp-kind { font-size: 0.7rem; color: var(--text-faint); white-space: nowrap; flex: none; }
+  .mp-handle { cursor: grab; touch-action: none; color: var(--text-faint); padding: 0.5rem 0.25rem; flex: none; }
+  .mp-handle:hover, .mp-handle:focus-visible { color: var(--gold); }
+  .mp-dragging .mp-handle { cursor: grabbing; }
+  .mp-track .t-icon-btn { width: 2rem; height: 2rem; flex: none; }
+  .mp-rename { flex: 1; }
+  .mp-track:has(.mp-import) { flex-wrap: wrap; }
+  .mp-import { flex-basis: 100%; padding: 0.5rem 0 0.25rem; }
+  .mp-yt .mp-import { margin-top: 0.75rem; }
+
+  .mp-edit { margin-top: 1.5rem; }
+  .mp-add { display: grid; gap: 1rem; grid-template-columns: minmax(0, 1fr); }
+  @media (min-width: 768px) { .mp-add { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+  .mp-drop {
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem; text-align: center;
+    min-height: 8.5rem; padding: 1rem; border: 1px dashed var(--border-gold); background: var(--bg-raised);
+    color: var(--text-muted); font-size: 0.875rem; cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  }
+  .mp-drop:hover, .mp-drop.mp-over, .mp-drop:focus-within { border-color: var(--gold); background: var(--gold-dim); color: var(--gold); }
+  .mp-yt { padding: 1rem; border: 1px solid var(--border); background: var(--bg-raised); }
+  .mp-yt-choice { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+  .mp-uploads { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.75rem; }
+  .mp-uploads:empty { display: none; }
+  .mp-upload { font-size: 0.8rem; }
+  .mp-upload-line { display: flex; justify-content: space-between; gap: 0.75rem; }
+  .mp-upload-name { min-width: 4rem; flex-shrink: 0; max-width: 60%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text-body); }
+  .mp-upload-status { white-space: nowrap; color: var(--text-muted); }
+  .mp-upload.mp-ok .mp-upload-status { color: var(--success); }
+  .mp-upload.mp-err .mp-upload-status { color: var(--danger); white-space: normal; text-align: right; }
+  .mp-upload .t-progress-track { height: 4px; margin-top: 0.25rem; }
+  .mp-upload .t-progress-fill { transition: width 0.1s linear; }
+
+  .mp-settings { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border); display: flex; flex-direction: column; gap: 0.75rem; }
+  .mp-toggle { display: flex; gap: 0.6rem; align-items: center; font-size: 0.875rem; color: var(--text-body); cursor: pointer; }
+  .mp-toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--gold); }
+  .mp-toggle:has(input:disabled) { cursor: default; opacity: 0.75; }
+  .mp-settings-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  #mp-root [hidden] { display: none !important; }
+</style>

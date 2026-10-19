@@ -24,6 +24,8 @@ is downloaded; the world comes from `src/data/arandor-world.json`.
 | Click a location | Side panel with its NPCs, diary entries and library documents |
 | Click a hero | That character's journey |
 
+Music from the [music player](User-Guide.md#music) keeps playing while you visit the map.
+
 ## Getting a place onto the map
 
 On **Locations**, edit the place:

@@ -88,6 +88,45 @@ never include exact HP, AC or notes of combatants.
 | `/api/events`, `/api/events/[id]` | GET / POST, PUT, DELETE | Calendar events | public / login |
 | `/api/calendar/ics.ics` | GET | iCal feed of all events (`text/calendar`, cached 5 min) | public |
 
+## Music
+
+Playlists of uploaded audio files and YouTube links. A playlist is **visible** to its owner, to
+admins, to every logged-in user when it is *public*, and to everyone (even without a login) when
+it is the site playlist. It can be **edited** by its owner and by admins; the site playlist can
+also be edited by DMs. A playlist you may not see answers 404, one you may see but not edit 403.
+All bodies are JSON unless noted; errors are `{ "error": "…" }`.
+
+| Endpoint | Method | Purpose | Access |
+|---|---|---|---|
+| `/api/music/site` | GET | `{ playlist }`: the site playlist with its tracks (`null` if none), for the dashboard | public |
+| `/api/music/playlists` | GET | Playlists you may see (site playlist first, then yours, then the rest by name): `[{ id, name, visibility, isSiteDefault, ownerId, ownerName, trackCount, canEdit }]` | login |
+| `/api/music/playlists` | POST `{name, visibility?}` | New playlist; name 1–80 characters, `visibility` `public` or `private` (default `private`). `201` with the playlist | login |
+| `/api/music/playlists/[id]` | GET | The playlist with its `tracks` (by position) and `canEdit` | login, may view |
+| `/api/music/playlists/[id]` | PATCH `{name?, visibility?}` | Rename or change visibility. 400 for an empty change, a bad name, or `private` on the site playlist | login, may edit |
+| `/api/music/playlists/[id]` | DELETE | Removes the playlist, its tracks and their uploaded files. `{ok: true}`. The site playlist answers 409 (choose another one first) | login, may edit |
+| `/api/music/playlists/[id]/tracks` | POST, multipart field `file` (one or more) | Upload audio. Per file: allowed type (see below) and at most 50 MB, checked before the file is read. Returns `{ results: [{ name, ok, track?, error? }] }`: `201` if at least one file was saved, otherwise `400` | login, may edit |
+| `/api/music/playlists/[id]/tracks` | POST `{youtubeUrl, mode?, title?}` | Add a YouTube link as one track. A video link becomes a `youtube_video` track, a list link a `youtube_playlist` track. A link with both a video and a list needs `mode: "video" \| "playlist"`, otherwise `409 {needsMode: true}`. `title` (max 200) skips the title lookup (YouTube oEmbed, link text as fallback). `201` with the track; `400` for anything that is not a YouTube link | login, may edit |
+| `/api/music/playlists/[id]/import` | POST `{videoIds, titles?}` | Adds YouTube videos as separate `youtube_video` tracks at the end, in order. 1–200 ids of 11 characters (`[A-Za-z0-9_-]`); duplicates are dropped. Titles come from YouTube oEmbed (at most 6 lookups at once), with `https://youtu.be/<id>` as fallback; `titles` (id → title) skips the lookup. Returns `201 {added, tracks}` | login, may edit |
+| `/api/music/playlists/[id]/order` | PUT `{trackIds}` | Sets the order. `trackIds` must list every track of the playlist exactly once, else 400. `{ok: true}` | login, may edit |
+| `/api/music/playlists/[id]/site-default` | POST | Makes this playlist the site playlist (the previous one stops being it). It becomes public. Returns the playlist | admin (403 for others); 404 if missing |
+| `/api/music/tracks/[id]` | PATCH `{title}` | Rename a track (1–200 characters) | login, may edit its playlist |
+| `/api/music/tracks/[id]` | DELETE | Removes the track, then its uploaded file. `{ok: true}` | login, may edit its playlist |
+
+All routes except `/api/music/site` answer `401` without a login.
+
+**Audio files:** `mp3`, `mpga`, `mpeg` (all `audio/mpeg`), `m4a`, `aac` (`audio/mp4`), `ogg`, `opus`
+(`audio/ogg`), `webm`, `flac`, `wav`; at most 50 MB each (`52428800` bytes). `.mp2` is not
+supported. Files are stored in `<uploads>/music/<uuid>.<ext>` and served at
+`/uploads/music/<uuid>.<ext>` with HTTP range support (needed for seeking), like other uploads;
+the track's `ref` is that URL. A track's `ref` is the video id or list id for YouTube tracks.
+The format list lives in `src/lib/music/formats.ts`.
+
+The browser reads the video ids of a YouTube playlist with a temporary, visible IFrame player
+(`src/lib/music/youtube-list.ts`), so no API key is needed. The import is a snapshot: later
+changes to the YouTube list do not reach the tracks. *Expand into tracks* in the editor imports
+the list, deletes the list track and puts the new tracks at its place (`/import`, `DELETE
+/api/music/tracks/[id]`, `PUT …/order`). The editor imports at most 200 videos of a list.
+
 ## Files
 
 | Endpoint | Method | Purpose | Access |
