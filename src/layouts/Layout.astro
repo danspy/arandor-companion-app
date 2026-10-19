@@ -130,12 +130,11 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               { href: '/characters', label: 'Characters' },
               { href: '/npcs',       label: 'NPCs'       },
               { href: '/locations',  label: 'Locations'  },
-              { href: '/map',        label: 'Map', reload: true },
+              { href: '/map',        label: 'Map' },
               { href: '/quests',     label: 'Quests'     },
-            ].map(({ href, label, reload }) => (
+            ].map(({ href, label }) => (
               <a
                 href={href}
-                {...(reload ? { 'data-astro-reload': true } : {})}
                 class:list={[
                   "nav-link px-3 py-1.5 text-sm rounded-md transition-all duration-200",
                   isActiveLink(href) ? "nav-link-active" : "nav-link-inactive"
@@ -203,12 +202,11 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               { href: '/characters', label: 'Characters' },
               { href: '/npcs',       label: 'NPCs'       },
               { href: '/locations',  label: 'Locations'  },
-              { href: '/map',        label: 'Map', reload: true },
+              { href: '/map',        label: 'Map' },
               { href: '/quests',     label: 'Quests'     },
-            ].map(({ href, label, reload }) => (
+            ].map(({ href, label }) => (
               <a
                 href={href}
-                {...(reload ? { 'data-astro-reload': true } : {})}
                 class:list={[
                   "nav-link px-3 py-2.5 text-sm rounded-md transition-all duration-200",
                   isActiveLink(href) ? "nav-link-active" : "nav-link-inactive"

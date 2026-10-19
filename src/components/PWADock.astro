@@ -91,7 +91,6 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
       {sheetPages.map((href, i) => (
         <a
           href={href}
-          data-astro-reload={href === '/map' ? true : undefined}
           class:list={['pwa-dock-tile', { 'is-active': isActive(href) }]}
           aria-current={isActive(href) ? 'page' : undefined}
           style={`--i: ${i};`}
@@ -139,7 +138,6 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
       {leftTabs.map((t) => (
         <a
           href={t.href}
-          data-astro-reload={t.href === '/map' ? true : undefined}
           class:list={['pwa-dock-tab', { 'is-active': isActive(t.href) }]}
           aria-current={isActive(t.href) ? 'page' : undefined}
         >
@@ -160,7 +158,6 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
       {rightTabs.map((t) => (
         <a
           href={t.href}
-          data-astro-reload={t.href === '/map' ? true : undefined}
           class:list={['pwa-dock-tab', { 'is-active': isActive(t.href) }]}
           aria-current={isActive(t.href) ? 'page' : undefined}
         >

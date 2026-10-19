@@ -1346,3 +1346,105 @@ test.describe('DM screen music', () => {
     }
   });
 });
+
+// ── Music keeps playing while navigating to the map (it used to force a full reload) ─
+test.describe('Map navigation', () => {
+  test.skip(!haveAccounts, 'Needs the E2E_* accounts (test server only)');
+  test.describe.configure({ mode: 'serial' });
+
+  let owner: BrowserContext;
+  let playlist: { id: string; name: string; tracks: { id: string; kind: string; title: string; ref: string }[] };
+
+  test.beforeAll(async ({ browser }) => {
+    owner = await browser.newContext();
+    await login(owner, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    const p = await (await owner.request.post('/api/music/playlists', { data: { name: `E2E map ${Date.now()}`, visibility: 'private' } })).json();
+    const up = await owner.request.post(`/api/music/playlists/${p.id}/tracks`, {
+      multipart: { file: { name: 'Rain.wav', mimeType: 'audio/wav', buffer: wav(30) } },
+    });
+    expect(up.status()).toBe(201);
+    playlist = await (await owner.request.get(`/api/music/playlists/${p.id}`)).json();
+  });
+
+  test.afterAll(async () => {
+    if (playlist) await owner.request.delete(`/api/music/playlists/${playlist.id}`);
+    await owner?.close();
+  });
+
+  test.beforeEach(async ({ context }) => {
+    await login(context, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
+    // count requestAnimationFrame calls so a leaked map render loop shows up
+    await context.addInitScript(() => {
+      (window as any).__raf = 0;
+      const orig = window.requestAnimationFrame.bind(window);
+      window.requestAnimationFrame = (cb: FrameRequestCallback) => { (window as any).__raf++; return orig(cb); };
+    });
+  });
+
+  async function navTo(page: import('@playwright/test').Page, href: string, isMobile: boolean) {
+    if (isMobile) {
+      await page.locator('#mobileMenuBtn').click();
+      await page.locator(`#mobileMenu a[href="${href}"]`).click();
+    } else {
+      await page.locator(`[data-testid="desktop-nav"] a[href="${href}"]`).click();
+    }
+    await page.waitForURL(`**${href}`);
+  }
+  const audio = (page: import('@playwright/test').Page) => page.locator('#music-audio');
+  const currentTime = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.currentTime);
+  const paused = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.paused);
+  // the engine paints into #worldCanvas; non-blank once the terrain is drawn
+  async function expectMapRendered(page: import('@playwright/test').Page) {
+    await expect(page.locator('#mapViewport[data-ready="1"] #worldCanvas')).toBeVisible();
+    await expect.poll(() => page.locator('#worldCanvas').evaluate((c: HTMLCanvasElement) => {
+      if (!c.width || !c.height) return 0;
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      const first = d.slice(0, 4).join();
+      let diff = 0;
+      for (let i = 0; i < d.length; i += 4 * 97) if (d.slice(i, i + 4).join() !== first) diff++;
+      return diff;
+    }), { timeout: 10_000 }).toBeGreaterThan(0);
+  }
+
+  test('music survives map visits, and the map loop stops on leaving', async ({ page, isMobile }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (e) => errors.push(e.message));
+    page.on('console', (m) => { if (m.type() === 'error' && !/favicon|Failed to load resource/.test(m.text())) errors.push(m.text()); });
+
+    await page.goto('/');
+    await page.waitForFunction(() => !!window.__music);
+    const tracks = playlist.tracks.map(({ id, kind, title, ref }) => ({ id, kind, title, ref }));
+    await page.evaluate(({ id, name, tracks }) => window.__music.playPlaylist({ id, name, tracks: tracks as any }), { id: playlist.id, name: playlist.name, tracks });
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.2);
+    await page.evaluate(() => ((window as any).__noReload = true));
+
+    await navTo(page, '/map', isMobile);
+    await expectMapRendered(page);
+    const t1 = await currentTime(page);
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(t1);
+    expect(await paused(page)).toBe(false);
+    expect(await page.evaluate(() => (window as any).__noReload)).toBe(true);
+
+    for (const away of ['/characters', '/npcs']) {
+      await navTo(page, away, isMobile);
+      await navTo(page, '/map', isMobile);
+      await expectMapRendered(page);
+      expect(await page.evaluate(() => (window as any).__noReload)).toBe(true);
+    }
+
+    // leave the map for good: its requestAnimationFrame loop must be gone
+    await navTo(page, '/characters', isMobile);
+    await page.waitForTimeout(500);
+    const rafOver = async () => {
+      const a = await page.evaluate(() => (window as any).__raf as number);
+      await page.waitForTimeout(1000);
+      return (await page.evaluate(() => (window as any).__raf as number)) - a;
+    };
+    const afterMap = await rafOver();
+    expect(afterMap).toBeLessThanOrEqual(5);
+
+    expect(await paused(page)).toBe(false);
+    expect(await currentTime(page)).toBeGreaterThan(t1);
+    expect(errors).toEqual([]);
+  });
+});
