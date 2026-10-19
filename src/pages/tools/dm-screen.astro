@@ -185,9 +185,14 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         <div class="pt-4" style="border-top:1px solid var(--border);">
           <div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-2 mb-3">
             <span class="t-body-text text-sm font-medium">Combat Controls</span>
-            <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-xs">
-              <span class="t-body-text text-xs font-medium">Round:</span>
-              <span id="dmCurrentRound" class="text-lg font-bold" style="color:var(--gold);">1</span>
+            <div class="flex items-center gap-2">
+              <div class="t-inset flex items-center gap-2 px-2.5 py-1 rounded-xs">
+                <span class="t-body-text text-xs font-medium">Round:</span>
+                <span id="dmCurrentRound" class="text-lg font-bold" style="color:var(--gold);">1</span>
+              </div>
+              <Button variant="secondary" size="sm" icon="refresh" id="dmNewFightBtn" class="text-xs" title="Start a new fight at round 1 with the first combatant">
+                New fight
+              </Button>
             </div>
           </div>
           
@@ -457,6 +462,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     let hpSyncStatusCheckInterval = null;
     let timerUpdateInterval = null;
 
+    const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+
     // Initialize data maps
     async function initializeData() {
       try {
@@ -610,11 +617,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           const remaining = getRemainingTime();
           if (remaining <= 0 && currentState.timerStatus === 'running') {
             // Timer expired - stop it
-            updateState({
-              timerStatus: 'stopped',
-              timerStartedAt: null,
-              timerPausedAt: null
-            });
+            clearInterval(timerUpdateInterval);
+            timerUpdateInterval = null;
+            updateState({ timerAction: 'reset' }).then(updateTimerDisplay);
           }
         }, 100); // Update every 100ms for smooth countdown
       }
@@ -677,8 +682,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         npcItem.className = 'npc-item t-row p-3 flex items-center justify-between';
         npcItem.innerHTML = `
           <div>
-            <p class="t-body-text font-medium">${npc.name}</p>
-            <p class="t-muted text-sm">${npc.occupation || npc.race}</p>
+            <p class="t-body-text font-medium">${escapeHtml(npc.name)}</p>
+            <p class="t-muted text-sm">${escapeHtml(npc.occupation || npc.race)}</p>
           </div>
           <button class="remove-npc-btn t-icon-btn t-icon-btn-danger" data-npc-id="${npcId}">
             <svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -842,7 +847,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                          currentCombatant.type === 'npc' ? 't-badge t-badge-accent' :
                          't-badge t-badge-red';
         currentContent.innerHTML = `
-          <span class="t-body-text font-semibold">${currentCombatant.name}</span>
+          <span class="t-body-text font-semibold">${escapeHtml(currentCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${currentCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${currentCombatant.type}</span>
         `;
@@ -854,7 +859,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
                          nextCombatant.type === 'npc' ? 't-badge t-badge-accent' :
                          't-badge t-badge-red';
         nextContent.innerHTML = `
-          <span class="t-body-text font-semibold">${nextCombatant.name}</span>
+          <span class="t-body-text font-semibold">${escapeHtml(nextCombatant.name)}</span>
           <span class="t-muted ml-2">Init: ${nextCombatant.initiative}</span>
           <span class="text-xs ${typeColor} ml-2">${nextCombatant.type}</span>
         `;
@@ -904,83 +909,58 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       return false;
     }
     
+    // The server moves the turn, so this screen and the initiative tracker can't disagree
+    async function turnAction(action) {
+      try {
+        const response = await fetch('/api/combat-state', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action }),
+        });
+        const result = await response.json();
+        if (!response.ok) {
+          alert(result.error || 'Failed to update combat');
+          return;
+        }
+        combatState = result;
+        const roundDisplay = document.getElementById('dmCurrentRound');
+        if (roundDisplay) roundDisplay.textContent = combatState.currentRound || 1;
+        updateButtonStates();
+        updateInitiativePreview();
+        startHpSync();
+      } catch (error) {
+        console.error('Error updating combat state:', error);
+      }
+    }
+
     // Initialize combat button handlers
     function initializeCombatHandlers() {
       // Next turn
       const dmNextTurnBtn = document.getElementById('dmNextTurnBtn');
-      const nextTurnHandler = async () => {
-        await loadCombatData(); // Refresh data
-        
-        const activeInitiatives = initiatives.filter(e => e.isActive);
-        if (activeInitiatives.length === 0) {
-          alert('No active combatants in initiative tracker');
-          return;
-        }
-        
-        let newIndex = combatState.currentTurnIndex + 1;
-        let newRound = combatState.currentRound;
-        
-        if (newIndex >= activeInitiatives.length) {
-          newIndex = 0;
-          newRound++;
-        }
-        
-        await updateCombatState({
-          currentTurnIndex: newIndex,
-          currentRound: newRound,
-          status: 'active'
-        });
-      };
+      const nextTurnHandler = () => turnAction('next');
       dmNextTurnBtn?.addEventListener('click', nextTurnHandler);
       eventHandlers.set('dmNextTurnBtn', nextTurnHandler);
       
       // Previous turn
       const dmPrevTurnBtn = document.getElementById('dmPrevTurnBtn');
-      const prevTurnHandler = async () => {
-        await loadCombatData(); // Refresh data
-        
-        const activeInitiatives = initiatives.filter(e => e.isActive);
-        if (activeInitiatives.length === 0) {
-          alert('No active combatants in initiative tracker');
-          return;
-        }
-        
-        let newIndex = combatState.currentTurnIndex - 1;
-        let newRound = combatState.currentRound;
-        
-        if (newIndex < 0) {
-          newIndex = activeInitiatives.length - 1;
-          newRound = Math.max(1, newRound - 1);
-        }
-        
-        await updateCombatState({
-          currentTurnIndex: newIndex,
-          currentRound: newRound,
-          status: 'active'
-        });
-      };
+      const prevTurnHandler = () => turnAction('prev');
       dmPrevTurnBtn?.addEventListener('click', prevTurnHandler);
       eventHandlers.set('dmPrevTurnBtn', prevTurnHandler);
       
       // Start combat
       const dmStartCombatBtn = document.getElementById('dmStartCombatBtn');
-      const startCombatHandler = async () => {
-        await loadCombatData();
-        
-        const activeInitiatives = initiatives.filter(e => e.isActive);
-        if (activeInitiatives.length === 0) {
-          alert('Add active combatants to the initiative tracker first');
-          return;
-        }
-        
-        await updateCombatState({
-          status: 'active',
-          currentTurnIndex: 0,
-          currentRound: 1
-        });
-      };
+      const startCombatHandler = () => turnAction('start');
       dmStartCombatBtn?.addEventListener('click', startCombatHandler);
       eventHandlers.set('dmStartCombatBtn', startCombatHandler);
+
+      // New fight: the only control that puts the round back to 1
+      const dmNewFightBtn = document.getElementById('dmNewFightBtn');
+      const newFightHandler = async () => {
+        if (!(await window.arandorConfirm('Start a new fight?', { detail: 'The round goes back to 1 and the first combatant has the turn. Combatants stay as they are.', confirmLabel: 'New fight' }))) return;
+        await turnAction('new-fight');
+      };
+      dmNewFightBtn?.addEventListener('click', newFightHandler);
+      eventHandlers.set('dmNewFightBtn', newFightHandler);
       
       // Pause combat
       const dmPauseCombatBtn = document.getElementById('dmPauseCombatBtn');
@@ -995,13 +975,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       // Stop combat
       const dmStopCombatBtn = document.getElementById('dmStopCombatBtn');
       const stopCombatHandler = async () => {
-        if (!(await window.arandorConfirm('Stop combat?', { detail: 'The turn order is reset.', confirmLabel: 'Stop combat', danger: true }))) return;
+        if (!(await window.arandorConfirm('Stop combat?', { detail: 'The round and turn are kept; Start carries on from there.', confirmLabel: 'Stop combat', danger: true }))) return;
         
-        await updateCombatState({
-          status: 'stopped',
-          currentTurnIndex: 0,
-          currentRound: 1
-        });
+        await updateCombatState({ status: 'stopped' });
       };
       dmStopCombatBtn?.addEventListener('click', stopCombatHandler);
       eventHandlers.set('dmStopCombatBtn', stopCombatHandler);
@@ -1015,7 +991,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         dmSyncHpBtn.innerHTML = '<span class="spinner"></span>Syncing...';
         
         try {
-          const response = await fetch('/api/initiative/sync-hp', {
+          const response = await fetch('/api/initiative/sync-hp?force=1', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
           });
@@ -1134,25 +1110,20 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           return;
         }
         
-        // Convert to data URL
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const dataUrl = e.target?.result;
-          if (typeof dataUrl === 'string') {
-            // Update the input field with the data URL
-            if (placeholderImageInput) placeholderImageInput.value = dataUrl;
-            
-            // Automatically save
-            const success = await updateState({ placeholderImageUrl: dataUrl });
-            if (success) {
-              alert('Placeholder wallpaper uploaded and saved!');
-            }
-          }
-        };
-        reader.onerror = () => {
-          alert('Error reading file. Please try again.');
-        };
-        reader.readAsDataURL(file);
+        // Upload as a file: the display then downloads it once instead of inside every poll
+        const formData = new FormData();
+        formData.append('file', file);
+        const uploadResponse = await fetch('/api/upload', { method: 'POST', body: formData });
+        const upload = await uploadResponse.json().catch(() => ({}));
+        if (!uploadResponse.ok || !upload.url) {
+          alert(upload.error || 'Upload failed. Please try again.');
+          return;
+        }
+        if (placeholderImageInput) placeholderImageInput.value = upload.url;
+        const success = await updateState({ placeholderImageUrl: upload.url });
+        if (success) {
+          alert('Placeholder wallpaper uploaded and saved!');
+        }
       };
       placeholderImageFile?.addEventListener('change', fileChangeHandler);
       eventHandlers.set('placeholderImageFile', fileChangeHandler);
@@ -1203,25 +1174,12 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         const minutes = parseInt(timerMinutesInput?.value || '5', 10);
         const durationSeconds = minutes * 60;
         
-        if (currentState.timerStatus === 'paused' && currentState.timerPausedAt && currentState.timerStartedAt) {
-          // Resume from paused state
-          const elapsed = (currentState.timerPausedAt - currentState.timerStartedAt) / 1000;
-          const newStartTime = Date.now() - (elapsed * 1000);
-          
-          await updateState({
-            timerStatus: 'running',
-            timerStartedAt: newStartTime,
-            timerPausedAt: null
-          });
+        if (currentState.timerStatus === 'paused') {
+          await updateState({ timerAction: 'resume' });
         } else {
-          // Start new timer
-          await updateState({
-            showTimer: true,
-            timerDuration: durationSeconds,
-            timerStartedAt: Date.now(),
-            timerPausedAt: null,
-            timerStatus: 'running'
-          });
+          await updateState({ showTimer: true, timerDuration: durationSeconds, timerAction: 'start' });
+          const showTimerCheckbox = document.getElementById('showTimer');
+          if (showTimerCheckbox) showTimerCheckbox.checked = true;
         }
         
         startTimerUpdates();
@@ -1232,10 +1190,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       
       const pauseTimerHandler = async () => {
         if (currentState.timerStatus === 'running') {
-          await updateState({
-            timerStatus: 'paused',
-            timerPausedAt: Date.now()
-          });
+          await updateState({ timerAction: 'pause' });
           
           if (timerUpdateInterval) {
             clearInterval(timerUpdateInterval);
@@ -1248,11 +1203,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       eventHandlers.set('pauseTimerBtn', pauseTimerHandler);
       
       const resetTimerHandler = async () => {
-        await updateState({
-          timerStatus: 'stopped',
-          timerStartedAt: null,
-          timerPausedAt: null
-        });
+        await updateState({ timerAction: 'reset' });
         
         if (timerUpdateInterval) {
           clearInterval(timerUpdateInterval);
@@ -1312,6 +1263,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     
     // Initialize all handlers and intervals
     async function initialize() {
+      if (!document.getElementById('locationSelect')) return;
+      cleanup();
+
       // Clear old data
       locationsData.clear();
       npcsData.clear();
@@ -1355,7 +1309,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     }
     
     // Cleanup function to remove all event listeners and intervals
-    const cleanup = () => {
+    function cleanup() {
       // Remove all event listeners
       eventHandlers.forEach((handler, elementId) => {
         const element = document.getElementById(elementId);
@@ -1383,12 +1337,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         clearInterval(timerUpdateInterval);
         timerUpdateInterval = null;
       }
-    };
+    }
 
-    // Initialize on page load
-    document.addEventListener('DOMContentLoaded', initialize);
-
-    // Also initialize after Astro page transitions
+    // Runs on the first load and after every client-side navigation (ClientRouter)
     document.addEventListener('astro:page-load', initialize);
     
     // Cleanup before navigation

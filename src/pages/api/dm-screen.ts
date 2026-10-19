@@ -74,6 +74,27 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     
     // Fetch current state
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
+
+    // Timer actions are stamped with the server's clock, so the countdown is the same on every
+    // device no matter how far their clocks are apart.
+    const now = Date.now();
+    switch (updates.timerAction) {
+      case 'start':
+        Object.assign(updates, { timerStatus: 'running', timerStartedAt: now, timerPausedAt: null });
+        break;
+      case 'resume':
+        if (state?.timerStatus === 'paused' && state.timerStartedAt && state.timerPausedAt) {
+          Object.assign(updates, { timerStatus: 'running', timerStartedAt: now - (state.timerPausedAt - state.timerStartedAt), timerPausedAt: null });
+        }
+        break;
+      case 'pause':
+        if (state?.timerStatus === 'running') Object.assign(updates, { timerStatus: 'paused', timerPausedAt: now });
+        break;
+      case 'reset':
+        Object.assign(updates, { timerStatus: 'stopped', timerStartedAt: null, timerPausedAt: null });
+        break;
+    }
+    delete updates.timerAction;
     
     // Create if doesn't exist
     if (!state) {

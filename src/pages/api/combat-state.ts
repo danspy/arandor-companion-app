@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, CombatState, eq } from '@/db';
 import { requireDungeonmasterOrAdmin } from '../../lib/middleware';
+import { advanceTurn, type TurnAction } from '../../lib/combat';
 
 const COMBAT_STATE_ID = 'current-combat';
 
@@ -95,6 +96,36 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     });
   } catch (error) {
     console.error('Error updating combat state:', error);
+    return new Response(JSON.stringify({ error: 'Failed to update combat state' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+};
+
+// POST - Move the turn on the server: { action: 'start' | 'next' | 'prev' | 'new-fight' }.
+// 'start' continues at the stored round and turn; only 'new-fight' goes back to round 1.
+// The tracker and the DM screen both use this, so they can't compute different turns.
+export const POST: APIRoute = async ({ request, cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+
+  try {
+    const { action } = await request.json();
+    if (!['start', 'next', 'prev', 'new-fight'].includes(action)) {
+      return new Response(JSON.stringify({ error: 'Invalid action. Must be start, next, prev or new-fight' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    const result = await advanceTurn(action as TurnAction);
+    return new Response(JSON.stringify(result), {
+      status: 'error' in result ? 409 : 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  } catch (error) {
+    console.error('Error advancing turn:', error);
     return new Response(JSON.stringify({ error: 'Failed to update combat state' }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' },

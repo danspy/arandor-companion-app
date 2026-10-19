@@ -1,6 +1,8 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from '@/db';
 import { requireDungeonmasterOrAdmin, requireAuth } from '../../../lib/middleware';
+import { getCurrentUser } from '../../../lib/auth';
+import { ownedCharacters, preserveTurn, redactEntry } from '../../../lib/combat';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
@@ -27,7 +29,12 @@ export const GET: APIRoute = async ({ params, cookies }) => {
       });
     }
 
-    return new Response(JSON.stringify(entry[0]), {
+    // Same rules as the list: exact values only for the DM and for your own character
+    const user = await getCurrentUser(cookies);
+    const isDm = user?.role === 'admin' || user?.role === 'dungeonmaster';
+    const body = isDm ? entry[0] : redactEntry(entry[0], await ownedCharacters(user?.id));
+
+    return new Response(JSON.stringify(body), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -76,6 +83,14 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       });
     }
 
+    const existing = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id)).get();
+    if (!existing) {
+      return new Response(JSON.stringify({ error: 'Initiative entry not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+
     const now = new Date();
     
     // When HP is restored above 0, reset death saves
@@ -100,15 +115,16 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       updateData.deathSaveFailures = 0;
       updateData.isStable = false;
     } else {
-      // Preserve or update death saves
-      updateData.deathSaveSuccesses = body.deathSaveSuccesses !== undefined ? body.deathSaveSuccesses : 0;
-      updateData.deathSaveFailures = body.deathSaveFailures !== undefined ? body.deathSaveFailures : 0;
-      updateData.isStable = body.isStable !== undefined ? body.isStable : false;
+      // Keep the stored death saves unless the request sets them (the edit form doesn't)
+      updateData.deathSaveSuccesses = body.deathSaveSuccesses ?? existing.deathSaveSuccesses;
+      updateData.deathSaveFailures = body.deathSaveFailures ?? existing.deathSaveFailures;
+      updateData.isStable = body.isStable ?? existing.isStable;
     }
     
-    await db.update(InitiativeTracker)
+    // Initiative or active flag may change the order; keep the turn with the same combatant
+    await preserveTurn(() => db.update(InitiativeTracker)
       .set(updateData)
-      .where(eq(InitiativeTracker.id, id));
+      .where(eq(InitiativeTracker.id, id)));
 
     const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id));
     
@@ -137,7 +153,7 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       });
     }
 
-    await db.delete(InitiativeTracker).where(eq(InitiativeTracker.id, id));
+    await preserveTurn(() => db.delete(InitiativeTracker).where(eq(InitiativeTracker.id, id)));
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

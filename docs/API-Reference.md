@@ -61,15 +61,18 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 
 | Endpoint | Method | Purpose | Access |
 |---|---|---|---|
-| `/api/initiative` | GET / POST | Combatants / add one | public / DM |
-| `/api/initiative/[id]` | GET / PUT, DELETE | One combatant | login / DM |
+| `/api/initiative` | GET / POST, DELETE | Combatants in turn order / add one, clear all (also stops combat). Non-DMs get a `health` band instead of HP, and exact HP only for their own characters | public / DM |
+| `/api/initiative/[id]` | GET / PUT, DELETE | One combatant (redacted the same way for non-DMs) | login / DM |
 | `/api/initiative/update-hp` | PUT | A player updates HP, temp HP and death saves of **their own** character's entry | login and owner |
-| `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker | DM |
+| `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
 | `/api/initiative/reset-combat` | POST | Keep player characters (initiative 10), remove everyone else, round 1 | DM |
-| `/api/combat-state` | GET / PUT | Round, turn, status | public / DM |
-| `/api/dm-screen` | GET / PUT | What the player display shows | public / DM |
+| `/api/combat-state` | GET / PUT, POST | Round, turn, status / set them, or move the turn with `{ action: 'start' \| 'next' \| 'prev' \| 'new-fight' }` (only `new-fight` resets the round) | public / DM |
+| `/api/dm-screen` | GET / PUT | What the player display shows. PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock | public / DM |
+| `/api/display` | GET | Everything `/display` shows in one small response (health bands, no HP/AC); supports ETag / 304 | public |
+| `/api/display/wallpaper` | GET | A wallpaper stored inline as a `data:` URL, served as a cacheable image | public |
 
-The public reads exist for the player display (`/display`), which runs without a login.
+The public reads exist for the player display (`/display`), which runs without a login. They
+never include exact HP, AC or notes of combatants.
 
 ## Calendar
 
