@@ -47,7 +47,7 @@ The schema keeps the encodings of the former Astro DB, so existing databases wor
 | **Location** | Places, and their map pins | `name*`, `type*` (`city`/`dungeon`/`wilderness`/`building`/`other`), `description*`, `region`, `visited`, `notes`, `imageUrl`, `mapX`, `mapY` (0–100 %), `visibleOnMap` |
 | **Quest** | Quests | `title*`, `description*`, `status*` (`active`/`completed`/`failed`), `priority*` (`high`/`medium`/`low`) |
 | **Faction** | Reputation with factions | `name*`, `status*` (`enemy`/`suspicious`/`neutral`/`friendly`/`respectful`), `progress` (default 50) |
-| **LibraryEntry** | Lore documents | `title*`, `content*` (Markdown), `tags`, `locationId` |
+| **LibraryEntry** | Lore documents | `title*`, `content*` (Markdown), `tags`, `locationId`, `questIds` |
 | **TimelineEntry** | World history timeline | `entryType*` (`event` or `label`), `year*`, `month`, `label`, `sortOrder`, `headline`, `shortDescription`, `fullDescription` (Markdown), `imageUrl`, `diaryEntryIds`, `libraryDocsEntryIds`, `npcIds`, `locationIds`, `characterIds`, `questIds` |
 | **Event** | Calendar (game sessions) | `title*`, `description`, `date*` (YYYY-MM-DD), `time*` (HH:MM), `duration` (minutes), `hostId` |
 | **CampaignProgress** | Party level and progress | `currentLevel*`, `progressPercent*` (0–100), `heroImageUrl` (dashboard banner) |

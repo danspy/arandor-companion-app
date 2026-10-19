@@ -129,8 +129,8 @@ export default async function seed() {
 
   // ── Library (markdown, tags, linked locations) ───────────────────────────
   await db.insert(LibraryEntry).values([
-    { id: '1', title: 'The Runes of the Drowned', tags: ['docs', 'lore', 'magic'], locationId: '7', content: '# The Runes of the Drowned\n\nAn old script used by the archivists of Mirewatch.\n\n| Rune | Meaning |\n|---|---|\n| ᚱ | water |\n| ᛗ | memory |\n\n> "The drowned will remember."' },
-    { id: '2', title: 'A Short History of Waterdeep', tags: ['docs', 'history'], locationId: '1', content: 'Founded as a trading post, Waterdeep grew into the **City of Splendors**. Its Masked Lords rule in secret.' },
+    { id: '1', title: 'The Runes of the Drowned', tags: ['docs', 'lore', 'magic'], locationId: '7', questIds: ['3'], content: '# The Runes of the Drowned\n\nAn old script used by the archivists of Mirewatch.\n\n| Rune | Meaning |\n|---|---|\n| ᚱ | water |\n| ᛗ | memory |\n\n> "The drowned will remember."' },
+    { id: '2', title: 'A Short History of Waterdeep', tags: ['docs', 'history'], locationId: '1', questIds: ['1'], content: 'Founded as a trading post, Waterdeep grew into the **City of Splendors**. Its Masked Lords rule in secret.' },
     { id: '3', title: 'Bestiary: Bog Hag', tags: ['bestiary'], content: 'Bog hags curse those who trespass. *Cure: holy water and an honest apology.*' },
     { id: '4', title: 'House Rules', tags: ['rules'], content: '1. Critical hits: max damage + roll.\n2. Potions are a bonus action.\n3. Snacks are mandatory.' },
   ]);

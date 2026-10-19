@@ -39,6 +39,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
         content: body.content,
         tags: body.tags || [],
         locationId: body.locationId || null,
+        questIds: body.questIds || [],
         updatedAt: now,
       })
       .where(eq(LibraryEntry.id, params.id!));

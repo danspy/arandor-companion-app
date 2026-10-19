@@ -1,7 +1,7 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import Button from '../../components/Button.astro';
-import { db, Quest, DiaryEntry, NPC, Location, Character, TimelineEntry, eq, inArray } from '@/db';
+import { db, Quest, DiaryEntry, NPC, Location, Character, TimelineEntry, LibraryEntry, eq, inArray } from '@/db';
 import { getUserRole } from '../../lib/auth';
 import { renderMarkdown, markdownExcerpt } from '../../utils/markdown';
 
@@ -15,7 +15,7 @@ if (!quest) return Astro.redirect('/quests');
 const userRole = await getUserRole(Astro.cookies);
 const canEdit = userRole === 'admin' || userRole === 'dungeonmaster';
 
-// Quests are linked from diary entries and timeline events (their questIds).
+// Quests are linked from diary entries, timeline events and library entries (their questIds).
 // NPCs, locations and party members come from the diary entries of the quest.
 const includesQuest = (ids: unknown) => Array.isArray(ids) && ids.includes(id);
 
@@ -26,6 +26,10 @@ const diaryEntries = (await db.select().from(DiaryEntry))
 const timelineEntries = (await db.select().from(TimelineEntry))
   .filter(entry => entry.entryType !== 'label' && includesQuest(entry.questIds))
   .sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0) || (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+
+const libraryEntries = (await db.select().from(LibraryEntry))
+  .filter(entry => includesQuest(entry.questIds))
+  .sort((a, b) => a.title.localeCompare(b.title));
 
 // How many of the quest's sessions each linked id appears in
 const countIds = (key: 'npcIds' | 'locationIds' | 'characterIds') => {
@@ -234,6 +238,24 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
             </div>
           </div>
         )}
+      </div>
+    )}
+
+    <!-- Library documents -->
+    {libraryEntries.length > 0 && (
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">From the Library</h2>
+          <span class="t-badge t-badge-gold ml-auto">{libraryEntries.length}</span>
+        </div>
+        <div class="flex flex-col gap-3">
+          {libraryEntries.map(entry => (
+            <a href={`/library/${entry.id}`} class="t-row p-4 block">
+              <div class="t-body-text font-medium truncate">{entry.title}</div>
+              <div class="t-faint text-xs mt-0.5 line-clamp-2">{markdownExcerpt(entry.content, 140)}</div>
+            </a>
+          ))}
+        </div>
       </div>
     )}
 

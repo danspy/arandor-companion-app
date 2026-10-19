@@ -7,6 +7,7 @@ What's new in the Arandor Companion App, newest first.
   involved, and its timeline events
 - Quests on the quest list, dashboard board and diary pages link to their page; NPC and
   location pages show their quests
+- Library documents can be linked to quests; they appear under "From the Library" on the quest
 
 ### A new look
 - One dark, immersive design across the whole app, with large scene images behind every page

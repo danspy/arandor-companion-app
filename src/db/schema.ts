@@ -151,6 +151,7 @@ export const LibraryEntry = sqliteTable('LibraryEntry', {
   content: text('content').notNull(), // Markdown content
   tags: jsonArray('tags'), // Array of tags for filtering
   locationId: text('locationId'), // Foreign key to Location table
+  questIds: jsonArray('questIds'), // Array of Quest IDs
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });
