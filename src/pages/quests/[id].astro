@@ -170,6 +170,24 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
       )}
     </div>
 
+    <!-- Library documents -->
+    {libraryEntries.length > 0 && (
+      <div class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header">
+          <h2 class="t-section-h text-xl">From the Library</h2>
+          <span class="t-badge t-badge-gold ml-auto">{libraryEntries.length}</span>
+        </div>
+        <div class="flex flex-col gap-3">
+          {libraryEntries.map(entry => (
+            <a href={`/library/${entry.id}`} class="t-row p-4 block">
+              <div class="t-body-text font-medium truncate">{entry.title}</div>
+              <div class="t-faint text-xs mt-0.5 line-clamp-2">{markdownExcerpt(entry.content, 140)}</div>
+            </a>
+          ))}
+        </div>
+      </div>
+    )}
+
     <!-- NPCs, locations, party members from the quest's sessions -->
     {(relatedNPCs.length > 0 || relatedLocations.length > 0 || relatedCharacters.length > 0) && (
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -238,24 +256,6 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
             </div>
           </div>
         )}
-      </div>
-    )}
-
-    <!-- Library documents -->
-    {libraryEntries.length > 0 && (
-      <div class="t-panel p-6 sm:p-8 mb-6">
-        <div class="t-section-header">
-          <h2 class="t-section-h text-xl">From the Library</h2>
-          <span class="t-badge t-badge-gold ml-auto">{libraryEntries.length}</span>
-        </div>
-        <div class="flex flex-col gap-3">
-          {libraryEntries.map(entry => (
-            <a href={`/library/${entry.id}`} class="t-row p-4 block">
-              <div class="t-body-text font-medium truncate">{entry.title}</div>
-              <div class="t-faint text-xs mt-0.5 line-clamp-2">{markdownExcerpt(entry.content, 140)}</div>
-            </a>
-          ))}
-        </div>
       </div>
     )}
 
