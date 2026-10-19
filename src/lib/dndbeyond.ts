@@ -42,6 +42,7 @@ export interface DnDBeyondCharacterData extends DnDBeyondHPData {
   skin?: string;
   hair?: string;
   stats?: AbilityScores;
+  sheet?: CharacterSheet;
 }
 
 // Stat ids used by D&D Beyond (1=STR … 6=CHA), in the order of AbilityScores
@@ -180,6 +181,7 @@ export function parseDnDBeyondCharacter(data: any): DnDBeyondCharacterData {
     ...hp,
     tempHp: tempHp || undefined,
     stats: abilityScores(data),
+    sheet: buildSheet(data),
   };
 }
 

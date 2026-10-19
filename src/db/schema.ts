@@ -89,6 +89,7 @@ export const Character = sqliteTable('Character', {
   skin: text('skin'),
   hair: text('hair'),
   lastSyncedAt: date('lastSyncedAt'), // Last time character was synced from D&D Beyond
+  sheet: json('sheet'), // CharacterSheet (src/lib/character-sheet.ts), written by the full sync
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });

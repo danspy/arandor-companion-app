@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import { db, Character, User } from '@/db';
 import { requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
+import { withoutSheet } from '../../../lib/character-sheet';
 
 // GET - Get available characters (not assigned to other users)
 export const GET: APIRoute = async ({ cookies }) => {
@@ -46,7 +47,7 @@ export const GET: APIRoute = async ({ cookies }) => {
       !assignedCharacterIds.has(char.id) || currentUserCharacterIds.includes(char.id)
     );
 
-    return new Response(JSON.stringify(availableCharacters), {
+    return new Response(JSON.stringify(availableCharacters.map(withoutSheet)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });

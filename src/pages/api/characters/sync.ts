@@ -3,6 +3,7 @@ import { db, Character, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { getCurrentUser, getUserRole } from '../../../lib/auth';
 import { fetchDnDBeyondCharacter } from '../../../lib/dndbeyond';
+import { canSeePrivateSheet, forViewer } from '../../../lib/character-sheet';
 
 export const POST: APIRoute = async ({ request, cookies }) => {
   const authError = await requirePlayerOrAbove(cookies);
@@ -78,6 +79,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       eyes: dndbeyondData.eyes || character.eyes,
       skin: dndbeyondData.skin || character.skin,
       hair: dndbeyondData.hair || character.hair,
+      sheet: dndbeyondData.sheet ?? character.sheet,
       lastSyncedAt: now,
       updatedAt: now,
     };
@@ -95,7 +97,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Return updated character
     const updatedCharacter = await db.select().from(Character).where(eq(Character.id, characterId)).get();
 
-    return new Response(JSON.stringify(updatedCharacter), {
+    return new Response(JSON.stringify(updatedCharacter && forViewer(updatedCharacter, canSeePrivateSheet(updatedCharacter, currentUser, userRole))), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });

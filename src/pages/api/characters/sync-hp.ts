@@ -3,6 +3,7 @@ import { db, Character, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { fetchDnDBeyondHP } from '../../../lib/dndbeyond';
 import { getCurrentUser, getUserRole } from '../../../lib/auth';
+import { withoutSheet } from '../../../lib/character-sheet';
 
 /**
  * Sync HP data for a character from D&D Beyond
@@ -78,7 +79,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     // Return updated character
     const updatedCharacter = await db.select().from(Character).where(eq(Character.id, characterId)).get();
 
-    return new Response(JSON.stringify(updatedCharacter), {
+    return new Response(JSON.stringify(updatedCharacter && withoutSheet(updatedCharacter)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' },
     });
