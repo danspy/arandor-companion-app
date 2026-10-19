@@ -81,7 +81,7 @@ export function mountMusicPicker(host: HTMLElement): void {
   function sync(s: MusicState) {
     const here = !!selected && s.source?.playlistId === selected.id;
     list.querySelectorAll<HTMLElement>('[data-dmm-row]').forEach((row, i) => {
-      const cur = here && s.index === i;
+      const cur = here && s.queue[s.index]?.id === tracks[i]?.id;
       if (cur) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
       row.style.outline = cur ? '1px solid var(--accent, currentColor)' : '';
     });

@@ -827,6 +827,11 @@ test.describe('DM screen music', () => {
       await expect(rows.nth(0)).not.toHaveAttribute('aria-current', 'true');
       await panel.locator('#dmm-shuffle').click();
       await expect(panel.locator('#dmm-shuffle')).toHaveAttribute('aria-pressed', 'true');
+      // shuffle on: the marked row is still the one playing (queue order differs from playlist order)
+      await panel.locator('#dmm-next').click();
+      await expect(rows.locator('xpath=self::*[@aria-current="true"]')).toHaveCount(1);
+      const playing = (await page.locator('#music-title').textContent())!.trim();
+      await expect(panel.locator('[data-dmm-row][aria-current="true"]')).toContainText(playing);
       await panel.locator('#dmm-repeat').click();
       await expect(panel.locator('#dmm-repeat')).toHaveAttribute('data-mode', 'all');
       await panel.locator('#dmm-toggle').click();
