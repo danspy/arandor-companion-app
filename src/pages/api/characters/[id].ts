@@ -103,7 +103,10 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       updatedAt: now,
     };
     // A sheet read from another (or no) D&D Beyond link is not this character's: the next sync writes a new one
-    if ((body.dndbeyondUrl || null) !== (character.dndbeyondUrl || null)) updateData.sheet = null;
+    if ((body.dndbeyondUrl || null) !== (character.dndbeyondUrl || null)) {
+      updateData.sheet = null;
+      updateData.lastSyncedAt = null; // due for the automatic sync right away
+    }
     
     // Mark stats as manually edited if they changed
     if (statsChanged) {

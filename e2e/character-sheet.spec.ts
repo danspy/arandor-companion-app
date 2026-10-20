@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { buildSheet } from '../src/lib/dndbeyond';
+import { buildSheet, parseDnDBeyondCharacter } from '../src/lib/dndbeyond';
 import { canSeePrivateSheet, publicSheet, withoutSheet } from '../src/lib/character-sheet';
 
 // Who sees which part of the character sheet. The logged-in browser tests need a server under
@@ -17,6 +17,14 @@ test.describe('Character sheet visibility', () => {
     expect(Object.keys(publicSheet(sheet)!).sort()).toEqual(['ac', 'initiative', 'passivePerception', 'proficiencyBonus', 'saves', 'speed', 'version']);
     expect(publicSheet(null)).toBeNull();
     expect(withoutSheet({ id: 'c1', name: 'X', sheet })).toEqual({ id: 'c1', name: 'X' });
+  });
+
+  test('an odd piece of sheet data does not stop HP and stats from syncing', () => {
+    const data = load('barum');
+    data.data.classSpells[0].spells.push(null);
+    const parsed = parseDnDBeyondCharacter(data);
+    expect(parsed.maxHp).toBe(62);
+    expect(parsed.stats?.intelligence).toBe(20);
   });
 
   test('the player, the DM and admins see the private part', () => {
@@ -54,6 +62,28 @@ test.describe('Character sheet on the server', () => {
     expect(list.every((c: Record<string, unknown>) => !('sheet' in c))).toBe(true);
     const dmView = await (await dm.request.get(`/api/characters/${CHARACTER}`)).json();
     expect(dmView.sheet.inventory.length).toBeGreaterThan(0);
+    // Public pages that hand character data to the browser
+    const timeline = await (await visitor.request.get('/library/timeline')).text();
+    expect(timeline).not.toContain('"skills"');
+    expect(timeline).not.toContain('"inventory"');
+  });
+
+  test('the automatic sync runs once per character, even when asked many times at once', async ({ browser }) => {
+    const dm = await browser.newContext();
+    expect((await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } })).ok()).toBe(true);
+    const character = await (await dm.request.get(`/api/characters/${CHARACTER}`)).json();
+    const url = character.dndbeyondUrl as string;
+    try {
+      // A new D&D Beyond link makes the character due for a sync right away
+      await dm.request.put(`/api/characters/${CHARACTER}`, { data: { ...character, dndbeyondUrl: `${url}?e2e` } });
+      const visitor = await browser.newContext();
+      const answers = await Promise.all(Array.from({ length: 8 }, () =>
+        visitor.request.post('/api/characters/auto-sync', { data: { characterId: CHARACTER } }).then((r) => r.json())));
+      expect(answers.filter((a) => a.success)).toHaveLength(1);
+    } finally {
+      await dm.request.put(`/api/characters/${CHARACTER}`, { data: { ...character, dndbeyondUrl: url } });
+      await dm.request.post('/api/characters/sync', { data: { characterId: CHARACTER } });
+    }
   });
 
   test('D&D Beyond wins over ability scores edited by hand', async ({ browser }) => {

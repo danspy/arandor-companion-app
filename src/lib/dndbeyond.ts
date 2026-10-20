@@ -181,8 +181,18 @@ export function parseDnDBeyondCharacter(data: any): DnDBeyondCharacterData {
     ...hp,
     tempHp: tempHp || undefined,
     stats: abilityScores(data),
-    sheet: buildSheet(data),
+    sheet: safeSheet(data),
   };
+}
+
+/** The sheet, or nothing if some odd D&D Beyond data trips it up: HP and stats still sync then. */
+function safeSheet(data: any): CharacterSheet | undefined {
+  try {
+    return buildSheet(data);
+  } catch (error) {
+    console.error(`Character sheet for "${data?.data?.name}" could not be built:`, error);
+    return undefined;
+  }
 }
 
 /**

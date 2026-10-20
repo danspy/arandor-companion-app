@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Character, eq } from '@/db';
+import { db, Character, eq, sql } from '@/db';
 import { syncCharacterFromDnDBeyond } from '../../../lib/character-sync';
 
 // A character is refreshed from D&D Beyond at most this often by visits
@@ -10,7 +10,8 @@ const json = (body: unknown, status = 200) => new Response(JSON.stringify(body),
 /**
  * Automatic sync from D&D Beyond, triggered by visits to the dashboard and the Characters list.
  * Full data (HP, ability scores, sheet …), D&D Beyond is the truth; at most every 15 minutes per
- * character. Works for every visitor and returns no character data, only whether something changed.
+ * character (also after a failed attempt). Works for every visitor and returns no character data,
+ * only whether something changed.
  *
  * POST /api/characters/auto-sync
  * Body: { characterId: string }
@@ -24,8 +25,14 @@ export const POST: APIRoute = async ({ request }) => {
     if (!character) return json({ error: 'Character not found' }, 404);
     if (!character.dndbeyondUrl) return json({ success: false, message: 'Character does not have a D&D Beyond URL' });
 
-    const lastSynced = character.lastSyncedAt ? new Date(character.lastSyncedAt).getTime() : 0;
-    if (Date.now() - lastSynced < MIN_INTERVAL_MS) {
+    // Claim the slot before asking D&D Beyond: parallel requests can't all get through, and a
+    // failing sheet (made private, D&D Beyond down) is not asked again on every visit either.
+    const cutoff = new Date(Date.now() - MIN_INTERVAL_MS).toISOString();
+    const claimed = await db.update(Character)
+      .set({ lastSyncedAt: new Date() })
+      .where(sql`${Character.id} = ${characterId} AND (${Character.lastSyncedAt} IS NULL OR ${Character.lastSyncedAt} < ${cutoff})`)
+      .returning({ id: Character.id });
+    if (!claimed.length) {
       return json({ success: false, message: 'Character was synced recently', lastSyncedAt: character.lastSyncedAt });
     }
 
