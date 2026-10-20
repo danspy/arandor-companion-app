@@ -33,21 +33,44 @@ export interface SheetSpellcasting {
   attack: number;
 }
 
-export interface SheetFeature {
-  name: string;
-  source: string;
-  description: string;
+export interface SheetSpell {
+  name: string; // the sheet's custom name if the spell was renamed on D&D Beyond
+  baseName?: string; // the spell's real name when it was renamed
+  level: number; // 0 = cantrip
+  school: string;
+  source: string; // "Wizard", "Fey Touched", "Staff of Frost" …
+  prepared: boolean; // false: in the spellbook but not prepared today
+  alwaysPrepared: boolean;
+  castingTime: string;
+  range: string;
+  components: string;
+  duration: string;
+  concentration: boolean;
+  ritual: boolean;
+  toHit: number | null;
+  saveDc: number | null;
+  saveAbility: Ability | null;
+  damage: string | null; // at the spell's own level (cantrips at the character's level)
+  damageType: string | null;
+  healing: string | null;
+  uses: string; // "1/LR", "1 charge", "At will", or "" for a normal cast
+  description: string; // plain text, paragraphs separated by blank lines
 }
 
-export interface SheetItem {
-  name: string;
-  quantity: number;
-  equipped: boolean;
-  attuned: boolean;
+export interface SheetSpellSlots {
+  level: number;
+  total: number;
+  used: number;
+}
+
+export interface SheetSpellbook {
+  slots: SheetSpellSlots[];
+  pact: SheetSpellSlots | null;
+  spells: SheetSpell[]; // by level, prepared first, then by name
 }
 
 export interface CharacterSheet {
-  version: 1;
+  version: 2;
   // public
   proficiencyBonus: number;
   ac: number;
@@ -61,8 +84,7 @@ export interface CharacterSheet {
   skills: SheetSkill[];
   spellcasting: SheetSpellcasting[];
   attacks: SheetAttack[];
-  features: SheetFeature[];
-  inventory: SheetItem[];
+  spellbook: SheetSpellbook | null; // null for characters without spells
 }
 
 // ── Who sees what ────────────────────────────────────────────────────────────
@@ -77,7 +99,7 @@ export function publicSheet(sheet: CharacterSheet | null | undefined): PublicShe
 }
 
 /**
- * Skills, attacks, features and inventory: the character's player (Character.userId, or the
+ * Skills, attacks and the spellbook: the character's player (Character.userId, or the
  * older User.characterIds link), the DM and admins.
  */
 export function canSeePrivateSheet(

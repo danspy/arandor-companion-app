@@ -41,7 +41,7 @@
  ],
  "sinatah": [
   [
-   "Aelar‘s Dagger",
+   "Aelar\u2018s Dagger",
    8,
    "1d4+3"
   ],
@@ -228,14 +228,5 @@
   "moronur": [],
   "volrak": []
  },
- "_omitted": {
-  "alvar": [
-   [
-    "Scorching Ray",
-    10,
-    "2d6"
-   ]
-  ]
- },
- "_omitted_reason": "Domain spells (Light Domain) are not in D&D Beyond's character JSON, so the import cannot list them"
+ "_omitted": {}
 }

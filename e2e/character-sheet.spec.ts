@@ -58,14 +58,16 @@ test.describe('Character sheet on the server', () => {
     expect(one.sheet.saves.str).toBeDefined();
     expect(one.sheet.skills).toBeUndefined();
     expect(one.sheet.attacks).toBeUndefined();
+    expect(one.sheet.spellbook).toBeUndefined();
     const list = await (await visitor.request.get('/api/characters')).json();
     expect(list.every((c: Record<string, unknown>) => !('sheet' in c))).toBe(true);
     const dmView = await (await dm.request.get(`/api/characters/${CHARACTER}`)).json();
-    expect(dmView.sheet.inventory.length).toBeGreaterThan(0);
+    expect(dmView.sheet.attacks.length).toBeGreaterThan(0);
+    expect(dmView.sheet).not.toHaveProperty('inventory');
     // Public pages that hand character data to the browser
     const timeline = await (await visitor.request.get('/library/timeline')).text();
     expect(timeline).not.toContain('"skills"');
-    expect(timeline).not.toContain('"inventory"');
+    expect(timeline).not.toContain('"spellbook"');
   });
 
   test('the automatic sync runs once per character, even when asked many times at once', async ({ browser }) => {
@@ -102,11 +104,14 @@ test.describe('Character sheet page', () => {
   test.skip(!DM || !DM_PASSWORD || !CHARACTER, 'Needs E2E_DM_USER/E2E_DM_PASSWORD and E2E_CHARACTER_ID');
 
   test('the DM rolls from the sheet and sees the private sections', async ({ browser }) => {
+    test.setTimeout(60_000);
     const context = await browser.newContext();
     expect((await context.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } })).ok()).toBe(true);
+    expect((await context.request.post('/api/characters/sync', { data: { characterId: CHARACTER } })).ok()).toBe(true);
     const page = await context.newPage();
     await page.goto(`/characters/${CHARACTER}`);
-    for (const id of ['#cs-strip', '#cs-abilities', '#cs-skills', '#cs-attacks', '#cs-features', '#cs-inventory']) await expect(page.locator(id)).toBeVisible();
+    for (const id of ['#cs-strip', '#cs-abilities', '#cs-skills', '#cs-attacks']) await expect(page.locator(id)).toBeVisible();
+    await expect(page.locator('#cs-features, #cs-inventory')).toHaveCount(0);
 
     const name = await page.locator('#character-page').getAttribute('data-character-name');
     const stealth = page.locator('#cs-skills .cs-roll[data-roll-name="Stealth"]');
@@ -124,6 +129,23 @@ test.describe('Character sheet page', () => {
     await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('arandor-dice-history') || '[]')[0]), { timeout: 15000 })
       .toMatchObject({ name: `${name} · Strength check`, mode: 'advantage' });
     await expect(page.locator('#cs-abilities [data-roll-mode="normal"]')).toHaveAttribute('aria-pressed', 'true');
+
+    await page.waitForFunction(() => !document.querySelector('#dice-overlay.is-rolling'));
+    const sheet = (await (await context.request.get(`/api/characters/${CHARACTER}`)).json()).sheet;
+    if (sheet.spellbook) {
+      await expect(page.locator('#cs-spellbook')).toBeVisible();
+      await expect(page.locator('#cs-spellbook .cs-spell')).toHaveCount(sheet.spellbook.spells.length);
+      // A roll button in the row rolls without opening it; the row itself opens the description
+      const row = page.locator('#cs-spellbook .cs-spell').filter({ has: page.locator('.cs-roll') }).first();
+      const spell = (await row.locator('.cs-roll').first().getAttribute('data-roll-name'))!;
+      await row.locator('.cs-roll').first().click();
+      await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('arandor-dice-history') || '[]')[0]?.name), { timeout: 15000 })
+        .toBe(`${name} · ${spell}`);
+      await expect(row).not.toHaveAttribute('open', '');
+      await page.waitForFunction(() => !document.querySelector('#dice-overlay.is-rolling'));
+      await row.locator('.cs-spell-name').click();
+      await expect(row.locator('.cs-spell-body')).toBeVisible();
+    }
   });
 
   test('a visitor sees stats and core rolls but not the private sections', async ({ page }) => {
@@ -131,7 +153,7 @@ test.describe('Character sheet page', () => {
     await expect(page.locator('#cs-strip')).toBeVisible();
     await expect(page.locator('#cs-abilities .cs-roll[data-roll-name="Dexterity save"]')).toBeVisible();
     const html = await page.content();
-    for (const id of ['cs-skills', 'cs-attacks', 'cs-features', 'cs-inventory']) expect(html).not.toContain(`id="${id}"`);
+    for (const id of ['cs-skills', 'cs-attacks', 'cs-spellbook']) expect(html).not.toContain(`id="${id}"`);
     await page.setViewportSize({ width: 375, height: 800 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
   });

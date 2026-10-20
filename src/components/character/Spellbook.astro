@@ -1,0 +1,89 @@
+---
+// Every spell the character has, by level, with spell slots and roll buttons (private part of the sheet)
+import type { SheetSpellbook, SheetSpellcasting } from '../../lib/character-sheet';
+import { d20, signed } from '../../lib/character-rolls';
+import RollMode from './RollMode.astro';
+
+interface Props { spellbook: SheetSpellbook; spellcasting: SheetSpellcasting[] }
+const { spellbook, spellcasting } = Astro.props;
+const ABBR = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' } as const;
+const ordinal = (n: number) => `${n}${n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th'}`;
+const rollable = (expr: string | null) => !!expr && /\d+d\d+/.test(expr);
+const levels = [...new Set(spellbook.spells.map((s) => s.level))];
+---
+<section id="cs-spellbook" class="t-panel p-6 sm:p-8 mb-6">
+  <div class="cs-head">
+    <h2 class="t-section-h text-xl">Spellbook</h2>
+    <RollMode />
+  </div>
+
+  {spellcasting.length > 0 && (
+    <p class="cs-casting">
+      {spellcasting.map((c) => (
+        <span><b>{c.className}</b> ({ABBR[c.ability]}): spell save DC <b>{c.saveDc}</b>, spell attack
+          <button type="button" class="cs-roll cs-chip" data-roll={d20(c.attack)} data-roll-name={`${c.className} spell attack`}>{signed(c.attack)}</button>
+        </span>
+      ))}
+    </p>
+  )}
+
+  {(spellbook.slots.length > 0 || spellbook.pact) && (
+    <div class="cs-slots" title="Spell slots as of the last D&D Beyond sync">
+      {spellbook.slots.map((s) => (
+        <span class="cs-slot-group" aria-label={`${ordinal(s.level)} level: ${s.total - s.used} of ${s.total} slots left`}>
+          <span class="cs-slot-label">{ordinal(s.level)}</span>
+          {Array.from({ length: s.total }, (_, i) => <span class={`cs-pip${i < s.total - s.used ? ' is-on' : ''}`} aria-hidden="true"></span>)}
+        </span>
+      ))}
+      {spellbook.pact && (
+        <span class="cs-slot-group is-pact" aria-label={`Pact magic, ${ordinal(spellbook.pact.level)} level: ${spellbook.pact.total - spellbook.pact.used} of ${spellbook.pact.total} slots left`}>
+          <span class="cs-slot-label">Pact {ordinal(spellbook.pact.level)}</span>
+          {Array.from({ length: spellbook.pact.total }, (_, i) => <span class={`cs-pip${i < spellbook.pact!.total - spellbook.pact!.used ? ' is-on' : ''}`} aria-hidden="true"></span>)}
+        </span>
+      )}
+    </div>
+  )}
+
+  {levels.map((level) => (
+    <div class="cs-spell-level">
+      <h3 class="t-label-sm">{level === 0 ? 'Cantrips' : `${ordinal(level)} level`}</h3>
+      <div class="cs-spells">
+        {spellbook.spells.filter((s) => s.level === level).map((s) => (
+          <details class={`cs-spell${s.prepared ? '' : ' is-unprepared'}`}>
+            <summary>
+              <span class="cs-spell-main">
+                <span class="cs-spell-name">
+                  {s.name}
+                  {s.concentration && <span class="cs-tag" title="Concentration">C</span>}
+                  {s.ritual && <span class="cs-tag" title="Ritual">R</span>}
+                  {s.alwaysPrepared && <span class="cs-tag" title="Always prepared">Always</span>}
+                  {!s.prepared && <span class="cs-tag" title="In the spellbook, not prepared">Not prepared</span>}
+                </span>
+                <span class="cs-spell-meta">{[s.castingTime, s.range, s.uses, s.source].filter(Boolean).join(' · ')}</span>
+              </span>
+              <span class="cs-attack-rolls">
+                {s.toHit != null && (
+                  <button type="button" class="cs-roll cs-chip" data-roll={d20(s.toHit)} data-roll-label="To hit" data-roll-name={s.name}
+                    data-roll-damage={rollable(s.damage) ? s.damage : undefined} data-roll-damage-label={s.damageType || 'Damage'}
+                    title={`Spell attack: ${d20(s.toHit)}${rollable(s.damage) ? ` and ${s.damage} damage` : ''}`}>{signed(s.toHit)} to hit</button>
+                )}
+                {s.saveDc != null && <span class="cs-chip cs-chip-flat" title={`${ABBR[s.saveAbility!]} saving throw against DC ${s.saveDc}`}>{ABBR[s.saveAbility!]} {s.saveDc}</span>}
+                {s.damage && (rollable(s.damage)
+                  ? <button type="button" class="cs-roll cs-chip cs-chip-dmg" data-roll={s.damage} data-roll-name={`${s.name} damage`} data-roll-label={s.damageType || 'Damage'} title={`Damage (${s.damage}${s.damageType ? ` ${s.damageType}` : ''})`}>{s.damage}</button>
+                  : <span class="cs-chip cs-chip-flat" title="Fixed damage">{s.damage}</span>)}
+                {s.healing && <button type="button" class="cs-roll cs-chip cs-chip-heal" data-roll={s.healing} data-roll-name={`${s.name} healing`} data-roll-label="Healing" title={`Healing (${s.healing})`}>{s.healing}</button>}
+              </span>
+            </summary>
+            <div class="cs-spell-body">
+              <p class="cs-spell-facts">
+                {[s.level === 0 ? `${s.school} cantrip` : `${ordinal(s.level)}-level ${s.school.toLowerCase()}`, s.components, s.concentration ? `Concentration, ${s.duration}` : s.duration].filter(Boolean).join(' · ')}
+                {s.baseName && <> · <i>{s.baseName}</i></>}
+              </p>
+              {s.description && <p class="cs-spell-text">{s.description}</p>}
+            </div>
+          </details>
+        ))}
+      </div>
+    </div>
+  ))}
+</section>

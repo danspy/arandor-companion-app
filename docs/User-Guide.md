@@ -71,9 +71,11 @@ appear in.
 proficiency bonus, passive Perception, the ability scores and saving throws. Tap a modifier to
 roll a check, a *Save* to roll the saving throw, or the initiative to roll initiative. The rolls
 use the 3D dice and show up in the roll history. *Adv* / *Dis* applies to the next d20 roll only.
-The character's player, the DM and admins also see the skills, attacks & spells, features &
-traits and the inventory. An attack's *to hit* button rolls the attack and its damage together,
-and a critical hit doubles the dice. These numbers come from D&D Beyond, so a character without a
+The character's player, the DM and admins also see the skills, the attacks and the spellbook.
+An attack's *to hit* button rolls the attack and its damage together, and a critical hit doubles
+the dice. The spellbook shows the spell slots left (as of the last D&D Beyond sync) and every
+spell by level; tap a spell to read its description, or its buttons to roll the attack, damage
+or healing. These numbers come from D&D Beyond, so a character without a
 D&D Beyond link shows only the ability checks and plain saves.
 
 ## NPCs (`/npcs`)

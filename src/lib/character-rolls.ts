@@ -28,6 +28,9 @@ export function wireCharacterRolls() {
     if (modeButton) return setMode(modeButton.dataset.rollMode as RollMode);
     const button = target.closest<HTMLElement>('.cs-roll');
     if (!button?.dataset.roll) return;
+    // A roll button in a spell row's summary rolls without opening the row (Chromium already
+    // leaves the row alone for buttons in a summary; this covers browsers that don't)
+    if (button.closest('summary')) e.preventDefault();
     const who = document.getElementById('character-page')?.dataset.characterName || 'Character';
     const what = button.dataset.rollName || '';
     const parts: RollPart[] = [{ label: button.dataset.rollLabel || what, expr: button.dataset.roll }];

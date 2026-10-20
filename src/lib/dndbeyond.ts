@@ -6,7 +6,7 @@
  * HP syncs all go through these functions. Checked against real sheets in e2e/dndbeyond.spec.ts.
  */
 
-import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetAttack, type SheetFeature, type SheetItem, type SheetSkill, type SheetSpellcasting } from './character-sheet';
+import { ABILITY_KEYS, type Ability, type CharacterSheet, type Proficiency, type SheetAttack, type SheetSkill, type SheetSpell, type SheetSpellbook, type SheetSpellcasting, type SheetSpellSlots } from './character-sheet';
 
 export interface DnDBeyondHPData {
   hp?: number;
@@ -218,8 +218,34 @@ export async function fetchDnDBeyondJson(url: string): Promise<any> {
   return response.json();
 }
 
+const getJson = async (url: string) => {
+  const response = await fetch(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ArandorCompanion/1.0)' }, signal: AbortSignal.timeout(10_000) });
+  if (!response.ok) throw new Error(`D&D Beyond answered ${response.status}`);
+  return response.json();
+};
+
+/**
+ * Spells some subclasses always have prepared (e.g. a Light Domain cleric's domain spells) are not
+ * in the character JSON; D&D Beyond's own sheet loads them per subclass. Adds them as
+ * `data.alwaysPreparedSpells` (shaped like `classSpells`). A failed request only leaves them out.
+ */
+export async function addSubclassSpells(json: any, fetchJson: (url: string) => Promise<any> = getJson): Promise<void> {
+  const classes = (json?.data?.classes || []).filter((c: any) => c.subclassDefinition?.id);
+  const lists = await Promise.all(classes.map(async (c: any) => {
+    try {
+      const answer = await fetchJson(`https://character-service.dndbeyond.com/character/v5/game-data/always-prepared-spells?classId=${c.subclassDefinition.id}&classLevel=${c.level}&sharingSetting=2`);
+      return { characterClassId: c.id, spells: Array.isArray(answer?.data) ? answer.data : [] };
+    } catch {
+      return { characterClassId: c.id, spells: [] };
+    }
+  }));
+  if (json?.data) json.data.alwaysPreparedSpells = lists;
+}
+
 export async function fetchDnDBeyondCharacter(url: string): Promise<DnDBeyondCharacterData> {
-  return parseDnDBeyondCharacter(await fetchDnDBeyondJson(url));
+  const json = await fetchDnDBeyondJson(url);
+  await addSubclassSpells(json);
+  return parseDnDBeyondCharacter(json);
 }
 
 /** Fetch HP data (current, max, temp, death saves) from a D&D Beyond character sheet. */
@@ -432,58 +458,260 @@ function spellcasting(data: any, modifiers: any[], mods: Record<Ability, number>
   }));
 }
 
-/** Spells with an attack roll and damage (cantrips scale with character level). */
-function spellAttacks(data: any, modifiers: any[], mods: Record<Ability, number>, prof: number): SheetAttack[] {
+interface SpellEntry {
+  spell: any;
+  ability: Ability | undefined;
+  className?: string;
+  source: string;
+  prepared: boolean;
+  granted: boolean; // from a feature, species, feat or item rather than the class spell list
+}
+
+/** Name of the feature, feat, species trait or item a spell comes from (an option names its parent feature). */
+function spellSource(data: any, componentId: number, fallback: string): string {
+  const d = data?.data || {};
+  const features = [
+    ...(d.classes || []).flatMap((c: any) => (c.classFeatures || []).map((f: any) => f.definition)),
+    ...(d.race?.racialTraits || []).map((t: any) => t.definition),
+    ...(d.feats || []).map((f: any) => f.definition),
+  ];
+  const named = (id: number) => features.find((f: any) => f?.id === id)?.name;
+  const option = Object.values(d.options || {}).flat().find((o: any) => o?.definition?.id === componentId) as any;
+  const item = (d.inventory || []).find((i: any) => i.definition?.id === componentId);
+  return named(componentId) || (option && named(option.componentId)) || item?.definition?.name || fallback;
+}
+
+/**
+ * Every spell the character has, the way the D&D Beyond Spells tab lists them: class spells
+ * (a wizard's whole spellbook, unprepared ones marked), subclass spells D&D Beyond adds itself
+ * (alwaysPreparedSpells, fetched separately), and spells from features, species, feats and
+ * equipped (attuned) items.
+ */
+function spellEntries(data: any): SpellEntry[] {
   const d = data?.data || {};
   const casters = spellcastingClasses(data);
   const fallback = casters.find((c) => (d.classes || []).find((x: any) => x.id === c.id)?.isStartingClass) ?? casters[0];
-  const level = totalLevel(data);
-  const options = Object.values(d.options || {}).flat().map((o: any) => o?.definition?.name || '');
-  const equippedItems = new Set((d.inventory || []).filter((i: any) => i.equipped).map((i: any) => i.definition?.id));
+  const usableItems = new Set((d.inventory || [])
+    .filter((i: any) => i.equipped && (!i.definition?.canAttune || i.isAttuned)).map((i: any) => i.definition?.id));
+  const entries: SpellEntry[] = [];
 
-  const entries: { spell: any; ability: Ability | undefined; className?: string }[] = [];
-  for (const cs of d.classSpells || []) {
-    const c = casters.find((x) => x.id === cs.characterClassId);
-    for (const spell of cs.spells || []) entries.push({ spell, ability: c?.ability, className: c?.name });
-  }
-  for (const [source, list] of Object.entries(d.spells || {})) {
-    for (const spell of (list as any[]) || []) {
-      if (source === 'item' && !equippedItems.has(spell.componentId)) continue;
-      const c = source === 'class' ? casters.find((x) => x.featureIds.has(spell.componentId)) : undefined;
-      const ability = spell.spellCastingAbilityId ? ABILITY_KEYS[spell.spellCastingAbilityId - 1] : (c ?? fallback)?.ability;
-      entries.push({ spell, ability, className: (c ?? (spell.spellCastingAbilityId ? undefined : fallback))?.name });
+  for (const list of [d.classSpells, d.alwaysPreparedSpells]) {
+    for (const cs of list || []) {
+      const c = casters.find((x) => x.id === cs.characterClassId);
+      const preparesSpells = (d.classes || []).find((x: any) => x.id === cs.characterClassId)?.definition?.spellPrepareType === 1;
+      for (const spell of cs.spells || []) {
+        if (!spell?.definition) continue;
+        // A wizard casts the rituals in their spellbook without preparing them
+        const ritualFromBook = !!spell.definition.ritual && c?.name === 'Wizard';
+        const prepared = list === d.alwaysPreparedSpells || !preparesSpells || spell.definition.level === 0 || !!spell.prepared || !!spell.alwaysPrepared || ritualFromBook;
+        entries.push({ spell, ability: c?.ability, className: c?.name, source: c?.name || 'Class', prepared, granted: false });
+      }
     }
   }
+  for (const [kind, list] of Object.entries(d.spells || {})) {
+    for (const spell of (list as any[]) || []) {
+      if (!spell?.definition || (kind === 'item' && !usableItems.has(spell.componentId))) continue;
+      const c = kind === 'class' ? casters.find((x) => x.featureIds.has(spell.componentId)) : undefined;
+      const ability = spell.spellCastingAbilityId ? ABILITY_KEYS[spell.spellCastingAbilityId - 1] : (c ?? fallback)?.ability;
+      const className = (c ?? (spell.spellCastingAbilityId ? undefined : fallback))?.name;
+      entries.push({ spell, ability, className, source: spellSource(data, spell.componentId, kind[0].toUpperCase() + kind.slice(1)), prepared: true, granted: true });
+    }
+  }
+  return entries;
+}
 
-  const attacks: SheetAttack[] = [];
-  const seen = new Set<string>();
-  for (const { spell, ability, className } of entries) {
-    const def = spell.definition;
-    const damage = (def?.modifiers || []).find((m: any) => m.type === 'damage' && m.die?.diceString);
-    if (!def?.attackType || def.asPartOfWeaponAttack || !damage || !ability) continue;
-    const name = (d.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === SPELL_ENTITY && String(c.valueId) === String(spell.id))?.value || def.name;
-    if (seen.has(name)) continue;
-    seen.add(name);
-    let dice: string = damage.die.diceString;
+const spellName = (data: any, spell: any): string =>
+  (data?.data?.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === SPELL_ENTITY && String(c.valueId) === String(spell.id))?.value || spell.definition.name;
+
+const diceOf = (die: any): string | null => (die?.diceCount && die?.diceValue ? `${die.diceCount}d${die.diceValue}` : null);
+
+/** Damage (or healing) dice of a spell at its own level; cantrips scale with character level. */
+function spellDice(data: any, entry: SpellEntry, modifiers: any[], mods: Record<Ability, number>): { damage: string | null; damageType: string | null; healing: string | null } {
+  const def = entry.spell.definition;
+  const out = { damage: null as string | null, damageType: null as string | null, healing: null as string | null };
+  const damage = (def.modifiers || []).find((m: any) => m.type === 'damage' && (m.die?.diceValue || m.die?.fixedValue));
+  if (damage) {
+    let dice = diceOf(damage.die);
     if (def.level === 0) {
       const steps = (damage.atHigherLevels?.higherLevelDefinitions || [])
-        .filter((h: any) => h.level <= level && h.dice?.diceString).sort((a: any, b: any) => b.level - a.level);
-      if (steps[0]) dice = steps[0].dice.diceString;
+        .filter((h: any) => h.level <= totalLevel(data) && diceOf(h.dice)).sort((a: any, b: any) => b.level - a.level);
+      if (steps[0]) dice = diceOf(steps[0].dice);
     }
-    let mod = damage.die.fixedValue || 0;
-    if (def.name === 'Eldritch Blast' && options.some((o) => o.startsWith('Agonizing Blast'))) mod += mods[ability];
-    if (def.level === 0 && className) mod += bonusFor(modifiers, `${className.toLowerCase()}-cantrip-damage`, mods);
+    let mod = (damage.die.fixedValue || 0) + (damage.usePrimaryStat && entry.ability ? mods[entry.ability] : 0);
+    const options = Object.values(data?.data?.options || {}).flat().map((o: any) => o?.definition?.name || '');
+    if (def.name === 'Eldritch Blast' && entry.ability && options.some((o) => o.startsWith('Agonizing Blast'))) mod += mods[entry.ability];
+    if (def.level === 0 && entry.className) mod += bonusFor(modifiers, `${entry.className.toLowerCase()}-cantrip-damage`, mods);
+    // True Strike's extra damage starts at 0d6 and only gains dice at higher character levels
+    if (dice || mod) out.damage = formatDamage(dice, mod);
+    out.damageType = out.damage ? damage.friendlySubtypeName || damage.subType || null : null;
+  }
+  // Dice only: Revivify's "returns with 1 hit point" is not healing to roll
+  const heal = (def.modifiers || []).find((m: any) => m.type === 'bonus' && m.subType === 'hit-points' && diceOf(m.die));
+  if (heal) out.healing = formatDamage(diceOf(heal.die), (heal.die.fixedValue || 0) + (heal.usePrimaryStat && entry.ability ? mods[entry.ability] : 0));
+  return out;
+}
+
+const spellAttackBonus = (entry: SpellEntry, modifiers: any[], mods: Record<Ability, number>, prof: number) =>
+  prof + mods[entry.ability!] + bonusFor(modifiers, 'spell-attacks', mods);
+
+const spellSaveDc = (entry: SpellEntry, modifiers: any[], mods: Record<Ability, number>, prof: number) =>
+  entry.spell.overrideSaveDc ?? 8 + prof + mods[entry.ability!] + bonusFor(modifiers, 'spell-save-dc', mods)
+    + (entry.className ? bonusFor(modifiers, `${entry.className.toLowerCase()}-spell-save-dc`, mods) : 0);
+
+const fromItem = (entry: SpellEntry) => entry.granted && entry.spell.componentTypeId === ITEM_COMPONENT_TYPE && !entry.spell.spellCastingAbilityId;
+
+/** Prepared spells with an attack roll and damage, for the attacks list. */
+function spellAttacks(data: any, entries: SpellEntry[], modifiers: any[], mods: Record<Ability, number>, prof: number): SheetAttack[] {
+  const attacks: SheetAttack[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    const def = entry.spell.definition;
+    if (!entry.prepared || !def.attackType || def.asPartOfWeaponAttack || !entry.ability) continue;
+    const { damage, damageType } = spellDice(data, entry, modifiers, mods);
+    const name = spellName(data, entry.spell);
+    if (!damage || !/d/.test(damage) || seen.has(name)) continue;
+    seen.add(name);
     attacks.push({
       name, kind: 'spell',
       range: def.range?.rangeValue ? `${def.range.rangeValue} ft.` : def.range?.origin || '',
-      toHit: prof + mods[ability] + bonusFor(modifiers, 'spell-attacks', mods),
+      toHit: spellAttackBonus(entry, modifiers, mods, prof),
       saveDc: null,
-      damage: formatDamage(dice, mod),
-      damageType: damage.friendlySubtypeName || damage.subType || null,
+      damage,
+      damageType,
       notes: def.level === 0 ? 'Cantrip' : `Level ${def.level}${def.concentration ? ', concentration' : ''}`,
     });
   }
   return attacks;
+}
+
+// ── Spellbook ────────────────────────────────────────────────────────────────
+
+// Multiclass spellcaster table (PHB): slots per spell level for caster levels 1–20
+const CASTER_SLOTS = [
+  [], [2], [3], [4, 2], [4, 3], [4, 3, 2], [4, 3, 3], [4, 3, 3, 1], [4, 3, 3, 2], [4, 3, 3, 3, 1], [4, 3, 3, 3, 2],
+  [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1],
+  [4, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 2, 1, 1, 1, 1], [4, 3, 3, 3, 3, 1, 1, 1, 1], [4, 3, 3, 3, 3, 2, 1, 1, 1], [4, 3, 3, 3, 3, 2, 2, 1, 1],
+];
+
+/** Spell slots (one class: its own table; several: the multiclass table) and Warlock pact slots. */
+function spellSlots(data: any): { slots: SheetSpellSlots[]; pact: SheetSpellSlots | null } {
+  const d = data?.data || {};
+  const used = (list: any[], level: number) => (list || []).find((s: any) => s.level === level)?.used || 0;
+  let pact: SheetSpellSlots | null = null;
+  const casters: { level: number; rules: any }[] = [];
+  for (const c of d.classes || []) {
+    const rules = c.definition?.canCastSpells ? c.definition.spellRules : c.subclassDefinition?.canCastSpells ? c.subclassDefinition.spellRules : null;
+    if (!rules?.levelSpellSlots) continue;
+    const table: number[] = rules.levelSpellSlots[c.level] || [];
+    if (c.definition.name === 'Warlock') {
+      const i = table.findIndex((n) => n > 0);
+      if (i >= 0) pact = { level: i + 1, total: table[i], used: used(d.pactMagic, i + 1) };
+    } else casters.push({ level: c.level, rules });
+  }
+  let table: number[] = [];
+  if (casters.length === 1) table = casters[0].rules.levelSpellSlots[casters[0].level] || [];
+  else if (casters.length > 1) {
+    const casterLevel = casters.reduce((sum, c) => {
+      const div = c.rules.multiClassSpellSlotDivisor || 1;
+      return sum + (c.rules.multiClassSpellSlotRounding === 2 ? Math.ceil(c.level / div) : Math.floor(c.level / div));
+    }, 0);
+    table = CASTER_SLOTS[Math.min(casterLevel, 20)];
+  }
+  const slots = table.map((total, i) => ({ level: i + 1, total, used: used(d.spellSlots, i + 1) })).filter((s) => s.total > 0);
+  return { slots, pact };
+}
+
+const ACTIVATION: Record<number, string> = { 1: 'action', 2: 'no action', 3: 'bonus action', 4: 'reaction', 6: 'minute', 7: 'hour' };
+const plural = (n: number, unit: string) => `${n} ${unit}${n === 1 ? '' : 's'}`;
+
+function castingTime(def: any): string {
+  const { activationTime: n = 1, activationType: type } = def.activation || {};
+  if (type === 6 || type === 7) return plural(n, ACTIVATION[type]);
+  return ACTIVATION[type] ? `${n} ${ACTIVATION[type]}` : def.castingTimeDescription || 'Special';
+}
+
+function spellRange(def: any): string {
+  const r = def.range || {};
+  const area = r.aoeType && r.aoeValue ? `${r.aoeValue} ft. ${String(r.aoeType).toLowerCase()}` : '';
+  const base = r.origin === 'Ranged' ? `${r.rangeValue} ft.` : r.origin || '';
+  return area ? `${base} (${area})` : base;
+}
+
+function spellDuration(def: any): string {
+  const dur = def.duration || {};
+  if (dur.durationType === 'Time' || dur.durationType === 'Concentration') return dur.durationUnit ? plural(dur.durationInterval || 1, dur.durationUnit.toLowerCase()) : 'Special';
+  return dur.durationType || '';
+}
+
+function spellComponents(def: any): string {
+  const parts = (def.components || []).map((c: number) => ({ 1: 'V', 2: 'S', 3: 'M' } as Record<number, string>)[c]).filter(Boolean);
+  return parts.map((p: string) => (p === 'M' && def.componentsDescription ? `M (${def.componentsDescription})` : p)).join(', ');
+}
+
+const RESET: Record<number, string> = { 1: 'SR', 2: 'LR', 3: 'Dawn' };
+
+/** How the spell is cast when it isn't a normal cast with a slot: limited uses, item charges, at will. */
+function spellUses(entry: SpellEntry): string {
+  const { spell } = entry;
+  const lu = spell.limitedUse;
+  if (spell.componentTypeId === ITEM_COMPONENT_TYPE && lu?.minNumberConsumed) return lu.minNumberConsumed === 1 ? '1 charge' : `${lu.minNumberConsumed} charges`;
+  if (lu?.maxUses) return `${lu.maxUses}/${RESET[lu.resetType] || 'rest'}`;
+  if (entry.granted && spell.definition.level > 0 && !spell.usesSpellSlot && !lu) return 'At will';
+  return '';
+}
+
+/** D&D Beyond description HTML → plain text paragraphs. */
+const paragraphs = (html: string) =>
+  String(html || '').split(/<\/p>|<br\s*\/?>|<\/li>|<\/h\d>/i).map((p) => plainText(p, Infinity)).filter(Boolean).join('\n\n');
+
+function spellbook(data: any, entries: SpellEntry[], modifiers: any[], mods: Record<Ability, number>, prof: number): SheetSpellbook | null {
+  const { slots, pact } = spellSlots(data);
+  const casting = spellcasting(data, modifiers, mods, prof);
+  const byName = new Map<string, SheetSpell>();
+  for (const entry of entries) {
+    const { spell } = entry;
+    const def = spell.definition;
+    const name = spellName(data, spell);
+    const uses = spellUses(entry);
+    const known = byName.get(name);
+    if (known) {
+      // The same spell from another source, or its free use next to the cast with a slot
+      if (!known.source.split(' · ').includes(entry.source)) known.source += ` · ${entry.source}`;
+      if (uses && !known.uses) known.uses = uses;
+      known.prepared ||= entry.prepared;
+      known.alwaysPrepared ||= !!spell.alwaysPrepared;
+      continue;
+    }
+    // True Strike and the like ride on a weapon attack: no spell attack roll of their own
+    const attack = !!(def.attackType || def.requiresAttackRoll) && !def.asPartOfWeaponAttack && !!entry.ability;
+    const save = !!def.saveDcAbilityId && (!!entry.ability || spell.overrideSaveDc != null);
+    // An item's spell uses the character's best spell save DC and attack
+    const best = fromItem(entry) && casting.length > 0;
+    byName.set(name, {
+      name,
+      ...(name !== def.name ? { baseName: def.name } : {}),
+      level: def.level,
+      school: def.school || '',
+      source: entry.source,
+      prepared: entry.prepared,
+      alwaysPrepared: !!spell.alwaysPrepared,
+      castingTime: castingTime(def),
+      range: spellRange(def),
+      components: spellComponents(def),
+      duration: spellDuration(def),
+      concentration: !!def.concentration,
+      ritual: !!def.ritual,
+      toHit: attack ? (best ? Math.max(...casting.map((c) => c.attack)) : spellAttackBonus(entry, modifiers, mods, prof)) : null,
+      saveDc: !attack && save ? (best && spell.overrideSaveDc == null ? Math.max(...casting.map((c) => c.saveDc)) : spellSaveDc(entry, modifiers, mods, prof)) : null,
+      saveAbility: !attack && save ? ABILITY_KEYS[def.saveDcAbilityId - 1] : null,
+      ...spellDice(data, entry, modifiers, mods),
+      uses,
+      description: paragraphs(def.description),
+    });
+  }
+  if (byName.size === 0 && slots.length === 0 && !pact) return null;
+  const spells = [...byName.values()].sort((a, b) => a.level - b.level || Number(b.prepared) - Number(a.prepared) || a.name.localeCompare(b.name));
+  return { slots, pact, spells };
 }
 
 const ENTITIES: Record<string, string> = { amp: '&', lt: '<', gt: '>', quot: '"', '#39': "'", apos: "'", nbsp: ' ' };
@@ -500,39 +728,6 @@ export function plainText(html: string, max = 300): string {
   if (text.length <= max) return text;
   const cut = text.slice(0, max - 1);
   return `${cut.slice(0, Math.max(cut.lastIndexOf(' '), max / 2)).trimEnd()}…`;
-}
-
-// Builder bookkeeping rather than something a player looks up at the table
-const SKIP_FEATURE = /Ability Score (Improvement|Increase)|^Core .+ Traits$|Subclass$|^Proficiencies$|^Hit Points$|^Creature Type$|^Size$|^Speed$|^Languages$/;
-
-function features(data: any): SheetFeature[] {
-  const d = data?.data || {};
-  const out: SheetFeature[] = [];
-  const seen = new Set<string>();
-  const add = (rawName: string, source: string, html: string) => {
-    const name = String(rawName || '').replace(/^\d+:\s*/, '');
-    if (!name || SKIP_FEATURE.test(name) || seen.has(name)) return;
-    seen.add(name);
-    out.push({ name, source, description: plainText(html) });
-  };
-  for (const c of d.classes || []) {
-    for (const f of c.classFeatures || []) {
-      if ((f.definition?.requiredLevel ?? 0) <= c.level) add(f.definition?.name, c.definition?.name || 'Class', f.definition?.description || f.definition?.snippet);
-    }
-  }
-  for (const t of d.race?.racialTraits || []) add(t.definition?.name, d.race?.fullName || 'Species', t.definition?.description || t.definition?.snippet);
-  for (const f of d.feats || []) add(f.definition?.name, 'Feat', f.definition?.description || f.definition?.snippet);
-  return out;
-}
-
-function inventory(data: any): SheetItem[] {
-  const d = data?.data || {};
-  return (d.inventory || []).map((i: any) => ({
-    name: (d.characterValues || []).find((c: any) => c.typeId === VALUE.customName && c.valueTypeId === ITEM_ENTITY && String(c.valueId) === String(i.id))?.value || i.definition?.name || 'Item',
-    quantity: i.quantity || 1,
-    equipped: !!i.equipped,
-    attuned: !!i.isAttuned,
-  })).sort((a: SheetItem, b: SheetItem) => Number(b.equipped) - Number(a.equipped) || a.name.localeCompare(b.name));
 }
 
 export function buildSheet(data: any): CharacterSheet {
@@ -563,8 +758,9 @@ export function buildSheet(data: any): CharacterSheet {
   const passive = (key: string) => 10 + skills.find((s) => s.key === key)!.bonus + bonusFor(modifiers, `passive-${key}`, mods);
 
   const initiativeProf = proficiencyFor(modifiers, 'initiative');
+  const spells = spellEntries(data);
   return {
-    version: 1,
+    version: 2,
     proficiencyBonus: prof,
     ac: armorClass(data, modifiers, mods),
     initiative: mods.dex + Math.max(proficiencyValue(initiativeProf, prof), proficiencyValue(allChecks, prof)) + checkBonus + bonusFor(modifiers, 'initiative', mods),
@@ -575,8 +771,7 @@ export function buildSheet(data: any): CharacterSheet {
     passiveInsight: passive('insight'),
     skills,
     spellcasting: spellcasting(data, modifiers, mods, prof),
-    attacks: [...weaponAttacks(data, modifiers, mods, prof), ...spellAttacks(data, modifiers, mods, prof)],
-    features: features(data),
-    inventory: inventory(data),
+    attacks: [...weaponAttacks(data, modifiers, mods, prof), ...spellAttacks(data, spells, modifiers, mods, prof)],
+    spellbook: spellbook(data, spells, modifiers, mods, prof),
   };
 }

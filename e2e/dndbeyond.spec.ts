@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
-import { abilityScores, buildSheet, calculateHitPoints } from '../src/lib/dndbeyond';
+import { abilityScores, addSubclassSpells, buildSheet, calculateHitPoints } from '../src/lib/dndbeyond';
 
 // D&D Beyond character JSON (trimmed to the fields we read) for the seven linked characters.
 // The expected numbers are what the D&D Beyond character sheet itself shows (checked 2026-10-19).
@@ -76,26 +76,76 @@ test.describe('D&D Beyond sheet', () => {
   }
 });
 
-test.describe('D&D Beyond features and inventory', () => {
+// Spell slots and spell rows read off the D&D Beyond Spells tab (checked 2026-10-20)
+const expectedSpells: Record<string, any> = JSON.parse(readFileSync(new URL('./fixtures/dndbeyond/expected-spells.json', import.meta.url), 'utf8'));
+const ABBR: Record<string, string> = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' };
+
+test.describe('D&D Beyond spellbook', () => {
   test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
 
-  test('features are short plain text', () => {
-    const { features } = buildSheet(load('moronur'));
-    const names = features.map((f) => f.name);
-    expect(names).toContain('Stunning Strike');
-    expect(names).toContain('Tough');
-    expect(names).not.toContain('Ability Score Improvement');
-    for (const f of features) {
-      expect(f.description, f.name).not.toMatch(/[<>]|&amp;|\{\{/);
-      expect(f.description.length, f.name).toBeLessThanOrEqual(300);
-    }
+  for (const [name, e] of Object.entries(expectedSpells).filter(([k]) => !k.startsWith('_'))) {
+    test(`${name}: spell slots and pact slots match`, () => {
+      const { spellbook } = buildSheet(load(name));
+      expect(spellbook!.slots.map((s) => [s.level, s.total, s.used])).toEqual(e.slots);
+      expect(spellbook!.pact && [spellbook!.pact.level, spellbook!.pact.total, spellbook!.pact.used]).toEqual(e.pact);
+    });
+
+    test(`${name}: the prepared spells are the ones D&D Beyond shows, with their numbers`, () => {
+      const prepared = buildSheet(load(name)).spellbook!.spells.filter((s) => s.prepared);
+      expect(prepared.map((s) => s.name).sort()).toEqual(e.names);
+      // Spells D&D Beyond only shows upcast (a Warlock's at the pact level): hit/DC only
+      const upcastOnly = new Set(e.rows.filter((r: unknown[]) => r[3] === 'upcast only').map((r: unknown[]) => r[0]));
+      const rows = prepared.map((s) => [
+        s.name, upcastOnly.has(s.name) ? null : s.level,
+        s.toHit != null ? `+${s.toHit}` : s.saveDc != null ? `${ABBR[s.saveAbility!]} ${s.saveDc}` : null,
+        upcastOnly.has(s.name) ? 'upcast only' : s.damage ?? s.healing,
+      ]);
+      expect(rows.sort((a, b) => String(a[0]).localeCompare(String(b[0])))).toEqual(e.rows);
+    });
+  }
+
+  test('characters without spells have no spellbook', () => {
+    expect(buildSheet(load('moronur')).spellbook).toBeNull();
+    expect(buildSheet(load('volrak')).spellbook).toBeNull();
   });
 
-  test('inventory lists equipped items first, with attunement', () => {
-    const { inventory } = buildSheet(load('alvar'));
-    expect(inventory.find((i) => i.name === 'Ring of the Ram')).toMatchObject({ equipped: true, attuned: true });
-    expect(inventory.find((i) => i.name === 'Potion of Healing')).toMatchObject({ equipped: false });
-    const firstUnequipped = inventory.findIndex((i) => !i.equipped);
-    expect(inventory.slice(firstUnequipped).every((i) => !i.equipped)).toBe(true);
+  test('a wizard keeps unprepared spells in the spellbook, after the prepared ones', () => {
+    const { spells } = buildSheet(load('morrigan')).spellbook!;
+    expect(spells.find((s) => s.name === 'Cone of Cold')).toMatchObject({ prepared: false, level: 5 });
+    const fifth = spells.filter((s) => s.level === 5);
+    expect(fifth.findIndex((s) => !s.prepared)).toBeGreaterThan(fifth.findLastIndex((s) => s.prepared));
+  });
+
+  test('spell rows carry what the table needs', () => {
+    const { spells } = buildSheet(load('sinatah')).spellbook!;
+    const byName = (n: string) => spells.find((s) => s.name === n)!;
+    expect(byName('Hex')).toMatchObject({
+      level: 1, school: 'Enchantment', source: 'Warlock', castingTime: '1 bonus action', range: '90 ft.',
+      components: 'V, S, M (the petrified eye of a newt)', duration: '1 hour', concentration: true, ritual: false,
+    });
+    expect(byName('Burning Hands')).toMatchObject({ range: 'Self (15 ft. cone)', duration: 'Instantaneous', alwaysPrepared: true, source: 'Fiend Spells' });
+    expect(byName('Fog Cloud')).toMatchObject({ source: 'Staff of Frost', uses: '1 charge' });
+    expect(byName('Misty Step')).toMatchObject({ source: 'Fey Touched', uses: '1/LR' });
+    expect(byName('Jump')).toMatchObject({ uses: 'At will' });
+    expect(byName('Eldritch Blast').uses).toBe('');
+    for (const s of spells) expect(s.description, s.name).not.toMatch(/<[a-z/]|&amp;|\{\{/);
+    // Renamed on D&D Beyond: the sheet's name, and the spell it is
+    expect(buildSheet(load('alvar')).spellbook!.spells.find((s) => s.name === 'Avada Kedavra')).toMatchObject({ baseName: 'Guiding Bolt' });
+  });
+
+  test('the sync adds subclass spells D&D Beyond keeps outside the character data', async () => {
+    const data = load('alvar');
+    const domain = data.data.alwaysPreparedSpells;
+    delete data.data.alwaysPreparedSpells;
+    const asked: string[] = [];
+    await addSubclassSpells(data, async (url) => { asked.push(url); return { data: domain[0].spells }; });
+    expect(asked).toEqual([expect.stringContaining('always-prepared-spells?classId=2190893&classLevel=12')]);
+    expect(buildSheet(data).spellbook!.spells.map((s) => s.name)).toContain('Daylight');
+
+    // D&D Beyond down: the sheet still builds, without those spells
+    const offline = load('alvar');
+    delete offline.data.alwaysPreparedSpells;
+    await addSubclassSpells(offline, async () => { throw new Error('503'); });
+    expect(buildSheet(offline).spellbook!.spells.map((s) => s.name)).not.toContain('Daylight');
   });
 });
