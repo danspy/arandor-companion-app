@@ -4,6 +4,8 @@ import Button from '../../components/Button.astro';
 import { db, Quest, DiaryEntry, NPC, Location, Character, TimelineEntry, LibraryEntry, eq, inArray } from '@/db';
 import { getUserRole } from '../../lib/auth';
 import { renderMarkdown, markdownExcerpt } from '../../utils/markdown';
+import { MONTH_NAMES } from '../../lib/fantasy-calendar';
+import { byStory } from '../../lib/timeline-layout';
 
 const { id } = Astro.params;
 if (!id) return Astro.redirect('/quests');
@@ -25,7 +27,7 @@ const diaryEntries = (await db.select().from(DiaryEntry))
 
 const timelineEntries = (await db.select().from(TimelineEntry))
   .filter(entry => entry.entryType !== 'label' && includesQuest(entry.questIds))
-  .sort((a, b) => a.year - b.year || (a.month ?? 0) - (b.month ?? 0) || (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+  .sort(byStory);
 
 const libraryEntries = (await db.select().from(LibraryEntry))
   .filter(entry => includesQuest(entry.questIds))
@@ -269,9 +271,9 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
         <ul class="space-y-3">
           {timelineEntries.map(entry => (
             <li class="pl-3" style="border-left:2px solid var(--border-gold);">
-              <div class="t-body-text font-medium">{entry.headline}</div>
+              <a href={`/library/timeline/${entry.id}`} class="t-link font-medium">{entry.headline}</a>
               <p class="t-faint text-xs">
-                Year {entry.year}{entry.month ? `, month ${entry.month}` : ''}
+                {entry.month ? `${MONTH_NAMES[entry.month]} ` : ''}{entry.year}
                 {entry.shortDescription && ` · ${entry.shortDescription}`}
               </p>
             </li>

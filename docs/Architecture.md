@@ -24,7 +24,7 @@ src/
   pages/            one file per URL (Astro file routing)
     api/            JSON endpoints, see API-Reference.md
     tools/          dice roller, initiative tracker, DM screen, music
-    library/        docs, timeline, single document
+    library/        docs, timeline, single document, timeline/[id] (one event)
     diary/ characters/ npcs/ locations/   detail pages ([id].astro)
     uploads/        serves uploaded files
     display.astro   full-screen player display (no main layout)
