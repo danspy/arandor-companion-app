@@ -507,7 +507,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
   </script>
 
   <script>
-    import { COMBATANT_CHANGED_EVENT, toggleStatBlock } from '../../lib/statblock-panel';
+    import { COMBATANT_CHANGED_EVENT, toggleStatBlock, toggleCharacterSheet } from '../../lib/statblock-panel';
+    import { wireCharacterRolls } from '../../lib/character-rolls';
     import { tagKind } from '../../lib/conditions';
     import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
@@ -1619,6 +1620,17 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const btn = e.target.closest?.('.statblock-btn');
       if (btn && document.getElementById('initiativePreview')) toggleStatBlock(btn.dataset.creatureId, btn.dataset.name, btn.dataset.entryId);
     });
+    // Party names open the character's sheet in the side panel (Ctrl/middle click still opens the page).
+    // Capture phase: the ClientRouter's own link handler would navigate first otherwise.
+    document.addEventListener('click', (e) => {
+      const link = e.target.closest?.('[data-party-sheet]');
+      if (!link || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+      const template = document.querySelector(`template[data-party-sheet-for="${CSS.escape(link.dataset.partySheet)}"]`);
+      if (!template) return;
+      e.preventDefault();
+      toggleCharacterSheet(link.dataset.partySheet, link.textContent.trim(), template.content.cloneNode(true));
+    }, true);
+    wireCharacterRolls();
     wireHpControls();
     // After damage/healing (preview or panel): refresh, so a combatant at 0 shows right away
     for (const event of [HP_CHANGED_EVENT, COMBATANT_CHANGED_EVENT]) {

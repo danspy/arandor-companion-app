@@ -16,6 +16,8 @@ export interface PartyRow {
   passives: Record<Passive, number> | null;
   saves: Record<Ability, number> | null;
   best: Record<Passive, boolean>; // the party's highest in that column (ties all count)
+  stats: Record<string, number | undefined> | null; // ability scores, for the sheet in the side panel
+  sheet: CharacterSheet | null;
 }
 
 interface PartyCharacter {
@@ -25,6 +27,7 @@ interface PartyCharacter {
   hp: number | null;
   maxHp: number | null;
   tempHp: number | null;
+  stats: unknown;
   sheet: unknown;
 }
 
@@ -45,6 +48,8 @@ export function partyOverview(characters: PartyCharacter[]): PartyRow[] {
       passives: sheet ? { perception: sheet.passivePerception, investigation: sheet.passiveInvestigation, insight: sheet.passiveInsight } : null,
       saves: sheet ? Object.fromEntries(ABILITY_KEYS.map((a) => [a, sheet.saves[a].bonus])) as Record<Ability, number> : null,
       best: { perception: false, investigation: false, insight: false },
+      stats: (c.stats as Record<string, number | undefined> | null) ?? null,
+      sheet,
     };
   });
   for (const p of PASSIVES) {

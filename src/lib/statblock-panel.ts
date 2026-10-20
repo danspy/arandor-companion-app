@@ -2,7 +2,8 @@
 // one combatant (initiative, HP, AC, notes, in combat, conditions), damage/heal, its stat block
 // if it has one (or a way to link one), so the fight stays in view. Every change is saved as
 // soon as a field is left, through PATCH /api/initiative/[id], and announced as
-// COMBATANT_CHANGED_EVENT so the page can update. A stat block can also be shown on its own.
+// COMBATANT_CHANGED_EVENT so the page can update. A stat block, or a party character's sheet
+// (DM screen), can also be shown on its own.
 
 import { renderStatBlock } from './statblock-view';
 import { formatHp, hpControlHtml, wireHpControls, HP_CHANGED_EVENT, type HpEntry } from './hp-control';
@@ -53,7 +54,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, className?: string, t
 };
 
 /** The combatant whose panel is open (an initiative entry id), if any. */
-export const openCombatantId = () => (current && !current.startsWith('creature:') && panel?.classList.contains('is-open') ? current : null);
+export const openCombatantId = () => (current && !/^(creature|character):/.test(current) && panel?.classList.contains('is-open') ? current : null);
 
 export function closeStatBlock() {
   if (!panel) return;
@@ -73,14 +74,15 @@ function show(p: HTMLElement, key: string) {
   document.documentElement.classList.add('sb-panel-open');
 }
 
-function bar(title: string, creatureId: string | null) {
+function bar(title: string, creatureId: string | null, page?: { href: string; title: string }) {
   const b = el('div', 'sb-panel-bar');
   b.append(el('span', 'sb-panel-who', title));
   const links = el('div', 'flex items-center gap-3');
-  if (creatureId) {
+  if (creatureId) page = { href: `/tools/bestiary/${encodeURIComponent(creatureId)}`, title: 'Open the stat block page' };
+  if (page) {
     const open = el('a', 't-link text-sm', 'Open');
-    open.href = `/tools/bestiary/${encodeURIComponent(creatureId)}`;
-    open.title = 'Open the stat block page';
+    open.href = page.href;
+    open.title = page.title;
     links.append(open);
   }
   const close = el('button', 't-icon-btn', '✕');
@@ -131,6 +133,15 @@ export async function toggleStatBlock(creatureId: string, combatantName: string,
   if (current !== key) return;
   if (!res.ok) return p.replaceChildren(bar('', null), document.createTextNode('Could not load the stat block.'));
   p.replaceChildren(bar('Stat block', creatureId), renderStatBlock(await res.json(), { rollerName: combatantName, showNotes: true }));
+}
+
+/** A party character's sheet (already rendered by the page): open it, or close it when it is open. */
+export function toggleCharacterSheet(characterId: string, name: string, sheet: Node) {
+  const p = ensurePanel();
+  const key = `character:${characterId}`;
+  if (current === key && p.classList.contains('is-open')) return closeStatBlock();
+  show(p, key);
+  p.replaceChildren(bar(name, null, { href: `/characters/${encodeURIComponent(characterId)}`, title: 'Open the character page' }), sheet);
 }
 
 // ── Quick edit ──────────────────────────────────────────────────────────────
