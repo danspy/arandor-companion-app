@@ -52,9 +52,14 @@ The entry page shows everything with a gallery viewer, previous/next session but
 - **Docs** (`/library/docs`): lore documents in Markdown with tags, an optional linked
   location and linked quests; search and tag filter. Linked quests show on the document and
   under **From the Library** on each quest's page.
-- **Timeline** (`/library/timeline`): the history of the world by year. *Events* have a
-  headline, short and full description, image, and links to sessions, documents, NPCs, places,
-  characters and quests. *Labels* mark eras or jumps ("100 years later").
+- **Timeline** (`/library/timeline`): the history of the world as a chronicle, top to bottom.
+  *Events* are cards (headline, short and full description, image, and links to sessions,
+  documents, NPCs, places, characters and quests); each has its own page
+  (`/library/timeline/<id>`) with *previous / next* to read on in story order and *Show on
+  timeline*. *Notes* (entry type `label`) are a short line next to their year, e.g. "Anvil
+  brennt". Stretches of more than 50 years without entries shrink to a "· 273 years ·" marker;
+  the bar at the top shows every entry on a true scale and jumps to it.
+  `/library/timeline#<id>` scrolls to an entry and highlights it.
 
 ## Characters (`/characters`)
 
@@ -76,7 +81,7 @@ passive Investigation and Insight. These numbers come from D&D Beyond, so a char
 D&D Beyond link shows only the ability checks and plain saves.
 
 **In the campaign**, further down the page, lists the sessions the character was in (from the
-diary), the quests and NPCs of those sessions, and the timeline events linked to the character.
+diary), the quests and NPCs of those sessions, and the timeline events linked to the character (each links to its event page).
 Long lists show the newest few; *Show all* opens the rest. The character's player, the DM and
 admins also get a **Notes** box there for debts, promises and plans; nobody else sees it.
 
@@ -105,7 +110,7 @@ description, priority, status active/completed/failed).
 
 Each quest has its own page (`/quests/<id>`): description, the diary entries that list the
 quest, and the NPCs, locations and party members of those sessions (with how many sessions
-each appears in), plus timeline events linked to the quest. Quests are linked from a diary
+each appears in), plus timeline events linked to the quest (linking to their event pages). Quests are linked from a diary
 entry's or timeline event's **Quests** field; NPC and location pages list the quests of their
 diary appearances. DMs can complete, fail, reactivate, edit and delete a quest from its page.
 

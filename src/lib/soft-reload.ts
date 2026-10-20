@@ -8,7 +8,10 @@ import { navigate } from 'astro:transitions/client';
 export function softReload(): Promise<void> {
   const { scrollX, scrollY } = window;
   document.addEventListener('astro:after-swap', () => window.scrollTo(scrollX, scrollY), { once: true });
-  return navigate(location.href, { history: 'replace' });
+  // Without the #hash: the router takes the same URL with a hash for a jump within the page and fetches nothing
+  const url = new URL(location.href);
+  url.hash = '';
+  return navigate(url.href, { history: 'replace' });
 }
 
 /** Go to another page of the app without a full reload. */

@@ -1,0 +1,163 @@
+---
+// One timeline event: what the character page, the quest page and the timeline's cards link to.
+// Previous / next step through the events in story order, so the timeline reads like a book.
+import Layout from '../../../layouts/Layout.astro';
+import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest, eq, inArray } from '@/db';
+import { isAuthenticated } from '../../../lib/auth';
+import { MONTH_NAMES } from '../../../lib/fantasy-calendar';
+import { storyEvents } from '../../../lib/timeline-layout';
+import { renderMarkdown, markdownExcerpt } from '../../../utils/markdown';
+
+const { id } = Astro.params;
+if (!id) return Astro.redirect('/library/timeline');
+
+const all = await db.select().from(TimelineEntry);
+const entry = all.find(e => e.id === id);
+if (!entry) return Astro.redirect('/library/timeline');
+// Notes have no page of their own: show them where they sit
+if (entry.entryType === 'label' || !entry.headline) return Astro.redirect(`/library/timeline#${id}`);
+
+const events = storyEvents(all);
+const index = events.findIndex(e => e.id === id);
+const previous = events[index - 1];
+const next = events[index + 1];
+
+const canEdit = isAuthenticated(Astro.cookies);
+const date = (e: { year: number; month: number | null }) => `${e.month ? `${MONTH_NAMES[e.month]} ` : ''}${e.year}`;
+
+const ids = (value: unknown): string[] => (Array.isArray(value) ? value : []);
+// In the order they were linked; ids that no longer exist drop out
+const linked = async <T extends { id: string }>(table: any, wanted: unknown, columns?: Record<string, unknown>): Promise<T[]> => {
+  const list = ids(wanted);
+  if (!list.length) return [];
+  const rows: T[] = await (columns ? db.select(columns as any) : db.select()).from(table).where(inArray(table.id, list));
+  return list.map(i => rows.find(r => r.id === i)).filter((r): r is T => r != null);
+};
+
+const [diaryEntries, docs, npcs, locations, characters, quests] = await Promise.all([
+  linked<typeof DiaryEntry.$inferSelect>(DiaryEntry, entry.diaryEntryIds),
+  linked<typeof LibraryEntry.$inferSelect>(LibraryEntry, entry.libraryDocsEntryIds),
+  linked<typeof NPC.$inferSelect>(NPC, entry.npcIds),
+  linked<typeof Location.$inferSelect>(Location, entry.locationIds),
+  // Only what the page shows: never the private character sheet
+  linked<{ id: string; name: string; avatarUrl: string | null; race: string | null; class: string | null; level: number | null }>(Character, entry.characterIds,
+    { id: Character.id, name: Character.name, avatarUrl: Character.avatarUrl, race: Character.race, class: Character.class, level: Character.level }),
+  linked<typeof Quest.$inferSelect>(Quest, entry.questIds),
+]);
+diaryEntries.sort((a, b) => a.session - b.session);
+
+const QUEST_BADGE: Record<string, string> = { active: 't-badge-accent', completed: 't-badge-green', failed: 't-badge-red' };
+// Many entries repeat the short description as the full one: show it once
+const description = entry.fullDescription?.trim() && entry.fullDescription.trim() !== entry.shortDescription?.trim() ? renderMarkdown(entry.fullDescription) : '';
+const people = [
+  ...characters.map(c => ({ href: `/characters/${c.id}`, name: c.name, image: c.avatarUrl, round: true, meta: [c.level && `Level ${c.level}`, c.race, c.class].filter(Boolean).join(' ') })),
+  ...npcs.map(n => ({ href: `/npcs/${n.id}`, name: n.name, image: n.avatarUrl, round: true, meta: `${n.race} · ${n.relationship}` })),
+  ...locations.map(l => ({ href: `/locations/${l.id}`, name: l.name, image: l.imageUrl, round: false, meta: l.type })),
+];
+---
+
+<Layout title={entry.headline}>
+  <div class="max-w-3xl mx-auto px-1 sm:px-0">
+
+    <div class="flex items-center justify-between gap-3 mb-6">
+      <a href={`/library/timeline#${entry.id}`} class="t-back-link">
+        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"/>
+        </svg>
+        Show on timeline
+      </a>
+      {canEdit && (
+        <a href={`/library/timeline?edit=${entry.id}#${entry.id}`} class="t-icon-btn" title="Edit event" aria-label="Edit event">
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+          </svg>
+        </a>
+      )}
+    </div>
+
+    <article class="t-panel overflow-hidden mb-6" id="timelineDetail" data-id={entry.id}>
+      {entry.imageUrl && <img src={entry.imageUrl} alt="" class="w-full object-cover" style="aspect-ratio:16/7;" />}
+      <div class="p-6 sm:p-8">
+        <span class="t-badge t-badge-gold">{date(entry)}</span>
+        <h1 class="font-display italic font-semibold text-3xl sm:text-4xl leading-tight mt-3" style="color:var(--gold);">{entry.headline}</h1>
+        {entry.shortDescription && <p class="t-muted text-lg mt-3">{entry.shortDescription}</p>}
+        {description && <div class="t-prose max-w-none mt-6 pt-6" style="border-top:1px solid var(--border);" set:html={description} />}
+      </div>
+    </article>
+
+    {people.length > 0 && (
+      <section class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header"><h2 class="t-section-h text-xl">Who and where</h2></div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {people.map(p => (
+            <a href={p.href} class="t-row p-3 flex items-center gap-3">
+              {p.image ? (
+                <img src={p.image} alt="" class={`w-10 h-10 object-cover shrink-0 ${p.round ? 'rounded-full' : 'rounded-sm'}`} style="border:2px solid var(--border-gold);" />
+              ) : (
+                <div class={`w-10 h-10 flex items-center justify-center text-lg font-bold shrink-0 ${p.round ? 'rounded-full' : 'rounded-sm'}`} style="background:var(--bg-raised);border:2px solid var(--border-gold);color:var(--gold);font-family:var(--font-display);">{p.name.charAt(0)}</div>
+              )}
+              <div class="min-w-0">
+                <div class="t-link font-medium truncate">{p.name}</div>
+                {p.meta && <p class="t-faint text-xs capitalize truncate">{p.meta}</p>}
+              </div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {(diaryEntries.length > 0 || docs.length > 0 || quests.length > 0) && (
+      <section class="t-panel p-6 sm:p-8 mb-6">
+        <div class="t-section-header"><h2 class="t-section-h text-xl">Read more</h2></div>
+        <div class="flex flex-col gap-3">
+          {quests.map(q => (
+            <a href={`/quests/${q.id}`} class="t-row p-4 flex items-center justify-between gap-4">
+              <span class="t-body-text font-medium truncate">{q.title}</span>
+              <span class={`t-badge shrink-0 ${QUEST_BADGE[q.status] ?? ''}`}>{q.status}</span>
+            </a>
+          ))}
+          {diaryEntries.map(d => (
+            <a href={`/diary/${d.id}`} class="t-row p-4 flex items-start justify-between gap-4">
+              <div class="min-w-0">
+                <div class="t-body-text font-medium truncate">{d.title}</div>
+                <div class="t-faint text-xs mt-0.5 line-clamp-2">{markdownExcerpt(d.summary || d.content, 140)}</div>
+              </div>
+              <span class="t-badge t-badge-accent shrink-0">Session {d.session}</span>
+            </a>
+          ))}
+          {docs.map(l => (
+            <a href={`/library/${l.id}`} class="t-row p-4 block">
+              <div class="t-body-text font-medium truncate">{l.title}</div>
+              <div class="t-faint text-xs mt-0.5 line-clamp-2">{markdownExcerpt(l.content, 140)}</div>
+            </a>
+          ))}
+        </div>
+      </section>
+    )}
+
+    <nav class="tl-pager" aria-label="Previous and next event">
+      {previous ? (
+        <a href={`/library/timeline/${previous.id}`} class="t-row p-4 tl-pager-prev" rel="prev">
+          <span class="t-faint text-xs">← {date(previous)}</span>
+          <span class="t-body-text font-medium">{previous.headline}</span>
+        </a>
+      ) : <span></span>}
+      {next && (
+        <a href={`/library/timeline/${next.id}`} class="t-row p-4 tl-pager-next" rel="next">
+          <span class="t-faint text-xs">{date(next)} →</span>
+          <span class="t-body-text font-medium">{next.headline}</span>
+        </a>
+      )}
+    </nav>
+  </div>
+</Layout>
+
+<style>
+  .tl-pager { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 2rem; }
+  .tl-pager a { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  .tl-pager-next { text-align: right; grid-column: 2; }
+  @media (max-width: 480px) {
+    .tl-pager { grid-template-columns: 1fr; }
+    .tl-pager-next { grid-column: 1; }
+  }
+</style>

@@ -61,7 +61,7 @@ const empty = !campaign.sessions.length && !campaign.quests.length && !campaign.
         <h3 class="t-label-sm mb-2">Timeline <span class="t-faint">({campaign.timeline.length})</span></h3>
         <ul class="cc-list">
           {campaign.timeline.map((t, i) => (
-            <li class={i >= LIMIT.timeline ? 'cc-extra' : ''}><a href="/library/timeline">{t.headline}</a><span class="cc-meta">{t.month ? `${MONTH_NAMES[t.month]} ` : ''}{t.year}</span></li>
+            <li class={i >= LIMIT.timeline ? 'cc-extra' : ''}><a href={`/library/timeline/${t.id}`}>{t.headline}</a><span class="cc-meta">{t.month ? `${MONTH_NAMES[t.month]} ` : ''}{t.year}</span></li>
           ))}
         </ul>
         {campaign.timeline.length > LIMIT.timeline && <button type="button" class="cc-more" data-cc-more aria-expanded="false">Show all {campaign.timeline.length}</button>}
