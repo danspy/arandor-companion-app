@@ -2172,14 +2172,18 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         if (changed.includes('creatureId')) window.arandorSoftReload();
       });
       window.addEventListener(PANEL_CLOSED_EVENT, markSelected);
-      // The panel survives reloads (new order, other screens): open again for the same combatant
-      window.addEventListener('pagehide', () => {
+      // The panel survives reloads and soft refreshes (new order, other screens): open again for the
+      // same combatant. A soft refresh fires no pagehide, and its before-swap closes the panel, so it
+      // is remembered before that, at before-preparation.
+      const rememberPanel = () => {
         const id = openCombatantId();
         try {
           if (id) sessionStorage.setItem('arandor-open-combatant', id);
           else sessionStorage.removeItem('arandor-open-combatant');
         } catch { /* private mode */ }
-      });
+      };
+      window.addEventListener('pagehide', rememberPanel);
+      document.addEventListener('astro:before-preparation', rememberPanel);
       // After damage or healing (here or in the stat block panel): show the new HP on the card
       window.addEventListener(HP_CHANGED_EVENT, (e) => {
         const entry = (e as CustomEvent<{ entry: HpEntry }>).detail.entry;

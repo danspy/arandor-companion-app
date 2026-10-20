@@ -1144,20 +1144,10 @@ const getOwnershipText = (character: typeof characters[0]) => {
     initializeAutoSync();
   });
   
-  // Auto-sync characters on page load (basic info, at most once a day each; the server decides).
-  // The list refreshes once when any of them changed, and only if the reader is still on it:
-  // a refresh after they clicked through to a character would land on that page instead.
-  async function initializeAutoSync() {
-    const cards = [...document.querySelectorAll('[data-character-id][data-dndbeyond-url]:not([data-dndbeyond-url=""])')];
-    if (!cards.length) return;
-    const results = await Promise.allSettled(cards.map((card) =>
-      fetch('/api/characters/auto-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId: card.getAttribute('data-character-id') }),
-      }).then((response) => response.json())
-    ));
-    const changed = results.some((r) => r.status === 'fulfilled' && r.value.success && r.value.updated);
-    if (changed && cards[0].isConnected) window.arandorSoftReload();
+  // HP, stats and sheet come from D&D Beyond: refresh them in the background (at most every 15 minutes)
+  function initializeAutoSync() {
+    const ids = [...document.querySelectorAll('[data-character-id][data-dndbeyond-url]:not([data-dndbeyond-url=""])')]
+      .map((card) => card.getAttribute('data-character-id'));
+    void window.arandorAutoSyncCharacters(ids);
   }
 </script>

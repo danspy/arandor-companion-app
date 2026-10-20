@@ -2,11 +2,12 @@ import type { APIRoute } from 'astro';
 import { db, Character, User, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
+import { withoutSheet } from '../../../lib/character-sheet';
 
 export const GET: APIRoute = async () => {
   try {
     const characters = await db.select().from(Character);
-    return new Response(JSON.stringify(characters), {
+    return new Response(JSON.stringify(characters.map(withoutSheet)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -76,7 +77,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const newCharacter = await db.select().from(Character).where(eq(Character.id, id));
     
-    return new Response(JSON.stringify(newCharacter[0]), {
+    return new Response(JSON.stringify(withoutSheet(newCharacter[0])), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
     });

@@ -16,12 +16,28 @@ don't have to be typed in twice.
 
 | Sync | What | Triggered by | Who |
 |---|---|---|---|
-| Automatic light sync | Name, level, class, race | Opening the Characters page, at most once per 24 hours per character | Anyone |
-| Automatic full sync | Everything the button syncs | The owner (or an admin) opening the character page, at most once per 24 hours | Owner or admin |
-| **Sync from D&D Beyond** button | Level, HP, max HP, ability scores | Character page | Owner or admin |
+| Automatic sync | Everything the button syncs | Opening the dashboard, the Characters page or a character page, at most once per 15 minutes per character | Anyone (the visit only triggers it; no data is sent back) |
+| **Sync from D&D Beyond** button | Level, HP, max HP, ability scores, the character sheet | Character page | Owner or admin |
 | HP sync | Current, max and temp HP, death saves | **Sync HP** in the initiative tracker or DM screen; automatically every 10 s while combat is active | DM or admin |
 
-Ability scores you edited by hand in the app are not overwritten by a sync.
+**D&D Beyond is the truth.** Every sync replaces HP and ability scores, including scores
+edited by hand in the app (those edits used to be kept because the import calculated wrong).
+For characters without a D&D Beyond link, hand-entered scores stay as they are.
+
+## The character sheet
+
+A full sync also stores the character sheet (`Character.sheet`): proficiency bonus, AC,
+initiative, speed, saving throws, skills and passive scores. The character page shows it with
+roll buttons. Spells and attacks stay on D&D Beyond, which the table uses for them anyway.
+
+- **Everyone** sees the proficiency bonus, AC, initiative, speed, passive Perception and saving throws.
+- **The character's player, the DM and admins** also see the skills and the passive Investigation
+  and Insight. Other people get only the public part, from the page and from `/api/characters/<id>`.
+  `/api/characters` never includes the sheet.
+- The calculation follows the D&D Beyond sheet. It includes manual adjustments made there
+  (skill and save overrides or bonuses, AC override), and save proficiencies come only from the
+  starting class. `e2e/dndbeyond.spec.ts` checks every number against the party's real sheets.
+- Changing or removing the D&D Beyond link clears the stored sheet until the next sync.
 
 HP synced during combat is stored on the character as well, so the dashboard's party cards
 show it too.

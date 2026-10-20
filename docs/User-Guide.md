@@ -67,6 +67,19 @@ Tick *assign to me* to make it yours. Mark characters who left the party as inac
 disappear from the dashboard, and on the map they part ways after the last session they
 appear in.
 
+**A character's page** works as a sheet at the table. Everyone sees HP, AC, initiative, speed,
+proficiency bonus, passive Perception, the ability scores and saving throws. Tap a modifier to
+roll a check, a *Save* to roll the saving throw, or the initiative to roll initiative. The rolls
+use the 3D dice and show up in the roll history. *Adv* / *Dis* applies to the next d20 roll only.
+The character's player, the DM and admins also see the skills (tap one to roll it) and the
+passive Investigation and Insight. These numbers come from D&D Beyond, so a character without a
+D&D Beyond link shows only the ability checks and plain saves.
+
+**In the campaign**, further down the page, lists the sessions the character was in (from the
+diary), the quests and NPCs of those sessions, and the timeline events linked to the character.
+Long lists show the newest few; *Show all* opens the rest. The character's player, the DM and
+admins also get a **Notes** box there for debts, promises and plans; nobody else sees it.
+
 ## NPCs (`/npcs`)
 
 Everyone the party has met: race, occupation, home location, portrait, relationship (ally,

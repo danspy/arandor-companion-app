@@ -5,7 +5,10 @@ import Button from '../../components/Button.astro';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
+import PartyPanel from '../../components/PartyPanel.astro';
+import { partyOverview } from '../../lib/party';
 import '../../styles/statblock.css';
+import '../../styles/character-sheet.css';
 
 // DM Screen is only accessible to DM/Admin
 const isLoggedIn = isAuthenticated(Astro.cookies);
@@ -24,6 +27,7 @@ const byName = (a: { name: string }, b: { name: string }) => a.name.localeCompar
 const characters = (await db.select().from(Character)).sort(byName);
 const party = characters.filter((c) => c.isActive);
 const formerParty = characters.filter((c) => !c.isActive);
+const partyRows = partyOverview(characters);
 
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dm-screen'));
@@ -79,6 +83,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       </div>
     </div>
   </div>
+
+  <PartyPanel rows={partyRows} />
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Location Control -->

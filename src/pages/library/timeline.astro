@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { MONTH_NAMES } from '../../lib/fantasy-calendar';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
 import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest, PageSettings, eq } from '@/db';
@@ -70,12 +71,7 @@ labels.forEach(label => {
   labelsByYear.get(year).push(label);
 });
 
-// Fantasy month names
-const monthNames = [
-  '', // 0 index (no month)
-  'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton',
-  'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'
-];
+const monthNames = MONTH_NAMES;
 
 // Fetch all related data for connections
 const diaryEntries = await db.select().from(DiaryEntry);
@@ -90,7 +86,8 @@ const diaryMap = new Map(diaryEntries.map(d => [d.id, d]));
 const libraryMap = new Map(libraryEntries.map(l => [l.id, l]));
 const npcMap = new Map(npcs.map(n => [n.id, n]));
 const locationMap = new Map(locations.map(l => [l.id, l]));
-const characterMap = new Map(characters.map(c => [c.id, c]));
+// Only what the detail view shows: full rows would hand every visitor the private character sheet
+const characterMap = new Map(characters.map(c => [c.id, { id: c.id, name: c.name, avatarUrl: c.avatarUrl, class: c.class, level: c.level }]));
 const questMap = new Map(quests.map(q => [q.id, q]));
 
 // Get page settings for hero image
@@ -1226,7 +1223,16 @@ const heroImageUrl = pageSettings.length > 0 ? pageSettings[0].heroImageUrl : nu
   }
   
   // Run on initial page load and after View Transitions navigation
-  document.addEventListener('astro:page-load', initializeTimeline);
+  // This inline script runs again whenever its data changed (after a save the page refreshes through
+  // the ClientRouter). One listener for good, always calling the newest initializer: a listener per
+  // run would bind the form once more each time and save entries twice, three times …
+  window.arandorTimelineInit = initializeTimeline;
+  if (!window.arandorTimelineWired) {
+    window.arandorTimelineWired = true;
+    document.addEventListener('astro:page-load', () => {
+      if (location.pathname.replace(/\/$/, '') === '/library/timeline') window.arandorTimelineInit();
+    });
+  }
 </script>
 
 <script>

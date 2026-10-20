@@ -126,6 +126,10 @@ about 2 seconds.
 
 - **Player display link** with *Copy* and *Open* buttons. Open it on the screen your players
   see.
+- **Party:** the active characters in one table: HP, AC, initiative, speed, passive
+  Perception, Investigation and Insight, and the six saves. The highest passive in each column is
+  highlighted. The numbers are from the last D&D Beyond sync, and only the DM screen shows them
+  (never the player display).
 - **Location:** pick a location to show its image and name full screen. **Hide from players**
   takes it off the display but keeps it selected; **Show to players** brings it back. It stays
   hidden when you switch to another location, so you can set up the next scene unseen.

@@ -89,7 +89,16 @@ export const Character = sqliteTable('Character', {
   skin: text('skin'),
   hair: text('hair'),
   lastSyncedAt: date('lastSyncedAt'), // Last time character was synced from D&D Beyond
+  sheet: json('sheet'), // CharacterSheet (src/lib/character-sheet.ts), written by the full sync
   createdAt: now('createdAt'),
+  updatedAt: now('updatedAt'),
+});
+
+// Private notes on a character: only its player, the DM and admins (kept out of Character so no
+// page or API that hands out character rows can leak them)
+export const CharacterNote = sqliteTable('CharacterNote', {
+  characterId: text('characterId').primaryKey(), // Character.id
+  content: text('content').notNull(),
   updatedAt: now('updatedAt'),
 });
 

@@ -1,0 +1,30 @@
+---
+// Skills: only rendered for the player, the DM and admins
+import type { CharacterSheet } from '../../lib/character-sheet';
+import { d20, signed } from '../../lib/character-rolls';
+import RollMode from './RollMode.astro';
+
+interface Props { sheet: CharacterSheet }
+const { sheet } = Astro.props;
+const ABBR = { str: 'STR', dex: 'DEX', con: 'CON', int: 'INT', wis: 'WIS', cha: 'CHA' } as const;
+const PROF_LABEL = { none: 'Not proficient', half: 'Half proficiency', proficient: 'Proficient', expertise: 'Expertise' } as const;
+---
+<p class="cs-private-note t-faint text-xs mb-3">Only you, the DM and admins see this section.</p>
+
+<section id="cs-skills" class="t-panel p-6 sm:p-8 mb-6">
+  <div class="cs-head">
+    <h2 class="t-section-h text-xl">Skills</h2>
+    <RollMode />
+  </div>
+  <div class="cs-skills">
+    {sheet.skills.map((s) => (
+      <button type="button" class="cs-roll cs-skill" data-roll={d20(s.bonus)} data-roll-name={s.name} title={`${s.name} (${d20(s.bonus)}) · ${PROF_LABEL[s.proficiency]}`}>
+        <span class={`cs-dot is-${s.proficiency}`} aria-hidden="true"></span>
+        <span class="cs-skill-name">{s.name}</span>
+        <span class="cs-skill-ab">{ABBR[s.ability]}</span>
+        <span class="cs-skill-bonus">{signed(s.bonus)}</span>
+      </button>
+    ))}
+  </div>
+  <p class="t-faint text-xs mt-3">Passive Investigation {sheet.passiveInvestigation} · Passive Insight {sheet.passiveInsight}</p>
+</section>

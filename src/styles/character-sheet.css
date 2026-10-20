@@ -1,0 +1,42 @@
+/* Character page sheet: combat strip, roll buttons, skills (src/components/character) */
+.cs-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+
+.cs-mode { display: inline-flex; flex: none; border: 1px solid var(--border-gold); border-radius: 2px; overflow: hidden; }
+.cs-mode button { padding: 0.25rem 0.6rem; font-size: 0.72rem; font-weight: 600; color: var(--text-muted); background: none; cursor: pointer; }
+.cs-mode button + button { border-left: 1px solid var(--border-gold); }
+.cs-mode button[aria-pressed='true'] { color: var(--on-gold); background: var(--gold); }
+
+.cs-roll { cursor: pointer; transition: background-color 0.15s, border-color 0.15s, transform 0.1s; }
+.cs-roll:hover { border-color: var(--gold); background: var(--gold-dim); }
+.cs-roll:active { transform: scale(0.96); }
+.cs-roll:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+/* Combat strip */
+.cs-strip { padding: 1rem 1.25rem; display: grid; gap: 0.9rem; }
+.cs-hp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; margin-bottom: 0.35rem; }
+.cs-hp-num { color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cs-hp-num b { color: var(--text-strong); font-size: 1.15rem; }
+.cs-temp { color: var(--gold); }
+.cs-hp-bar { height: 8px; border-radius: 999px; background: var(--bg-raised); border: 1px solid var(--border); overflow: hidden; }
+.cs-hp-bar span { display: block; height: 100%; background: var(--success); transition: width 0.4s; }
+.cs-hp-bar span.is-mid { background: var(--gold); }
+.cs-hp-bar span.is-low { background: var(--danger); }
+.cs-strip-cells { display: grid; grid-template-columns: repeat(auto-fit, minmax(6.5rem, 1fr)); gap: 0.5rem; }
+.cs-cell { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; padding: 0.5rem 0.25rem; background: var(--bg-raised); border: 1px solid var(--border); border-radius: 2px; text-align: center; }
+.cs-cell b { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; line-height: 1.1; color: var(--text-strong); }
+.cs-roll-big { font-family: 'Cormorant Garamond', Georgia, serif; font-size: 1.5rem; font-weight: 700; line-height: 1.1; color: var(--gold); border: 1px solid var(--border-gold); border-radius: 2px; padding: 0 0.6rem; background: var(--gold-dim); }
+
+/* Ability cards */
+.cs-ability .t-stat-mod { font-size: 1rem; }
+.cs-save { display: inline-flex; align-items: center; justify-content: center; gap: 0.25rem; margin-top: 0.45rem; width: 100%; white-space: nowrap; font-size: 0.72rem; color: var(--text-muted); border: 1px solid var(--border); border-radius: 2px; padding: 0.15rem 0.25rem; background: none; }
+.cs-dot { width: 0.5rem; height: 0.5rem; border-radius: 999px; border: 1px solid var(--gold); flex: none; }
+.cs-dot.is-on, .cs-dot.is-proficient { background: var(--gold); }
+.cs-dot.is-expertise { background: var(--gold); box-shadow: 0 0 0 2px var(--gold-dim), 0 0 0 3px var(--gold); }
+.cs-dot.is-half { background: linear-gradient(90deg, var(--gold) 50%, transparent 50%); }
+
+/* Skills */
+.cs-skills { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr)); gap: 0.35rem; }
+.cs-skill { display: flex; align-items: center; gap: 0.5rem; padding: 0.4rem 0.6rem; border: 1px solid var(--border); border-radius: 2px; background: var(--bg-raised); text-align: left; color: var(--text-body, inherit); }
+.cs-skill-name { flex: 1; min-width: 0; color: var(--text-strong); }
+.cs-skill-ab { font-size: 0.65rem; letter-spacing: 0.08em; color: var(--text-faint); }
+.cs-skill-bonus { font-weight: 700; color: var(--gold); min-width: 2rem; text-align: right; font-variant-numeric: tabular-nums; }

@@ -1,8 +1,15 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SceneBackdrop from '../../components/SceneBackdrop.astro';
-import { db, Character, DiaryEntry, User, eq } from '@/db';
+import { db, Character, CharacterNote, DiaryEntry, NPC, Quest, TimelineEntry, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
+import CombatStrip from '../../components/character/CombatStrip.astro';
+import AbilityCards from '../../components/character/AbilityCards.astro';
+import PrivateSheet from '../../components/character/PrivateSheet.astro';
+import CampaignSection from '../../components/character/CampaignSection.astro';
+import { characterCampaign } from '../../lib/character-campaign';
+import { canSeePrivateSheet, publicSheet, type CharacterSheet } from '../../lib/character-sheet';
+import '../../styles/character-sheet.css';
 
 const { id } = Astro.params;
 
@@ -17,11 +24,13 @@ if (!character) {
   return Astro.redirect('/characters');
 }
 
-const allDiaryEntries = await db.select().from(DiaryEntry);
-const sessionCount = allDiaryEntries.filter(entry => {
-  const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
-  return characterIds.includes(id);
-}).length;
+const campaign = characterCampaign(id, {
+  diary: await db.select().from(DiaryEntry),
+  quests: await db.select().from(Quest),
+  npcs: await db.select().from(NPC),
+  timeline: await db.select().from(TimelineEntry),
+});
+const sessionCount = campaign.sessions.length;
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
@@ -49,23 +58,23 @@ const canEditCharacter = () => {
 
 const canEdit = canEditCharacter();
 
-const shouldAutoSync = character.dndbeyondUrl &&
-  canEdit &&
-  (!character.lastSyncedAt ||
-   (new Date().getTime() - new Date(character.lastSyncedAt).getTime()) > 24 * 60 * 60 * 1000);
+// The D&D Beyond sheet: stats and core rolls for everyone, the rest for the player, the DM and admins
+const fullSheet = (character.sheet as CharacterSheet | null) ?? null;
+const canSeePrivate = canSeePrivateSheet(character, currentUser, userRole);
+const stats = (character.stats ?? {}) as Record<string, number | undefined>;
+// Private notes: same people as the private sheet; null hides the notes box
+const notes = canSeePrivate
+  ? (await db.select().from(CharacterNote).where(eq(CharacterNote.characterId, character.id)))[0]?.content ?? ''
+  : null;
 
-// What a sync can change on this page: after an auto-sync the page only refreshes if one of these did
-const syncedFields = (c: typeof character) => JSON.stringify([c.name, c.race, c.class, c.level, c.avatarUrl, c.hp, c.maxHp, c.tempHp, c.stats, c.background, c.alignment]);
+const shouldAutoSync = !!character.dndbeyondUrl;
 
-const statMod = (v: number) => {
-  const m = Math.floor((v - 10) / 2);
-  return (m >= 0 ? '+' : '') + m;
-};
+
 ---
 
 <Layout title={character.name}>
   <SceneBackdrop imageUrl={character.avatarUrl} />
-  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-auto-sync={shouldAutoSync ? character.id : undefined} data-synced-fields={syncedFields(character)}>
+  <div class="max-w-4xl mx-auto px-1 sm:px-0" id="character-page" data-character-name={character.name} data-auto-sync={shouldAutoSync ? character.id : undefined}>
 
     <!-- Nav row -->
     <div class="flex items-center justify-between mb-6">
@@ -161,32 +170,12 @@ const statMod = (v: number) => {
       </div>
     </div>
 
+    <CombatStrip hp={character.hp} maxHp={character.maxHp} tempHp={character.tempHp} sheet={publicSheet(fullSheet)} dexterity={stats.dexterity ?? null} />
+
     <!-- ── Ability Scores ─────────────────────────────────────── -->
-    {character.stats && (
-      <div class="t-panel p-6 sm:p-8 mb-6">
-        <div class="t-section-header">
-          <h2 class="t-section-h text-xl">Ability Scores</h2>
-        </div>
-        <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {([
-            { key: 'strength',     label: 'STR' },
-            { key: 'dexterity',    label: 'DEX' },
-            { key: 'constitution', label: 'CON' },
-            { key: 'intelligence', label: 'INT' },
-            { key: 'wisdom',       label: 'WIS' },
-            { key: 'charisma',     label: 'CHA' },
-          ] as const).map(({ key, label }) => (
-            <div class="t-stat-block">
-              <div class="t-stat-label">{label}</div>
-              <div class="t-stat-value">{(character.stats as any)[key] ?? '—'}</div>
-              {(character.stats as any)[key] !== undefined && (
-                <div class="t-stat-mod">{statMod((character.stats as any)[key])}</div>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
+    {character.stats && <AbilityCards stats={stats} sheet={publicSheet(fullSheet)} />}
+
+    {canSeePrivate && fullSheet && <PrivateSheet sheet={fullSheet} />}
 
     <!-- ── Character Details ──────────────────────────────────── -->
     {(character.background || character.alignment || character.gender || character.age || character.height || character.weight || character.eyes || character.skin || character.hair) && (
@@ -253,6 +242,8 @@ const statMod = (v: number) => {
       </div>
     )}
 
+    <CampaignSection characterId={character.id} campaign={campaign} notes={notes} />
+
     <!-- ── D&D Beyond ─────────────────────────────────────────── -->
     {character.dndbeyondUrl && (
       <div class="t-panel p-6 sm:p-8 mb-6">
@@ -299,39 +290,10 @@ const statMod = (v: number) => {
 </Layout>
 
 <script>
-  const SYNC_ICON = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>';
+  import { wireCharacterRolls } from '../../lib/character-rolls';
+  wireCharacterRolls();
 
-  // Once a day the owner's visit pulls fresh data from D&D Beyond in the background.
-  // The page only refreshes (softly, without a reload, so music keeps playing) when something changed.
-  async function autoSyncCharacter() {
-    const page = document.getElementById('character-page');
-    const characterId = page?.dataset.autoSync;
-    if (!page || !characterId) return;
-    const toast = document.createElement('div');
-    toast.className = 't-toast';
-    toast.innerHTML = `<svg class="w-4 h-4 animate-spin shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">${SYNC_ICON}</svg><span>Syncing from D&D Beyond…</span>`;
-    document.body.appendChild(toast);
-    const done = (ok: boolean, text: string) => {
-      toast.className = `t-toast ${ok ? 't-toast-success' : 't-toast-error'}`;
-      toast.textContent = text;
-      setTimeout(() => toast.remove(), 2500);
-    };
-    try {
-      const response = await fetch('/api/characters/sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ characterId }),
-      });
-      if (!response.ok) return done(false, 'Auto-sync failed');
-      const c = await response.json();
-      const fresh = JSON.stringify([c.name, c.race, c.class, c.level, c.avatarUrl, c.hp, c.maxHp, c.tempHp, c.stats, c.background, c.alignment]);
-      done(true, 'Synced with D&D Beyond');
-      // Still on this character? Then show the new data.
-      if (fresh !== page.dataset.syncedFields && page.isConnected) await window.arandorSoftReload();
-    } catch {
-      done(false, 'Auto-sync error');
-    }
-  }
+  import { autoSyncCharacters } from '../../lib/auto-sync';
 
   function initializeDetailPage() {
     const deleteBtn = document.getElementById('deleteCharacter');
@@ -410,6 +372,8 @@ const statMod = (v: number) => {
   document.addEventListener('astro:page-load', () => {
     if (!document.getElementById('character-page')) return;
     initializeDetailPage();
-    void autoSyncCharacter();
+    // HP, stats and sheet come from D&D Beyond: refreshed in the background (at most every 15 minutes)
+    const id = document.getElementById('character-page')?.dataset.autoSync;
+    if (id) void autoSyncCharacters([id]);
   });
 </script>

@@ -1,9 +1,10 @@
 import type { APIRoute } from 'astro';
-import { db, Character, User, eq } from '@/db';
+import { db, Character, CharacterNote, User, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { getCurrentUser, getUserRole } from '../../../lib/auth';
+import { canSeePrivateSheet, forViewer } from '../../../lib/character-sheet';
 
-export const GET: APIRoute = async ({ params }) => {
+export const GET: APIRoute = async ({ params, cookies }) => {
   try {
     const character = await db.select().from(Character).where(eq(Character.id, params.id!));
     
@@ -14,7 +15,9 @@ export const GET: APIRoute = async ({ params }) => {
       });
     }
 
-    return new Response(JSON.stringify(character[0]), {
+    // Skills only for the player, the DM and admins
+    const canSee = canSeePrivateSheet(character[0], await getCurrentUser(cookies), await getUserRole(cookies));
+    return new Response(JSON.stringify(forViewer(character[0], canSee)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -99,6 +102,11 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
       hair: body.hair,
       updatedAt: now,
     };
+    // A sheet read from another (or no) D&D Beyond link is not this character's: the next sync writes a new one
+    if ((body.dndbeyondUrl || null) !== (character.dndbeyondUrl || null)) {
+      updateData.sheet = null;
+      updateData.lastSyncedAt = null; // due for the automatic sync right away
+    }
     
     // Mark stats as manually edited if they changed
     if (statsChanged) {
@@ -112,7 +120,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
     const updatedCharacter = await db.select().from(Character).where(eq(Character.id, params.id!));
     
-    return new Response(JSON.stringify(updatedCharacter[0]), {
+    return new Response(JSON.stringify(forViewer(updatedCharacter[0], canSeePrivateSheet(updatedCharacter[0], currentUser, userRole))), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -174,6 +182,7 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
     }
     
     await db.delete(Character).where(eq(Character.id, params.id!));
+    await db.delete(CharacterNote).where(eq(CharacterNote.characterId, params.id!));
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

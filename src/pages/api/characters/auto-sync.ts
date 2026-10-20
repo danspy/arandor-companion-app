@@ -1,170 +1,45 @@
 import type { APIRoute } from 'astro';
-import { db, Character, eq } from '@/db';
+import { db, Character, eq, sql } from '@/db';
+import { syncCharacterFromDnDBeyond } from '../../../lib/character-sync';
+
+// A character is refreshed from D&D Beyond at most this often by visits
+const MIN_INTERVAL_MS = 15 * 60 * 1000;
+
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 /**
- * Auto-sync basic character information from D&D Beyond
- * This is a lightweight sync that only updates basic info (level, class, race, name)
- * Does NOT require authentication - works for all viewers
- * Does NOT update ability scores (respects manual edits)
- * 
+ * Automatic sync from D&D Beyond, triggered by visits to the dashboard and the Characters list.
+ * Full data (HP, ability scores, sheet …), D&D Beyond is the truth; at most every 15 minutes per
+ * character (also after a failed attempt). Works for every visitor and returns no character data,
+ * only whether something changed.
+ *
  * POST /api/characters/auto-sync
  * Body: { characterId: string }
  */
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const body = await request.json();
-    const { characterId } = body;
+    const { characterId } = await request.json();
+    if (!characterId || typeof characterId !== 'string') return json({ error: 'Character ID is required' }, 400);
 
-    if (!characterId || typeof characterId !== 'string') {
-      return new Response(
-        JSON.stringify({ error: 'Character ID is required' }),
-        { status: 400, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Get character from database
     const character = await db.select().from(Character).where(eq(Character.id, characterId)).get();
-    
-    if (!character) {
-      return new Response(
-        JSON.stringify({ error: 'Character not found' }),
-        { status: 404, headers: { 'Content-Type': 'application/json' } }
-      );
+    if (!character) return json({ error: 'Character not found' }, 404);
+    if (!character.dndbeyondUrl) return json({ success: false, message: 'Character does not have a D&D Beyond URL' });
+
+    // Claim the slot before asking D&D Beyond: parallel requests can't all get through, and a
+    // failing sheet (made private, D&D Beyond down) is not asked again on every visit either.
+    const cutoff = new Date(Date.now() - MIN_INTERVAL_MS).toISOString();
+    const claimed = await db.update(Character)
+      .set({ lastSyncedAt: new Date() })
+      .where(sql`${Character.id} = ${characterId} AND (${Character.lastSyncedAt} IS NULL OR ${Character.lastSyncedAt} < ${cutoff})`)
+      .returning({ id: Character.id });
+    if (!claimed.length) {
+      return json({ success: false, message: 'Character was synced recently', lastSyncedAt: character.lastSyncedAt });
     }
 
-    // Only sync if character has a D&D Beyond URL
-    if (!character.dndbeyondUrl) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Character does not have a D&D Beyond URL' 
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    // Check if sync is needed (last synced more than 24 hours ago)
-    const now = new Date();
-    const lastSynced = character.lastSyncedAt ? new Date(character.lastSyncedAt) : null;
-    const hoursSinceSync = lastSynced 
-      ? (now.getTime() - lastSynced.getTime()) / (1000 * 60 * 60)
-      : 999; // If never synced, set high value
-    
-    if (hoursSinceSync < 24) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Character was synced recently (within 24 hours)',
-          lastSyncedAt: character.lastSyncedAt
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Extract character ID from D&D Beyond URL
-    const characterIdMatch = character.dndbeyondUrl.match(/characters\/(\d+)/);
-    if (!characterIdMatch) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Invalid D&D Beyond URL format' 
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const dndbeyondCharacterId = characterIdMatch[1];
-    const API_VERSION = 'v5';
-    const jsonUrl = `https://character-service.dndbeyond.com/character/${API_VERSION}/character/${dndbeyondCharacterId}`;
-    
-    // Fetch from D&D Beyond
-    const response = await fetch(jsonUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (compatible; ArandorCompanion/1.0)',
-      },
-    });
-
-    if (!response.ok) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          message: 'Failed to fetch from D&D Beyond' 
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
-    const data = await response.json();
-    
-    // Extract basic data only
-    const name = data.data?.name;
-    const race = data.data?.race?.fullName || data.data?.race?.baseName;
-    const classes = data.data?.classes || [];
-    const classString = classes.length > 0 
-      ? classes.map((cls: any) => cls.definition?.name || cls.name).join(' / ')
-      : null;
-    const totalLevel = classes.reduce((sum: number, c: any) => sum + (c.level || 0), 0) || 1;
-    
-    // Check if data actually changed
-    const hasChanges = 
-      (name && name !== character.name) ||
-      (race && race !== character.race) ||
-      (classString && classString !== character.class) ||
-      (totalLevel && totalLevel !== character.level);
-    
-    if (!hasChanges) {
-      // No changes, just update lastSyncedAt
-      await db.update(Character)
-        .set({ lastSyncedAt: now })
-        .where(eq(Character.id, characterId));
-      
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'No changes detected',
-          updated: false,
-          lastSyncedAt: now
-        }),
-        { status: 200, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-    
-    // Update only basic info (NOT stats - respect manual edits)
-    await db.update(Character)
-      .set({
-        name: name || character.name,
-        race: race || character.race,
-        class: classString || character.class,
-        level: totalLevel || character.level,
-        lastSyncedAt: now,
-        updatedAt: now,
-      })
-      .where(eq(Character.id, characterId));
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Character synced successfully',
-        updated: true,
-        changes: {
-          name: name !== character.name,
-          race: race !== character.race,
-          class: classString !== character.class,
-          level: totalLevel !== character.level,
-        },
-        lastSyncedAt: now
-      }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } }
-    );
+    const { character: updated, changed } = await syncCharacterFromDnDBeyond(character);
+    return json({ success: true, updated: changed, lastSyncedAt: updated.lastSyncedAt });
   } catch (error) {
     console.error('Auto-sync error:', error);
-    return new Response(
-      JSON.stringify({ 
-        success: false, 
-        message: 'Auto-sync failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      }),
-      { status: 500, headers: { 'Content-Type': 'application/json' } }
-    );
+    return json({ success: false, message: 'Auto-sync failed', error: error instanceof Error ? error.message : 'Unknown error' }, 500);
   }
 };
