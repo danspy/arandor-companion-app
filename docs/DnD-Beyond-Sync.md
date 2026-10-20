@@ -27,27 +27,16 @@ For characters without a D&D Beyond link, hand-entered scores stay as they are.
 ## The character sheet
 
 A full sync also stores the character sheet (`Character.sheet`): proficiency bonus, AC,
-initiative, speed, saving throws, skills, passive scores, spell save DC and spell attack,
-weapon and spell attacks, and the spellbook. The character page shows it with roll buttons.
+initiative, speed, saving throws, skills and passive scores. The character page shows it with
+roll buttons. Spells and attacks stay on D&D Beyond, which the table uses for them anyway.
 
 - **Everyone** sees the proficiency bonus, AC, initiative, speed, passive Perception and saving throws.
-- **The character's player, the DM and admins** also see the skills, attacks and the spellbook. Other people get only the public part, from the page and from `/api/characters/<id>`.
+- **The character's player, the DM and admins** also see the skills and the passive Investigation
+  and Insight. Other people get only the public part, from the page and from `/api/characters/<id>`.
   `/api/characters` never includes the sheet.
 - The calculation follows the D&D Beyond sheet. It includes manual adjustments made there
-  (skill and save overrides or bonuses, AC override, custom weapon and spell names, weapon
-  proficiencies), and save proficiencies come only from the starting class.
-  `e2e/dndbeyond.spec.ts` checks every number against the party's real sheets.
-- The spellbook lists every spell the character has, by level, the way the D&D Beyond Spells
-  tab does: class spells (a wizard's whole spellbook; unprepared spells are dimmed, rituals in
-  the book count as castable), spells from features, species, feats and equipped (attuned) items,
-  with casting time, range, components, duration, to hit or save DC, damage or healing, limited
-  uses and item charges, and the full description. Some subclasses' always-prepared spells
-  (e.g. a Light Domain cleric's) are not in the character data; the sync fetches them from
-  D&D Beyond's `game-data/always-prepared-spells` per subclass and stores them as
-  `alwaysPreparedSpells`. If that request fails, the sheet is built without them.
-- Spell slots are worked out from the class levels (multiclass table, Warlock pact slots
-  separate); how many are used is what D&D Beyond had at the last sync. Spells roll at their own
-  level; casting at a higher level is not offered.
+  (skill and save overrides or bonuses, AC override), and save proficiencies come only from the
+  starting class. `e2e/dndbeyond.spec.ts` checks every number against the party's real sheets.
 - Changing or removing the D&D Beyond link clears the stored sheet until the next sync.
 
 HP synced during combat is stored on the character as well, so the dashboard's party cards

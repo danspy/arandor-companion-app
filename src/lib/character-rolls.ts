@@ -1,5 +1,4 @@
 // Roll buttons on the character page: <button class="cs-roll" data-roll="1d20+5" data-roll-name="Stealth">.
-// An attack button also carries data-roll-damage (rolled with the hit, critical hits double it).
 // Advantage/disadvantage ([data-roll-mode]) applies to the next d20 roll, then falls back to Normal,
 // like the bestiary stat block. Delegated and bound once, so it survives ClientRouter page swaps.
 import { rollParts, type RollMode } from './dice';
@@ -28,13 +27,9 @@ export function wireCharacterRolls() {
     if (modeButton) return setMode(modeButton.dataset.rollMode as RollMode);
     const button = target.closest<HTMLElement>('.cs-roll');
     if (!button?.dataset.roll) return;
-    // A roll button in a spell row's summary rolls without opening the row (Chromium already
-    // leaves the row alone for buttons in a summary; this covers browsers that don't)
-    if (button.closest('summary')) e.preventDefault();
     const who = document.getElementById('character-page')?.dataset.characterName || 'Character';
     const what = button.dataset.rollName || '';
-    const parts: RollPart[] = [{ label: button.dataset.rollLabel || what, expr: button.dataset.roll }];
-    if (button.dataset.rollDamage) parts.push({ label: button.dataset.rollDamageLabel || 'Damage', expr: button.dataset.rollDamage });
+    const parts: RollPart[] = [{ label: what, expr: button.dataset.roll }];
     const isD20 = button.dataset.roll.startsWith('1d20');
     const m = isD20 ? mode : 'normal';
     if (isD20) setMode('normal');

@@ -15,7 +15,7 @@ export const GET: APIRoute = async ({ params, cookies }) => {
       });
     }
 
-    // Skills, attacks and the spellbook only for the player, the DM and admins
+    // Skills only for the player, the DM and admins
     const canSee = canSeePrivateSheet(character[0], await getCurrentUser(cookies), await getUserRole(cookies));
     return new Response(JSON.stringify(forViewer(character[0], canSee)), {
       status: 200,

@@ -1,4 +1,4 @@
-/* Character page sheet: combat strip, roll buttons, skills, attacks, spellbook (src/components/character) */
+/* Character page sheet: combat strip, roll buttons, skills (src/components/character) */
 .cs-head { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
 
 .cs-mode { display: inline-flex; flex: none; border: 1px solid var(--border-gold); border-radius: 2px; overflow: hidden; }
@@ -40,40 +40,3 @@
 .cs-skill-name { flex: 1; min-width: 0; color: var(--text-strong); }
 .cs-skill-ab { font-size: 0.65rem; letter-spacing: 0.08em; color: var(--text-faint); }
 .cs-skill-bonus { font-weight: 700; color: var(--gold); min-width: 2rem; text-align: right; font-variant-numeric: tabular-nums; }
-
-/* Attacks */
-.cs-casting { display: flex; flex-wrap: wrap; gap: 0.4rem 1.25rem; margin-bottom: 0.9rem; color: var(--text-muted); font-size: 0.9rem; }
-.cs-casting b { color: var(--text-strong); }
-.cs-attacks { display: grid; gap: 0.4rem; }
-.cs-attack { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; padding: 0.55rem 0.7rem; border: 1px solid var(--border); border-radius: 2px; background: var(--bg-raised); }
-.cs-attack-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; }
-.cs-attack-name { color: var(--text-strong); font-weight: 600; }
-.cs-attack-meta { font-size: 0.75rem; color: var(--text-faint); overflow-wrap: anywhere; }
-.cs-attack-rolls { display: flex; gap: 0.4rem; flex: none; }
-.cs-chip { display: inline-flex; align-items: center; padding: 0.2rem 0.6rem; border: 1px solid var(--border-gold); border-radius: 2px; background: var(--gold-dim); color: var(--gold); font-weight: 700; font-size: 0.85rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.cs-chip-dmg { color: var(--text-strong); }
-.cs-chip-flat { background: none; color: var(--text-muted); border-color: var(--border); }
-
-/* Spellbook */
-.cs-slots { display: flex; flex-wrap: wrap; gap: 0.5rem 1.1rem; margin-bottom: 1rem; }
-.cs-slot-group { display: inline-flex; align-items: center; gap: 0.25rem; }
-.cs-slot-label { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); margin-right: 0.15rem; white-space: nowrap; }
-.cs-pip { width: 0.7rem; height: 0.7rem; border-radius: 2px; border: 1px solid var(--gold); transform: rotate(45deg); }
-.cs-pip.is-on { background: var(--gold); }
-.cs-slot-group.is-pact .cs-pip { border-radius: 999px; transform: none; }
-.cs-spell-level + .cs-spell-level { margin-top: 1rem; }
-.cs-spell-level h3 { margin-bottom: 0.4rem; }
-.cs-spells { display: grid; gap: 0.35rem; }
-.cs-spell { border: 1px solid var(--border); border-radius: 2px; background: var(--bg-raised); }
-.cs-spell summary { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; flex-wrap: wrap; padding: 0.5rem 0.7rem; cursor: pointer; list-style: none; }
-.cs-spell summary::-webkit-details-marker { display: none; }
-.cs-spell[open] summary { border-bottom: 1px solid var(--border); }
-.cs-spell-main { display: flex; flex-direction: column; min-width: 0; flex: 1 1 12rem; }
-.cs-spell-name { color: var(--text-strong); font-weight: 600; display: flex; align-items: center; flex-wrap: wrap; gap: 0.3rem; }
-.cs-spell-meta { font-size: 0.75rem; color: var(--text-faint); overflow-wrap: anywhere; }
-.cs-tag { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.05em; padding: 0 0.3rem; border: 1px solid var(--border-gold); border-radius: 2px; color: var(--gold); }
-.cs-spell.is-unprepared { opacity: 0.6; }
-.cs-chip-heal { color: var(--success); }
-.cs-spell-body { padding: 0.55rem 0.7rem 0.7rem; font-size: 0.9rem; color: var(--text-muted); }
-.cs-spell-facts { font-size: 0.78rem; color: var(--text-faint); margin-bottom: 0.4rem; overflow-wrap: anywhere; }
-.cs-spell-text { white-space: pre-line; overflow-wrap: anywhere; }
