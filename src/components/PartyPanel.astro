@@ -1,7 +1,13 @@
 ---
-// DM screen: the whole active party at a glance (HP, AC, initiative, speed, passives, saves)
+// DM screen: the whole active party at a glance (HP, AC, initiative, speed, passives, saves).
+// A name opens that character's sheet in the side panel (src/lib/statblock-panel.ts); the
+// sheets are rendered here into <template>s, so opening one needs no request.
 import type { PartyRow } from '../lib/party';
 import { signed } from '../lib/character-rolls';
+import { publicSheet } from '../lib/character-sheet';
+import CombatStrip from './character/CombatStrip.astro';
+import AbilityCards from './character/AbilityCards.astro';
+import PrivateSheet from './character/PrivateSheet.astro';
 
 interface Props { rows: PartyRow[] }
 const { rows } = Astro.props;
@@ -38,7 +44,7 @@ const hpTone = (r: PartyRow) => {
         <tbody>
           {rows.map((r) => (
             <tr data-character-id={r.id}>
-              <th scope="row" class="party-name"><a href={`/characters/${r.id}`}>{r.name}</a></th>
+              <th scope="row" class="party-name"><a href={`/characters/${r.id}`} data-party-sheet={r.id} title="Show the sheet in the side panel">{r.name}</a></th>
               <td class="party-hp">
                 {r.hp != null && r.maxHp ? (
                   <>
@@ -57,6 +63,15 @@ const hpTone = (r: PartyRow) => {
         </tbody>
       </table>
     </div>
+    {rows.map((r) => (
+      <template data-party-sheet-for={r.id}>
+        <div class="party-sheet" data-character-name={r.name}>
+          <CombatStrip hp={r.hp} maxHp={r.maxHp} tempHp={r.tempHp} sheet={publicSheet(r.sheet)} dexterity={r.stats?.dexterity ?? null} />
+          {r.stats && <AbilityCards stats={r.stats} sheet={publicSheet(r.sheet)} />}
+          {r.sheet && <PrivateSheet sheet={r.sheet} />}
+        </div>
+      </template>
+    ))}
   </section>
 )}
 

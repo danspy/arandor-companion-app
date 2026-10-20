@@ -1,4 +1,4 @@
-// Roll buttons on the character page: <button class="cs-roll" data-roll="1d20+5" data-roll-name="Stealth">.
+// Roll buttons on the character page (and the DM screen's party side panel): <button class="cs-roll" data-roll="1d20+5" data-roll-name="Stealth">.
 // Advantage/disadvantage ([data-roll-mode]) applies to the next d20 roll, then falls back to Normal,
 // like the bestiary stat block. Delegated and bound once, so it survives ClientRouter page swaps.
 import { rollParts, type RollMode } from './dice';
@@ -27,7 +27,8 @@ export function wireCharacterRolls() {
     if (modeButton) return setMode(modeButton.dataset.rollMode as RollMode);
     const button = target.closest<HTMLElement>('.cs-roll');
     if (!button?.dataset.roll) return;
-    const who = document.getElementById('character-page')?.dataset.characterName || 'Character';
+    // The character page, or a character sheet in the DM screen's side panel
+    const who = button.closest<HTMLElement>('[data-character-name]')?.dataset.characterName || 'Character';
     const what = button.dataset.rollName || '';
     const parts: RollPart[] = [{ label: what, expr: button.dataset.roll }];
     const isD20 = button.dataset.roll.startsWith('1d20');

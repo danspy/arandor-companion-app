@@ -84,6 +84,10 @@
 .sb-panel-bar { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-bottom: 0.75rem; }
 .sb-panel-who { font-size: 0.8rem; color: var(--text-muted); }
 @media (prefers-reduced-motion: reduce) { .sb-panel { transition: none; } }
+/* A party character's sheet in the panel (DM screen): the character page's sections, narrower */
+.sb-panel .party-sheet .t-panel { padding: 1rem; margin-bottom: 1rem; }
+.sb-panel .party-sheet #cs-abilities .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sb-panel .party-sheet .cs-skills { grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr)); }
 
 /* ── Damage / heal on the initiative tracker ── */
 .hp-amount { width: 4rem; padding: 0.25rem 0.4rem; text-align: center; font-size: 0.85rem; }

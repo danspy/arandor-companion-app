@@ -25,6 +25,7 @@ test.describe('Party panel', () => {
     });
     expect(rows[1].saves).toEqual(Object.fromEntries(Object.entries(sinatah.saves).map(([k, v]) => [k, v.bonus])));
     expect(rows[0].tempHp).toBe(5);
+    expect(rows[1].sheet).toEqual(sinatah); // for the sheet in the side panel
   });
 
   test('the best passive in each column is marked, ties included', () => {
@@ -112,6 +113,30 @@ test.describe('Party panel and character notes on the server', () => {
     await expect(page.locator(`#party-panel tr[data-character-id="${CHARACTER}"]`)).toBeVisible();
     await page.setViewportSize({ width: 375, height: 800 });
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(375);
+  });
+
+  test('a party name opens the sheet in the side panel, and its rolls carry the name', async ({ browser }) => {
+    const context = await browser.newContext();
+    expect((await context.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } })).ok()).toBe(true);
+    const page = await context.newPage();
+    await page.goto('/tools/dm-screen');
+    const link = page.locator('#party-panel [data-party-sheet]').first();
+    const name = (await link.textContent())!.trim();
+    await link.click();
+    await expect(page).toHaveURL(/\/tools\/dm-screen/);
+    const panel = page.locator('.sb-panel.is-open');
+    await expect(panel.locator('.sb-panel-who')).toHaveText(name);
+    await expect(panel.locator('#cs-strip')).toBeVisible();
+    await expect(panel.locator('a', { hasText: 'Open' })).toHaveAttribute('href', `/characters/${await link.getAttribute('data-party-sheet')}`);
+
+    const roll = panel.locator('.cs-roll').first();
+    const what = await roll.getAttribute('data-roll-name');
+    await roll.click();
+    await expect.poll(async () => page.evaluate(() => JSON.parse(localStorage.getItem('arandor-dice-history') || '[]')[0]?.name), { timeout: 15000 })
+      .toBe(`${name} · ${what}`);
+
+    await link.click(); // the same name again closes it
+    await expect(page.locator('.sb-panel.is-open')).toHaveCount(0);
   });
 
   test('only the player, the DM and admins read and write a character\'s notes', async ({ browser, page }) => {
