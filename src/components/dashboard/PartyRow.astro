@@ -249,7 +249,7 @@ const hpInfo = (hp: number | null, maxHp: number | null) => {
       });
       card.addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !(e.target as HTMLElement).closest('a')) {
-          window.location.href = card.querySelector('a')!.href;
+          window.arandorGoTo(card.querySelector('a')!.href);
         }
       });
     }

@@ -1104,7 +1104,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
 
             if (!response.ok) throw new Error('Failed to delete entry');
             
-            window.location.reload();
+            window.arandorSoftReload();
           } catch (error) {
             console.error('Error deleting entry:', error);
             alert('Failed to delete entry');
@@ -1128,7 +1128,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           try {
             const response = await fetch('/api/initiative', { method: 'DELETE' });
             if (!response.ok) throw new Error('Failed to clear entries');
-            window.location.reload();
+            window.arandorSoftReload();
           } catch (error) {
             console.error('Error clearing entries:', error);
             alert('Failed to clear entries');
@@ -1157,7 +1157,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               throw new Error(error.error || 'Failed to reset combat');
             }
             
-            window.location.reload();
+            window.arandorSoftReload();
           } catch (error) {
             console.error('Error resetting combat:', error);
             alert(error instanceof Error ? error.message : 'Failed to reset combat');
@@ -1252,7 +1252,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               }
           }
 
-          window.location.reload();
+          window.arandorSoftReload();
         } catch (error) {
           console.error('Error saving entry:', error);
           alert(error instanceof Error ? error.message : 'Failed to save entry');
@@ -1421,7 +1421,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   
                   if (!entry) {
                     // Entry was deleted, trigger reload
-                    window.location.reload();
+                    window.arandorSoftReload();
                     return;
                   }
                   
@@ -1455,7 +1455,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                   // Conditions; a new initiative changes the order: reload
                   window.arandorRenderConditions?.(card, entry.conditions || []);
                   if (String(entry.initiative) !== card.getAttribute('data-initiative')) {
-                    window.location.reload();
+                    window.arandorSoftReload();
                     return;
                   }
 
@@ -1470,7 +1470,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
                 
                 // Check if initiative order changed (entry added/deleted)
                 if (cards.length !== initiatives.length) {
-                  window.location.reload();
+                  window.arandorSoftReload();
                 }
               }
             }
@@ -1495,7 +1495,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           
           if (response.ok) {
             // Reload to update button states and polling behavior
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             throw new Error('Failed to update combat status');
           }
@@ -1525,7 +1525,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ action }),
         });
-        if (response.ok) window.location.reload();
+        if (response.ok) window.arandorSoftReload();
         else alert((await response.json()).error || 'Failed to start combat');
       };
       const startHandler = () => combatAction('start');
@@ -1584,7 +1584,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             alert(`HP synced successfully!\n\nSynced: ${result.syncedCount} of ${result.totalCount} characters with D&D Beyond URLs.`);
             
             // Reload to show updated HP
-            window.location.reload();
+            window.arandorSoftReload();
           } catch (error) {
             console.error('Error syncing HP:', error);
             alert('Failed to sync HP from D&D Beyond. Make sure characters have valid D&D Beyond URLs.');
@@ -1736,7 +1736,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           const updatedEntry = await response.json();
           
           // Reload page to show updated HP and death saves
-          window.location.reload();
+          window.arandorSoftReload();
         } catch (error) {
           console.error('Error updating HP:', error);
           alert(error instanceof Error ? error.message : 'Failed to update HP');
@@ -1789,7 +1789,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               
               if (!entry) {
                 // Entry was deleted, trigger reload
-                window.location.reload();
+                window.arandorSoftReload();
                 return;
               }
               
@@ -1935,7 +1935,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
               // Conditions; a new initiative changes the order: reload
               window.arandorRenderConditions?.(card, entry.conditions || []);
               if (String(entry.initiative) !== card.getAttribute('data-initiative')) {
-                window.location.reload();
+                window.arandorSoftReload();
                 return;
               }
 
@@ -1968,7 +1968,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
             
             // Check if initiative order changed (entry added/deleted)
             if (cards.length !== initiatives.length) {
-              window.location.reload();
+              window.arandorSoftReload();
             }
           }
         } catch (error) {
@@ -2153,12 +2153,12 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
       // Changes from the quick edit: show them on the card; a new order needs a reload
       window.addEventListener(COMBATANT_CHANGED_EVENT, (e) => {
         const { entry, changed } = (e as CustomEvent<{ entry: Combatant; changed: string[] }>).detail;
-        if (changed.some((k) => k === 'initiative' || k === 'isActive')) return window.location.reload();
+        if (changed.some((k) => k === 'initiative' || k === 'isActive')) return window.arandorSoftReload();
         const card = document.querySelector<HTMLElement>(`.initiative-card[data-entry-id="${CSS.escape(entry.id)}"]`);
         if (!card) return;
         const hp = card.querySelector<HTMLElement>('[data-hp-display]');
         if (hp && (changed.includes('hp') || changed.includes('maxHp') || changed.includes('tempHp'))) {
-          if (entry.hp === 0 || /^0(\/|$)/.test(hp.textContent!.trim())) return window.location.reload();
+          if (entry.hp === 0 || /^0(\/|$)/.test(hp.textContent!.trim())) return window.arandorSoftReload();
           hp.textContent = formatHp(entry);
         }
         const ac = card.querySelector<HTMLElement>('[data-ac-display]');
@@ -2169,7 +2169,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
           notes.parentElement?.classList.toggle('hidden', !entry.notes);
         }
         renderConditions(card, entry.conditions);
-        if (changed.includes('creatureId')) window.location.reload();
+        if (changed.includes('creatureId')) window.arandorSoftReload();
       });
       window.addEventListener(PANEL_CLOSED_EVENT, markSelected);
       // The panel survives reloads (new order, other screens): open again for the same combatant
@@ -2186,7 +2186,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         const display = document.querySelector<HTMLElement>(`.initiative-card[data-entry-id="${CSS.escape(entry.id)}"] [data-hp-display]`);
         if (!display) return;
         // Down to or up from 0 changes more than the number (death saves, dead/unconscious)
-        if (entry.hp === 0 || /^0(\/|$)/.test(display.textContent!.trim())) return window.location.reload();
+        if (entry.hp === 0 || /^0(\/|$)/.test(display.textContent!.trim())) return window.arandorSoftReload();
         display.textContent = formatHp(entry);
         display.classList.remove('hp-flash-damage', 'hp-flash-heal');
         void display.offsetWidth;
@@ -2201,7 +2201,7 @@ const getHealthStatus = (hp: number | null, maxHp: number | null, deathSaveFailu
         if ((document.getElementById('entryId') as HTMLInputElement | null)?.value) return; // editing an entry
         const creature = JSON.parse(option.dataset.creature);
         document.getElementById('closeModalBtn')?.click();
-        openQuickAdd(creature, { npcName: select.id === 'npcSelect' ? option.dataset.name : undefined, onAdded: () => window.location.reload() });
+        openQuickAdd(creature, { npcName: select.id === 'npcSelect' ? option.dataset.name : undefined, onAdded: () => window.arandorSoftReload() });
       });
     }
 

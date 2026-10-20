@@ -665,7 +665,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         });
 
         if (response.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to update campaign progress');
         }
@@ -749,7 +749,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
           });
 
           if (response.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to update hero image');
             // Reset button state on error
@@ -842,7 +842,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
               });
 
               if (response.ok) {
-                window.location.reload();
+                window.arandorSoftReload();
               } else {
                 alert('Failed to delete faction');
               }
@@ -880,7 +880,7 @@ const progressPercentage = Math.min(100, Math.max(0, campaignProgress.progressPe
         });
 
         if (response.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to save faction');
         }

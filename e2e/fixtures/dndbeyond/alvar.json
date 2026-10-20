@@ -1,0 +1,894 @@
+{
+"data": {
+"id": 90818931,
+"name": "Alvar Kjell",
+"baseHitPoints": 68,
+"bonusHitPoints": null,
+"overrideHitPoints": null,
+"removedHitPoints": 0,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 8
+},
+{
+"id": 2,
+"name": null,
+"value": 12
+},
+{
+"id": 3,
+"name": null,
+"value": 13
+},
+{
+"id": 4,
+"name": null,
+"value": 10
+},
+{
+"id": 5,
+"name": null,
+"value": 15
+},
+{
+"id": 6,
+"name": null,
+"value": 14
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": 1
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 12,
+"isStartingClass": true,
+"definition": {
+"name": "Cleric",
+"hitDice": 8
+},
+"subclassDefinition": {
+"name": "Light Domain"
+}
+},
+{
+"level": 1,
+"isStartingClass": false,
+"definition": {
+"name": "Warlock",
+"hitDice": 8
+},
+"subclassDefinition": null
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "advantage",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856134,
+"componentTypeId": 1960452172,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": "to avoid or end the Frightened condition"
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856142,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common-sign-language",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856142,
+"componentTypeId": 1960452172,
+"entityId": 127,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Common Sign Language",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "dwarvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856142,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dwarvish",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 3727544,
+"componentTypeId": 306912077,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "dexterity-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 3727544,
+"componentTypeId": 306912077,
+"entityId": 2,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dexterity Score",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "proficiency",
+"subType": "insight",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 12,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Insight",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "persuasion",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 19,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Persuasion",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "medium-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Medium Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "shields",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": 4,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Shields",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "wisdom-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "charisma-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292195,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Saving Throws",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292199,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "wisdom-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "charisma-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-warlock-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Warlock Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-warlock-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Warlock Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292363,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "arcana",
+"value": null,
+"fixedValue": null,
+"statId": 5,
+"componentId": 4496843,
+"componentTypeId": 258900837,
+"entityId": 6,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Arcana",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "religion",
+"value": null,
+"fixedValue": null,
+"statId": 5,
+"componentId": 4496843,
+"componentTypeId": 258900837,
+"entityId": 10,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Religion",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "cleric-cantrip-damage",
+"value": null,
+"fixedValue": null,
+"statId": 5,
+"componentId": 4496847,
+"componentTypeId": 258900837,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Cleric Cantrip Damage",
+"restriction": ""
+},
+{
+"type": "enable-feature",
+"subType": "enable-pact-weapon",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 4496889,
+"componentTypeId": 258900837,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Enable Pact Weapon",
+"restriction": ""
+},
+{
+"type": "replace-weapon-ability",
+"subType": "charisma-score",
+"value": null,
+"fixedValue": null,
+"statId": 6,
+"componentId": 4496889,
+"componentTypeId": 258900837,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+}
+],
+"background": [],
+"item": [
+{
+"type": "bonus",
+"subType": "magic",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 4801,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "damage",
+"subType": "force",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 9228971,
+"componentTypeId": 112130694,
+"entityId": 13,
+"entityTypeId": 349597128,
+"requiresAttunement": true,
+"isGranted": true,
+"friendlySubtypeName": "Force",
+"restriction": "Spend 1-3 charges to make a ranged spell attack against one creature within 60 feet of yourself. On a hit, deal 2d10 Force damage for each charge spent"
+},
+{
+"type": "bonus",
+"subType": "hit-points",
+"value": null,
+"fixedValue": 2,
+"statId": null,
+"componentId": 8960641,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Hit Points",
+"restriction": ""
+},
+{
+"type": "resistance",
+"subType": "poison",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 8225884,
+"componentTypeId": 112130694,
+"entityId": 10,
+"entityTypeId": 349597128,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Poison",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 10832478,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "damage",
+"subType": "poison",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10832478,
+"componentTypeId": 112130694,
+"entityId": 10,
+"entityTypeId": 349597128,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Poison",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 10832483,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+}
+],
+"feat": [
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789209,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "constitution-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789209,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Constitution Saving Throws",
+"restriction": "saving throws that you make to maintain Concentration."
+},
+{
+"type": "bonus",
+"subType": "wisdom-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1874732,
+"componentTypeId": 1088085227,
+"entityId": 5,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Score",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [
+{
+"id": 930385811,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 4801,
+"name": "Battleaxe, +1",
+"canAttune": false
+}
+},
+{
+"id": 675697685,
+"equipped": true,
+"isAttuned": true,
+"definition": {
+"id": 8225884,
+"name": "Demon Skin (Ring Mail)",
+"canAttune": true
+}
+},
+{
+"id": 774324903,
+"equipped": true,
+"isAttuned": true,
+"definition": {
+"id": 9228971,
+"name": "Ring of the Ram",
+"canAttune": true
+}
+},
+{
+"id": 906386552,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832478,
+"name": "Alvars Unholy Splinter",
+"canAttune": false
+}
+},
+{
+"id": 906386553,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832483,
+"name": "Alvars Warhammer",
+"canAttune": false
+}
+},
+{
+"id": 442356378,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 20,
+"name": "Backpack",
+"canAttune": false
+}
+},
+{
+"id": 442356380,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 38,
+"name": "Clothes, Common",
+"canAttune": false
+}
+},
+{
+"id": 459672862,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 159,
+"name": "Amulet",
+"canAttune": false
+}
+},
+{
+"id": 442356379,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 210,
+"name": "Vestments",
+"canAttune": false
+}
+},
+{
+"id": 833321730,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 8960641,
+"name": "Potion of Healing",
+"canAttune": false
+}
+},
+{
+"id": 524639539,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 51,
+"name": "Hourglass",
+"canAttune": false
+}
+},
+{
+"id": 528831539,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 111,
+"name": "Leatherworker's Tools",
+"canAttune": false
+}
+},
+{
+"id": 529340029,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 188,
+"name": "Saddle, Riding",
+"canAttune": false
+}
+},
+{
+"id": 470578139,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 244,
+"name": "Bloodstone",
+"canAttune": false
+}
+},
+{
+"id": 459653104,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 280,
+"name": "Obsidian",
+"canAttune": false
+}
+}
+],
+"feats": [
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789209,
+"name": "War Caster"
+}
+},
+{
+"definition": {
+"id": 1874732,
+"name": "Shadow Touched"
+}
+},
+{
+"definition": {
+"id": 2048517,
+"name": "Dark Bargain"
+}
+}
+]
+}
+}

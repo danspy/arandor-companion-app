@@ -779,7 +779,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
         });
 
         if (response.ok) {
-          window.location.reload();
+          window.arandorSoftReload();
         } else {
           alert('Failed to save character. Please try again.');
         }
@@ -1032,7 +1032,7 @@ const getOwnershipText = (character: typeof characters[0]) => {
           });
           
           if (response.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to delete character. Please try again.');
           }
@@ -1144,39 +1144,20 @@ const getOwnershipText = (character: typeof characters[0]) => {
     initializeAutoSync();
   });
   
-  // Auto-sync characters on page load
+  // Auto-sync characters on page load (basic info, at most once a day each; the server decides).
+  // The list refreshes once when any of them changed, and only if the reader is still on it:
+  // a refresh after they clicked through to a character would land on that page instead.
   async function initializeAutoSync() {
-    // Get all character cards with D&D Beyond URLs
-    const characterCards = document.querySelectorAll('[data-character-id]');
-    
-    for (const card of characterCards) {
-      const characterId = card.getAttribute('data-character-id');
-      const dndbeyondUrl = card.getAttribute('data-dndbeyond-url');
-      
-      // Only auto-sync if character has D&D Beyond URL
-      if (!characterId || !dndbeyondUrl) continue;
-      
-      try {
-        // Fire and forget - don't block page load
-        fetch('/api/characters/auto-sync', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ characterId }),
-        }).then(response => response.json()).then(result => {
-          // If character was updated, reload the page to show new data
-          if (result.success && result.updated) {
-            console.log(`Character ${characterId} was auto-synced with changes`);
-            // Refresh page to show updated data
-            window.location.reload();
-          }
-        }).catch(err => {
-          // Silently fail - auto-sync is a nice-to-have
-          console.debug('Auto-sync skipped for character', characterId, err);
-        });
-      } catch (error) {
-        // Silently fail
-        console.debug('Auto-sync error for character', characterId, error);
-      }
-    }
+    const cards = [...document.querySelectorAll('[data-character-id][data-dndbeyond-url]:not([data-dndbeyond-url=""])')];
+    if (!cards.length) return;
+    const results = await Promise.allSettled(cards.map((card) =>
+      fetch('/api/characters/auto-sync', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ characterId: card.getAttribute('data-character-id') }),
+      }).then((response) => response.json())
+    ));
+    const changed = results.some((r) => r.status === 'fulfilled' && r.value.success && r.value.updated);
+    if (changed && cards[0].isConnected) window.arandorSoftReload();
   }
 </script>

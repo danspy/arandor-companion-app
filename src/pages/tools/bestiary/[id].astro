@@ -78,7 +78,7 @@ const quick = { id: creature.id, name: creature.name, ac: creature.ac, hp: creat
     del.addEventListener('click', async () => {
       if (!(await window.arandorConfirm(`Delete "${del.dataset.name}"?`, { detail: 'Combatants added from it stay in the fight, without the stat block.', confirmLabel: 'Delete', danger: true }))) return;
       const res = await fetch(`/api/creatures/${del.dataset.id}`, { method: 'DELETE' });
-      if (res.ok) window.location.href = '/tools/bestiary';
+      if (res.ok) window.arandorGoTo('/tools/bestiary');
     });
   }
   document.addEventListener('astro:page-load', init);

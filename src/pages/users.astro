@@ -624,7 +624,7 @@ const users = await db.select({
           closeEditModal();
           showMessage(`User '${username}' updated successfully!`, 'success');
           // Reload page to show updated role and name
-          setTimeout(() => window.location.reload(), 1000);
+          setTimeout(() => window.arandorSoftReload(), 1000);
         } else {
           if (editModalErrorMessage) {
             editModalErrorMessage.textContent = result.error || 'Failed to update user. Please try again.';

@@ -289,7 +289,7 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
     if (!questId) return;
 
     document.getElementById('editQuest')?.addEventListener('click', () => {
-      window.location.href = `/quests?edit=${questId}`;
+      window.arandorGoTo(`/quests?edit=${questId}`);
     });
 
     document.querySelectorAll('.set-quest-status').forEach(button => {
@@ -304,7 +304,7 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
             body: JSON.stringify({ ...quest, status }),
           });
           if (updateResponse.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to update quest. Please try again.');
           }
@@ -319,7 +319,7 @@ const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slic
         try {
           const response = await fetch(`/api/quests/${questId}`, { method: 'DELETE' });
           if (response.ok) {
-            window.location.href = '/quests';
+            window.arandorGoTo('/quests');
           } else {
             alert('Failed to delete quest. Please try again.');
           }

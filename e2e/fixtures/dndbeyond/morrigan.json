@@ -1,0 +1,506 @@
+{
+"data": {
+"id": 148273694,
+"name": "Morrigan",
+"baseHitPoints": 42,
+"bonusHitPoints": null,
+"overrideHitPoints": null,
+"removedHitPoints": 56,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 8
+},
+{
+"id": 2,
+"name": null,
+"value": 12
+},
+{
+"id": 3,
+"name": null,
+"value": 15
+},
+{
+"id": 4,
+"name": null,
+"value": 18
+},
+{
+"id": 5,
+"name": null,
+"value": 14
+},
+{
+"id": 6,
+"name": null,
+"value": 13
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 10,
+"isStartingClass": true,
+"definition": {
+"name": "Wizard",
+"hitDice": 6
+},
+"subclassDefinition": {
+"name": "Evoker"
+}
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "proficiency",
+"subType": "insight",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856144,
+"componentTypeId": 1960452172,
+"entityId": 12,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Insight",
+"restriction": ""
+},
+{
+"type": "size",
+"subType": "medium",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856147,
+"componentTypeId": 1960452172,
+"entityId": 4,
+"entityTypeId": 127108918,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Medium",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856150,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "elvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856150,
+"componentTypeId": 1960452172,
+"entityId": 3,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Elvish",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "dwarvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856150,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dwarvish",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "proficiency",
+"subType": "intelligence-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292382,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Intelligence Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "wisdom-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292382,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "arcana",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292382,
+"componentTypeId": 12168134,
+"entityId": 6,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Arcana",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "investigation",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292382,
+"componentTypeId": 12168134,
+"entityId": 8,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Investigation",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292382,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "expertise",
+"subType": "arcana",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292386,
+"componentTypeId": 12168134,
+"entityId": 6,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Arcana",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292387,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+}
+],
+"background": [
+{
+"type": "proficiency",
+"subType": "deception",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406485,
+"componentTypeId": 1669830167,
+"entityId": 16,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Deception",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "history",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406485,
+"componentTypeId": 1669830167,
+"entityId": 7,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "History",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "calligraphers-supplies",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406485,
+"componentTypeId": 1669830167,
+"entityId": 104,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Calligrapher's Supplies",
+"restriction": ""
+}
+],
+"item": [],
+"feat": [
+{
+"type": "bonus",
+"subType": "intelligence-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 4,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Intelligence Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "intelligence-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 4,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Intelligence Score",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "nature",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789189,
+"componentTypeId": 1088085227,
+"entityId": 9,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Nature",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "medicine",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789189,
+"componentTypeId": 1088085227,
+"entityId": 13,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Medicine",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "survival",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789189,
+"componentTypeId": 1088085227,
+"entityId": 15,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Survival",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "intelligence-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 1789181,
+"componentTypeId": 1088085227,
+"entityId": 4,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Intelligence Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789181,
+"componentTypeId": 1088085227,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [],
+"feats": [
+{
+"definition": {
+"id": 47,
+"name": "Svirfneblin Magic"
+}
+},
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789165,
+"name": "Magic Initiate (Wizard)"
+}
+},
+{
+"definition": {
+"id": 1789181,
+"name": "Sage Ability Score Improvements"
+}
+},
+{
+"definition": {
+"id": 1789189,
+"name": "Skilled"
+}
+},
+{
+"definition": {
+"id": 2048517,
+"name": "Dark Bargain"
+}
+}
+]
+}
+}

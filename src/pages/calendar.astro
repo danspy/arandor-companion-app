@@ -682,7 +682,7 @@ function getHostName(hostId: string | null): string {
 
       // Download calendar file
       downloadCalendarBtn?.addEventListener('click', () => {
-        window.location.href = calendarUrl;
+        window.arandorGoTo(calendarUrl);
       });
 
       // Show instructions modal
@@ -801,7 +801,7 @@ function getHostName(hostId: string | null): string {
               });
 
               if (response.ok) {
-                window.location.reload();
+                window.arandorSoftReload();
               } else {
                 alert('Failed to delete event');
               }
@@ -844,7 +844,7 @@ function getHostName(hostId: string | null): string {
           });
 
           if (response.ok) {
-            window.location.reload();
+            window.arandorSoftReload();
           } else {
             alert('Failed to save event');
           }

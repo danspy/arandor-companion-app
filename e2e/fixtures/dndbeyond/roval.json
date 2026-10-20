@@ -1,0 +1,1530 @@
+{
+"data": {
+"id": 94808066,
+"name": "Roval Belmont",
+"baseHitPoints": 64,
+"bonusHitPoints": 10,
+"overrideHitPoints": 127,
+"removedHitPoints": 15,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 15
+},
+{
+"id": 2,
+"name": null,
+"value": 10
+},
+{
+"id": 3,
+"name": null,
+"value": 13
+},
+{
+"id": 4,
+"name": null,
+"value": 8
+},
+{
+"id": 5,
+"name": null,
+"value": 12
+},
+{
+"id": 6,
+"name": null,
+"value": 14
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": 16
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 10,
+"isStartingClass": true,
+"definition": {
+"name": "Paladin",
+"hitDice": 10
+},
+"subclassDefinition": {
+"name": "Oath of Vengeance"
+}
+},
+{
+"level": 3,
+"isStartingClass": false,
+"definition": {
+"name": "Fighter",
+"hitDice": 10
+},
+"subclassDefinition": {
+"name": "Champion"
+}
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "set-base",
+"subType": "darkvision",
+"value": 60,
+"fixedValue": 60,
+"statId": null,
+"componentId": 48,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 668550506,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Darkvision",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 49,
+"componentTypeId": 1960452172,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": "against being charmed, and magic can’t put you to sleep"
+},
+{
+"type": "immunity",
+"subType": "magical-sleep",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 49,
+"componentTypeId": 1960452172,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magical Sleep",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "insight",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 50,
+"componentTypeId": 1960452172,
+"entityId": 12,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Insight",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "intimidation",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 50,
+"componentTypeId": 1960452172,
+"entityId": 17,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Intimidation",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "charisma-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 93,
+"componentTypeId": 1960452172,
+"entityId": 6,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 93,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 93,
+"componentTypeId": 1960452172,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 94,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "elvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 94,
+"componentTypeId": 1960452172,
+"entityId": 3,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Elvish",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "abyssal",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 94,
+"componentTypeId": 1960452172,
+"entityId": 9,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Abyssal",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "proficiency",
+"subType": "strength-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Strength Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "constitution-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Constitution Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-fighter-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Fighter Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "choose-a-fighter-skill-proficiency",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Choose a Fighter Skill Proficiency ",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "martial-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Martial Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "medium-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Medium Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "shields",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 4,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Shields",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "heavy-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292231,
+"componentTypeId": 12168134,
+"entityId": 3,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Heavy Armor",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292237,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "athletics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292624,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Athletics",
+"restriction": ""
+},
+{
+"type": "advantage",
+"subType": "initiative",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292624,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Initiative",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "charisma-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Charisma Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "wisdom-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Wisdom Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "persuasion",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 19,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Persuasion",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "athletics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Athletics",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "martial-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Martial Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "light-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Light Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "medium-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Medium Armor",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "shields",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 4,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Shields",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "heavy-armor",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292281,
+"componentTypeId": 12168134,
+"entityId": 3,
+"entityTypeId": 174869515,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Heavy Armor",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292288,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "extra-attacks",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 10292290,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Extra Attacks",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": 6,
+"componentId": 10292292,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Saving Throws",
+"restriction": ""
+},
+{
+"type": "immunity",
+"subType": "frightened",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292295,
+"componentTypeId": 12168134,
+"entityId": 5,
+"entityTypeId": 1737492944,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Frightened",
+"restriction": "while in your Aura of Protection."
+}
+],
+"background": [
+{
+"type": "proficiency",
+"subType": "history",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10,
+"componentTypeId": 1669830167,
+"entityId": 7,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "History",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "deception",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10,
+"componentTypeId": 1669830167,
+"entityId": 16,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Deception",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "playing-card-set",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10,
+"componentTypeId": 1669830167,
+"entityId": 122,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Playing Card Set",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "dwarvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10,
+"componentTypeId": 1669830167,
+"entityId": 2,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dwarvish",
+"restriction": ""
+}
+],
+"item": [
+{
+"type": "bonus",
+"subType": "hit-points",
+"value": null,
+"fixedValue": 4,
+"statId": null,
+"componentId": 5133,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Hit Points",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 10832423,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "damage",
+"subType": "additional",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10832423,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Additional",
+"restriction": "Against Giants"
+}
+],
+"feat": [
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "armored-armor-class",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789128,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Armored Armor Class",
+"restriction": ""
+},
+{
+"type": "damage",
+"subType": "one-handed-melee-attacks",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 1789131,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "One-Handed Melee Attacks",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789185,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 8,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 195,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "slow-javelin-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 215,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Slow (Javelin, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-greatsword",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 22,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Greatsword)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-greatsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Greatsword, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "graze-greatsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 202,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Graze (Greatsword, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-morningstar",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 26,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Morningstar)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-morningstar-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Morningstar, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-morningstar-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Morningstar, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-morningstar-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 206,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Morningstar, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-morningstar-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789142,
+"componentTypeId": 1088085227,
+"entityId": 221,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Morningstar, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "vex-shortsword",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": 30,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Vex (Shortsword)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "vex-shortsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Vex (Shortsword, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "vex-shortsword-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Vex (Shortsword, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "vex-shortsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": 210,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Vex (Shortsword, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "vex-shortsword-wooden",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": 224,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Vex (Shortsword, Wooden)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-longsword",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": 4,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Longsword)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-longsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Longsword, Silver)",
+"restriction": ""
+},
+{
+"type": "weapon-mastery",
+"subType": "sap-longsword-silver",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 1789212,
+"componentTypeId": 1088085227,
+"entityId": 205,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Sap (Longsword, Silver)",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [
+{
+"id": 481292560,
+"equipped": true,
+"isAttuned": true,
+"definition": {
+"id": 4646,
+"name": "Gloves of Missile Snaring",
+"canAttune": true
+}
+},
+{
+"id": 906375685,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 10832423,
+"name": "Belmonts Giant Slayer",
+"canAttune": false
+}
+},
+{
+"id": 906377091,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 8,
+"name": "Shield",
+"canAttune": false
+}
+},
+{
+"id": 529363103,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 18,
+"name": "Plate",
+"canAttune": false
+}
+},
+{
+"id": 438860822,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 4,
+"name": "Longsword",
+"canAttune": false
+}
+},
+{
+"id": 438860823,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 8,
+"name": "Javelin",
+"canAttune": false
+}
+},
+{
+"id": 438861730,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 17,
+"name": "Shortbow",
+"canAttune": false
+}
+},
+{
+"id": 438860821,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 20,
+"name": "Backpack",
+"canAttune": false
+}
+},
+{
+"id": 438861655,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 43,
+"name": "Crowbar",
+"canAttune": false
+}
+},
+{
+"id": 438860221,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 50,
+"name": "Holy Water (flask)",
+"canAttune": false
+}
+},
+{
+"id": 438860831,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 213,
+"name": "Holy Symbol",
+"canAttune": false
+}
+},
+{
+"id": 438860832,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 84,
+"name": "Signet Ring",
+"canAttune": false
+}
+},
+{
+"id": 438860968,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 115,
+"name": "Smith's Tools",
+"canAttune": false
+}
+},
+{
+"id": 688523119,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 71,
+"name": "Potion of Healing",
+"canAttune": false
+}
+},
+{
+"id": 669231023,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 5133,
+"name": "Potion of Healing (Greater)",
+"canAttune": false
+}
+},
+{
+"id": 1094677144,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832420,
+"name": "Belmonts Bloodeater",
+"canAttune": false
+}
+},
+{
+"id": 438860824,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 24,
+"name": "Bedroll",
+"canAttune": false
+}
+},
+{
+"id": 438860825,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 61,
+"name": "Mess Kit",
+"canAttune": false
+}
+},
+{
+"id": 459723136,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 71,
+"name": "Potion of Healing",
+"canAttune": false
+}
+},
+{
+"id": 438860828,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 75,
+"name": "Rations (1 day)",
+"canAttune": false
+}
+},
+{
+"id": 438860830,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 77,
+"name": "Rope, Hempen (50 feet)",
+"canAttune": false
+}
+},
+{
+"id": 524639623,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 82,
+"name": "Shovel",
+"canAttune": false
+}
+},
+{
+"id": 438860826,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 90,
+"name": "Tinderbox",
+"canAttune": false
+}
+},
+{
+"id": 438860827,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 91,
+"name": "Torch",
+"canAttune": false
+}
+},
+{
+"id": 438860829,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 92,
+"name": "Waterskin",
+"canAttune": false
+}
+},
+{
+"id": 459653102,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 280,
+"name": "Obsidian",
+"canAttune": false
+}
+},
+{
+"id": 463131777,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 287,
+"name": "Turquoise",
+"canAttune": false
+}
+}
+],
+"feats": [
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789128,
+"name": "Defense"
+}
+},
+{
+"definition": {
+"id": 1789131,
+"name": "Dueling"
+}
+},
+{
+"definition": {
+"id": 1789142,
+"name": "Weapon Mastery"
+}
+},
+{
+"definition": {
+"id": 1789185,
+"name": "Sentinel"
+}
+},
+{
+"definition": {
+"id": 1789212,
+"name": "Weapon Mastery"
+}
+},
+{
+"definition": {
+"id": 2048517,
+"name": "Dark Bargain"
+}
+}
+]
+}
+}

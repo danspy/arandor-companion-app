@@ -1,0 +1,932 @@
+{
+"data": {
+"id": 139369565,
+"name": "Moronur",
+"baseHitPoints": 73,
+"bonusHitPoints": null,
+"overrideHitPoints": null,
+"removedHitPoints": 0,
+"temporaryHitPoints": 0,
+"stats": [
+{
+"id": 1,
+"name": null,
+"value": 13
+},
+{
+"id": 2,
+"name": null,
+"value": 14
+},
+{
+"id": 3,
+"name": null,
+"value": 15
+},
+{
+"id": 4,
+"name": null,
+"value": 12
+},
+{
+"id": 5,
+"name": null,
+"value": 10
+},
+{
+"id": 6,
+"name": null,
+"value": 8
+}
+],
+"bonusStats": [
+{
+"id": 1,
+"name": null,
+"value": 1
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"overrideStats": [
+{
+"id": 1,
+"name": null,
+"value": null
+},
+{
+"id": 2,
+"name": null,
+"value": null
+},
+{
+"id": 3,
+"name": null,
+"value": null
+},
+{
+"id": 4,
+"name": null,
+"value": null
+},
+{
+"id": 5,
+"name": null,
+"value": null
+},
+{
+"id": 6,
+"name": null,
+"value": null
+}
+],
+"deathSaves": {
+"failCount": 0,
+"successCount": 0,
+"isStabilized": false
+},
+"classes": [
+{
+"level": 13,
+"isStartingClass": true,
+"definition": {
+"name": "Monk",
+"hitDice": 8
+},
+"subclassDefinition": {
+"name": "Warrior of the Open Hand"
+}
+}
+],
+"modifiers": {
+"race": [
+{
+"type": "set-base",
+"subType": "darkvision",
+"value": 120,
+"fixedValue": 120,
+"statId": null,
+"componentId": 13856152,
+"componentTypeId": 1960452172,
+"entityId": 2,
+"entityTypeId": 668550506,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Darkvision",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "common",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 1,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Common",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "orc",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 8,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Orc",
+"restriction": ""
+},
+{
+"type": "language",
+"subType": "elvish",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 13856158,
+"componentTypeId": 1960452172,
+"entityId": 3,
+"entityTypeId": 906033267,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Elvish",
+"restriction": ""
+}
+],
+"class": [
+{
+"type": "bonus",
+"subType": "unarmored-movement",
+"value": 5,
+"fixedValue": 5,
+"statId": null,
+"componentId": 10292267,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Unarmored Movement",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "unarmored-movement",
+"value": 5,
+"fixedValue": 5,
+"statId": null,
+"componentId": 10292271,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Unarmored Movement",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "strength-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Strength Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "dexterity-saving-throws",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Dexterity Saving Throws",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "acrobatics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 3,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Acrobatics",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "athletics",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 2,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Athletics",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "carpenters-tools",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 105,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Carpenter's Tools",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "simple-weapons",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 660121713,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Simple Weapons",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "scimitar",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 29,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Scimitar",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "shortsword",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 30,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Shortsword",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "crossbow-hand",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292255,
+"componentTypeId": 12168134,
+"entityId": 1,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Crossbow, Hand",
+"restriction": ""
+},
+{
+"type": "monk-weapon",
+"subType": "scimitar",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292256,
+"componentTypeId": 12168134,
+"entityId": 29,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Scimitar",
+"restriction": ""
+},
+{
+"type": "monk-weapon",
+"subType": "greatclub",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292256,
+"componentTypeId": 12168134,
+"entityId": 6,
+"entityTypeId": 1782728300,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Greatclub",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "unarmored-armor-class",
+"value": null,
+"fixedValue": null,
+"statId": 5,
+"componentId": 10292257,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Unarmored Armor Class",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "unarmored-movement",
+"value": 10,
+"fixedValue": 10,
+"statId": null,
+"componentId": 10292259,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Unarmored Movement",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "subclass",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 10292262,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Subclass",
+"restriction": ""
+},
+{
+"type": "set",
+"subType": "extra-attacks",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 10292265,
+"componentTypeId": 12168134,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Extra Attacks",
+"restriction": ""
+}
+],
+"background": [
+{
+"type": "proficiency",
+"subType": "animal-handling",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406479,
+"componentTypeId": 1669830167,
+"entityId": 11,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Animal Handling",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "nature",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406479,
+"componentTypeId": 1669830167,
+"entityId": 9,
+"entityTypeId": 1958004211,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Nature",
+"restriction": ""
+},
+{
+"type": "proficiency",
+"subType": "masons-tools",
+"value": null,
+"fixedValue": null,
+"statId": null,
+"componentId": 406479,
+"componentTypeId": 1669830167,
+"entityId": 112,
+"entityTypeId": 2103445194,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Mason's Tools",
+"restriction": ""
+}
+],
+"item": [
+{
+"type": "bonus",
+"subType": "magic",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 4801,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 3,
+"fixedValue": 3,
+"statId": null,
+"componentId": 10832225,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 10832368,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "magic",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 10832372,
+"componentTypeId": 112130694,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Magic",
+"restriction": ""
+}
+],
+"feat": [
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789092,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "dexterity-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 2,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dexterity Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789093,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "dexterity-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789161,
+"componentTypeId": 1088085227,
+"entityId": 2,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Dexterity Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "hit-points-per-level",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 1789206,
+"componentTypeId": 1088085227,
+"entityId": null,
+"entityTypeId": null,
+"requiresAttunement": false,
+"isGranted": true,
+"friendlySubtypeName": "Hit Points per Level",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "strength-score",
+"value": 2,
+"fixedValue": 2,
+"statId": null,
+"componentId": 1789140,
+"componentTypeId": 1088085227,
+"entityId": 1,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Strength Score",
+"restriction": ""
+},
+{
+"type": "bonus",
+"subType": "constitution-score",
+"value": 1,
+"fixedValue": 1,
+"statId": null,
+"componentId": 1789140,
+"componentTypeId": 1088085227,
+"entityId": 3,
+"entityTypeId": 1472902489,
+"requiresAttunement": false,
+"isGranted": false,
+"friendlySubtypeName": "Constitution Score",
+"restriction": ""
+}
+],
+"condition": []
+},
+"inventory": [
+{
+"id": 906409571,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 4801,
+"name": "Battleaxe, +1",
+"canAttune": false
+}
+},
+{
+"id": 906365892,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832225,
+"name": "Moronurs Quarterstaff",
+"canAttune": false
+}
+},
+{
+"id": 906371339,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 10832368,
+"name": "Moronurs Left Knuckle",
+"canAttune": false
+}
+},
+{
+"id": 906371343,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 10832372,
+"name": "Moronurs Right Knuckle",
+"canAttune": false
+}
+},
+{
+"id": 910592647,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 3,
+"name": "Studded Leather",
+"canAttune": false
+}
+},
+{
+"id": 773051407,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 16,
+"name": "Dart",
+"canAttune": false
+}
+},
+{
+"id": 773051408,
+"equipped": true,
+"isAttuned": false,
+"definition": {
+"id": 20,
+"name": "Backpack",
+"canAttune": false
+}
+},
+{
+"id": 773051409,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 38,
+"name": "Clothes, Common",
+"canAttune": false
+}
+},
+{
+"id": 774318113,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 401,
+"name": "Iron Pot",
+"canAttune": false
+}
+},
+{
+"id": 774318165,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 422,
+"name": "Shovel",
+"canAttune": false
+}
+},
+{
+"id": 774318010,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 428,
+"name": "Mason's Tools",
+"canAttune": false
+}
+},
+{
+"id": 773051410,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 16,
+"name": "Chain Mail",
+"canAttune": false
+}
+},
+{
+"id": 773051411,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 30,
+"name": "Shortsword",
+"canAttune": false
+}
+},
+{
+"id": 773051412,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 61,
+"name": "Mess Kit",
+"canAttune": false
+}
+},
+{
+"id": 773051413,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 85,
+"name": "Soap",
+"canAttune": false
+}
+},
+{
+"id": 773051414,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 255,
+"name": "Diamond",
+"canAttune": false
+}
+},
+{
+"id": 774318553,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 411,
+"name": "Rations",
+"canAttune": false
+}
+},
+{
+"id": 774318224,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 420,
+"name": "Bedroll",
+"canAttune": false
+}
+},
+{
+"id": 774318887,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 434,
+"name": "Tinderbox",
+"canAttune": false
+}
+},
+{
+"id": 774318984,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 437,
+"name": "Torch",
+"canAttune": false
+}
+},
+{
+"id": 774318275,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 476,
+"name": "Glass Bottle",
+"canAttune": false
+}
+},
+{
+"id": 774318466,
+"equipped": false,
+"isAttuned": false,
+"definition": {
+"id": 493,
+"name": "Hooded Lantern",
+"canAttune": false
+}
+}
+],
+"feats": [
+{
+"definition": {
+"id": 1789092,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789093,
+"name": "Ability Score Improvement"
+}
+},
+{
+"definition": {
+"id": 1789140,
+"name": "Farmer Ability Score Improvements"
+}
+},
+{
+"definition": {
+"id": 1789161,
+"name": "Mage Slayer"
+}
+},
+{
+"definition": {
+"id": 1789206,
+"name": "Tough"
+}
+}
+]
+}
+}

@@ -286,6 +286,8 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <MusicPlayer />
     
     <script>
+      import '../lib/soft-reload';
+
       // Function to close mobile menu
       const closeMobileMenu = () => {
         const mobileMenu = document.getElementById('mobileMenu');
