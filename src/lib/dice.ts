@@ -51,14 +51,15 @@ const OVERLAY_ID = 'dice-overlay';
 const SETTLE_TIMEOUT_MS = 10000;
 const LINGER_MS = 3500;
 
+// Theme bronze (--color-primary-*): bronze dice, a gold d20, dark leather d100.
 const DICE_COLORS: Record<DieType, string> = {
-  d4: '#8b4545',
-  d6: '#8b4545',
-  d8: '#8b4545',
-  d10: '#8b4545',
-  d12: '#8b4545',
-  d20: '#d97706',
-  d100: '#475569',
+  d4: '#8d5a18',
+  d6: '#8d5a18',
+  d8: '#8d5a18',
+  d10: '#8d5a18',
+  d12: '#8d5a18',
+  d20: '#c99032',
+  d100: '#4e3010',
 };
 
 // ── History (per browser) ──────────────────────────────────────────────────
