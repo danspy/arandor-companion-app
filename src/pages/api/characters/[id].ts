@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro';
-import { db, Character, User, eq } from '@/db';
+import { db, Character, CharacterNote, User, eq } from '@/db';
 import { requirePlayerOrAbove } from '../../../lib/middleware';
 import { getCurrentUser, getUserRole } from '../../../lib/auth';
 import { canSeePrivateSheet, forViewer } from '../../../lib/character-sheet';
@@ -182,6 +182,7 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
     }
     
     await db.delete(Character).where(eq(Character.id, params.id!));
+    await db.delete(CharacterNote).where(eq(CharacterNote.characterId, params.id!));
     
     return new Response(JSON.stringify({ success: true }), {
       status: 200,

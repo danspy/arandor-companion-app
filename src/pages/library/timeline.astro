@@ -1,5 +1,6 @@
 ---
 import Layout from '../../layouts/Layout.astro';
+import { MONTH_NAMES } from '../../lib/fantasy-calendar';
 import PageHero from '../../components/PageHero.astro';
 import Button from '../../components/Button.astro';
 import { db, TimelineEntry, DiaryEntry, LibraryEntry, NPC, Location, Character, Quest, PageSettings, eq } from '@/db';
@@ -70,12 +71,7 @@ labels.forEach(label => {
   labelsByYear.get(year).push(label);
 });
 
-// Fantasy month names
-const monthNames = [
-  '', // 0 index (no month)
-  'Jalun', 'Forun', 'Myrt', 'Adrel', 'Mel', 'Juton',
-  'Jilu', 'Aykast', 'Sibton', 'Oni', 'Novrum', 'Decetra'
-];
+const monthNames = MONTH_NAMES;
 
 // Fetch all related data for connections
 const diaryEntries = await db.select().from(DiaryEntry);

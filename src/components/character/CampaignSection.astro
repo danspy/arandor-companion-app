@@ -1,0 +1,193 @@
+---
+// Character page: sessions, quests, NPCs met and timeline events from the diary and the timeline
+// (public), plus the character's private notes (player, DM and admins)
+import type { CharacterCampaign } from '../../lib/character-campaign';
+import { MONTH_NAMES } from '../../lib/fantasy-calendar';
+
+interface Props { characterId: string; campaign: CharacterCampaign; notes: string | null } // notes: null = not for this viewer
+const { characterId, campaign, notes } = Astro.props;
+const QUEST_BADGE: Record<string, string> = { active: 't-badge-gold', completed: 't-badge-green', failed: 't-badge-red' };
+const formatDate = (d: string) => {
+  const date = new Date(`${d}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? d : date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+};
+// Long campaigns: the first few of each list, the rest behind "Show all"
+const LIMIT = { sessions: 6, quests: 6, npcs: 16, timeline: 6 } as const;
+const empty = !campaign.sessions.length && !campaign.quests.length && !campaign.npcs.length && !campaign.timeline.length;
+---
+<section id="cs-campaign" class="t-panel p-6 sm:p-8 mb-6">
+  <div class="t-section-header">
+    <h2 class="t-section-h text-xl">In the campaign</h2>
+  </div>
+
+  {notes != null && (
+    <form id="cs-notes" class="cc-notes mb-6" data-character-id={characterId}>
+      <label for="cs-notes-text" class="t-label-sm">Notes <span class="t-faint">(only you, the DM and admins)</span></label>
+      <textarea id="cs-notes-text" class="t-input w-full" rows="5" maxlength="20000" placeholder="Debts, promises, secrets, plans…">{notes}</textarea>
+      <div class="cc-notes-actions">
+        <span class="t-faint text-xs" data-notes-status aria-live="polite"></span>
+        <button type="submit" class="t-btn-secondary text-sm">Save notes</button>
+      </div>
+    </form>
+  )}
+
+  {empty && <p class="t-faint text-sm">Nothing yet. Diary entries and timeline events that mention this character show up here.</p>}
+
+  <div class="cc-grid">
+    {campaign.sessions.length > 0 && (
+      <div class="cc-block" data-cc-list>
+        <h3 class="t-label-sm mb-2">Sessions <span class="t-faint">({campaign.sessions.length})</span></h3>
+        <ul class="cc-list">
+          {campaign.sessions.map((s, i) => (
+            <li class={i >= LIMIT.sessions ? 'cc-extra' : ''}><a href={`/diary/${s.id}`}><span class="cc-num">#{s.session}</span> {s.title}</a><span class="cc-meta">{formatDate(s.date)}</span></li>
+          ))}
+        </ul>
+        {campaign.sessions.length > LIMIT.sessions && <button type="button" class="cc-more" data-cc-more aria-expanded="false">Show all {campaign.sessions.length}</button>}
+      </div>
+    )}
+    {campaign.quests.length > 0 && (
+      <div class="cc-block" data-cc-list>
+        <h3 class="t-label-sm mb-2">Quests <span class="t-faint">({campaign.quests.length})</span></h3>
+        <ul class="cc-list">
+          {campaign.quests.map((q, i) => (
+            <li class={i >= LIMIT.quests ? 'cc-extra' : ''}><a href={`/quests/${q.id}`}>{q.title}</a><span class={`t-badge text-xs ${QUEST_BADGE[q.status] ?? ''}`}>{q.status}</span></li>
+          ))}
+        </ul>
+        {campaign.quests.length > LIMIT.quests && <button type="button" class="cc-more" data-cc-more aria-expanded="false">Show all {campaign.quests.length}</button>}
+      </div>
+    )}
+    {campaign.timeline.length > 0 && (
+      <div class="cc-block" data-cc-list>
+        <h3 class="t-label-sm mb-2">Timeline <span class="t-faint">({campaign.timeline.length})</span></h3>
+        <ul class="cc-list">
+          {campaign.timeline.map((t, i) => (
+            <li class={i >= LIMIT.timeline ? 'cc-extra' : ''}><a href="/library/timeline">{t.headline}</a><span class="cc-meta">{t.month ? `${MONTH_NAMES[t.month]} ` : ''}{t.year}</span></li>
+          ))}
+        </ul>
+        {campaign.timeline.length > LIMIT.timeline && <button type="button" class="cc-more" data-cc-more aria-expanded="false">Show all {campaign.timeline.length}</button>}
+      </div>
+    )}
+  </div>
+
+  {campaign.npcs.length > 0 && (
+    <div class="cc-block mt-6" data-cc-list>
+      <h3 class="t-label-sm mb-2">NPCs met <span class="t-faint">({campaign.npcs.length})</span></h3>
+      <ul class="cc-npcs">
+        {campaign.npcs.map((n, i) => (
+          <li class={i >= LIMIT.npcs ? 'cc-extra' : ''}>
+            <a href={`/npcs/${n.id}`} class={`cc-npc is-${['ally', 'enemy'].includes(n.relationship) ? n.relationship : 'neutral'}`} title={`${n.name} (${n.relationship})`}>
+              {n.avatarUrl ? <img src={n.avatarUrl} alt="" loading="lazy" /> : <span class="cc-npc-initial" aria-hidden="true">{n.name.charAt(0)}</span>}
+              {n.name}
+            </a>
+          </li>
+        ))}
+      </ul>
+      {campaign.npcs.length > LIMIT.npcs && <button type="button" class="cc-more" data-cc-more aria-expanded="false">Show all {campaign.npcs.length}</button>}
+      <p class="cc-legend t-faint text-xs"><span class="cc-dot is-ally"></span>Ally <span class="cc-dot is-neutral"></span>Neutral <span class="cc-dot is-enemy"></span>Enemy</p>
+    </div>
+  )}
+</section>
+
+<script>
+  import type { TransitionBeforeSwapEvent } from 'astro:transitions/client';
+
+  // Delegated once, so it survives ClientRouter page swaps. A page refresh (the background
+  // D&D Beyond sync) can swap the form at any time, so status and edits always go to the form
+  // that is on the page now.
+  const notesForm = () => document.getElementById('cs-notes');
+  const setStatus = (text: string) => {
+    const status = notesForm()?.querySelector<HTMLElement>('[data-notes-status]');
+    if (status) status.textContent = text;
+  };
+
+  document.addEventListener('submit', async (e) => {
+    const form = (e.target as HTMLElement).closest<HTMLFormElement>('#cs-notes');
+    if (!form) return;
+    e.preventDefault();
+    const content = form.querySelector('textarea')!.value;
+    const button = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    button.disabled = true;
+    setStatus('Saving…');
+    try {
+      const response = await fetch(`/api/characters/${form.dataset.characterId}/notes`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content }),
+      });
+      const answer = await response.json().catch(() => ({}));
+      const current = notesForm();
+      // Typed on while saving: the newer text is still unsaved
+      if (response.ok && current?.querySelector('textarea')?.value === content) {
+        delete current.dataset.unsaved;
+        setStatus('Saved');
+      } else if (!response.ok) {
+        setStatus(`Not saved: ${answer.error || response.statusText}`);
+      }
+    } catch {
+      setStatus('Not saved: check your connection');
+    } finally {
+      button.disabled = false;
+      notesForm()?.querySelector<HTMLButtonElement>('button[type="submit"]')?.removeAttribute('disabled');
+    }
+  });
+
+  document.addEventListener('input', (e) => {
+    if ((e.target as HTMLElement).id !== 'cs-notes-text') return;
+    notesForm()!.dataset.unsaved = ''; // the background sync leaves the page alone (src/lib/auto-sync.ts)
+    setStatus('Not saved yet');
+  });
+
+  // A refresh that started before the first keystroke still lands: carry the unsaved text,
+  // the cursor and the status over to the new page
+  document.addEventListener('astro:before-swap', (e) => {
+    const old = document.querySelector<HTMLFormElement>('#cs-notes[data-unsaved]');
+    const next = (e as TransitionBeforeSwapEvent).newDocument.getElementById('cs-notes');
+    if (!old || !next || old.dataset.characterId !== next.dataset.characterId) return;
+    const oldText = old.querySelector('textarea')!;
+    next.dataset.unsaved = '';
+    next.querySelector('textarea')!.textContent = oldText.value;
+    next.querySelector('[data-notes-status]')!.textContent = old.querySelector('[data-notes-status]')!.textContent;
+    if (document.activeElement !== oldText) return;
+    const { selectionStart, selectionEnd } = oldText;
+    document.addEventListener('astro:after-swap', () => {
+      const text = notesForm()?.querySelector('textarea');
+      text?.focus({ preventScroll: true });
+      text?.setSelectionRange(selectionStart, selectionEnd);
+    }, { once: true });
+  });
+
+  // "Show all" opens the rest of a long list
+  document.addEventListener('click', (e) => {
+    const button = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-cc-more]');
+    if (!button) return;
+    button.closest('[data-cc-list]')?.classList.add('is-open');
+    button.remove();
+  });
+</script>
+
+<style>
+  .cc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem 2rem; }
+  .cc-list { display: grid; gap: 0.35rem; }
+  .cc-list li { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; min-width: 0; }
+  .cc-list a { color: var(--text-strong); min-width: 0; overflow-wrap: anywhere; }
+  .cc-list a:hover { color: var(--gold); }
+  .cc-num { color: var(--gold); font-weight: 700; font-variant-numeric: tabular-nums; }
+  .cc-meta { flex: none; font-size: 0.75rem; color: var(--text-faint); white-space: nowrap; }
+  .cc-list .t-badge { flex: none; text-transform: capitalize; }
+  [data-cc-list]:not(.is-open) .cc-extra { display: none; }
+  .cc-more { margin-top: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--gold); background: none; cursor: pointer; }
+  .cc-more:hover { text-decoration: underline; }
+  .cc-npcs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .cc-npc { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.15rem 0.6rem 0.15rem 0.15rem; border: 1px solid var(--border); border-radius: 999px; background: var(--bg-raised); color: var(--text-strong); font-size: 0.85rem; }
+  .cc-npc:hover { border-color: var(--gold); }
+  .cc-npc img, .cc-npc-initial, .cc-dot { width: 1.5rem; height: 1.5rem; border-radius: 999px; object-fit: cover; flex: none; border: 2px solid var(--text-faint); }
+  .cc-npc.is-ally img, .cc-npc.is-ally .cc-npc-initial, .cc-dot.is-ally { border-color: var(--success); }
+  .cc-npc.is-enemy img, .cc-npc.is-enemy .cc-npc-initial, .cc-dot.is-enemy { border-color: var(--danger); }
+  .cc-legend { display: flex; align-items: center; gap: 0.35rem; margin-top: 0.6rem; }
+  .cc-dot { display: inline-block; width: 0.6rem; height: 0.6rem; margin-left: 0.4rem; }
+  .cc-dot:first-child { margin-left: 0; }
+  .cc-npc-initial { display: inline-flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 700; color: var(--gold); background: var(--bg-raised); }
+  .cc-notes { padding-bottom: 1.25rem; border-bottom: 1px solid var(--border); display: grid; gap: 0.5rem; }
+  .cc-notes textarea { padding: 0.6rem 0.75rem; resize: vertical; min-height: 6rem; }
+  .cc-notes-actions { display: flex; align-items: center; justify-content: flex-end; gap: 0.75rem; }
+</style>

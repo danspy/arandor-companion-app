@@ -75,6 +75,11 @@ The character's player, the DM and admins also see the skills (tap one to roll i
 passive Investigation and Insight. These numbers come from D&D Beyond, so a character without a
 D&D Beyond link shows only the ability checks and plain saves.
 
+**In the campaign**, further down the page, lists the sessions the character was in (from the
+diary), the quests and NPCs of those sessions, and the timeline events linked to the character.
+Long lists show the newest few; *Show all* opens the rest. The character's player, the DM and
+admins also get a **Notes** box there for debts, promises and plans; nobody else sees it.
+
 ## NPCs (`/npcs`)
 
 Everyone the party has met: race, occupation, home location, portrait, relationship (ally,

@@ -94,6 +94,14 @@ export const Character = sqliteTable('Character', {
   updatedAt: now('updatedAt'),
 });
 
+// Private notes on a character: only its player, the DM and admins (kept out of Character so no
+// page or API that hands out character rows can leak them)
+export const CharacterNote = sqliteTable('CharacterNote', {
+  characterId: text('characterId').primaryKey(), // Character.id
+  content: text('content').notNull(),
+  updatedAt: now('updatedAt'),
+});
+
 export const NPC = sqliteTable('NPC', {
   id: text('id').primaryKey(),
   name: text('name').notNull(),

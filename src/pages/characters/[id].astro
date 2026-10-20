@@ -1,11 +1,13 @@
 ---
 import Layout from '../../layouts/Layout.astro';
 import SceneBackdrop from '../../components/SceneBackdrop.astro';
-import { db, Character, DiaryEntry, User, eq } from '@/db';
+import { db, Character, CharacterNote, DiaryEntry, NPC, Quest, TimelineEntry, User, eq } from '@/db';
 import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import CombatStrip from '../../components/character/CombatStrip.astro';
 import AbilityCards from '../../components/character/AbilityCards.astro';
 import PrivateSheet from '../../components/character/PrivateSheet.astro';
+import CampaignSection from '../../components/character/CampaignSection.astro';
+import { characterCampaign } from '../../lib/character-campaign';
 import { canSeePrivateSheet, publicSheet, type CharacterSheet } from '../../lib/character-sheet';
 import '../../styles/character-sheet.css';
 
@@ -22,11 +24,13 @@ if (!character) {
   return Astro.redirect('/characters');
 }
 
-const allDiaryEntries = await db.select().from(DiaryEntry);
-const sessionCount = allDiaryEntries.filter(entry => {
-  const characterIds = Array.isArray(entry.characterIds) ? entry.characterIds : [];
-  return characterIds.includes(id);
-}).length;
+const campaign = characterCampaign(id, {
+  diary: await db.select().from(DiaryEntry),
+  quests: await db.select().from(Quest),
+  npcs: await db.select().from(NPC),
+  timeline: await db.select().from(TimelineEntry),
+});
+const sessionCount = campaign.sessions.length;
 
 const isLoggedIn = isAuthenticated(Astro.cookies);
 const userRole = await getUserRole(Astro.cookies);
@@ -58,6 +62,10 @@ const canEdit = canEditCharacter();
 const fullSheet = (character.sheet as CharacterSheet | null) ?? null;
 const canSeePrivate = canSeePrivateSheet(character, currentUser, userRole);
 const stats = (character.stats ?? {}) as Record<string, number | undefined>;
+// Private notes: same people as the private sheet; null hides the notes box
+const notes = canSeePrivate
+  ? (await db.select().from(CharacterNote).where(eq(CharacterNote.characterId, character.id)))[0]?.content ?? ''
+  : null;
 
 const shouldAutoSync = !!character.dndbeyondUrl;
 
@@ -233,6 +241,8 @@ const shouldAutoSync = !!character.dndbeyondUrl;
         </div>
       </div>
     )}
+
+    <CampaignSection characterId={character.id} campaign={campaign} notes={notes} />
 
     <!-- ── D&D Beyond ─────────────────────────────────────────── -->
     {character.dndbeyondUrl && (

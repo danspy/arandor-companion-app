@@ -1,0 +1,79 @@
+---
+// DM screen: the whole active party at a glance (HP, AC, initiative, speed, passives, saves)
+import type { PartyRow } from '../lib/party';
+import { signed } from '../lib/character-rolls';
+
+interface Props { rows: PartyRow[] }
+const { rows } = Astro.props;
+const SAVES = [['str', 'STR'], ['dex', 'DEX'], ['con', 'CON'], ['int', 'INT'], ['wis', 'WIS'], ['cha', 'CHA']] as const;
+const PASSIVES = [['perception', 'Perc'], ['investigation', 'Inv'], ['insight', 'Ins']] as const;
+const hpTone = (r: PartyRow) => {
+  if (r.hp == null || !r.maxHp) return '';
+  const pct = r.hp / r.maxHp;
+  return pct <= 0.25 ? 'is-low' : pct <= 0.5 ? 'is-mid' : '';
+};
+---
+{rows.length > 0 && (
+  <section id="party-panel" class="t-panel p-6 mb-6" aria-label="Party">
+    <h2 class="t-section-h text-xl mb-1 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+      </svg>
+      Party
+    </h2>
+    <p class="t-faint text-xs mb-4">From D&D Beyond as of the last sync. The highest passive in each column is highlighted.</p>
+    <div class="party-scroll">
+      <table class="party-table">
+        <thead>
+          <tr>
+            <th scope="col" class="party-name">Character</th>
+            <th scope="col">HP</th>
+            <th scope="col">AC</th>
+            <th scope="col">Init</th>
+            <th scope="col">Speed</th>
+            {PASSIVES.map(([, label]) => <th scope="col" title={`Passive ${label}`}>{label}</th>)}
+            {SAVES.map(([, label]) => <th scope="col" class="party-save" title={`${label} save`}>{label}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((r) => (
+            <tr data-character-id={r.id}>
+              <th scope="row" class="party-name"><a href={`/characters/${r.id}`}>{r.name}</a></th>
+              <td class="party-hp">
+                {r.hp != null && r.maxHp ? (
+                  <>
+                    <span class="party-hp-num"><b>{r.hp}</b>/{r.maxHp}{r.tempHp ? <span class="cs-temp"> +{r.tempHp}</span> : null}</span>
+                    <span class="cs-hp-bar"><span class={hpTone(r)} style={`width:${Math.max(0, Math.min(100, Math.round((r.hp / r.maxHp) * 100)))}%`}></span></span>
+                  </>
+                ) : '–'}
+              </td>
+              <td><b>{r.ac ?? '–'}</b></td>
+              <td>{r.initiative != null ? signed(r.initiative) : '–'}</td>
+              <td>{r.speed != null ? `${r.speed} ft.` : '–'}</td>
+              {PASSIVES.map(([key]) => <td class={r.best[key] ? 'is-best' : ''}>{r.passives?.[key] ?? '–'}</td>)}
+              {SAVES.map(([key]) => <td class="party-save">{r.saves ? signed(r.saves[key]) : '–'}</td>)}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </section>
+)}
+
+<style>
+  .party-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .party-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 0.9rem; }
+  .party-table th, .party-table td { padding: 0.45rem 0.5rem; text-align: center; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  .party-table thead th { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-faint); }
+  .party-table tbody tr:last-child > * { border-bottom: none; }
+  .party-table .party-name { text-align: left; }
+  .party-table tbody .party-name a { color: var(--text-strong); font-weight: 600; }
+  .party-table tbody .party-name a:hover { color: var(--gold); }
+  .party-table td b { color: var(--text-strong); }
+  .party-table .party-save { color: var(--text-muted); }
+  .party-table thead .party-save { color: var(--text-faint); }
+  .party-table td.is-best { color: var(--gold); font-weight: 700; }
+  .party-hp { min-width: 6.5rem; }
+  .party-hp-num { display: block; color: var(--text-muted); margin-bottom: 0.2rem; }
+  .party-hp .cs-hp-bar { display: block; height: 5px; }
+</style>
