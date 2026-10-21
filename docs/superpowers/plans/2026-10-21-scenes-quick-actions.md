@@ -16,7 +16,7 @@
 - Schema changes = reviewed SQL migration `db/migrations/2026-10-21_scenes.sql`; on dev apply it to `/srv/arandor-dev/data/dev.db` after copying the db to `/srv/arandor-dev/data/archive/`. Never touch preview/live DBs.
 - All scene and dm-screen write routes: `requireDungeonmasterOrAdmin(cookies)` from `src/lib/middleware.ts`.
 - Spotlight keys: NPC id or `character:<id>` (`src/lib/spotlight.ts`), never a new format.
-- Applying a scene never changes `showInitiativeTracker`, `showTimer`, `timer*`, `placeholderImageUrl`, `customAssets`.
+- Applying a scene never changes `screenMode` (spec addendum), `showInitiativeTracker`, `showTimer`, `timer*`, `placeholderImageUrl`, `customAssets`.
 - `screenVisible` is still written, always as `screenMode !== 'pause'`; `/api/display` keeps returning it.
 - Campaign name on the start screen: `Arandor`. Recap is plain text (no markdown/HTML injection: set via `textContent`).
 - Dark-only app; only colour tokens from `global.css`. Errors on the DM screen use `alert(...)` like the rest of the page.
@@ -163,6 +163,28 @@
 - [ ] **Step 3:** Implement. Strip layout: `t-panel`, `grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6`, quick actions left; on phones stacked. Use `<dialog>` + existing `Button` component.
 - [ ] **Step 4:** Run → PASS; `e2e/display.spec.ts` still PASS.
 - [ ] **Step 5:** Commit `feat(dm-screen): start session and pause quick actions`.
+
+### Task 4b: Session lifecycle (off mode, End session, next session)
+
+Spec: the "Addendum (2026-10-21): session lifecycle" section.
+
+**Files:**
+- Modify: `src/lib/scenes.ts` (`ScreenMode` gains `'off'`; `setupToStateUpdate` no longer returns `screenMode`/`screenVisible`), `src/db/schema.ts` (comment only: allowed values), `src/pages/api/dm-screen/index.ts` (accept `'off'`; new rows default `'off'`; `screenVisible` written as `mode === 'live' || mode === 'start'`), `src/pages/api/display/index.ts` (`nextSession`), `src/pages/display.astro` (`off` layer), `src/components/SceneStrip.astro` (buttons per mode, End session with `ConfirmDialog`, badge "No session")
+- Create: `src/lib/next-session.ts` — `nextSession(events: { date: string; time: string }[], now: Date): { date: string; time: string } | null` (first event whose local date+time ≥ now, sorted by date then time)
+- Test: `e2e/scenes.spec.ts` (update `Scenes logic` + `Scenes API` for the new apply rule; new cases in `Start screen` → rename describe to `Display modes`, and `DM screen`)
+
+**Interfaces:**
+- Produces: `ScreenMode = 'off' | 'start' | 'live' | 'pause'`; `/api/display` field `nextSession: { date, time } | null` (non-null only when mode is `off`); display ids `#offScreen`, `#offCampaign`, `#offTitle`, `#offNext`; strip button `#endSessionBtn` (label "End session"), badge text "No session".
+
+- [ ] **Step 1: Failing tests:**
+  - logic: `setupToStateUpdate` keys no longer include `screenMode`/`screenVisible`; `nextSession` with events in the past only → null; with two future events → the earlier; an event today later than `now` → that one; an event today earlier than `now` → skipped.
+  - API: apply while mode is `off` → mode stays `off`; PUT `{screenMode:'off'}` → display `mode 'off'`, `screenVisible false`, `nextSession` set when the seed/test creates a future Event (create one via the calendar API, delete it after), `startScreen null`; `screenMode:'bogus'` → 400.
+  - display (mocked): mode off with `nextSession {date:'2026-10-24', time:'19:00'}` → `#offTitle` "No session running", `#offNext` contains "Friday, 24 October" and "19:00"; `nextSession null` → `#offNext` hidden; off → live hides `#offScreen`.
+  - DM screen: from off only *Start session* is visible; after Show: *Go live* + *End session*; after Go live: *Pause* + *End session*; End session → confirm → badge "No session", display shows `#offScreen`; cancelling the confirm leaves it live.
+- [ ] **Step 2:** Run → FAIL.
+- [ ] **Step 3:** Implement. Off screen reuses the start screen's look (backdrop, campaign small caps, serif title).
+- [ ] **Step 4:** Run the whole `e2e/scenes.spec.ts` (both projects) + `e2e/display.spec.ts --project=chromium` → PASS.
+- [ ] **Step 5:** Commit `feat(dm-screen): session lifecycle with no-session screen and End session`.
 
 ### Task 5: SceneStrip — scenes (cards, apply, save current, edit, reorder, delete)
 

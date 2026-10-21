@@ -127,6 +127,30 @@ The DM screen reads the mode on load and after its own actions; it does not poll
   display shows pause screen → resume.
 - Migration applied to dev first; preview/live only after the user approves the merge.
 
+## Addendum (2026-10-21): session lifecycle
+
+Agreed with the user after Task 4 was built. The display follows a session lifecycle:
+
+```
+off ──Start session──▶ start ──Go live──▶ live ⇄ pause
+ ▲                                          │
+ └──────────────── End session ◀────────────┘   (End session also from start/pause)
+```
+
+| Question | Decision |
+|---|---|
+| Modes | `screenMode` is `'off' \| 'start' \| 'live' \| 'pause'`. `off` = no session running |
+| Default | A newly created `DMScreenState` row starts `off`. Existing rows keep their mode (dev is `live` until the DM ends a session once) |
+| Off screen | Backdrop + "Arandor" + "No session running"; when the calendar has a next session (first `Event` with date+time ≥ now, server local time), a line "Next session: Friday, 24 October · 19:00". Only date and time are sent to the display, never the event title or description |
+| End session | Confirm, then `screenMode = 'off'`. Location, spotlight, turn order and timer are kept as they are |
+| Applying a scene | **Changes this spec's earlier rule:** applying a scene never changes `screenMode`. Scenes can be prepared and applied while off/start/pause; players see them once the DM goes live / resumes |
+| Buttons per mode | off: *Start session* · start: *Go live*, *End session* · live: *Pause*, *End session* · pause: *Resume*, *End session* |
+| Badge | off "No session" · start "Start screen" · live "Live" · pause "Paused" |
+| Legacy `screenVisible` | written as `screenMode === 'live' \|\| screenMode === 'start'`; a legacy `screenVisible:false` still maps to `pause`, `true` to `live` |
+
+API: `/api/display` adds `nextSession: { date: 'YYYY-MM-DD', time: 'HH:MM' } | null`, non-null only when mode is `off`.
+Display: `data-mode="off"` layer `#offScreen` with `#offCampaign`, `#offTitle` ("No session running"), `#offNext` (hidden when null); date formatted `en-GB` weekday + day + month, local date.
+
 ## Out of scope
 
 Music in scenes, scene folders/groups per adventure, scheduled/automatic scene changes, a
