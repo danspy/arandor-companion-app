@@ -1269,6 +1269,7 @@ test.describe('Music button', () => {
     expect(await audio(page).evaluate((a: HTMLAudioElement) => a.currentSrc)).toBe(''); // nothing loaded yet
 
     // The dice button's twin, on the other side, clear of it
+    await fab(page).evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished))); // the pop-in
     const f = await box(page, '#music-fab');
     expect(Math.round(f.width)).toBe(56);
     expect(Math.round(f.height)).toBe(56);
