@@ -6,6 +6,7 @@ import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 import PartyPanel from '../../components/PartyPanel.astro';
+import DisplayPreview from '../../components/DisplayPreview.astro';
 import { partyOverview } from '../../lib/party';
 import '../../styles/statblock.css';
 import '../../styles/character-sheet.css';
@@ -478,6 +479,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       <div id="dm-music-host" class="space-y-3" data-me={musicMe}></div>
     </div>
   </div>
+
+  <!-- Floating live preview of the player display -->
+  <DisplayPreview />
 
   <style>
     /* Loading spinner animation */
