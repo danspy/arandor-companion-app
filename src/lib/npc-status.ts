@@ -54,3 +54,23 @@ export function npcStatusUpdate(
   if (hp !== null && maxHp !== null && hp > maxHp) update.hp = maxHp;
   return { update };
 }
+
+interface TrackerRow { name: string; type: string; characterId: string | null; isActive: boolean }
+
+/**
+ * The combatant a spotlight entry is while a fight runs (not stopped): a party character by its
+ * character id (or name, for entries without one), an NPC by its name like the stat block links
+ * (lib/creature-links). Its HP and conditions then win over the NPC's or character's own.
+ */
+export function spotlightCombatant<T extends TrackerRow>(
+  entries: T[],
+  combatStatus: string | null | undefined,
+  kind: 'character' | 'npc',
+  who: { id: string; name: string },
+): T | null {
+  if (!combatStatus || combatStatus === 'stopped') return null;
+  const name = who.name.trim();
+  return entries.find((e) => e.isActive && (kind === 'character'
+    ? e.type === 'character' && (e.characterId ? e.characterId === who.id : e.name.trim() === name)
+    : e.type !== 'character' && e.name.trim() === name)) ?? null;
+}
