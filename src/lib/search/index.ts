@@ -115,6 +115,11 @@ export function snippet(body: string, terms: string[], width = 120): string | un
     if (space > start + width - 20) end = space;
   }
 
+  // Never cut a surrogate pair or a letter from its accent
+  const unsafe = (i: number) => i > 0 && i < body.length && (/[\uDC00-\uDFFF]/.test(body[i]) || /\p{M}/u.test(body[i]));
+  while (unsafe(start)) start--;
+  while (unsafe(end)) end--;
+
   // Match ranges in original positions, inside the window, not overlapping
   const ranges: [number, number][] = [];
   for (const t of terms) {

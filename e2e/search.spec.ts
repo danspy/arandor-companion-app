@@ -54,6 +54,13 @@ test.describe('Search core', () => {
     expect(s.replace(/<\/?mark>/g, '').length).toBeLessThanOrEqual(140);
   });
 
+  test('snippets never cut a character in half', () => {
+    const body = '🐉'.repeat(200) + ' dragon ' + '🐉'.repeat(200);
+    const s = snippet(body, ['dragon'])!;
+    expect(s).toContain('<mark>dragon</mark>');
+    expect(s).not.toMatch(/[\uD800-\uDBFF](?![\uDC00-\uDFFF])|(?<![\uD800-\uDBFF])[\uDC00-\uDFFF]/);
+  });
+
   test('odd characters are searched literally', () => {
     const records = [npc('1', 'The (Old) Tower *'), npc('2', '<b>Bold</b>')];
     expect(() => search('a(', records, null)).not.toThrow();
@@ -223,5 +230,17 @@ test.describe('Search palette, typing fast', () => {
     await expect(page.getByTestId('search-dialog')).toBeHidden();
     await expect(page).toHaveURL(/\/$/); // rolled, did not navigate
     await expect(page.locator('#dice-result-banner .dice-banner-card')).toBeVisible({ timeout: 10_000 });
+  });
+
+  test('Esc right after Enter cancels', async ({ page }) => {
+    const openKey = process.platform === 'darwin' ? 'Meta+k' : 'Control+k';
+    await page.goto('/quests');
+    await page.keyboard.press(openKey);
+    await page.getByTestId('search-input').fill('goblin');
+    await page.keyboard.press('Enter');
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('search-dialog')).toBeHidden();
+    await page.waitForTimeout(1500);
+    await expect(page).toHaveURL(/\/quests$/);
   });
 });

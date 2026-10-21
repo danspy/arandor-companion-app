@@ -341,13 +341,16 @@ const viewer = (await getUserRole(Astro.cookies)) ?? '';
 
   function close() {
     const e = els();
-    if (!e || !e.dialog.open) return;
+    if (e?.dialog.open) e.dialog.close(); // cleanup runs in the close listener (Esc closes natively)
+  }
+
+  // Forget the query in flight, so a late answer neither renders nor opens anything
+  function cancelPending() {
     if (debounce) clearTimeout(debounce);
     inflight?.abort();
     seq++;
     pending = false;
     queuedEnter = null;
-    e.dialog.close();
   }
 
   const isEditable = (el: Element | null) =>
@@ -360,7 +363,7 @@ const viewer = (await getUserRole(Astro.cookies)) ?? '';
     if ((ev.key === 'k' || ev.key === 'K') && (ev.metaKey || ev.ctrlKey) && !ev.altKey && !ev.shiftKey) {
       ev.preventDefault();
       if (e.dialog.open) close();
-      else open();
+      else if (!document.querySelector('dialog[open]')) open(); // not over another dialog
       return;
     }
     if (ev.key === '/' && !ev.metaKey && !ev.ctrlKey && !ev.altKey && !e.dialog.open && !isEditable(document.activeElement)) {
@@ -370,6 +373,8 @@ const viewer = (await getUserRole(Astro.cookies)) ?? '';
       return;
     }
     if (!e.dialog.open || ev.target !== e.input) return;
+    // A search field would first clear its text on Esc; here Esc always closes
+    if (ev.key === 'Escape') { ev.preventDefault(); close(); return; }
     if (ev.key === 'ArrowDown') { ev.preventDefault(); select(selected + 1, true); }
     else if (ev.key === 'ArrowUp') { ev.preventDefault(); select(selected - 1, true); }
     else if (ev.key === 'Enter' && !ev.isComposing) {
@@ -394,11 +399,15 @@ const viewer = (await getUserRole(Astro.cookies)) ?? '';
       return;
     }
     const e = els();
-    if (e?.dialog.open && target === e.dialog) close(); // backdrop click
+    if (e?.dialog.open && target === e.dialog && pressedOn === e.dialog) close(); // backdrop click
   });
+  // A text selection dragged out of the input ends on the backdrop: that is not a click on it
+  let pressedOn: EventTarget | null = null;
+  document.addEventListener('pointerdown', (ev) => (pressedOn = ev.target), true);
 
   document.addEventListener('close', (ev) => {
     if ((ev.target as Element)?.id !== 'search-palette') return;
+    cancelPending();
     if (returnFocus?.isConnected) returnFocus.focus();
     returnFocus = null;
   }, true);
@@ -408,4 +417,5 @@ const viewer = (await getUserRole(Astro.cookies)) ?? '';
   }
   labelShortcuts();
   document.addEventListener('astro:page-load', labelShortcuts);
+  document.addEventListener('astro:before-swap', cancelPending);
 </script>
