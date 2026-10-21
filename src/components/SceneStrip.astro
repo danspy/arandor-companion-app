@@ -76,7 +76,8 @@ interface Props {
       </div>
     </fieldset>
     <div class="start-dialog-actions">
-      <button value="cancel" formnovalidate class="t-btn-secondary">Cancel</button>
+      <!-- type="button": Enter in a field submits with the first submit button, which must be Show -->
+      <button type="button" id="startCancelBtn" class="t-btn-secondary">Cancel</button>
       <Button variant="primary" type="submit" id="startShowBtn">Show</Button>
     </div>
   </form>
@@ -181,9 +182,21 @@ interface Props {
   }
 
   // Today's start screen again if there is one, else the next session from the diary
+  let opening = false;
   async function openStartDialog() {
     const dialog = $<HTMLDialogElement>('startSessionDialog');
-    if (!dialog) return;
+    if (!dialog || dialog.open || opening) return; // double click: one prefill, one dialog
+    opening = true;
+    try {
+      await prefill();
+    } finally {
+      opening = false;
+    }
+    dialog.showModal();
+    $('startFormTitle')?.focus();
+  }
+
+  async function prefill() {
     const saved = state?.startScreen;
     if (saved && saved.date === localToday()) {
       fill(saved);
@@ -198,8 +211,6 @@ interface Props {
         fill({ title: '', session: null, date: localToday(), recap: '', showRecap: false });
       }
     }
-    dialog.showModal();
-    $('startFormTitle')?.focus();
   }
 
   // Delegated once on document: survives client-side navigation without piling up
@@ -209,7 +220,8 @@ interface Props {
   });
 
   document.addEventListener('click', async (e) => {
-    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn');
+    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn, #startCancelBtn');
+    if (btn?.id === 'startCancelBtn') return $<HTMLDialogElement>('startSessionDialog')?.close();
     if (!btn || !state) return;
     const mode = modeOf(state);
     if (btn.id === 'pauseBtn') await put({ screenMode: mode === 'pause' ? 'live' : 'pause' });
@@ -219,7 +231,7 @@ interface Props {
 
   document.addEventListener('submit', async (e) => {
     const form = e.target as HTMLFormElement;
-    if (form.id !== 'startSessionForm' || (e as SubmitEvent).submitter?.id !== 'startShowBtn') return;
+    if (form.id !== 'startSessionForm') return;
     e.preventDefault();
     const session = $<HTMLInputElement>('startFormSession')!.value.trim();
     const startScreen: StartScreen = {

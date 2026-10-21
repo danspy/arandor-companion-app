@@ -578,8 +578,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       document.dispatchEvent(new CustomEvent('dm-screen:state', { detail: currentState }));
     }
 
-    // Show a state from the server in the whole page
-    function renderState(state) {
+    // Show a state from the server in the whole page. Changes from the scene strip never touch
+    // the wallpaper or the timer, so its redraws keep what the DM is typing in those inputs.
+    function renderState(state, { fromStrip = false } = {}) {
       currentState = state;
 
       // Update UI
@@ -595,9 +596,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       if (locationSelect) locationSelect.value = state.currentLocationId || '';
       if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
 
-      if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
+      if (placeholderImageInput && !fromStrip) placeholderImageInput.value = state.placeholderImageUrl || '';
       if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
-      if (timerMinutesInput && state.timerDuration !== undefined) {
+      if (timerMinutesInput && !fromStrip && state.timerDuration !== undefined) {
         timerMinutesInput.value = Math.floor(state.timerDuration / 60);
       }
 
@@ -1576,7 +1577,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     document.addEventListener('astro:page-load', initialize);
     // State changed by the scene strip (our own announcements carry currentState itself)
     document.addEventListener('dm-screen:state', (e) => {
-      if (e.detail !== currentState && document.getElementById('locationSelect')) renderState(e.detail);
+      if (e.detail !== currentState && document.getElementById('locationSelect')) renderState(e.detail, { fromStrip: true });
     });
     // Stat block buttons in the turn preview (redrawn every few seconds, so delegated)
     document.addEventListener('click', (e) => {

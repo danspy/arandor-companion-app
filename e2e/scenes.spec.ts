@@ -375,7 +375,7 @@ test.describe('DM screen', () => {
     await page.locator('#startSessionBtn').click();
     await expect(page.locator('#startFormTitle')).toHaveValue('E2E The Frozen Gate');
     await expect(page.locator('input[name="startLayout"][value="recap"]')).toBeChecked();
-    await page.locator('#startSessionDialog button[value="cancel"]').click();
+    await page.locator('#startCancelBtn').click();
     await expect(page.locator('#startSessionDialog')).toBeHidden();
     await expect(page.locator('#screenModeBadge')).toHaveText('Live');
     await page.close();
@@ -399,6 +399,28 @@ test.describe('DM screen', () => {
     await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
     await page.close();
     await display.close();
+  });
+
+  test('enter shows, unsaved inputs stay', async () => {
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.locator('#placeholderImageUrl').fill('https://example.com/e2e-unsaved.png');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await expect(page.locator('#placeholderImageUrl')).toHaveValue('https://example.com/e2e-unsaved.png');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+
+    await page.locator('#startSessionBtn').dblclick();
+    await expect(page.locator('#startSessionDialog')).toBeVisible();
+    await page.locator('#startFormTitle').fill('E2E Enter');
+    await page.locator('#startFormTitle').press('Enter');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    await expect(page.locator('#startSessionDialog')).toBeHidden();
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
   });
 
   test('old hide button gone', async () => {
