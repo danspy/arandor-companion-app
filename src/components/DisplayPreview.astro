@@ -1,0 +1,115 @@
+---
+// Live thumbnail of the player display for the DM screen. Embeds /display?preview at a fixed
+// 1920×1080 and scales it down to the panel, so it looks exactly like the TV. It updates
+// through the display's own polling; while collapsed the frame is blanked, so nothing polls.
+// Open/closed is remembered per browser (default: open, closed on phones).
+interface Props { class?: string }
+const { class: className } = Astro.props;
+---
+
+<section id="displayPreview" class:list={['dm-preview', className]} data-state="auto" aria-label="Player display preview">
+  <div class="flex items-center justify-between gap-2">
+    <p class="dm-preview-label t-label-sm flex items-center gap-2">
+      <span class="dm-preview-dot" aria-hidden="true"></span>
+      Live on the display
+    </p>
+    <button
+      type="button"
+      id="displayPreviewToggle"
+      class="t-btn-secondary text-xs inline-flex items-center gap-1.5"
+      aria-controls="displayPreviewBody"
+      aria-expanded="true"
+    >
+      <svg class="dm-preview-chevron w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+      </svg>
+      <span data-label>Hide preview</span>
+    </button>
+  </div>
+  <div id="displayPreviewBody" class="dm-preview-body">
+    <iframe
+      id="displayPreviewFrame"
+      class="dm-preview-frame"
+      title="Player display preview"
+      src="about:blank"
+      width="1920"
+      height="1080"
+      tabindex="-1"
+      scrolling="no"
+    ></iframe>
+  </div>
+</section>
+
+<style>
+  .dm-preview-dot {
+    width: .5rem; height: .5rem; border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 .5rem var(--gold);
+  }
+  .dm-preview[data-state="closed"] .dm-preview-dot { background: var(--text-faint); box-shadow: none; }
+  .dm-preview-chevron { transition: transform .2s ease; }
+  .dm-preview[data-state="closed"] .dm-preview-chevron { transform: rotate(-90deg); }
+  .dm-preview-body {
+    position: relative;
+    margin-top: .5rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--border-gold);
+    border-radius: 2px;
+    background: #0c0906;
+  }
+  /* The display at TV size, scaled to the panel (--preview-scale is set from its width) */
+  .dm-preview-frame {
+    position: absolute; top: 0; left: 0;
+    width: 1920px; height: 1080px;
+    border: 0;
+    transform-origin: 0 0;
+    transform: scale(var(--preview-scale, .2));
+    pointer-events: none;
+  }
+  .dm-preview[data-state="closed"] .dm-preview-body { display: none; }
+  /* Before the script decides: open, except on phones */
+  @media (max-width: 639px) {
+    .dm-preview[data-state="auto"] .dm-preview-body { display: none; }
+  }
+</style>
+
+<script>
+  const STORAGE_KEY = 'arandor:dm-display-preview';
+  const PREVIEW_URL = '/display?preview';
+
+  function setupPreview() {
+    const root = document.getElementById('displayPreview');
+    const toggle = document.getElementById('displayPreviewToggle');
+    const body = document.getElementById('displayPreviewBody');
+    const frame = document.getElementById('displayPreviewFrame') as HTMLIFrameElement | null;
+    if (!root || !toggle || !body || !frame || root.dataset.ready) return;
+    root.dataset.ready = '1';
+
+    // Scale the 1920-wide display to the panel's width
+    const fit = () => { if (body.clientWidth) frame.style.setProperty('--preview-scale', String(body.clientWidth / 1920)); };
+    new ResizeObserver(fit).observe(body);
+
+    const apply = (open: boolean) => {
+      root.dataset.state = open ? 'open' : 'closed';
+      toggle.setAttribute('aria-expanded', String(open));
+      toggle.querySelector('[data-label]')!.textContent = open ? 'Hide preview' : 'Show preview';
+      // A blank frame doesn't poll the server
+      const src = open ? PREVIEW_URL : 'about:blank';
+      if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+      if (open) fit();
+    };
+
+    let saved: string | null = null;
+    try { saved = localStorage.getItem(STORAGE_KEY); } catch { /* storage blocked */ }
+    apply(saved ? saved === 'open' : !matchMedia('(max-width: 639px)').matches);
+
+    toggle.addEventListener('click', () => {
+      const open = root.dataset.state !== 'open';
+      apply(open);
+      try { localStorage.setItem(STORAGE_KEY, open ? 'open' : 'closed'); } catch { /* storage blocked */ }
+    });
+  }
+
+  document.addEventListener('astro:page-load', setupPreview);
+</script>
