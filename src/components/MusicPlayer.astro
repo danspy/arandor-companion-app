@@ -1,6 +1,6 @@
 ---
-// Site-wide music player: the round music button (bottom left, the dice button's twin), the
-// player it slides open (mini bar + queue panel), the <audio> element and the YouTube tile.
+// Site-wide music player: the music button (bottom left, the dice button's twin), the mini bar
+// it slides out to its right, the queue panel above them, the <audio> element and the YouTube tile.
 // Persisted across ClientRouter page changes so playback never stops. All logic lives in
 // src/lib/music/player.ts; this component only renders the store's state.
 ---
@@ -19,10 +19,18 @@
     <div id="music-yt-frame" class="music-yt-frame"></div>
   </div>
 
-  <!-- The player the music button slides open and shut. Closed, it takes no room and is inert. -->
-  <div id="music-drawer" class="music-drawer">
-  <div class="music-drawer-inner">
+  <!-- Queue and options: opens upwards, above the button and the bar (only while the player is open) -->
   <div id="music-panel" class="music-panel t-panel" role="region" aria-label="Music queue and options" hidden>
+    <!-- Narrow screens: the bar has no room for these, so they live here -->
+    <div class="music-panel-ctl">
+      <span id="music-panel-title" class="music-panel-title"></span>
+      <button type="button" id="music-prev-p" class="music-btn" aria-label="Previous track" title="Previous">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z" /></svg>
+      </button>
+      <button type="button" id="music-close-p" class="music-btn" aria-label="Stop and close player" title="Stop and close">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+      </button>
+    </div>
     <div class="music-seek-row">
       <span id="music-pos" class="music-time">0:00</span>
       <input id="music-seek" type="range" class="music-range" min="0" max="0" step="0.1" value="0" aria-label="Seek" />
@@ -41,30 +49,8 @@
     <ol id="music-queue" class="music-queue" aria-label="Queue"></ol>
   </div>
 
-  <div id="music-bar" class="music-bar t-panel" hidden>
-    <span id="music-title" class="music-title"></span>
-    <button type="button" id="music-prev" class="music-btn" aria-label="Previous track" title="Previous">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z" /></svg>
-    </button>
-    <button type="button" id="music-toggle" class="music-btn music-btn-main" aria-label="Play" title="Play">
-      <svg class="music-icon-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z" /></svg>
-      <svg class="music-icon-pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
-    </button>
-    <button type="button" id="music-next" class="music-btn" aria-label="Next track" title="Next">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z" /></svg>
-    </button>
-    <input id="music-volume" type="range" class="music-range music-volume" min="0" max="1" step="0.05" value="0.8" aria-label="Volume" />
-    <button type="button" id="music-expand" class="music-btn" aria-label="Show queue and options" aria-expanded="false" aria-controls="music-panel" title="Queue and options">
-      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
-    </button>
-    <button type="button" id="music-close" class="music-btn" aria-label="Stop and close player" title="Stop and close">
-      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
-    </button>
-    <div id="music-progress" class="music-progress" hidden aria-hidden="true"><div id="music-progress-fill" class="music-progress-fill"></div></div>
-  </div>
-  </div>
-  </div>
-
+  <!-- One row along the bottom: the button, and the bar it slides out to its right -->
+  <div class="music-row">
   <!-- Shown while there is something to play (a queue, or the site playlist cued) -->
   <button
     type="button"
@@ -82,17 +68,49 @@
     <!-- Playing: an equaliser instead of the note -->
     <span class="music-fab-eq" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
   </button>
+
+  <!-- The mini bar slides out of the button. Shut, it takes no room and is inert. -->
+  <div id="music-drawer" class="music-drawer">
+  <div class="music-drawer-inner">
+  <div id="music-bar" class="music-bar t-panel" hidden>
+    <span id="music-title" class="music-title"></span>
+    <button type="button" id="music-prev" class="music-btn music-wide-only" aria-label="Previous track" title="Previous">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M6 5h2v14H6zM20 5v14L9 12z" /></svg>
+    </button>
+    <button type="button" id="music-toggle" class="music-btn music-btn-main" aria-label="Play" title="Play">
+      <svg class="music-icon-play" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 4v16l13-8z" /></svg>
+      <svg class="music-icon-pause" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
+    </button>
+    <button type="button" id="music-next" class="music-btn" aria-label="Next track" title="Next">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M16 5h2v14h-2zM4 5v14l11-7z" /></svg>
+    </button>
+    <input id="music-volume" type="range" class="music-range music-volume" min="0" max="1" step="0.05" value="0.8" aria-label="Volume" />
+    <button type="button" id="music-expand" class="music-btn" aria-label="Show queue and options" aria-expanded="false" aria-controls="music-panel" title="Queue and options">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 15l6-6 6 6" /></svg>
+    </button>
+    <button type="button" id="music-close" class="music-btn music-wide-only" aria-label="Stop and close player" title="Stop and close">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18" /></svg>
+    </button>
+    <div id="music-progress" class="music-progress" hidden aria-hidden="true"><div id="music-progress-fill" class="music-progress-fill"></div></div>
+  </div>
+  </div>
+  </div>
+  </div>
 </div>
 
 <style is:global>
-  /* Where the music button sits, on the root so toasts and page padding can follow it. */
-  :root { --music-bottom: calc(16px + env(safe-area-inset-bottom, 0px)); }
-  /* Distance from the screen bottom to the top of the button, or of the mini bar while the player
-     is open (unset while there is no button); the toasts (ConfirmDialog) stay above this line. */
+  /* Where the music row sits, on the root so toasts and page padding can follow it.
+     --music-bar-max: the room for the mini bar right of the button, up to the dice button
+     (56px, 16px from the right edge) with a 12px gap. */
+  :root {
+    --music-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    --music-bar-max: calc(100vw - 16px - 56px - 8px - 12px - 56px - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+  }
+  /* Distance from the screen bottom to the top of the button row (unset while there is no button);
+     the toasts (ConfirmDialog) stay above this line. */
   html:has(#music-fab:not([hidden])) { --music-bar-top: calc(var(--music-bottom) + 56px); }
-  html:has(#music-root.is-open #music-bar:not([hidden])) { --music-bar-top: calc(var(--music-bottom) + 56px + 8px + 44px); }
-  /* Bottom up: button, mini bar, queue panel, YouTube tile. The player stacks above the button,
-     so it clears the dice button (bottom right, 56px tall) and may use the full width. */
+  /* Bottom up: one row (button + the mini bar to its right, same height and bottom line), then the
+     queue panel, then the YouTube tile. The row stays clear of the dice button on the right. */
   .music-root {
     position: fixed;
     left: calc(16px + env(safe-area-inset-left, 0px));
@@ -104,7 +122,8 @@
     max-width: calc(100vw - 32px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
     pointer-events: none;
   }
-  .music-root > :not(.music-drawer), .music-drawer-inner > * { pointer-events: auto; }
+  .music-root > :not(.music-row), .music-fab, .music-drawer-inner > * { pointer-events: auto; }
+  .music-row { display: flex; align-items: flex-end; max-width: 100%; }
   .music-root [hidden] { display: none !important; }
 
   /* ── Music button: the dice button's twin on the left ── */
@@ -145,51 +164,54 @@
   .music-fab.is-playing { box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3), 0 0 24px var(--accent-glow); }
   @keyframes music-eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
 
-  /* ── The player slides up out of the button ── */
+  /* ── The mini bar slides out of the button to the right ── */
   .music-drawer {
     display: grid;
-    grid-template-rows: 0fr;
+    grid-template-columns: 0fr;
+    min-width: 0;
     opacity: 0;
     visibility: hidden;
-    transform: translateY(14px) scale(0.96);
-    transform-origin: bottom left;
+    transform: translateX(-14px) scale(0.96);
+    transform-origin: left center;
     transition:
-      grid-template-rows 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
+      grid-template-columns 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
       transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1),
       opacity 0.2s ease,
       visibility 0s linear 0.28s;
   }
   .music-drawer-inner { transition: padding 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.28s cubic-bezier(0.2, 0.8, 0.2, 1); }
   .music-root.is-open .music-drawer {
-    grid-template-rows: 1fr;
+    grid-template-columns: 1fr;
     opacity: 1;
     visibility: visible;
     transform: none;
     transition-delay: 0s;
   }
   /* Clips while it slides; the padding (taken back by the margins) leaves room for the shadows,
-     and open, 8px between the mini bar and the button. */
+     and open, 8px between the button and the mini bar. */
   .music-drawer-inner {
-    min-height: 0;
+    min-width: 0;
     overflow: hidden;
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 0 24px 0 0;
-    margin: 0 -24px 0 0;
+    padding: 24px 24px 24px 0;
+    margin: -24px -24px -24px 0;
   }
-  .music-root.is-open .music-drawer-inner { padding-bottom: 32px; margin-bottom: -24px; }
-  .music-yt-tile { margin-bottom: 8px; }
+  .music-root.is-open .music-drawer-inner { padding-left: 8px; }
+  .music-yt-tile, .music-panel { margin-bottom: 8px; }
+  /* The queue panel belongs to the open player */
+  .music-root:not(.is-open) .music-panel { display: none !important; }
+  .music-panel { animation: music-panel-in 0.2s ease-out both; transform-origin: bottom left; }
+  @keyframes music-panel-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 
   .music-bar {
     position: relative;
     display: flex;
     align-items: center;
     gap: 2px;
-    height: 44px;
-    padding: 0 4px 0 12px;
-    max-width: 100%;
+    height: 56px;
+    padding: 0 6px 0 12px;
+    width: max-content;
+    max-width: var(--music-bar-max);
     background-color: var(--bg-raised);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
   }
@@ -233,10 +255,21 @@
   .music-volume { width: 72px; margin: 0 6px; display: none; }
   @media (min-width: 768px) { .music-volume { display: block; } }
 
+  /* Narrow screens: the bar fills the room between the two buttons and keeps title, play, next and
+     the queue arrow; previous and stop move to the top of the queue panel. */
+  .music-panel-ctl { display: none; align-items: center; gap: 4px; }
+  .music-panel-title { flex: 1; min-width: 0; font-size: 0.85rem; color: var(--text-strong); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  @media (max-width: 599px) {
+    .music-bar { width: var(--music-bar-max); }
+    .music-title { max-width: none; }
+    .music-bar .music-wide-only { display: none; }
+    .music-panel-ctl { display: flex; }
+  }
+
   .music-panel {
     width: min(22rem, 100%);
-    /* Room left above the button and the mini bar (and the YouTube tile while it shows) */
-    max-height: min(24rem, calc(100dvh - var(--music-bottom) - 56px - 52px - 8px - 16px - env(safe-area-inset-top, 0px)));
+    /* Room left above the button row (and the YouTube tile while it shows) */
+    max-height: min(24rem, calc(100dvh - var(--music-bottom) - 56px - 8px - 16px - env(safe-area-inset-top, 0px)));
     display: flex;
     flex-direction: column;
     gap: 8px;
@@ -298,39 +331,44 @@
   .music-yt-tile.is-small #music-yt-size svg { transform: rotate(180deg); }
   .music-yt-frame iframe { display: block; width: 100%; height: 100%; border: 0; }
   .music-root:has(.music-yt-tile:not([hidden]):not(.is-idle)) .music-panel {
-    max-height: min(24rem, calc(100dvh - var(--music-bottom) - 56px - 52px - 8px - 16px - 240px - env(safe-area-inset-top, 0px)));
+    max-height: min(24rem, calc(100dvh - var(--music-bottom) - 56px - 8px - 16px - 240px - env(safe-area-inset-top, 0px)));
   }
 
   /* Touch screens: every control at least 44px */
   @media (pointer: coarse) {
     .music-btn { width: 44px; height: 44px; }
-    .music-bar { padding-left: 10px; }
     .music-yt-head { height: 44px; }
     .music-queue button { min-height: 44px; align-items: center; }
   }
 
-  /* Phones and tablets: the dice panel opens over the player, so the bar and queue step aside
-     instead of peeking out around it. The YouTube tile stays (YouTube playback is never hidden). */
+  /* Phones and tablets: the dice panel opens over the queue panel, so that steps aside instead of
+     peeking out around it. The YouTube tile stays (YouTube playback is never hidden). */
   @media (max-width: 1024px) {
-    html:has(#dice-fab[aria-expanded='true']) .music-drawer { visibility: hidden; }
+    html:has(#dice-fab[aria-expanded='true']) .music-panel { visibility: hidden; }
   }
 
-  /* Installed app: the button sits on the left just above the bottom dock (the dice seal is in its
-     middle) and drops to the bottom edge with it while the dock is tucked away. */
+  /* Installed app: the row sits on the left above the bottom dock. The dice seal in the middle of the
+     dock pokes ~23px above it, so the row's bottom line is 30px above the dock: the bar can then run
+     to the right edge over the seal (the dice button lives in the dock, nothing else is on the right).
+     While the dock is tucked away the button drops to the bottom edge; an open bar stays above the
+     tucked seal (which reaches ~60px up). */
   @media (display-mode: standalone) and (max-width: 1024px) {
-    :root { --music-bottom: calc(var(--pwa-dock-height) + 12px + env(safe-area-inset-bottom, 0px)); }
+    :root {
+      --music-bottom: calc(var(--pwa-dock-height) + 30px + env(safe-area-inset-bottom, 0px));
+      --music-bar-max: calc(100vw - 16px - 56px - 8px - 16px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px));
+    }
     .music-root { transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
     html.pwa-dock-tucked { --music-bottom: calc(10px + env(safe-area-inset-bottom, 0px)); }
-    /* Tucked, like the seal: smaller and dimmer (still 44px+ to tap) */
-    html.pwa-dock-tucked .music-fab { transform: scale(0.8); transform-origin: bottom left; opacity: 0.75; }
-    html.pwa-dock-tucked .music-fab:active { transform: scale(0.74); }
-    /* The page can scroll its last lines above the button, and above the mini bar while the player is
-       open (global.css pads main by this clearance). Uses the dock-shown position so tucking the
-       dock never changes the page height. */
-    html:has(#music-fab:not([hidden])) main { --pwa-floating-menu-clearance: calc(var(--pwa-dock-height) + 12px + 56px + 8px); }
-    html:has(#music-root.is-open #music-bar:not([hidden])) main { --pwa-floating-menu-clearance: calc(var(--pwa-dock-height) + 12px + 56px + 8px + 44px + 8px); }
-    /* The dice panel opens over the button too */
-    html:has(#dice-fab[aria-expanded='true']) .music-fab { visibility: hidden; }
+    html.pwa-dock-tucked:has(#music-root.is-open #music-bar:not([hidden])) { --music-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+    /* Tucked and shut, like the seal: smaller and dimmer (still 44px+ to tap) */
+    html.pwa-dock-tucked #music-root:not(.is-open) .music-fab { transform: scale(0.8); transform-origin: bottom left; opacity: 0.75; }
+    html.pwa-dock-tucked #music-root:not(.is-open) .music-fab:active { transform: scale(0.74); }
+    /* The page can scroll its last lines above the row (global.css pads main by this clearance).
+       Uses the dock-shown position so tucking the dock never changes the page height. */
+    html:has(#music-fab:not([hidden])) main { --pwa-floating-menu-clearance: calc(var(--pwa-dock-height) + 30px + 56px + 8px); }
+    /* The dice panel opens over the row: button and bar step aside (the YouTube tile stays) */
+    html:has(#dice-fab[aria-expanded='true']) .music-row,
+    html:has(#dice-fab[aria-expanded='true']) .music-drawer { visibility: hidden; }
   }
   @media (prefers-reduced-motion: reduce) {
     .music-root, .music-progress-fill, .music-drawer, .music-drawer-inner, .music-fab { transition: none; }
@@ -399,6 +437,7 @@
     const title = $('music-title')!;
     title.textContent = s.videoTitle ?? cur?.title ?? '';
     title.title = title.textContent;
+    $('music-panel-title')!.textContent = title.textContent;
 
     const toggle = $('music-toggle')!;
     toggle.classList.toggle('is-playing', s.playing);
@@ -471,14 +510,17 @@
     if (!root || root.dataset.bound) return;
     root.dataset.bound = '1';
     $('music-prev')!.addEventListener('click', () => music.prev());
+    $('music-prev-p')!.addEventListener('click', () => music.prev());
     $('music-toggle')!.addEventListener('click', () => music.toggle());
     $('music-next')!.addEventListener('click', () => music.next());
     // ✕ stops, clears the queue and shuts the player (the site playlist is cued again)
-    $('music-close')!.addEventListener('click', () => {
+    const close = () => {
       music.stop();
       setOpen(false);
       $('music-fab')?.focus();
-    });
+    };
+    $('music-close')!.addEventListener('click', close);
+    $('music-close-p')!.addEventListener('click', close);
     let open = false;
     try { open = localStorage.getItem(OPEN_KEY) === '1'; } catch { /* storage blocked */ }
     setOpen(open, false);

@@ -342,6 +342,14 @@ test.describe('Music API', () => {
 // YouTube playlists (they can't play from the test server: error 150). Mirrors YouTube:
 // loadPlaylist/nextVideo/previousVideo and seekTo from CUED start playback; cuePlaylist doesn't.
 // getPlaylist() returns window.__ytLists[listId] when a test sets it.
+/** Clicks a player control. On narrow screens previous and stop live in the queue panel, which is
+ *  opened first. */
+async function control(page: import('@playwright/test').Page, name: string) {
+  const b = page.getByRole('button', { name, exact: true });
+  if (!(await b.isVisible())) await page.locator('#music-expand').click();
+  await b.click();
+}
+
 const FAKE_YT_API = `(() => {
   const calls = window.__ytCalls = [];
   class Player {
@@ -452,7 +460,7 @@ test.describe('Music player', () => {
     await page.getByRole('button', { name: 'Next track' }).click();
     await expect(page.locator('#music-title')).toHaveText('Wind');
     await expect.poll(() => paused(page)).toBe(false);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(page.locator('#music-bar')).toBeHidden();
     expect(await paused(page)).toBe(true);
   });
@@ -466,7 +474,7 @@ test.describe('Music player', () => {
     const a = await frac();
     await page.waitForTimeout(1500);
     expect(await frac()).toBeGreaterThan(a);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(page.locator('#music-bar')).toBeHidden();
   });
 
@@ -507,7 +515,7 @@ test.describe('Music player', () => {
     await expect.poll(async () => (await st(page)).duration).toBe(100);
     await playQueue(page, q);
     await expectProgress(page);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('switching to YouTube while a file is loading: time is still reported (fake YouTube API)', async ({ page }) => {
@@ -524,7 +532,7 @@ test.describe('Music player', () => {
     await playQueue(page, q);
     await expect(page.locator('#music-title')).toHaveText('Rain');
     await expectProgress(page);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('paused YouTube playlist: next/prev cue the entry and stay paused and hidden (fake YouTube API)', async ({ page }) => {
@@ -552,14 +560,14 @@ test.describe('Music player', () => {
     expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
     expect(c[0].arg).toMatchObject({ list: 'PLfake', index: 2, startSeconds: 0 });
     // Paused (cued): prev cues entry b
-    await page.getByRole('button', { name: 'Previous track' }).click();
+    await control(page, 'Previous track');
     await expect(page.locator('#music-title')).toHaveText('Entry b');
     c = await calls();
     expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
     expect(c[0].arg).toMatchObject({ index: 1, startSeconds: 0 });
     // Cued, more than 3 s in: prev restarts the entry by cueing it (seekTo would start it)
     await page.evaluate(() => { (window as any).__ytPlayer.t = 10; });
-    await page.getByRole('button', { name: 'Previous track' }).click();
+    await control(page, 'Previous track');
     await expect.poll(async () => (await calls()).map((x) => x.name)).toEqual(['cuePlaylist']);
     await page.waitForTimeout(300);
     const s = await st();
@@ -568,7 +576,7 @@ test.describe('Music player', () => {
     expect(s.position).toBe(0);
     await expect(page.locator('#music-yt-tile')).toBeHidden();
     expect(await page.evaluate(() => (window as any).__ytPlayer.state)).not.toBe(1);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('pause during an autoplay load keeps the tile until YouTube has paused (fake YouTube API)', async ({ page }) => {
@@ -589,7 +597,7 @@ test.describe('Music player', () => {
     await expect(page.locator('#music-yt-tile')).toBeHidden({ timeout: 5000 });
     expect(await page.evaluate(() => (window as any).__ytPlayer.state)).toBe(2);
     expect(await page.evaluate(() => (window as any).__bad)).toBe(0);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   // ── YouTube (real youtube.com; desktop Chromium only) ──
@@ -854,20 +862,24 @@ test.describe('Music player', () => {
       await expect(page.locator('#music-progress')).toBeVisible();
       await page.waitForTimeout(450);
       await clear(page, 'dock shown');
-      // The button sits just above the dock, on the left
+      // The button sits above the dock, on the left; the bar to its right on the same bottom line,
+      // running over the dice seal (clear of it) towards the right edge
       const dockBox = await box(page, '.pwa-dock-root .pwa-dock-bar');
       const shown = await box(page, '#music-fab');
+      const barBox = await box(page, '#music-bar');
       expect(shown.y + shown.height, 'button above the dock').toBeLessThanOrEqual(dockBox.y);
-      expect(dockBox.y - (shown.y + shown.height), 'button close to the dock').toBeLessThanOrEqual(24);
+      expect(dockBox.y - (shown.y + shown.height), 'button close to the dock').toBeLessThanOrEqual(34);
+      expect(barBox.x, 'bar right of the button').toBeGreaterThanOrEqual(shown.x + shown.width);
+      expect(Math.abs(barBox.y + barBox.height - (shown.y + shown.height)), 'same bottom line').toBeLessThanOrEqual(1);
+      expect(page.viewportSize()!.width - (barBox.x + barBox.width), 'bar reaches the right side').toBeLessThanOrEqual(20);
       await tucked(page, true);
       await clear(page, 'dock tucked');
-      // ...and drops with the dock when it tucks away
-      expect((await box(page, '#music-fab')).y, 'button drops with the dock').toBeGreaterThan(shown.y + 30);
-      // Shut: only the button, still clear of everything
+      // Shut: only the button, still clear of everything; it drops with the dock when that tucks away
       await page.locator('#music-fab').click();
       await expect(page.locator('#music-bar')).not.toBeVisible();
       await page.waitForTimeout(400);
       await clear(page, 'shut, dock tucked');
+      expect((await box(page, '#music-fab')).y, 'button drops with the dock').toBeGreaterThan(shown.y + 30);
       await tucked(page, false);
       await clear(page, 'shut, dock shown');
       await page.locator('#music-fab').click();
@@ -928,7 +940,7 @@ test.describe('Music player', () => {
       }
       await page.locator('#music-fab').click();
       await tucked(page, false);
-      await page.getByRole('button', { name: 'Stop and close player' }).click();
+      await control(page, 'Stop and close player');
     });
   });
 
@@ -1239,6 +1251,28 @@ test.describe('Music button', () => {
   const currentTime = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.currentTime);
   const fab = (page: import('@playwright/test').Page) => page.locator('#music-fab');
   const bar = (page: import('@playwright/test').Page) => page.locator('#music-bar');
+  /** The open bar sits right of the button on the same bottom line; with a dice button on the right
+   *  (not in the installed app) it stays clear of it, and on phones it fills the room up to it. */
+  async function expectRow(page: import('@playwright/test').Page) {
+    await page.mouse.move(page.viewportSize()!.width / 2, 1); // off the button (hover tilts it)
+    await page.waitForTimeout(400); // the slide
+    const f = await box(page, '#music-fab'), b = await box(page, '#music-bar'), d = await box(page, '#dice-fab');
+    expect(b.x, 'bar right of the button').toBeGreaterThanOrEqual(f.x + f.width);
+    expect(b.x - (f.x + f.width), 'bar next to the button').toBeLessThanOrEqual(12);
+    expect(Math.abs(b.y + b.height - (f.y + f.height)), 'same bottom line').toBeLessThanOrEqual(1);
+    expect(Math.round(b.height), 'as tall as the button').toBe(56);
+    expect(meets(b, d), 'bar meets the dice button').toBe(false);
+    expect(b.x + b.width, 'bar left of the dice button').toBeLessThanOrEqual(d.x - 8);
+    if (page.viewportSize()!.width < 600) expect(d.x - (b.x + b.width), 'bar fills the room up to the dice button').toBeLessThanOrEqual(16);
+    // every control in the bar is visible inside it and, on touch screens, 44px or more
+    const touch = await page.evaluate(() => matchMedia('(pointer: coarse)').matches);
+    for (const btn of await page.locator('#music-bar button').all()) {
+      if (!(await btn.isVisible())) continue;
+      const bb = (await btn.boundingBox())!;
+      expect(bb.x + bb.width, 'control inside the bar').toBeLessThanOrEqual(b.x + b.width + 0.5);
+      if (touch) expect(Math.min(bb.width, bb.height), 'control at least 44px').toBeGreaterThanOrEqual(44);
+    }
+  }
 
   const SITE = {
     id: 'e2e-site', name: 'Tavern music', tracks: [
@@ -1281,6 +1315,7 @@ test.describe('Music button', () => {
     await expect(bar(page)).toBeVisible();
     await expect(page.locator('#music-title')).toHaveText('Site One');
     await expect(page.locator('#music-toggle')).toHaveAttribute('aria-label', 'Play');
+    await expectRow(page);
     await page.waitForTimeout(500);
     expect((await st(page)).playing).toBe(false); // never autoplays
 
@@ -1338,7 +1373,7 @@ test.describe('Music button', () => {
 
     // ✕ stops and shuts; the site playlist is cued again
     await fab(page).click();
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(bar(page)).not.toBeVisible();
     await expect(fab(page)).toBeVisible();
     await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
@@ -1368,7 +1403,7 @@ test.describe('Music button', () => {
     await expect(fab(page)).toHaveAttribute('aria-expanded', 'true');
     await expect(bar(page)).toBeVisible();
     await expect.poll(() => currentTime(page)).toBeGreaterThan(0.2);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(fab(page)).toBeHidden();
   });
 
@@ -1430,7 +1465,8 @@ test.describe('Music button', () => {
       expect(meets(b, dice), `${sel} meets the dice button`).toBe(false);
       expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= 820 && b.y + b.height <= 1180, `${sel} inside the viewport`).toBe(true);
     }
-    expect((await box(page, '#music-bar')).y + 44, 'bar above the button').toBeLessThanOrEqual((await box(page, '#music-fab')).y);
+    await expectRow(page);
+    expect((await box(page, '#music-panel')).y + (await box(page, '#music-panel')).height, 'queue above the row').toBeLessThanOrEqual((await box(page, '#music-fab')).y);
   });
 });
 
