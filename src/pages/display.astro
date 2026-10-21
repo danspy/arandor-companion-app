@@ -2,6 +2,8 @@
 // Player display: a full-screen page for the TV or second screen at the table. Public (no
 // login). Shows whatever the DM picks on /tools/dm-screen; it polls /api/display, which only
 // contains what players may see (health bands, never exact HP).
+// /display?preview is the same page as a small live thumbnail on the DM screen: it never asks
+// to keep the screen awake, goes full screen or hides the cursor.
 import '../styles/global.css';
 ---
 
@@ -1039,8 +1041,11 @@ import '../styles/global.css';
       });
 
       // ── TV conveniences: stay awake, full screen on F, hide idle cursor ──
+      // Not in the DM screen's preview: that's a thumbnail, not the TV.
+      const preview = new URLSearchParams(location.search).has('preview');
       let wakeLock: { release(): Promise<void> } | null = null;
       async function keepAwake() {
+        if (preview) return;
         try {
           if ('wakeLock' in navigator && !wakeLock) {
             wakeLock = await (navigator as any).wakeLock.request('screen');
@@ -1048,27 +1053,29 @@ import '../styles/global.css';
           }
         } catch { /* not allowed (e.g. no user gesture yet); harmless */ }
       }
-      function toggleFullscreen() {
-        if (document.fullscreenElement) document.exitFullscreen?.();
-        else document.documentElement.requestFullscreen?.().catch(() => {});
-        keepAwake();
-      }
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'f' || e.key === 'F') toggleFullscreen();
-      });
-      document.addEventListener('dblclick', toggleFullscreen);
+      if (!preview) {
+        const toggleFullscreen = () => {
+          if (document.fullscreenElement) document.exitFullscreen?.();
+          else document.documentElement.requestFullscreen?.().catch(() => {});
+          keepAwake();
+        };
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'f' || e.key === 'F') toggleFullscreen();
+        });
+        document.addEventListener('dblclick', toggleFullscreen);
 
-      let cursorTimer: number | undefined;
-      document.addEventListener('mousemove', () => {
-        body.classList.remove('cursor-idle');
-        clearTimeout(cursorTimer);
-        cursorTimer = window.setTimeout(() => body.classList.add('cursor-idle'), 3000);
-      });
+        let cursorTimer: number | undefined;
+        document.addEventListener('mousemove', () => {
+          body.classList.remove('cursor-idle');
+          clearTimeout(cursorTimer);
+          cursorTimer = window.setTimeout(() => body.classList.add('cursor-idle'), 3000);
+        });
 
-      if (!document.fullscreenElement && window.self === window.top && matchMedia('(pointer: fine)').matches) {
-        const hint = $('hint');
-        hint.classList.add('is-shown');
-        setTimeout(() => hint.classList.remove('is-shown'), 6000);
+        if (!document.fullscreenElement && window.self === window.top && matchMedia('(pointer: fine)').matches) {
+          const hint = $('hint');
+          hint.classList.add('is-shown');
+          setTimeout(() => hint.classList.remove('is-shown'), 6000);
+        }
       }
 
       keepAwake();
