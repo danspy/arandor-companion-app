@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import {
   matchesSetup,
   normalizeSetup,
@@ -222,5 +222,87 @@ test.describe('Scenes API', () => {
     expect([401, 403]).toContain((await anon.post('/api/scenes', { data: { name: 'E2E nope', setup: {} } })).status());
     expect([401, 403]).toContain((await anon.get('/api/scenes')).status());
     await anon.dispose();
+  });
+});
+
+// Start screen on the player display. /api/display is mocked like in display.spec.ts.
+test.describe('Start screen', () => {
+  const start = (over: Record<string, unknown> = {}) => ({
+    screenVisible: true,
+    mode: 'start',
+    wallpaperUrl: null,
+    backdropUrl: null,
+    location: null,
+    npcs: [],
+    initiative: null,
+    timer: null,
+    startScreen: { title: 'The Frozen Gate', session: 12, date: '2026-10-21', recap: '', showRecap: false, ...over },
+  });
+  const live = {
+    screenVisible: true, mode: 'live', wallpaperUrl: null, backdropUrl: null, npcs: [], initiative: null, timer: null,
+    location: { name: 'Frostheim', type: 'city', region: 'Rulik', imageUrl: null }, startScreen: null,
+  };
+
+  async function open(page: Page, first: unknown) {
+    let current = first;
+    await page.route('**/api/display', (route) => route.fulfill({ json: current }));
+    await page.goto('/display');
+    return async (next: unknown) => {
+      current = next;
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    };
+  }
+
+  test('title card', async ({ page }) => {
+    await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await expect(page.locator('#startTitle')).toHaveText('The Frozen Gate');
+    await expect(page.locator('#startCampaign')).toHaveText('Arandor');
+    await expect(page.locator('#startSession')).toHaveText('Session 12');
+    await expect(page.locator('#startDate')).toHaveText('21 October 2026');
+    await expect(page.locator('#startRecap')).toBeHidden();
+  });
+
+  test('title and recap', async ({ page }) => {
+    const recap = 'The party fled the keep.\nThalia was wounded.';
+    await open(page, start({ recap, showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecapText')).toHaveText(recap);
+    await expect(page.locator('#startRecapText')).toHaveCSS('white-space', 'pre-line');
+  });
+
+  test('no session number', async ({ page }) => {
+    await open(page, start({ session: null }));
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await expect(page.locator('#startSession')).toBeHidden();
+  });
+
+  test('long recap fits', async ({ page }) => {
+    const recap = Array.from({ length: 40 }, (_, i) => `${i}: ` + 'lorem ipsum '.repeat(8)).join('\n').slice(0, 4000);
+    await open(page, start({ recap, showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await page.waitForTimeout(1000); // fade-in
+    const fit = await page.evaluate(() => {
+      const r = document.getElementById('startScreen')!.getBoundingClientRect();
+      return {
+        inside: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1,
+        scroll: document.scrollingElement!.scrollHeight <= innerHeight,
+      };
+    });
+    expect(fit).toEqual({ inside: true, scroll: true });
+  });
+
+  test('recap is text', async ({ page }) => {
+    await open(page, start({ recap: '<img src=x onerror=alert(1)>', showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecap img')).toHaveCount(0);
+    await expect(page.locator('#startRecapText')).toHaveText('<img src=x onerror=alert(1)>');
+  });
+
+  test('back to live', async ({ page }) => {
+    const set = await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await set(live);
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'stage');
   });
 });

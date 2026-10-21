@@ -26,6 +26,18 @@ import '../styles/global.css';
       <p class="dsp-idle-text" id="idleText"></p>
     </div>
 
+    <!-- Session start: title card, optionally with a recap of the last session -->
+    <div class="dsp-start" id="startScreen">
+      <p class="dsp-start-campaign" id="startCampaign">Arandor</p>
+      <p class="dsp-start-session" id="startSession" hidden></p>
+      <h1 class="dsp-start-title" id="startTitle"></h1>
+      <p class="dsp-start-date" id="startDate"></p>
+      <section class="dsp-start-recap t-panel" id="startRecap" hidden>
+        <h2 class="dsp-start-recap-head">Previously…</h2>
+        <p class="dsp-start-recap-text" id="startRecapText"></p>
+      </section>
+    </div>
+
     <!-- DM hid the screen and set a wallpaper -->
     <div class="dsp-wallpaper" id="wallpaper"><img id="wallpaperImg" alt="" /></div>
 
@@ -90,13 +102,14 @@ import '../styles/global.css';
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
-      /* Mode switching: idle | hidden | wallpaper | stage */
-      .dsp-idle, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks {
+      /* Mode switching: idle | start | wallpaper | stage */
+      .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks {
         position: fixed; inset: 0;
         opacity: 0; visibility: hidden;
         transition: opacity .8s var(--ease), visibility 0s linear .8s;
       }
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
+      body[data-mode="start"] :is(.dsp-start, .dsp-backdrop),
       body[data-mode="wallpaper"] .dsp-wallpaper,
       body[data-mode="stage"] .dsp-stage,
       body[data-mode="stage"]:is([data-scene="cast"], [data-scene="none"]) .dsp-backdrop {
@@ -140,6 +153,37 @@ import '../styles/global.css';
         margin: 0; text-shadow: 0 .2rem 2rem rgba(0, 0, 0, .6);
       }
       .dsp-idle-text { margin: 1rem 0 0; font-size: 1.15rem; color: var(--text-muted); max-width: 36ch; }
+
+      /* ── Start screen ─────────────────────────────────────────────── */
+      .dsp-start {
+        z-index: 2;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 2rem; gap: .6rem;
+      }
+      .dsp-start [hidden] { display: none; }
+      .dsp-start-campaign, .dsp-start-session {
+        margin: 0; font-size: 1.1rem; letter-spacing: .3em; text-transform: uppercase; color: var(--accent);
+      }
+      .dsp-start-title {
+        font-family: var(--font-display); font-style: italic; font-weight: 600;
+        font-size: 4.2rem; line-height: 1.05; color: var(--text-strong);
+        margin: .4rem 0 0; max-width: 24ch; text-wrap: balance;
+        text-shadow: 0 .2rem 2rem rgba(0, 0, 0, .6);
+      }
+      .dsp-start-date { margin: 0; font-size: 1.15rem; color: var(--text-muted); }
+      .dsp-start-recap {
+        margin-top: 1.5rem; width: min(52rem, 100%); min-height: 0; flex: 0 1 auto;
+        display: flex; flex-direction: column; padding: 1.25rem 1.75rem; text-align: left;
+        background-color: rgba(20, 15, 10, .78);
+      }
+      .dsp-start-recap-head {
+        margin: 0 0 .6rem; font-family: var(--font-display); font-style: italic; font-weight: 600;
+        font-size: 1.4rem; color: var(--accent);
+      }
+      .dsp-start-recap-text {
+        margin: 0; min-height: 0; overflow-y: auto; white-space: pre-line;
+        font-size: 1.2rem; line-height: 1.5; color: var(--text-body);
+      }
 
       /* ── Wallpaper ─────────────────────────────────────────────────── */
       .dsp-wallpaper { z-index: 3; background: #000; }
@@ -438,7 +482,7 @@ import '../styles/global.css';
         body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; }
         body[data-location="0"] .dsp-cast { inset: 1rem; }
         body[data-side="1"] .dsp-cast, body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + .75rem); }
-        .dsp-idle-title { font-size: 2.4rem; }
+        .dsp-idle-title, .dsp-start-title { font-size: 2.4rem; }
       }
 
       /* ── Portrait screens (phones, tablets upright): one column, page scrolls.
@@ -475,7 +519,7 @@ import '../styles/global.css';
         .dsp-now-name { font-size: min(3.3rem, 11vw); }
         .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1.25rem; }
         body[data-cast="1"] .dsp-loc-caption { top: 1.25rem; }
-        .dsp-idle-title { font-size: min(4.2rem, 11vw); }
+        .dsp-idle-title, .dsp-start-title { font-size: min(4.2rem, 11vw); }
       }
 
       /* Touch screens have no F key */
@@ -494,6 +538,8 @@ import '../styles/global.css';
       type Health = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
       interface DisplayState {
         screenVisible: boolean;
+        mode?: 'live' | 'start' | 'pause';
+        startScreen?: { title: string; session: number | null; date: string; recap: string; showRecap: boolean } | null;
         wallpaperUrl: string | null;
         backdropUrl: string | null;
         location: { name: string; type: string; region: string | null; imageUrl: string | null } | null;
@@ -548,10 +594,32 @@ import '../styles/global.css';
         img.hidden = !url;
       }
 
+      function showStart(st: NonNullable<DisplayState['startScreen']>) {
+        body.dataset.mode = 'start';
+        $('startTitle').textContent = st.title;
+        const session = $('startSession');
+        session.hidden = st.session == null;
+        session.textContent = st.session == null ? '' : `Session ${st.session}`;
+        // The ISO date is a calendar day, not an instant: parse it as local time
+        const [y, m, d] = st.date.split('-').map(Number);
+        $('startDate').textContent = new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        const recap = $('startRecap');
+        recap.hidden = !(st.showRecap && st.recap);
+        $('startRecapText').textContent = st.recap; // text only, never HTML
+        setSparks($<HTMLCanvasElement>('idleSparks'), false);
+        setSparks($<HTMLCanvasElement>('nowSparks'), false);
+      }
+
       function render(s: DisplayState) {
         setBackdrop(s.backdropUrl);
 
-        if (!s.screenVisible) {
+        const mode = s.mode ?? (s.screenVisible === false ? 'pause' : 'live');
+        if (mode === 'start' && s.startScreen) {
+          showStart(s.startScreen);
+          return;
+        }
+
+        if (mode === 'pause') {
           if (s.wallpaperUrl) {
             const img = $<HTMLImageElement>('wallpaperImg');
             if (img.getAttribute('src') !== s.wallpaperUrl) img.src = s.wallpaperUrl;
