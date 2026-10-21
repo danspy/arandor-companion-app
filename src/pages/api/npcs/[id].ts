@@ -1,8 +1,11 @@
 import type { APIRoute } from 'astro';
 import { db, Creature, NPC, eq } from '@/db';
-import { requirePlayerOrAbove } from '../../../lib/middleware';
+import { isDungeonmasterOrAdmin, requireDungeonmasterOrAdmin, requirePlayerOrAbove } from '../../../lib/middleware';
+import { statBlockHpByNpc } from '../../../lib/creature-links';
+import { effectiveNpcHp, npcStatusUpdate, publicNpc } from '../../../lib/npc-status';
 
-export const GET: APIRoute = async ({ params }) => {
+// HP and conditions (lib/npc-status) only reach the DM and admins
+export const GET: APIRoute = async ({ params, cookies }) => {
   try {
     const npc = await db.select().from(NPC).where(eq(NPC.id, params.id!));
     
@@ -13,7 +16,7 @@ export const GET: APIRoute = async ({ params }) => {
       });
     }
 
-    return new Response(JSON.stringify(npc[0]), {
+    return new Response(JSON.stringify((await isDungeonmasterOrAdmin(cookies)) ? npc[0] : publicNpc(npc[0])), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -50,7 +53,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
 
     const updatedNPC = await db.select().from(NPC).where(eq(NPC.id, params.id!));
     
-    return new Response(JSON.stringify(updatedNPC[0]), {
+    return new Response(JSON.stringify((await isDungeonmasterOrAdmin(cookies)) ? updatedNPC[0] : publicNpc(updatedNPC[0])), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -84,5 +87,29 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
+  }
+};
+
+// PATCH { hp?, maxHp?, conditions? } - The NPC's status on the DM screen (DM/admin). Only the
+// fields sent change; HP stays within 0 and max HP (the linked stat block's while it has none).
+export const PATCH: APIRoute = async ({ params, request, cookies }) => {
+  const authError = await requireDungeonmasterOrAdmin(cookies);
+  if (authError) return authError;
+  const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
+  try {
+    const npc = await db.select().from(NPC).where(eq(NPC.id, params.id!)).get();
+    if (!npc) return json({ error: 'NPC not found' }, 404);
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== 'object' || Array.isArray(body)) return json({ error: 'Invalid JSON' }, 400);
+
+    const result = npcStatusUpdate(body, effectiveNpcHp(npc, (await statBlockHpByNpc()).get(npc.id)));
+    if ('error' in result) return json({ error: result.error }, 400);
+    if (Object.keys(result.update).length) {
+      await db.update(NPC).set({ ...result.update, updatedAt: new Date() }).where(eq(NPC.id, npc.id));
+    }
+    return json((await db.select().from(NPC).where(eq(NPC.id, npc.id)).get())!);
+  } catch (error) {
+    console.error('Error changing NPC status:', error);
+    return json({ error: 'Failed to update NPC' }, 500);
   }
 };

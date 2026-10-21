@@ -41,3 +41,9 @@ export async function requireDungeonmasterOrAdmin(cookies: AstroCookies): Promis
 export async function requirePlayerOrAbove(cookies: AstroCookies): Promise<Response | null> {
   return await requireRole(cookies, ['player', 'dungeonmaster', 'admin']);
 }
+
+/** For responses that show DM-only fields to the DM and admins and leave them out for everyone else. */
+export async function isDungeonmasterOrAdmin(cookies: AstroCookies): Promise<boolean> {
+  const role = await getUserRole(cookies);
+  return role === 'dungeonmaster' || role === 'admin';
+}
