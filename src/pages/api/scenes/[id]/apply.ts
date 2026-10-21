@@ -9,8 +9,8 @@ const DM_SCREEN_STATE_ID = 'current-dm-screen';
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' } });
 
-// POST - Put a scene on the screen. Replaces location and spotlight only; timer, initiative and
-// wallpaper stay as they are. Deleted NPCs, characters and locations are dropped.
+// POST - Put a scene on the screen. Replaces location and spotlight only; timer, initiative,
+// wallpaper and the screen mode stay as they are. Deleted NPCs, characters and locations are dropped.
 export const POST: APIRoute = async ({ params, cookies }) => {
   const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
@@ -23,7 +23,8 @@ export const POST: APIRoute = async ({ params, cookies }) => {
     if (state) {
       await db.update(DMScreenState).set(update).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID));
     } else {
-      await db.insert(DMScreenState).values({ id: DM_SCREEN_STATE_ID, customAssets: [], ...update });
+      // A new row starts without a session, like on the DM screen
+      await db.insert(DMScreenState).values({ id: DM_SCREEN_STATE_ID, customAssets: [], screenMode: 'off', screenVisible: false, ...update });
     }
     const updated = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     return json(updated);

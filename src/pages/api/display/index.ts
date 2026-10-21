@@ -1,7 +1,8 @@
 import type { APIRoute } from 'astro';
 import crypto from 'node:crypto';
-import { db, CampaignProgress, Character, DMScreenState, Location, NPC, eq, inArray } from '@/db';
+import { db, CampaignProgress, Character, DMScreenState, Event, Location, NPC, eq, inArray, sql } from '@/db';
 import { currentEntry, getCombatState, getEntries, healthStatus } from '../../../lib/combat';
+import { nextSession } from '../../../lib/next-session';
 import type { ScreenMode } from '../../../lib/scenes';
 import { characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../../lib/spotlight';
 
@@ -73,10 +74,22 @@ export const GET: APIRoute = async ({ request }) => {
       };
     }
 
+    // No session running: the next game night from the calendar (date and time only). No row
+    // yet means no session either.
+    const mode = (screen?.screenMode ?? 'off') as ScreenMode;
+    let next = null;
+    if (mode === 'off') {
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const events = await db.select({ date: Event.date, time: Event.time }).from(Event).where(sql`${Event.date} >= ${today}`);
+      next = nextSession(events, now);
+    }
+
     const placeholder = screen?.placeholderImageUrl ?? null;
     const payload = {
-      screenVisible: screen?.screenVisible ?? true,
-      mode: (screen?.screenMode ?? 'live') as ScreenMode,
+      screenVisible: screen?.screenVisible ?? false,
+      mode,
+      nextSession: next,
       startScreen: screen?.screenMode === 'start' ? (screen.startScreen ?? null) : null,
       // Older wallpapers were saved inline as data: URLs (megabytes); serve those separately
       // so they are downloaded once and cached, not with every poll.

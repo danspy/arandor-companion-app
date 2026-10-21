@@ -38,6 +38,13 @@ import '../styles/global.css';
       </section>
     </div>
 
+    <!-- No session running: the campaign and, if planned, the next game night -->
+    <div class="dsp-start" id="offScreen">
+      <p class="dsp-start-campaign" id="offCampaign">Arandor</p>
+      <h1 class="dsp-start-title" id="offTitle">No session running</h1>
+      <p class="dsp-start-date" id="offNext" hidden></p>
+    </div>
+
     <!-- DM hid the screen and set a wallpaper -->
     <div class="dsp-wallpaper" id="wallpaper"><img id="wallpaperImg" alt="" /></div>
 
@@ -102,14 +109,15 @@ import '../styles/global.css';
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
-      /* Mode switching: idle | start | wallpaper | stage */
+      /* Mode switching: idle | start | off | wallpaper | stage */
       .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks {
         position: fixed; inset: 0;
         opacity: 0; visibility: hidden;
         transition: opacity .8s var(--ease), visibility 0s linear .8s;
       }
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
-      body[data-mode="start"] :is(.dsp-start, .dsp-backdrop),
+      body[data-mode="start"] :is(#startScreen, .dsp-backdrop),
+      body[data-mode="off"] :is(#offScreen, .dsp-backdrop),
       body[data-mode="wallpaper"] .dsp-wallpaper,
       body[data-mode="stage"] .dsp-stage,
       body[data-mode="stage"]:is([data-scene="cast"], [data-scene="none"]) .dsp-backdrop {
@@ -154,7 +162,7 @@ import '../styles/global.css';
       }
       .dsp-idle-text { margin: 1rem 0 0; font-size: 1.15rem; color: var(--text-muted); max-width: 36ch; }
 
-      /* ── Start screen ─────────────────────────────────────────────── */
+      /* ── Start screen (and the no-session screen, same look) ──────── */
       .dsp-start {
         z-index: 2;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -538,7 +546,8 @@ import '../styles/global.css';
       type Health = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
       interface DisplayState {
         screenVisible: boolean;
-        mode?: 'live' | 'start' | 'pause';
+        mode?: 'off' | 'start' | 'live' | 'pause';
+        nextSession?: { date: string; time: string } | null;
         startScreen?: { title: string; session: number | null; date: string; recap: string; showRecap: boolean } | null;
         wallpaperUrl: string | null;
         backdropUrl: string | null;
@@ -610,6 +619,22 @@ import '../styles/global.css';
         setSparks($<HTMLCanvasElement>('nowSparks'), false);
       }
 
+      function showOff(next: DisplayState['nextSession']) {
+        body.dataset.mode = 'off';
+        const line = $('offNext');
+        line.hidden = !next;
+        if (next) {
+          // Calendar day and wall-clock time: parse as local time, like the start screen's date
+          const [y, m, d] = next.date.split('-').map(Number);
+          const day = new Date(y, m - 1, d);
+          const weekday = day.toLocaleDateString('en-GB', { weekday: 'long' });
+          const date = day.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+          line.textContent = `Next session: ${weekday}, ${date} · ${next.time}`; // Friday, 23 October · 19:00
+        }
+        setSparks($<HTMLCanvasElement>('idleSparks'), false);
+        setSparks($<HTMLCanvasElement>('nowSparks'), false);
+      }
+
       function render(s: DisplayState) {
         setBackdrop(s.backdropUrl);
 
@@ -617,6 +642,10 @@ import '../styles/global.css';
         const mode = s.mode === 'start' && !s.startScreen ? fallback : (s.mode ?? fallback);
         if (mode === 'start' && s.startScreen) {
           showStart(s.startScreen);
+          return;
+        }
+        if (mode === 'off') {
+          showOff(s.nextSession ?? null);
           return;
         }
 

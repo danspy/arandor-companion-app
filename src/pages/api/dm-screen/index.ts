@@ -2,9 +2,10 @@ import type { APIRoute } from 'astro';
 import { db, DMScreenState, eq } from '@/db';
 import { getUserRole } from '../../../lib/auth';
 import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
-import { validateStartScreen } from '../../../lib/scenes';
+import { validateStartScreen, type ScreenMode } from '../../../lib/scenes';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
+const MODES: ScreenMode[] = ['off', 'start', 'live', 'pause'];
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
@@ -18,7 +19,7 @@ export const GET: APIRoute = async ({ cookies }) => {
   try {
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     
-    // Create default state if it doesn't exist
+    // Create default state if it doesn't exist: no session running
     if (!state) {
       await db.insert(DMScreenState).values({
         id: DM_SCREEN_STATE_ID,
@@ -26,8 +27,8 @@ export const GET: APIRoute = async ({ cookies }) => {
         spotlightNpcIds: [],
         customAssets: [],
         showInitiativeTracker: false,
-        screenVisible: true,
-        screenMode: 'live',
+        screenVisible: false,
+        screenMode: 'off',
         placeholderImageUrl: null,
         showTimer: false,
         timerDuration: 0,
@@ -46,8 +47,8 @@ export const GET: APIRoute = async ({ cookies }) => {
         spotlightNpcIds: [], 
         customAssets: [], 
         showInitiativeTracker: false,
-        screenVisible: true,
-        screenMode: 'live',
+        screenVisible: false,
+        screenMode: 'off',
         startScreen: null,
         placeholderImageUrl: null,
         showTimer: false,
@@ -88,8 +89,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     const updates = await request.json();
 
     // Screen mode and the legacy screenVisible flag stay in sync both ways
-    if (updates.screenMode !== undefined && !['live', 'start', 'pause'].includes(updates.screenMode)) {
-      return json({ error: 'screenMode must be live, start or pause' }, 400);
+    if (updates.screenMode !== undefined && !MODES.includes(updates.screenMode)) {
+      return json({ error: 'screenMode must be off, start, live or pause' }, 400);
     }
     if (updates.startScreen !== undefined) {
       const checked = validateStartScreen(updates.startScreen);
@@ -99,7 +100,7 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
     if (updates.screenMode === undefined && updates.screenVisible !== undefined) {
       updates.screenMode = updates.screenVisible ? 'live' : 'pause';
     }
-    if (updates.screenMode !== undefined) updates.screenVisible = updates.screenMode !== 'pause';
+    if (updates.screenMode !== undefined) updates.screenVisible = updates.screenMode === 'live' || updates.screenMode === 'start';
 
     // Fetch current state
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
@@ -149,8 +150,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         focusNpcIds: updates.focusNpcIds ?? [],
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
-        screenVisible: updates.screenVisible ?? true,
-        screenMode: updates.screenMode ?? 'live',
+        screenVisible: updates.screenVisible ?? false,
+        screenMode: updates.screenMode ?? 'off',
         startScreen: updates.startScreen ?? null,
         placeholderImageUrl: updates.placeholderImageUrl ?? null,
         showTimer: updates.showTimer ?? false,

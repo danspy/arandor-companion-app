@@ -1,5 +1,6 @@
 ---
-// DM screen: quick actions for the player display (start screen, pause) next to the saved scenes.
+// DM screen: quick actions for the player display (session lifecycle: off → start → live ⇄ pause →
+// off) next to the saved scenes. Each button sends the mode it leads to, never a toggle.
 // Talks to the DM screen page only through the `dm-screen:state` event on `document` (detail: the
 // full DM screen state row): the page fires it after loading or changing the state, this strip
 // fires it after its own changes so the page can redraw.
@@ -24,12 +25,15 @@ interface Props {
       Quick actions
       <span id="screenModeBadge" class="t-badge ml-auto" aria-live="polite" style="display:none"></span>
     </h2>
-    <div class="grid grid-cols-2 gap-2">
-      <Button variant="primary" size="sm" id="startSessionBtn" class="w-full">Start session</Button>
-      <Button variant="warning" size="sm" id="pauseBtn" class="w-full">Pause</Button>
+    <!-- Which buttons show depends on the mode (see render) -->
+    <div class="flex gap-2">
+      <Button variant="primary" size="sm" id="startSessionBtn" class="flex-1">Start session</Button>
+      <Button variant="warning" size="sm" id="pauseBtn" class="flex-1">Pause</Button>
+      <Button variant="secondary" size="sm" id="endSessionBtn" class="flex-1">End session</Button>
     </div>
     <p class="t-faint text-xs mt-2">
       Start session shows a title card on the player display. Pause shows the wallpaper below (or a short break card).
+      End session shows the next game night from the calendar.
     </p>
   </div>
 
@@ -117,8 +121,9 @@ interface Props {
 
   const STATE_EVENT = 'dm-screen:state';
   const MODE_LABEL: Record<ScreenMode, [string, string]> = {
-    live: ['Live', 't-badge-green'],
+    off: ['No session', ''],
     start: ['Start screen', 't-badge-gold'],
+    live: ['Live', 't-badge-green'],
     pause: ['Paused', 't-badge-red'],
   };
   const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
@@ -137,13 +142,23 @@ interface Props {
       badge.className = `t-badge ${tone} ml-auto`;
       badge.style.display = ''; // .t-badge sets display, so not the hidden attribute
     }
+    // off: Start session · start: Go live, End session · live: Pause, End session · pause: Resume, End session
+    const show = (el: HTMLElement | null, on: boolean) => el && (el.style.display = on ? '' : 'none');
+    // data-target: the mode a click leads to (none = open the start dialog)
     const start = $('startSessionBtn');
-    if (start) start.textContent = mode === 'start' ? 'Go live' : 'Start session';
+    if (start) {
+      start.textContent = mode === 'start' ? 'Go live' : 'Start session';
+      start.dataset.target = mode === 'start' ? 'live' : '';
+    }
+    show(start, mode === 'off' || mode === 'start');
     const pause = $('pauseBtn');
     if (pause) {
       pause.textContent = mode === 'pause' ? 'Resume' : 'Pause';
+      pause.dataset.target = mode === 'pause' ? 'live' : 'pause';
       pause.setAttribute('aria-pressed', String(mode === 'pause'));
     }
+    show(pause, mode === 'live' || mode === 'pause');
+    show($('endSessionBtn'), mode !== 'off');
   }
 
   async function put(updates: Record<string, unknown>): Promise<boolean> {
@@ -219,13 +234,37 @@ interface Props {
     render();
   });
 
+  // One mode change at a time, so a double click on Pause can't pause and then resume
+  let busy = false;
+  async function setMode(target: ScreenMode) {
+    if (busy) return;
+    busy = true;
+    try {
+      await put({ screenMode: target });
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function endSession() {
+    if (busy) return;
+    const ok = await window.arandorConfirm('End the session?', {
+      detail: 'The player display shows "No session running" and the next game night. Location, spotlight, turn order and timer stay as they are.',
+      confirmLabel: 'End session',
+      danger: true,
+    });
+    if (ok) await setMode('off');
+  }
+
   document.addEventListener('click', async (e) => {
-    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn, #startCancelBtn');
+    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn, #endSessionBtn, #startCancelBtn');
     if (btn?.id === 'startCancelBtn') return $<HTMLDialogElement>('startSessionDialog')?.close();
     if (!btn || !state) return;
-    const mode = modeOf(state);
-    if (btn.id === 'pauseBtn') await put({ screenMode: mode === 'pause' ? 'live' : 'pause' });
-    else if (mode === 'start') await put({ screenMode: 'live' });
+    // The second click of a double click (detail 2) would undo the first once the button redraws
+    if ((e as MouseEvent).detail > 1) return;
+    const target = (btn as HTMLElement).dataset.target as ScreenMode | undefined;
+    if (btn.id === 'endSessionBtn') await endSession();
+    else if (target) await setMode(target);
     else await openStartDialog();
   });
 

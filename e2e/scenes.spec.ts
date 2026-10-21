@@ -9,6 +9,7 @@ import {
   validateStartScreen,
   type SceneSetup,
 } from '../src/lib/scenes';
+import { nextSession } from '../src/lib/next-session';
 
 // Saved display scenes and the start screen: pure logic only.
 
@@ -47,13 +48,11 @@ test.describe('Scenes logic', () => {
     expect(matchesSetup({ ...row, npcsHidden: true }, setup)).toBe(false);
   });
 
-  test('apply replaces setup', () => {
+  test('apply replaces setup, not the screen mode', () => {
     const u = setupToStateUpdate({ ...base, spotlightIds: ['n1'] }, { ...none, npcIds: new Set(['n1']) });
     expect(Object.keys(u).sort()).toEqual(
-      ['currentLocationId', 'focusNpcIds', 'hiddenNpcIds', 'locationHidden', 'npcsHidden', 'screenMode', 'screenVisible', 'spotlightNpcIds'],
+      ['currentLocationId', 'focusNpcIds', 'hiddenNpcIds', 'locationHidden', 'npcsHidden', 'spotlightNpcIds'],
     );
-    expect(u.screenMode).toBe('live');
-    expect(u.screenVisible).toBe(true);
   });
 
   test('apply drops missing references', () => {
@@ -94,6 +93,26 @@ test.describe('Scenes logic', () => {
     expect(validateStartScreen({ ...ok, recap: 'x'.repeat(5001) }).ok).toBe(false);
     expect(validateStartScreen({ ...ok, title: 'x'.repeat(121) }).ok).toBe(false);
     expect(validateStartScreen(ok).ok).toBe(true);
+  });
+
+  test('next session from the calendar', () => {
+    const now = new Date(2026, 9, 21, 18, 0); // local time, like the server
+    expect(nextSession([], now)).toBeNull();
+    expect(nextSession([{ date: '2026-10-01', time: '19:00' }, { date: '2026-10-20', time: '23:00' }], now)).toBeNull();
+    // The earlier of two future events, only date and time
+    const events = [
+      { date: '2026-11-07', time: '18:30', title: 'One-shot' },
+      { date: '2026-10-24', time: '19:00', title: 'Session' },
+    ];
+    expect(nextSession(events, now)).toEqual({ date: '2026-10-24', time: '19:00' });
+    // Today: later than now counts, earlier is over
+    expect(nextSession([{ date: '2026-10-24', time: '19:00' }, { date: '2026-10-21', time: '19:30' }], now))
+      .toEqual({ date: '2026-10-21', time: '19:30' });
+    expect(nextSession([{ date: '2026-10-21', time: '17:00' }, { date: '2026-10-28', time: '19:00' }], now))
+      .toEqual({ date: '2026-10-28', time: '19:00' });
+    // Same day: sorted by time
+    expect(nextSession([{ date: '2026-10-24', time: '20:00' }, { date: '2026-10-24', time: '09:00' }], now))
+      .toEqual({ date: '2026-10-24', time: '09:00' });
   });
 
   test('start defaults from the diary', () => {
@@ -193,6 +212,45 @@ test.describe('Scenes API', () => {
     expect(live.startScreen).toBeNull();
     expect((await put({ startScreen: { ...startScreen, date: '21.10.2026' } })).status()).toBe(400);
     expect((await put({ screenMode: 'party' })).status()).toBe(400);
+    expect((await put({ screenMode: 'bogus' })).status()).toBe(400);
+  });
+
+  test('apply keeps the screen mode', async () => {
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E mode scene', setup: { spotlightIds: ['2'] } } })).json();
+    for (const mode of ['off', 'pause', 'start']) {
+      await put({ screenMode: mode, spotlightNpcIds: [] });
+      expect((await dm.request.post(`/api/scenes/${card.id}/apply`)).status()).toBe(200);
+      const s = await state();
+      expect(s.screenMode).toBe(mode);
+      expect(s.spotlightNpcIds).toEqual(['2']);
+    }
+  });
+
+  test('off mode on display', async () => {
+    // A game night later today (or tomorrow just after midnight), so there is a next session
+    const at = new Date(Date.now() + 2 * 60_000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const date = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
+    const time = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+    const event = await (await dm.request.post('/api/events', { data: { title: 'E2E secret plans', description: 'not for players', date, time } })).json();
+    try {
+      expect((await put({ screenMode: 'start', startScreen: { title: 'E2E', session: null, date, recap: '', showRecap: false } })).ok()).toBe(true);
+      expect((await display()).screenVisible).toBe(true);
+      expect((await put({ screenMode: 'off' })).ok()).toBe(true);
+      const d = await display();
+      expect(d.mode).toBe('off');
+      expect(d.screenVisible).toBe(false);
+      expect(d.startScreen).toBeNull();
+      // Only date and time, and nothing later than our event
+      expect(Object.keys(d.nextSession).sort()).toEqual(['date', 'time']);
+      expect(`${d.nextSession.date} ${d.nextSession.time}` <= `${date} ${time}`).toBe(true);
+      expect(JSON.stringify(d)).not.toContain('secret');
+      expect((await state()).screenMode).toBe('off');
+      await put({ screenMode: 'live' });
+      expect((await display()).nextSession).toBeNull();
+    } finally {
+      expect((await dm.request.delete(`/api/events/${event.id}`)).ok()).toBe(true);
+    }
   });
 
   test('start defaults', async () => {
@@ -225,8 +283,9 @@ test.describe('Scenes API', () => {
   });
 });
 
-// Start screen on the player display. /api/display is mocked like in display.spec.ts.
-test.describe('Start screen', () => {
+// Start screen and no-session screen on the player display. /api/display is mocked like in
+// display.spec.ts.
+test.describe('Display modes', () => {
   const start = (over: Record<string, unknown> = {}) => ({
     screenVisible: true,
     mode: 'start',
@@ -242,6 +301,9 @@ test.describe('Start screen', () => {
     screenVisible: true, mode: 'live', wallpaperUrl: null, backdropUrl: null, npcs: [], initiative: null, timer: null,
     location: { name: 'Frostheim', type: 'city', region: 'Rulik', imageUrl: null }, startScreen: null,
   };
+  const off = (nextSession: { date: string; time: string } | null) => ({
+    ...live, mode: 'off', screenVisible: false, nextSession,
+  });
 
   async function open(page: Page, first: unknown) {
     let current = first;
@@ -317,6 +379,30 @@ test.describe('Start screen', () => {
     await expect(page.locator('#idleTitle')).toHaveText('Short break');
     await expect(page.locator('#startScreen')).toBeHidden();
   });
+
+  test('no session, next session', async ({ page }) => {
+    await open(page, off({ date: '2026-10-23', time: '19:00' }));
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'off');
+    await expect(page.locator('#offScreen')).toBeVisible();
+    await expect(page.locator('#offCampaign')).toHaveText('Arandor');
+    await expect(page.locator('#offTitle')).toHaveText('No session running');
+    await expect(page.locator('#offNext')).toHaveText('Next session: Friday, 23 October · 19:00');
+    await expect(page.locator('#stage')).toBeHidden();
+  });
+
+  test('no session, nothing planned', async ({ page }) => {
+    await open(page, off(null));
+    await expect(page.locator('#offTitle')).toHaveText('No session running');
+    await expect(page.locator('#offNext')).toBeHidden();
+  });
+
+  test('no session to live', async ({ page }) => {
+    const set = await open(page, off({ date: '2026-10-24', time: '19:00' }));
+    await expect(page.locator('#offScreen')).toBeVisible();
+    await set({ ...live, nextSession: null });
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await expect(page.locator('#offScreen')).toBeHidden();
+  });
 });
 
 // Quick actions on the DM screen, with the player display open in a second page.
@@ -331,24 +417,37 @@ test.describe('DM screen', () => {
     const res = await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } });
     expect(res.ok(), 'login as dm').toBe(true);
     // A location, so live mode is the stage; no wallpaper, so pause is the "Short break" card
-    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', currentLocationId: '1', placeholderImageUrl: null } });
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'off', currentLocationId: '1', placeholderImageUrl: null } });
   });
   test.afterAll(async () => {
     await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', currentLocationId: null } });
     await dm.close();
   });
 
+  const setMode = (screenMode: string) => dm.request.put('/api/dm-screen', { data: { screenMode } });
   const today = () => {
     const d = new Date();
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
+
+  // Which quick action buttons show: [Start session / Go live, Pause / Resume, End session]
+  async function expectButtons(page: Page, start: string | null, pause: string | null, end: boolean) {
+    for (const [id, label] of [['#startSessionBtn', start], ['#pauseBtn', pause]] as const) {
+      if (label) await expect(page.locator(id)).toHaveText(label);
+      else await expect(page.locator(id)).toBeHidden();
+    }
+    if (end) await expect(page.locator('#endSessionBtn')).toHaveText('End session');
+    else await expect(page.locator('#endSessionBtn')).toBeHidden();
+  }
 
   test('start session flow', async () => {
     const page = await dm.newPage();
     const display = await dm.newPage();
     await page.goto('/tools/dm-screen');
     await display.goto('/display');
-    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
+    await expectButtons(page, 'Start session', null, false);
+    await expect(display.locator('#offScreen')).toBeVisible();
 
     await page.locator('#startSessionBtn').click();
     const dialog = page.locator('#startSessionDialog');
@@ -360,37 +459,41 @@ test.describe('DM screen', () => {
     await page.locator('#startShowBtn').click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
-    await expect(page.locator('#startSessionBtn')).toHaveText('Go live');
+    await expectButtons(page, 'Go live', null, true);
 
     await expect(display.locator('#startTitle')).toHaveText('E2E The Frozen Gate');
     await expect(display.locator('#startRecapText')).toHaveText('They fled the keep.');
 
-    // Reopening after a reload keeps today's start screen
     await page.reload();
     await expect(page.locator('#startSessionBtn')).toHaveText('Go live');
     await page.locator('#startSessionBtn').click();
     await expect(page.locator('#screenModeBadge')).toHaveText('Live');
-    await expect(page.locator('#startSessionBtn')).toHaveText('Start session');
+    await expectButtons(page, null, 'Pause', true);
     await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+
+    // Starting again on the same day keeps today's start screen
+    await setMode('off');
+    await page.reload();
     await page.locator('#startSessionBtn').click();
     await expect(page.locator('#startFormTitle')).toHaveValue('E2E The Frozen Gate');
     await expect(page.locator('input[name="startLayout"][value="recap"]')).toBeChecked();
     await page.locator('#startCancelBtn').click();
     await expect(page.locator('#startSessionDialog')).toBeHidden();
-    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
     await page.close();
     await display.close();
   });
 
   test('pause flow', async () => {
+    await setMode('live');
     const page = await dm.newPage();
     const display = await dm.newPage();
     await page.goto('/tools/dm-screen');
     await display.goto('/display');
-    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await expectButtons(page, null, 'Pause', true);
     await page.locator('#pauseBtn').click();
     await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
-    await expect(page.locator('#pauseBtn')).toHaveText('Resume');
+    await expectButtons(page, null, 'Resume', true);
     await expect(display.locator('body')).toHaveAttribute('data-mode', 'idle');
     await expect(display.locator('#idleTitle')).toHaveText('Short break');
     await page.locator('#pauseBtn').click();
@@ -401,7 +504,63 @@ test.describe('DM screen', () => {
     await display.close();
   });
 
+  test('double click pauses once', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await page.locator('#pauseBtn').dblclick();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    // A double click whose second click lands after the server answered (button now "Resume")
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    const box = (await page.locator('#pauseBtn').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await page.mouse.down({ clickCount: 2 });
+    await page.mouse.up({ clickCount: 2 });
+    await page.waitForTimeout(500);
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    expect((await (await dm.request.get('/api/dm-screen')).json()).screenMode).toBe('pause');
+    await page.close();
+  });
+
+  test('end session', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    const confirm = page.locator('#arandor-confirm');
+
+    // Cancelled: stays live
+    await page.locator('#endSessionBtn').click();
+    await expect(confirm).toBeVisible();
+    await confirm.locator('[data-cancel]').click();
+    await expect(confirm).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+
+    await page.locator('#endSessionBtn').click();
+    await expect(confirm.locator('[data-confirm]')).toHaveText('End session');
+    await confirm.locator('[data-confirm]').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
+    await expectButtons(page, 'Start session', null, false);
+    await expect(display.locator('#offScreen')).toBeVisible();
+    await expect(display.locator('#offTitle')).toHaveText('No session running');
+    // The table stays set up for next time
+    expect((await (await dm.request.get('/api/dm-screen')).json()).currentLocationId).toBe('1');
+    await page.close();
+    await display.close();
+  });
+
   test('enter shows, unsaved inputs stay', async () => {
+    await setMode('live');
     const page = await dm.newPage();
     await page.goto('/tools/dm-screen');
     await expect(page.locator('#screenModeBadge')).toHaveText('Live');
@@ -412,6 +571,8 @@ test.describe('DM screen', () => {
     await page.locator('#pauseBtn').click();
     await expect(page.locator('#screenModeBadge')).toHaveText('Live');
 
+    await setMode('off');
+    await page.reload();
     await page.locator('#startSessionBtn').dblclick();
     await expect(page.locator('#startSessionDialog')).toBeVisible();
     await page.locator('#startFormTitle').fill('E2E Enter');

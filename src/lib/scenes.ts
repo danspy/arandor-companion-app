@@ -5,7 +5,8 @@ import type { DMScreenState } from '@/db';
 
 type DMScreenStateRow = typeof DMScreenState.$inferSelect;
 
-export type ScreenMode = 'live' | 'start' | 'pause';
+// off: no session running · start: title card · live: the table · pause: wallpaper or break card
+export type ScreenMode = 'off' | 'start' | 'live' | 'pause';
 
 export interface StartScreen {
   title: string;
@@ -49,7 +50,8 @@ export function snapshotSetup(state: DMScreenStateRow): SceneSetup {
   });
 }
 
-// The DMScreenState fields a scene replaces. Initiative tracker and timer are not touched.
+// The DMScreenState fields a scene replaces. Initiative tracker, timer and the screen mode are not
+// touched: a scene can be prepared while off or paused and players see it once the DM goes live.
 export function setupToStateUpdate(
   s: SceneSetup,
   exists: { npcIds: Set<string>; characterIds: Set<string>; locationIds: Set<string> },
@@ -64,8 +66,6 @@ export function setupToStateUpdate(
     hiddenNpcIds: n.hiddenIds,
     focusNpcIds: n.focusIds,
     npcsHidden: n.npcsHidden,
-    screenMode: 'live' as const,
-    screenVisible: true as const,
   };
 }
 
