@@ -154,14 +154,15 @@ export function search(query: string, records: SearchRecord[], viewer: Viewer): 
   for (const r of records) {
     if (!canSee(r.access, viewer)) continue;
     const title = normalize(r.title);
-    const hay = `${title} ${normalize(r.subtitle ?? '')} ${normalize(r.body ?? '')}`;
+    const body = normalize(r.body ?? '');
+    const hay = `${title} ${normalize(r.subtitle ?? '')} ${body}`;
     if (!terms.every((t) => hay.includes(t))) continue;
     results.push({
       group: r.group,
       id: r.id,
       title: r.title,
       subtitle: r.subtitle,
-      snippet: r.body ? snippet(r.body, terms) : undefined,
+      snippet: r.body && terms.some((t) => body.includes(t)) ? snippet(r.body, terms) : undefined,
       href: r.href,
       score: score(title, q, terms),
     });

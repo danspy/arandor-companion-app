@@ -1,11 +1,13 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, type APIRequestContext } from '@playwright/test';
 import { canSee, normalize, plainText, search, snippet, type SearchRecord } from '../src/lib/search';
 import { COMMANDS, diceAction } from '../src/lib/search/commands';
 
 // Global search (⌘K / Ctrl+K): ranking, role filtering, the API and the palette.
 // The logged-in tests need an account on the server under test (never live data):
-//   E2E_USER / E2E_PASSWORD (a player) and optionally E2E_DM / E2E_DM_PASSWORD
+//   E2E_DM / E2E_DM_PASSWORD (dungeonmaster)   E2E_PLAYER / E2E_PLAYER_PASSWORD (player)
 // They are skipped when those are not set.
+
+if (process.env.E2E_BASE_URL) test.use({ baseURL: process.env.E2E_BASE_URL });
 
 const npc = (id: string, title: string, body = ''): SearchRecord => ({
   group: 'npcs', id, title, body, href: `/npcs/${id}`, access: 'public',
@@ -83,5 +85,59 @@ test.describe('Search core', () => {
     expect(diceAction('d20')?.notation).toBe('1d20');
     expect(diceAction('goblin')).toBeNull();
     expect(diceAction('12')).toBeNull(); // a plain number is not a roll
+  });
+});
+
+const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
+const PLAYER = process.env.E2E_PLAYER, PLAYER_PASSWORD = process.env.E2E_PLAYER_PASSWORD;
+
+async function login(request: APIRequestContext, username: string, password: string) {
+  const res = await request.post('/api/auth/login', { data: { username, password } });
+  expect(res.ok(), `login as ${username}`).toBe(true);
+}
+
+const RESULT_KEYS = ['group', 'id', 'title', 'subtitle', 'snippet', 'href', 'score'];
+async function groupsFor(request: APIRequestContext, q: string) {
+  const res = await request.get(`/api/search?q=${encodeURIComponent(q)}`);
+  expect(res.status()).toBe(200);
+  expect(res.headers()['cache-control']).toBe('no-store');
+  const body = (await res.json()) as { groups: { group: string; label: string; results: Record<string, unknown>[] }[] };
+  for (const g of body.groups) {
+    expect(Object.keys(g).sort()).toEqual(['group', 'label', 'results']);
+    for (const r of g.results) for (const k of Object.keys(r)) expect(RESULT_KEYS).toContain(k);
+  }
+  return body.groups;
+}
+
+test.describe('Search API', () => {
+  test.skip(({ isMobile }) => isMobile, 'API, once is enough');
+
+  test('logged out: public content only', async ({ request }) => {
+    const groups = await groupsFor(request, 'goblin');
+    const names = groups.map((g) => g.group);
+    expect(names).not.toContain('bestiary');
+    expect(names).not.toContain('calendar');
+    expect(await groupsFor(request, 'x')).toEqual([]);
+    const pages = (await groupsFor(request, 'dm screen')).find((g) => g.group === 'pages');
+    expect(pages).toBeUndefined();
+  });
+
+  test('a player never finds stat blocks', async ({ playwright, baseURL }) => {
+    test.skip(!PLAYER || !PLAYER_PASSWORD, 'Needs E2E_PLAYER/E2E_PLAYER_PASSWORD (test server only)');
+    const request = await playwright.request.newContext({ baseURL });
+    await login(request, PLAYER!, PLAYER_PASSWORD!);
+    const groups = await groupsFor(request, 'goblin');
+    expect(groups.map((g) => g.group)).not.toContain('bestiary');
+    expect((await groupsFor(request, 'calendar')).find((g) => g.group === 'pages')?.results[0].href).toBe('/calendar');
+    await request.dispose();
+  });
+
+  test('the DM finds SRD creatures', async ({ playwright, baseURL }) => {
+    test.skip(!DM || !DM_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD (test server only)');
+    const request = await playwright.request.newContext({ baseURL });
+    await login(request, DM!, DM_PASSWORD!);
+    const bestiary = (await groupsFor(request, 'goblin')).find((g) => g.group === 'bestiary');
+    expect(bestiary?.results.some((r) => r.href === '/tools/bestiary/srd/goblin-warrior')).toBe(true);
+    await request.dispose();
   });
 });
