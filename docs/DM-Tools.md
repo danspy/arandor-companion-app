@@ -161,6 +161,16 @@ about 2 seconds.
   timer back as they were. Hidden entries stay hidden even when focused. On the display, removed or hidden portraits fade out, the others glide to their
   new place and size, and new ones rise in last. Portraits and the place name also glide (never
   jump) when the location, timer or turn order appears or goes.
+- **HP and conditions in the spotlight** (DM screen only, never on the player display): each
+  NPC row shows its HP with the same **damage / heal** field as the combatants, and its
+  conditions as chips. The pencil button opens HP, max HP and the condition chips (conditions,
+  spells and effects, Exhaustion, own tags) right in the row; every change is saved at once and
+  kept with the NPC for the next session. An NPC without HP of its own uses the HP of the stat
+  block it is linked to until the first change. Party characters show their HP from D&D Beyond.
+  While a fight runs (started or paused) and someone in the spotlight is in it (an NPC by its
+  name, a character by its link), the row shows the combatant instead, marked *In combat*:
+  damage and healing go to the combatant, and the pencil opens its side panel. On phones and
+  tablets every control on the rows is at least 40 px high.
 - **Turn preview:** the current and next combatant show their HP with a **damage / heal**
   field and their conditions, and a link to their side panel (*Stat block*, or *Edit* without one)
   with the same quick edit as in the tracker.

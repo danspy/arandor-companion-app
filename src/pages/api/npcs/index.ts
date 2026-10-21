@@ -1,11 +1,13 @@
 import type { APIRoute } from 'astro';
 import { db, NPC, eq } from '@/db';
-import { requirePlayerOrAbove } from '../../../lib/middleware';
+import { isDungeonmasterOrAdmin, requirePlayerOrAbove } from '../../../lib/middleware';
+import { publicNpc } from '../../../lib/npc-status';
 
-export const GET: APIRoute = async () => {
+// HP and conditions (lib/npc-status) only reach the DM and admins
+export const GET: APIRoute = async ({ cookies }) => {
   try {
     const npcs = await db.select().from(NPC);
-    return new Response(JSON.stringify(npcs), {
+    return new Response(JSON.stringify((await isDungeonmasterOrAdmin(cookies)) ? npcs : npcs.map(publicNpc)), {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -43,7 +45,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
 
     const newNPC = await db.select().from(NPC).where(eq(NPC.id, id));
     
-    return new Response(JSON.stringify(newNPC[0]), {
+    return new Response(JSON.stringify((await isDungeonmasterOrAdmin(cookies)) ? newNPC[0] : publicNpc(newNPC[0])), {
       status: 201,
       headers: { 'Content-Type': 'application/json' }
     });

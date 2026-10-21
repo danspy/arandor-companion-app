@@ -113,6 +113,11 @@ export const NPC = sqliteTable('NPC', {
   relationship: text('relationship').notNull(), // 'ally' | 'neutral' | 'enemy'
   notes: text('notes'),
   avatarUrl: text('avatarUrl'),
+  // Status for the DM screen spotlight (DM/admin only; never sent to players). Null HP: not set
+  // (the linked stat block's HP stands in, see lib/npc-status).
+  hp: integer('hp'),
+  maxHp: integer('maxHp'),
+  conditions: jsonArray('conditions'), // like InitiativeTracker.conditions (lib/conditions.ts)
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });
