@@ -107,11 +107,11 @@ All bodies are JSON unless noted; errors are `{ "error": "…" }`.
 
 | Endpoint | Method | Purpose | Access |
 |---|---|---|---|
-| `/api/music/site` | GET | `{ playlist }`: the site playlist with its tracks (`null` if none), for the dashboard | public |
+| `/api/music/site` | GET | `{ playlist }`: the site playlist with its tracks (`null` if none), cued in the music button | public |
 | `/api/music/playlists` | GET | Playlists you may see (site playlist first, then yours, then the rest by name): `[{ id, name, visibility, isSiteDefault, ownerId, ownerName, trackCount, canEdit }]` | login |
 | `/api/music/playlists` | POST `{name, visibility?}` | New playlist; name 1–80 characters, `visibility` `public` or `private` (default `private`). `201` with the playlist | login |
 | `/api/music/playlists/[id]` | GET | The playlist with its `tracks` (by position) and `canEdit` | login, may view |
-| `/api/music/playlists/[id]` | PATCH `{name?, visibility?, showOnDashboard?}` | Rename, change visibility, or (site playlist only) show/hide its dashboard panel. 400 for an empty change, a bad name, `private` on the site playlist, a non-boolean `showOnDashboard`, or `showOnDashboard` on another playlist | login, may edit |
+| `/api/music/playlists/[id]` | PATCH `{name?, visibility?}` | Rename or change visibility. 400 for an empty change, a bad name, or `private` on the site playlist | login, may edit |
 | `/api/music/playlists/[id]` | DELETE | Removes the playlist, its tracks and their uploaded files. `{ok: true}`. The site playlist answers 409 (choose another one first) | login, may edit |
 | `/api/music/playlists/[id]/tracks` | POST, multipart field `file` (one or more) | Upload audio. Per file: allowed type (see below) and at most 50 MB, checked before the file is read. Returns `{ results: [{ name, ok, track?, error? }] }`: `201` if at least one file was saved, otherwise `400` | login, may edit |
 | `/api/music/playlists/[id]/tracks` | POST `{youtubeUrl, mode?, title?}` | Add a YouTube link as one track. A video link becomes a `youtube_video` track, a list link a `youtube_playlist` track. A link with both a video and a list needs `mode: "video" \| "playlist"`, otherwise `409 {needsMode: true}`. `title` (max 200) skips the title lookup (YouTube oEmbed, link text as fallback). `201` with the track; `400` for anything that is not a YouTube link | login, may edit |

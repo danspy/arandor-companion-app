@@ -159,3 +159,20 @@ requests for `audio/*` as for video (needed for seeking).
 
 Synced "play for the table" playback, crossfade, importing a YouTube playlist as separate
 tracks, storage quotas, sharing one track between playlists, access-checked file serving.
+
+## Update 2026-10-21: music button replaces the dashboard panel
+
+Agreed with the user in chat. Supersedes the *Mini bar* and *Dashboard* views above.
+
+- A 56×56 **music button** (the dice button's look) sits bottom left on every `Layout` page, for
+  visitors too, whenever there is something to play (a queue, or a non-empty site playlist).
+  In the installed app (≤ 1024px) it sits on the left just above the dock and tucks with it.
+- Tapping it slides the player (mini bar, and its queue panel) open or shut above it; the choice
+  is remembered per viewer (`localStorage` `arandor.music.open`).
+- With an empty queue the store **cues** the site playlist (fetched from `GET /api/music/site`):
+  paused, no autoplay, no player built until Play; never saved (`state.cued`).
+- Any request for playback (`music:play`: a playlist, Play, a queue entry, media keys) slides the
+  player open. It can be shut while playing: the button shows an equaliser; a playing YouTube
+  video stays visible (≥ 200×200) right above the button.
+- The dashboard `TavernMusic` panel and the "Show on the dashboard" switch are gone. The
+  `Playlist.showOnDashboard` column stays (unused, no migration); PATCH no longer accepts it.

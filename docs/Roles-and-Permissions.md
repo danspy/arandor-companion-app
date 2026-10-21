@@ -18,7 +18,7 @@ things, and for the calendar, tools, profile and private notes.
 | NPCs, locations, library documents, timeline: add, edit, delete | | ✓ | ✓ | ✓ |
 | Calendar: view, add, edit, delete events | | ✓ | ✓ | ✓ |
 | Upload images and videos | | ✓ | ✓ | ✓ |
-| Music: play the site playlist ("Tavern music" on the dashboard) | ✓ | ✓ | ✓ | ✓ |
+| Music: play the site playlist ("Tavern music", in the music button) | ✓ | ✓ | ✓ | ✓ |
 | Music: see and play public playlists, create own playlists, edit them | | ✓ | ✓ | ✓ |
 | Music: edit the site playlist | | | ✓ | ✓ |
 | Music: see and edit every playlist, including private ones of others | | | | ✓ |
@@ -42,7 +42,7 @@ Notes:
   the more convenient way.
 - **Music:** a playlist is private (only you and admins) or public (everyone logged in). You edit
   your own playlists; the site playlist can be edited by DMs and admins and is always public.
-  It is the one place where visitors without a login can play music (dashboard). The site
+  It is the one place where visitors without a login can play music (music button). The site
   playlist cannot be deleted; make another playlist the site playlist first.
 - The account named `admin` cannot be deleted.
 

@@ -167,15 +167,15 @@ about 2 seconds.
 
 Music for the table comes from playlists made on **Tools → Music** (`/tools/music`) and plays
 through a player that stays alive while you move between pages. For the player's everyday use
-(mini bar, dashboard strip) see the [User guide](User-Guide.md#music); this section is about
+(music button and mini bar) see the [User guide](User-Guide.md#music); this section is about
 what a DM needs.
 
 **Playlists.** Every logged-in user can make playlists, *Only me* or *Everyone logged in*.
-Owners and admins edit them; the **site playlist** ("Tavern music", plays on the dashboard
-for everybody, even without a login) can also be edited by DMs. An admin picks it with
-*Make site playlist*; it is always public and cannot be deleted. Its **Show on the dashboard**
-switch (admins and DMs) hides the dashboard panel for everyone without touching the playlist;
-the panel is also hidden while the playlist is empty. Deleting a playlist or a track
+Owners and admins edit them; the **site playlist** ("Tavern music", waiting paused in
+everybody's music button while nothing else is loaded, even without a login) can also be
+edited by DMs. An admin picks it with *Make site playlist*; it is always public and cannot be
+deleted. While it is empty (and nothing else is loaded) the music button is not shown.
+Deleting a playlist or a track
 also deletes the uploaded files. Who may do what is in
 [Roles and permissions](Roles-and-Permissions.md).
 
@@ -196,10 +196,10 @@ does the same import and puts the new tracks where the entry was. Longer lists a
 links (a list id cut short when copying) cannot be read; the error message says to check that
 the link is complete (copy it via *Share → Copy link*) and that the playlist is public or unlisted.
 
-**YouTube tracks** play in a video window beside the mini bar. YouTube's terms say a playing
+**YouTube tracks** play in a video window above the mini bar. YouTube's terms say a playing
 player must be visible and at least 200×200 pixels, so the window cannot be hidden or made
 smaller than that while it plays (the ▾ button shrinks it to exactly that size), not even on
-the DM screen. While the music is **paused** the window is hidden and comes back when you press
+the DM screen, and it stays right above the music button when you shut the player. While the music is **paused** the window is hidden and comes back when you press
 Play. Files have no such window, so use uploads when you want music without any picture on the
 screen you share.
 
@@ -214,8 +214,8 @@ so it is still selected after a reload. Nothing here is sent to the player displ
 
 - Playback is per browser tab and device: music started on your laptop does not play on the
   display. Open `/display` on its own device and play from there if the table should hear it.
-- The mini bar shows a thin progress line along its bottom edge. After a full reload it returns
-  paused, because browsers do not allow music to start by itself; press Play.
+- The mini bar shows a thin progress line along its bottom edge. After a full reload the music
+  returns paused, because browsers do not allow music to start by itself; press Play.
 - The world map (`/map`) is part of the same page-to-page navigation as everything else, so
   music keeps playing there too.
 
