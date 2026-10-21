@@ -2,6 +2,7 @@ import type { APIRoute } from 'astro';
 import crypto from 'node:crypto';
 import { db, CampaignProgress, Character, DMScreenState, Location, NPC, eq, inArray } from '@/db';
 import { currentEntry, getCombatState, getEntries, healthStatus } from '../../../lib/combat';
+import type { ScreenMode } from '../../../lib/scenes';
 import { characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../../lib/spotlight';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
@@ -75,6 +76,8 @@ export const GET: APIRoute = async ({ request }) => {
     const placeholder = screen?.placeholderImageUrl ?? null;
     const payload = {
       screenVisible: screen?.screenVisible ?? true,
+      mode: (screen?.screenMode ?? 'live') as ScreenMode,
+      startScreen: screen?.screenMode === 'start' ? (screen.startScreen ?? null) : null,
       // Older wallpapers were saved inline as data: URLs (megabytes); serve those separately
       // so they are downloaded once and cached, not with every poll.
       wallpaperUrl: placeholder?.startsWith('data:')

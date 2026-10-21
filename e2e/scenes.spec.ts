@@ -103,3 +103,124 @@ test.describe('Scenes logic', () => {
     expect(startDefaults([{ session: 3, summary: 'A' }, { session: 7, summary: null }], 'd').recap).toBe('');
   });
 });
+
+// ── Against a test server ────────────────────────────────────────────────────
+// Logged-in tests change the DM screen, so they only run against a test server with a copy of
+// the data (never dev, preview or live data): E2E_DM / E2E_DM_PASSWORD (dungeonmaster).
+
+const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
+
+test.describe('Scenes API', () => {
+  test.skip(!DM || !DM_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'API only, once is enough');
+  test.describe.configure({ mode: 'serial' });
+
+  let dm: import('@playwright/test').BrowserContext;
+  test.beforeAll(async ({ browser }) => {
+    dm = await browser.newContext();
+    const res = await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } });
+    expect(res.ok(), 'login as dm').toBe(true);
+  });
+  test.afterAll(async () => {
+    const list = await (await dm.request.get('/api/scenes')).json();
+    for (const s of list) if (String(s.name).startsWith('E2E ')) await dm.request.delete(`/api/scenes/${s.id}`);
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', spotlightNpcIds: [], showTimer: false } });
+    await dm.close();
+  });
+
+  const put = (data: object) => dm.request.put('/api/dm-screen', { data });
+  const state = async () => (await dm.request.get('/api/dm-screen')).json();
+  const display = async () => (await dm.request.get('/api/display')).json();
+
+  test('save current and apply', async () => {
+    expect((await put({ currentLocationId: '1', spotlightNpcIds: ['2', 'character:1'], showTimer: false, screenMode: 'live' })).ok()).toBe(true);
+    const made = await dm.request.post('/api/scenes', { data: { name: 'E2E scene', fromCurrent: true } });
+    expect(made.status()).toBe(201);
+    const card = await made.json();
+    expect(card.setup).toMatchObject({ locationId: '1', spotlightIds: ['2', 'character:1'] });
+    expect(card.location).toMatchObject({ id: '1' });
+    expect(card.locationMissing).toBe(false);
+    expect(card.portraits.map((p: any) => p.key)).toEqual(['2', 'character:1']);
+
+    await put({ spotlightNpcIds: [], currentLocationId: null, showTimer: true });
+    const applied = await dm.request.post(`/api/scenes/${card.id}/apply`);
+    expect(applied.status()).toBe(200);
+    const s = await state();
+    expect(s.spotlightNpcIds).toEqual(['2', 'character:1']);
+    expect(s.currentLocationId).toBe('1');
+    expect(s.screenMode).toBe('live');
+    expect(s.showTimer).toBe(true);
+    expect((await applied.json()).spotlightNpcIds).toEqual(['2', 'character:1']);
+  });
+
+  test('rename, reorder, validation, delete', async () => {
+    const a = await (await dm.request.post('/api/scenes', { data: { name: 'E2E a', setup: { locationId: null, spotlightIds: ['3'] } } })).json();
+    const b = await (await dm.request.post('/api/scenes', { data: { name: 'E2E b', setup: {} } })).json();
+    expect(b.sortOrder).toBe(a.sortOrder + 1);
+    expect((await dm.request.post('/api/scenes', { data: { name: '', setup: {} } })).status()).toBe(400);
+    const renamed = await dm.request.put(`/api/scenes/${a.id}`, { data: { name: 'E2E a2', setup: a.setup } });
+    expect((await renamed.json()).name).toBe('E2E a2');
+    expect((await dm.request.put('/api/scenes/nope', { data: { name: 'E2E x', setup: {} } })).status()).toBe(404);
+    expect((await dm.request.put('/api/scenes/order', { data: { ids: [b.id, 'nope'] } })).status()).toBe(400);
+    expect((await dm.request.put('/api/scenes/order', { data: { ids: [b.id, a.id] } })).status()).toBe(204);
+    const names = (await (await dm.request.get('/api/scenes')).json()).map((s: any) => s.name).filter((n: string) => n.startsWith('E2E '));
+    expect(names.indexOf('E2E b')).toBeLessThan(names.indexOf('E2E a2'));
+    expect((await dm.request.delete(`/api/scenes/${a.id}`)).status()).toBe(204);
+    expect((await dm.request.delete(`/api/scenes/${b.id}`)).status()).toBe(204);
+  });
+
+  test('apply drops deleted NPC', async () => {
+    const npc = await (await dm.request.post('/api/npcs', { data: { name: 'E2E Ghost', race: 'Human', occupation: 'Test', relationship: 'neutral', description: 'x' } })).json();
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E ghost scene', setup: { spotlightIds: [npc.id, '2'], locationId: '1' } } })).json();
+    expect((await dm.request.delete(`/api/npcs/${npc.id}`)).ok()).toBe(true);
+    await dm.request.post(`/api/scenes/${card.id}/apply`);
+    expect((await state()).spotlightNpcIds).toEqual(['2']);
+    const list = await (await dm.request.get('/api/scenes')).json();
+    const got = list.find((s: any) => s.id === card.id);
+    expect(got.portraits.find((p: any) => p.key === npc.id).missing).toBe(true);
+    expect(got.portraits.find((p: any) => p.key === '2').missing).toBe(false);
+  });
+
+  test('start mode on display', async () => {
+    const startScreen = { title: 'The Frozen Pass', session: 12, date: '2026-10-21', recap: 'They fled.', showRecap: true };
+    expect((await put({ screenMode: 'start', startScreen })).ok()).toBe(true);
+    const d = await display();
+    expect(d.mode).toBe('start');
+    expect(d.startScreen).toEqual(startScreen);
+    await put({ screenMode: 'live' });
+    const live = await display();
+    expect(live.mode).toBe('live');
+    expect(live.startScreen).toBeNull();
+    expect((await put({ startScreen: { ...startScreen, date: '21.10.2026' } })).status()).toBe(400);
+    expect((await put({ screenMode: 'party' })).status()).toBe(400);
+  });
+
+  test('start defaults', async () => {
+    const res = await dm.request.get('/api/dm-screen/start-defaults');
+    expect(res.status()).toBe(200);
+    const d = await res.json();
+    expect(d.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(d).toHaveProperty('session');
+    expect(typeof d.recap).toBe('string');
+  });
+
+  test('display keeps screenVisible', async () => {
+    await put({ screenMode: 'pause' });
+    let d = await display();
+    expect(d.screenVisible).toBe(false);
+    expect(d.mode).toBe('pause');
+    await put({ screenVisible: true });
+    d = await display();
+    expect(d.mode).toBe('live');
+    expect(d.screenVisible).toBe(true);
+    await put({ screenVisible: false });
+    expect((await display()).mode).toBe('pause');
+  });
+
+  test('players cannot', async ({ playwright }) => {
+    const anon = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL });
+    expect([401, 403]).toContain((await anon.post('/api/scenes', { data: { name: 'E2E nope', setup: {} } })).status());
+    expect([401, 403]).toContain((await anon.get('/api/scenes')).status());
+    await anon.dispose();
+  });
+});
