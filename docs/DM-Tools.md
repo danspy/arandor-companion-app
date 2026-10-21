@@ -126,11 +126,15 @@ about 2 seconds.
 
 - **Player display link** with *Copy* and *Open* buttons. Open it on the screen your players
   see.
-- **Live on the display:** a small 16:9 preview next to the link shows exactly what the TV
-  shows (the real display page at 1920×1080, scaled down), updating within about 2 seconds.
-  *Hide preview* collapses it; while collapsed it loads nothing and stops checking the server.
-  Each browser remembers the choice; it starts open on tablets and computers and closed on
-  phones.
+- **Live preview:** a small floating window (*● Live*) shows exactly what the TV shows (the
+  real display page at 1920×1080, scaled down), updating within about 2 seconds. It stays in
+  sight while you scroll: bottom right above the dice button by default, below the menu bar at
+  the top, and above the bottom bar and dice seal in the installed app. Drag it (mouse or
+  finger) to any corner, where it snaps; the minimise button (–) shrinks it to a *● Live display*
+  pill, and tapping the pill opens it again. While minimised it loads nothing and stops checking
+  the server. It steps aside while the dice roller is open. Each browser remembers the corner and
+  whether it is minimised; on phones it starts minimised. About 320 px wide on computers,
+  240 px on tablets, 200 px on phones.
 - **Party:** the active characters in one table: HP, AC, initiative, speed, passive
   Perception, Investigation and Insight, and the six saves. The highest passive in each column is
   highlighted. The numbers are from the last D&D Beyond sync, and only the DM screen shows them
@@ -264,8 +268,8 @@ all evening on a phone hotspot. If the server can't be reached it retries with g
 and picks up again on its own.
 
 `/display?preview` is the variant the DM screen's preview uses: it never asks to keep
-the screen awake, goes full screen (F, double-click) or hides the cursor, and shows no *Press F*
-hint.
+the screen awake, goes full screen (F, double-click) or hides the cursor, draws no idle sparks
+and shows no *Press F* hint.
 
 ## Tips
 
