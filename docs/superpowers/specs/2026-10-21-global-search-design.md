@@ -57,7 +57,7 @@ outside the table above.
 - `src/pages/api/search.ts` — `GET ?q=`; returns `{ groups: [{ group, label, results }] }`;
   `Cache-Control: no-store`.
 - `src/components/SearchPalette.astro` — `<dialog>` + script, included once in `Layout.astro`
-  (`transition:persist`, so it survives view transitions like DiceFab/MusicPlayer). Nav gets a
+  (re-rendered with each page so it always knows the current role; the key listener is registered once). Nav gets a
   search button (magnifier, `aria-keyshortcuts`) showing ⌘K or Ctrl K depending on platform.
 - `DiceFab.astro` listens for a `dice:roll` `CustomEvent` (`detail: string` notation) and rolls it
   as if typed; the palette dispatches it.

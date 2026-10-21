@@ -1,0 +1,411 @@
+---
+// Global search (⌘K / Ctrl+K, or "/" outside text fields). Results come from /api/search, which
+// filters by role on the server; the page list for an empty query is filtered here from the same
+// COMMANDS with the same rule. Any element with [data-search-open] opens it.
+import { getUserRole } from '../lib/auth';
+
+const viewer = (await getUserRole(Astro.cookies)) ?? '';
+---
+
+<dialog id="search-palette" class="sp-dialog t-modal-panel" aria-label="Search" data-viewer={viewer} data-testid="search-dialog">
+  <div class="sp-head">
+    <svg class="sp-head-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+    <input
+      id="search-palette-input"
+      class="sp-input"
+      type="search"
+      placeholder="Search NPCs, places, quests, pages… or roll 2d6"
+      autocomplete="off"
+      spellcheck="false"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="search-palette-list"
+      aria-autocomplete="list"
+      data-testid="search-input"
+    />
+    <kbd class="sp-esc">Esc</kbd>
+  </div>
+  <div id="search-palette-list" class="sp-list" role="listbox" aria-label="Results"></div>
+  <p id="search-palette-status" class="sp-status" role="status" aria-live="polite"></p>
+  <div class="sp-foot" aria-hidden="true">
+    <span><kbd>↑</kbd><kbd>↓</kbd> choose</span>
+    <span><kbd>Enter</kbd> open</span>
+    <span class="sp-foot-wide"><kbd data-search-mod>Ctrl</kbd><kbd>Enter</kbd> new tab</span>
+  </div>
+</dialog>
+
+<style is:global>
+  .sp-dialog {
+    width: min(640px, calc(100vw - 32px));
+    max-height: min(560px, calc(100dvh - 12vh - var(--modal-safe-bottom)));
+    margin: max(10vh, var(--modal-safe-top)) auto auto;
+    padding: 0;
+    display: none;
+    flex-direction: column;
+    background: var(--bg-raised);
+    border: 1px solid var(--border-gold);
+    color: var(--text-body);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+  }
+  .sp-dialog[open] { display: flex; }
+  .sp-dialog::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+
+  .sp-head { display: flex; align-items: center; gap: 0.6rem; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+  .sp-head-icon { width: 1.1rem; height: 1.1rem; color: var(--gold); flex-shrink: 0; }
+  .sp-input { flex: 1; min-width: 0; background: transparent; border: 0; outline: none; color: var(--text-strong); font-size: 1rem; }
+  .sp-input::placeholder { color: var(--text-faint); }
+  .sp-input::-webkit-search-cancel-button { display: none; }
+
+  .sp-dialog kbd {
+    font-family: var(--font-sans); font-size: 0.7rem; line-height: 1; padding: 0.2rem 0.35rem;
+    border: 1px solid var(--border-gold); border-radius: 2px; color: var(--text-muted); background: var(--bg-surface);
+  }
+  .sp-list { overflow-y: auto; overscroll-behavior: contain; padding: 0.25rem 0 0.5rem; }
+  .sp-list:empty { display: none; }
+  .sp-group-label {
+    padding: 0.7rem 1rem 0.3rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-faint);
+  }
+  .sp-row {
+    display: flex; gap: 0.75rem; align-items: flex-start; padding: 0.5rem 1rem; margin: 0 0.35rem;
+    color: var(--text-body); text-decoration: none; cursor: pointer; border-left: 2px solid transparent;
+  }
+  .sp-row[aria-selected='true'] { background: var(--accent-dim); border-left-color: var(--gold); }
+  .sp-row-icon { width: 1rem; height: 1rem; margin-top: 0.15rem; flex-shrink: 0; color: var(--text-muted); }
+  .sp-row[aria-selected='true'] .sp-row-icon { color: var(--gold); }
+  .sp-row-text { min-width: 0; flex: 1; }
+  .sp-row-title { color: var(--text-strong); font-size: 0.92rem; }
+  .sp-row-sub { color: var(--text-muted); font-size: 0.78rem; margin-left: 0.4rem; }
+  .sp-row-snippet {
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    margin-top: 0.15rem; font-size: 0.8rem; color: var(--text-muted); line-height: 1.4;
+  }
+  .sp-row-snippet mark { background: var(--gold-dim); color: var(--accent); padding: 0 1px; }
+  .sp-status { padding: 0 1rem; font-size: 0.85rem; color: var(--text-muted); }
+  .sp-status:not(:empty) { padding: 1rem; }
+  .sp-foot {
+    display: flex; gap: 1rem; padding: 0.55rem 1rem; border-top: 1px solid var(--border);
+    font-size: 0.72rem; color: var(--text-faint);
+  }
+  .sp-foot kbd { margin-right: 0.2rem; }
+  @media (max-width: 640px) {
+    .sp-foot-wide, .sp-esc { display: none; }
+  }
+  @media (hover: none) {
+    .sp-foot { display: none; }
+  }
+</style>
+
+<script>
+  import { navigate } from 'astro:transitions/client';
+  import { canSee, search, type SearchGroup, type Viewer } from '../lib/search';
+  import { COMMANDS, diceAction } from '../lib/search/commands';
+
+  type Row = { title: string; subtitle?: string; snippet?: string; href?: string; dice?: string; icon: string };
+  type Recent = { title: string; href: string; icon: string };
+
+  const RECENT_KEY = 'arandor.search.recent';
+  const MAX_RECENT = 5;
+  const isApple = /mac|iphone|ipad|ipod/i.test(navigator.platform || navigator.userAgent);
+
+  const ICONS: Record<string, string> = {
+    pages: 'M4 6h16M4 12h16M4 18h10',
+    npcs: 'M12 12a4 4 0 100-8 4 4 0 000 8zm-7 8a7 7 0 0114 0',
+    locations: 'M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11zm0-8.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
+    quests: 'M5 21V4m0 0h11l-2 4 2 4H5',
+    characters: 'M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z',
+    factions: 'M6 3h12v14l-6-3-6 3V3z',
+    diary: 'M4 5a2 2 0 012-2h13v16H6a2 2 0 00-2 2V5zm0 14a2 2 0 012-2h13',
+    timeline: 'M12 7v5l3 2m6-2a9 9 0 11-18 0 9 9 0 0118 0z',
+    library: 'M7 3h7l5 5v13H7a2 2 0 01-2-2V5a2 2 0 012-2zm7 0v5h5',
+    calendar: 'M7 3v4m10-4v4M4 9h16M5 5h14v16H5V5z',
+    bestiary: 'M12 3c4 0 7 3 7 7 0 3-2 4-2 6v2H7v-2c0-2-2-3-2-6 0-4 3-7 7-7zm-3 9h.01M15 12h.01M10 21h4',
+    dice: 'M12 2l9 5v10l-9 5-9-5V7l9-5zm0 0v20M3 7l9 5 9-5',
+    recent: 'M3 12a9 9 0 109-9M3 4v5h5m4-1v4l3 2',
+  };
+
+  const els = () => {
+    const dialog = document.getElementById('search-palette') as HTMLDialogElement | null;
+    if (!dialog) return null;
+    return {
+      dialog,
+      input: dialog.querySelector('#search-palette-input') as HTMLInputElement,
+      list: dialog.querySelector('#search-palette-list') as HTMLDivElement,
+      status: dialog.querySelector('#search-palette-status') as HTMLParagraphElement,
+      viewer: (dialog.dataset.viewer || null) as Viewer,
+    };
+  };
+
+  // ── Recent searches (this browser only; optional) ──
+  function readRecent(): Recent[] {
+    try {
+      const v = JSON.parse(localStorage.getItem(RECENT_KEY) || '[]');
+      return Array.isArray(v) ? v.filter((r) => r && typeof r.href === 'string' && typeof r.title === 'string').slice(0, MAX_RECENT) : [];
+    } catch {
+      return [];
+    }
+  }
+  function remember(r: Recent) {
+    try {
+      const list = [r, ...readRecent().filter((x) => x.href !== r.href)].slice(0, MAX_RECENT);
+      localStorage.setItem(RECENT_KEY, JSON.stringify(list));
+    } catch {
+      // storage blocked: no recents
+    }
+  }
+
+  // ── Rendering ──
+  let rows: Row[] = [];
+  let selected = 0;
+  let seq = 0;
+  let inflight: AbortController | null = null;
+  let debounce: ReturnType<typeof setTimeout> | null = null;
+  let returnFocus: HTMLElement | null = null;
+  let pending = false; // a query is typed but its results are not shown yet
+  let queuedEnter: { newTab: boolean } | null = null; // Enter pressed while pending
+
+  function svg(path: string, cls: string) {
+    const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    s.setAttribute('viewBox', '0 0 24 24');
+    s.setAttribute('fill', 'none');
+    s.setAttribute('stroke', 'currentColor');
+    s.setAttribute('stroke-width', '1.6');
+    s.setAttribute('stroke-linecap', 'round');
+    s.setAttribute('stroke-linejoin', 'round');
+    s.setAttribute('aria-hidden', 'true');
+    s.classList.add(cls);
+    const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    p.setAttribute('d', path);
+    s.append(p);
+    return s;
+  }
+
+  function render(groups: { label: string; rows: Row[] }[], status = '') {
+    const e = els();
+    if (!e) return;
+    rows = [];
+    const nodes: Node[] = [];
+    groups.forEach((g, gi) => {
+      if (g.rows.length === 0) return;
+      const wrap = document.createElement('div');
+      wrap.setAttribute('role', 'group');
+      const label = document.createElement('div');
+      label.className = 'sp-group-label';
+      label.id = `sp-g${gi}`;
+      label.textContent = g.label;
+      wrap.setAttribute('aria-labelledby', label.id);
+      wrap.append(label);
+      for (const row of g.rows) {
+        const i = rows.length;
+        rows.push(row);
+        const a = document.createElement('a');
+        a.className = 'sp-row';
+        a.id = `sp-r${i}`;
+        a.setAttribute('role', 'option');
+        a.setAttribute('data-testid', 'search-result');
+        a.href = row.href ?? '#';
+        const text = document.createElement('div');
+        text.className = 'sp-row-text';
+        const title = document.createElement('span');
+        title.className = 'sp-row-title';
+        title.textContent = row.title;
+        text.append(title);
+        if (row.subtitle) {
+          const sub = document.createElement('span');
+          sub.className = 'sp-row-sub';
+          sub.textContent = row.subtitle;
+          text.append(sub);
+        }
+        if (row.snippet) {
+          const sn = document.createElement('div');
+          sn.className = 'sp-row-snippet';
+          sn.innerHTML = row.snippet; // escaped on the server, only <mark> added
+          text.append(sn);
+        }
+        a.append(svg(ICONS[row.icon] ?? ICONS.pages, 'sp-row-icon'), text);
+        a.addEventListener('mousemove', () => select(i, false));
+        a.addEventListener('click', (ev) => {
+          if (ev.metaKey || ev.ctrlKey || ev.shiftKey || ev.button !== 0) return; // browser handles new tab
+          ev.preventDefault();
+          activate(i, false);
+        });
+        wrap.append(a);
+      }
+      nodes.push(wrap);
+    });
+    e.list.replaceChildren(...nodes);
+    e.status.textContent = status;
+    select(0, true);
+  }
+
+  function select(i: number, scroll: boolean) {
+    const e = els();
+    if (!e) return;
+    if (rows.length === 0) {
+      e.input.removeAttribute('aria-activedescendant');
+      return;
+    }
+    selected = (i + rows.length) % rows.length;
+    e.list.querySelectorAll('.sp-row').forEach((el, n) => el.setAttribute('aria-selected', String(n === selected)));
+    const el = document.getElementById(`sp-r${selected}`);
+    e.input.setAttribute('aria-activedescendant', `sp-r${selected}`);
+    if (scroll) el?.scrollIntoView({ block: 'nearest' });
+  }
+
+  function activate(i: number, newTab: boolean) {
+    const row = rows[i];
+    if (!row) return;
+    if (row.dice) {
+      close();
+      window.dispatchEvent(new CustomEvent('dice:roll', { detail: row.dice }));
+      return;
+    }
+    if (!row.href) return;
+    remember({ title: row.title, href: row.href, icon: row.icon });
+    if (newTab) {
+      window.open(row.href, '_blank', 'noopener');
+      return;
+    }
+    close();
+    void navigate(row.href);
+  }
+
+  function pageRows(viewer: Viewer): Row[] {
+    return COMMANDS.filter((c) => canSee(c.access, viewer)).map((c) => ({ title: c.title, href: c.href, icon: 'pages' }));
+  }
+
+  const toRows = (groups: SearchGroup[]) =>
+    groups.map((g) => ({ label: g.label, rows: g.results.map((r) => ({ title: r.title, subtitle: r.subtitle, snippet: r.snippet, href: r.href, icon: r.group })) }));
+
+  function diceGroup(q: string) {
+    const d = diceAction(q);
+    return d ? [{ label: 'Dice', rows: [{ title: d.label, dice: d.notation, icon: 'dice' }] }] : [];
+  }
+
+  function update() {
+    const e = els();
+    if (!e) return;
+    const q = e.input.value.trim();
+    if (debounce) clearTimeout(debounce);
+    inflight?.abort();
+    const mySeq = ++seq;
+
+    if (q.length < 2) {
+      pending = false;
+      const recent = readRecent().map((r) => ({ title: r.title, href: r.href, icon: r.icon in ICONS ? r.icon : 'recent' }));
+      render([...diceGroup(q), { label: 'Recent', rows: recent }, { label: 'Pages & tools', rows: pageRows(e.viewer) }]);
+      return;
+    }
+
+    // Shown at once, so Enter never opens a result of the previous query
+    pending = true;
+    const dice = diceGroup(q);
+    if (dice.length) render(dice);
+
+    debounce = setTimeout(async () => {
+      const ctrl = new AbortController();
+      inflight = ctrl;
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: ctrl.signal, cache: 'no-store' });
+        if (!res.ok) throw new Error(String(res.status));
+        const body = (await res.json()) as { groups: SearchGroup[] };
+        if (mySeq !== seq) return; // a newer query is on its way
+        const groups = [...diceGroup(q), ...toRows(body.groups)];
+        render(groups, groups.length ? '' : `Nothing found for “${q}”`);
+        settle();
+      } catch (err) {
+        if (mySeq !== seq || (err as Error).name === 'AbortError') return;
+        const local = toRows(search(q, COMMANDS, e.viewer));
+        render([...diceGroup(q), ...local], 'Search is unavailable right now — only pages are shown.');
+        settle();
+      }
+    }, 150);
+  }
+
+  function settle() {
+    pending = false;
+    const enter = queuedEnter;
+    queuedEnter = null;
+    if (enter && rows.length) activate(selected, enter.newTab);
+  }
+
+  function open() {
+    const e = els();
+    if (!e || e.dialog.open) return;
+    returnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    for (const k of e.dialog.querySelectorAll('[data-search-mod]')) k.textContent = isApple ? '⌘' : 'Ctrl';
+    e.dialog.showModal();
+    e.input.value = '';
+    update();
+    e.input.focus();
+  }
+
+  function close() {
+    const e = els();
+    if (!e || !e.dialog.open) return;
+    if (debounce) clearTimeout(debounce);
+    inflight?.abort();
+    seq++;
+    pending = false;
+    queuedEnter = null;
+    e.dialog.close();
+  }
+
+  const isEditable = (el: Element | null) =>
+    !!el && (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable);
+
+  // ── Wiring: once per browser tab. The dialog itself is re-rendered with each page. ──
+  document.addEventListener('keydown', (ev) => {
+    const e = els();
+    if (!e) return;
+    if ((ev.key === 'k' || ev.key === 'K') && (ev.metaKey || ev.ctrlKey) && !ev.altKey && !ev.shiftKey) {
+      ev.preventDefault();
+      if (e.dialog.open) close();
+      else open();
+      return;
+    }
+    if (ev.key === '/' && !ev.metaKey && !ev.ctrlKey && !ev.altKey && !e.dialog.open && !isEditable(document.activeElement)) {
+      if (document.querySelector('dialog[open]')) return; // another dialog has the stage
+      ev.preventDefault();
+      open();
+      return;
+    }
+    if (!e.dialog.open || ev.target !== e.input) return;
+    if (ev.key === 'ArrowDown') { ev.preventDefault(); select(selected + 1, true); }
+    else if (ev.key === 'ArrowUp') { ev.preventDefault(); select(selected - 1, true); }
+    else if (ev.key === 'Enter' && !ev.isComposing) {
+      ev.preventDefault();
+      const newTab = ev.metaKey || ev.ctrlKey;
+      // The roll for what is typed now is final; anything else waits for this query's results
+      const fresh = !!rows[selected]?.dice && rows[selected].dice === diceAction(e.input.value)?.notation;
+      if (pending && !fresh) queuedEnter = { newTab };
+      else activate(selected, newTab);
+    }
+  });
+
+  document.addEventListener('input', (ev) => {
+    if ((ev.target as Element)?.id === 'search-palette-input') update();
+  });
+
+  document.addEventListener('click', (ev) => {
+    const target = ev.target as Element;
+    if (target.closest?.('[data-search-open]')) {
+      ev.preventDefault();
+      open();
+      return;
+    }
+    const e = els();
+    if (e?.dialog.open && target === e.dialog) close(); // backdrop click
+  });
+
+  document.addEventListener('close', (ev) => {
+    if ((ev.target as Element)?.id !== 'search-palette') return;
+    if (returnFocus?.isConnected) returnFocus.focus();
+    returnFocus = null;
+  }, true);
+
+  function labelShortcuts() {
+    for (const k of document.querySelectorAll('[data-search-kbd]')) k.textContent = isApple ? '⌘K' : 'Ctrl K';
+  }
+  labelShortcuts();
+  document.addEventListener('astro:page-load', labelShortcuts);
+</script>

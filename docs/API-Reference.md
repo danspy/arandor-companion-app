@@ -45,6 +45,15 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 
 `index` routes take POST (create) and GET (list); `[id]` routes take GET, PUT and DELETE.
 
+### Search
+
+`GET /api/search?q=…` (public; at least 2 characters) →
+`{ groups: [{ group, label, results: [{ group, id, title, subtitle?, snippet?, href, score }] }] }`.
+What is searched depends on the role: logged-out visitors get public content and pages; logged
+in adds calendar events and the tools pages; DM/admin add the bestiary (own creatures and SRD).
+`snippet` is HTML (escaped text with `<mark>` around matches). Never reads private notes.
+Ranking and matching: `src/lib/search/index.ts`; sources: `src/lib/search/sources.ts`.
+
 ## Characters and D&D Beyond
 
 | Endpoint | Method | Purpose | Access |

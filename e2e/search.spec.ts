@@ -141,3 +141,87 @@ test.describe('Search API', () => {
     await request.dispose();
   });
 });
+
+test.describe('Search palette', () => {
+  const openKey = process.platform === 'darwin' ? 'Meta+k' : 'Control+k';
+
+  test('Ctrl+K finds an NPC and opens its page', async ({ page, request, isMobile }) => {
+    test.skip(isMobile, 'No keyboard on phones; see the button test');
+    const someNpc = (await (await request.get('/api/search?q=goblin')).json()).groups.find((g: { group: string }) => g.group === 'npcs')?.results[0];
+    test.skip(!someNpc, 'Needs an NPC matching "goblin" in the test data');
+
+    await page.goto('/npcs');
+    await page.keyboard.press(openKey);
+    const dialog = page.getByTestId('search-dialog');
+    await expect(dialog).toBeVisible();
+    await page.getByTestId('search-input').fill(someNpc.title);
+    const first = dialog.getByTestId('search-result').filter({ hasText: someNpc.title }).first();
+    await expect(first).toBeVisible();
+    await expect(first).toHaveAttribute('href', someNpc.href);
+    // Keyboard to it and open
+    while ((await first.getAttribute('aria-selected')) !== 'true') await page.keyboard.press('ArrowDown');
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(new RegExp(`${someNpc.href}$`));
+    await expect(dialog).toBeHidden();
+  });
+
+  test('"/" opens it, but not while typing', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'No keyboard on phones');
+    await page.goto('/npcs');
+    const search = page.locator('#searchInput');
+    await search.click();
+    await page.keyboard.type('/');
+    await expect(search).toHaveValue('/');
+    await expect(page.getByTestId('search-dialog')).toBeHidden();
+
+    await page.locator('body').click({ position: { x: 5, y: 300 } });
+    await page.keyboard.press('/');
+    await expect(page.getByTestId('search-dialog')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('search-dialog')).toBeHidden();
+  });
+
+  test('dice notation offers a roll', async ({ page, isMobile }) => {
+    test.skip(isMobile, 'No keyboard on phones');
+    await page.goto('/');
+    await page.keyboard.press(openKey);
+    await page.getByTestId('search-input').fill('2d6');
+    await expect(page.getByTestId('search-result').first()).toHaveText(/Roll 2d6/);
+  });
+
+  test('the nav button opens it on a phone', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'Phone layout');
+    await page.goto('/');
+    await page.getByTestId('search-btn-mobile').click();
+    await expect(page.getByTestId('search-dialog')).toBeVisible();
+    await expect(page.getByTestId('search-result').first()).toBeVisible(); // page list
+    const box = await page.getByTestId('search-dialog').boundingBox();
+    const width = page.viewportSize()!.width;
+    expect(box!.x).toBeGreaterThanOrEqual(15);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(width - 15);
+  });
+
+  test('not on the display screen', async ({ page }) => {
+    await page.goto('/display');
+    await page.keyboard.press(openKey);
+    await expect(page.getByTestId('search-dialog')).toHaveCount(0);
+  });
+});
+
+test.describe('Search palette, typing fast', () => {
+  test.skip(({ isMobile }) => isMobile, 'Keyboard');
+  test.use({ reducedMotion: 'reduce' }); // the 3D dice do not settle in a headless browser
+  test('Enter right after typing uses the new query, not the old results', async ({ page }) => {
+    const openKey = process.platform === 'darwin' ? 'Meta+k' : 'Control+k';
+    await page.goto('/');
+    await page.keyboard.press(openKey);
+    const input = page.getByTestId('search-input');
+    await input.fill('goblin');
+    await expect(page.getByTestId('search-result').first()).toBeVisible();
+    await input.fill('2d6+3');
+    await page.keyboard.press('Enter');
+    await expect(page.getByTestId('search-dialog')).toBeHidden();
+    await expect(page).toHaveURL(/\/$/); // rolled, did not navigate
+    await expect(page.locator('#dice-result-banner .dice-banner-card')).toBeVisible({ timeout: 10_000 });
+  });
+});

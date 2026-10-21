@@ -102,6 +102,10 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
     </nav>
 
     <div class="pwa-dock-account">
+      <button type="button" class="pwa-dock-row" data-search-open data-testid="search-btn-dock">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <span>Search</span>
+      </button>
       {isLoggedIn ? (
         <>
           <a href="/profile" class:list={['pwa-dock-row', { 'is-active': isActive('/profile') }]}>
@@ -224,7 +228,7 @@ const sheetPages = ['/', '/diary', '/library', '/characters', '/npcs', '/locatio
 
     menuBtn.addEventListener('click', () => setOpen(!isOpen()));
     scrim.addEventListener('click', () => setOpen(false));
-    sheet.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    sheet.querySelectorAll('a, [data-search-open]').forEach((a) => a.addEventListener('click', () => setOpen(false)));
     // The bar is re-rendered on every page; drop the previous page's document listener.
     keydownAbort?.abort();
     keydownAbort = new AbortController();
