@@ -125,12 +125,14 @@ test.describe('Scenes logic', () => {
 
 // ── Against a test server ────────────────────────────────────────────────────
 // Logged-in tests change the DM screen, so they only run against a test server with a copy of
-// the data (never dev, preview or live data): E2E_DM / E2E_DM_PASSWORD (dungeonmaster).
+// the data (never dev, preview or live data): E2E_BASE_URL and E2E_DM / E2E_DM_PASSWORD (dungeonmaster).
 
 const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
+// Without an explicit E2E_BASE_URL the default is the dev server, which must never be changed
+const TEST_SERVER = !!(DM && DM_PASSWORD && process.env.E2E_BASE_URL);
 
 test.describe('Scenes API', () => {
-  test.skip(!DM || !DM_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(!TEST_SERVER, 'Needs E2E_BASE_URL and E2E_DM/E2E_DM_PASSWORD (test server only)');
   test.skip(({ isMobile }) => isMobile, 'API only, once is enough');
   test.describe.configure({ mode: 'serial' });
 
@@ -251,6 +253,28 @@ test.describe('Scenes API', () => {
     } finally {
       expect((await dm.request.delete(`/api/events/${event.id}`)).ok()).toBe(true);
     }
+  });
+
+  test('stage only when live', async () => {
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E stage scene', setup: { spotlightIds: ['2'], locationId: '1' } } })).json();
+    expect((await put({ screenMode: 'off', showTimer: true, showInitiativeTracker: true })).ok()).toBe(true);
+    expect((await dm.request.post(`/api/scenes/${card.id}/apply`)).status()).toBe(200);
+    for (const mode of ['off', 'start', 'pause']) {
+      await put({ screenMode: mode });
+      const d = await display();
+      expect(d.mode).toBe(mode);
+      expect(d.npcs).toEqual([]);
+      expect(d.location).toBeNull();
+      expect(d.initiative).toBeNull();
+      expect(d.timer).toBeNull();
+    }
+    await put({ screenMode: 'live' });
+    const live = await display();
+    expect(live.npcs.map((n: any) => n.id)).toEqual(['2']);
+    expect(live.location).not.toBeNull();
+    expect(live.initiative).not.toBeNull();
+    expect(live.timer).not.toBeNull();
+    await put({ showTimer: false, showInitiativeTracker: false });
   });
 
   test('start defaults', async () => {
@@ -407,7 +431,7 @@ test.describe('Display modes', () => {
 
 // Quick actions on the DM screen, with the player display open in a second page.
 test.describe('DM screen', () => {
-  test.skip(!DM || !DM_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(!TEST_SERVER, 'Needs E2E_BASE_URL and E2E_DM/E2E_DM_PASSWORD (test server only)');
   test.skip(({ isMobile }) => isMobile, 'Changes the shared DM screen state, once is enough');
   test.describe.configure({ mode: 'serial' });
 
@@ -760,6 +784,17 @@ test.describe('DM screen', () => {
     await expect(ghosts.locator('.scene-portrait')).toHaveCount(5);
     await expect(ghosts.locator('.scene-portrait.is-missing')).toHaveAttribute('title', 'Deleted');
     await expect(ghosts.locator('.scene-more')).toHaveText('+3');
+
+    // Applied without the deleted ones, and still the current scene
+    await expect(ghosts).not.toHaveClass(/is-active/);
+    await ghosts.locator('[data-action=apply]').click();
+    await expect(ghosts).toHaveClass(/is-active/);
+    expect((await setMode('live')).ok()).toBe(true);
+    const shown = await (await dm.request.get('/api/display')).json();
+    expect(shown.npcs.map((n: { id: string }) => n.id)).toEqual(['2', '1', '3', '4', '5', '6', '7']);
+    expect(shown.location).toBeNull();
+    await page.reload();
+    await expect(card(page, 'E2E Ghosts')).toHaveClass(/is-active/);
 
     await page.locator('#newSceneBtn').click();
     await expect(page.locator('#sceneDialogTitle')).toHaveText('New scene');

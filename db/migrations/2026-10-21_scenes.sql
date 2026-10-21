@@ -4,7 +4,7 @@ ALTER TABLE DMScreenState ADD COLUMN startScreen text;
 UPDATE DMScreenState SET screenMode = 'pause' WHERE screenVisible = 0;
 
 -- Saved display setups on the DM screen (location + spotlight). Keys as in DMScreenState.
-CREATE TABLE Scene (
+CREATE TABLE IF NOT EXISTS Scene (
   id text PRIMARY KEY NOT NULL, name text NOT NULL, sortOrder integer NOT NULL,
   locationId text, locationHidden integer NOT NULL DEFAULT 0,
   spotlightIds text NOT NULL DEFAULT '[]', hiddenIds text NOT NULL DEFAULT '[]', focusIds text NOT NULL DEFAULT '[]',

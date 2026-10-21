@@ -17,19 +17,25 @@ export const GET: APIRoute = async ({ request }) => {
     const screen = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     const campaign = await db.select({ heroImageUrl: CampaignProgress.heroImageUrl }).from(CampaignProgress).limit(1).get();
 
+    // The stage (location, spotlight, initiative, timer) only while the session is live; the
+    // other modes show their own screen and must not leak what the DM is preparing. No row yet
+    // means no session.
+    const mode = (screen?.screenMode ?? 'off') as ScreenMode;
+    const live = mode === 'live';
+
     // Focus: only the focused spotlight entries; the rest stays set up on the DM screen
     const focusKeys = new Set((screen?.focusNpcIds ?? []) as string[]);
     const only = focusKeys.size > 0;
 
     // Hidden on the DM screen = never sent to the display
-    const location = screen?.currentLocationId && !screen.locationHidden && !only
+    const location = live && screen?.currentLocationId && !screen.locationHidden && !only
       ? await db.select({ name: Location.name, type: Location.type, region: Location.region, imageUrl: Location.imageUrl })
           .from(Location).where(eq(Location.id, screen.currentLocationId)).get()
       : undefined;
 
     // The spotlight: NPCs and party characters, in the order the DM added them
     const hiddenKeys = new Set((screen?.hiddenNpcIds ?? []) as string[]);
-    const keys = screen?.npcsHidden ? [] : ((screen?.spotlightNpcIds ?? []) as string[])
+    const keys = !live || screen?.npcsHidden ? [] : ((screen?.spotlightNpcIds ?? []) as string[])
       .filter((key) => !hiddenKeys.has(key) && (!only || focusKeys.has(key)));
     const parsed = keys.map((key) => ({ key, ...parseSpotlightKey(key) }));
     const npcIds = parsed.filter((p) => p.kind === 'npc').map((p) => p.id);
@@ -55,7 +61,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
 
     let initiative = null;
-    if (screen?.showInitiativeTracker && !only) {
+    if (live && screen?.showInitiativeTracker && !only) {
       const [entries, combat] = await Promise.all([getEntries(), getCombatState()]);
       const current = currentEntry(entries, combat);
       initiative = {
@@ -74,9 +80,7 @@ export const GET: APIRoute = async ({ request }) => {
       };
     }
 
-    // No session running: the next game night from the calendar (date and time only). No row
-    // yet means no session either.
-    const mode = (screen?.screenMode ?? 'off') as ScreenMode;
+    // No session running: the next game night from the calendar (date and time only)
     let next = null;
     if (mode === 'off') {
       const now = new Date();
@@ -100,7 +104,7 @@ export const GET: APIRoute = async ({ request }) => {
       location: location ?? null,
       npcs,
       initiative,
-      timer: screen?.showTimer && !only
+      timer: live && screen?.showTimer && !only
         ? {
             status: screen.timerStatus,
             duration: screen.timerDuration,

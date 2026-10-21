@@ -484,16 +484,27 @@ const { locations, party, formerParty, npcs } = Astro.props;
     markActive();
   }
 
+  // The setup as Apply puts it on the display: deleted NPCs, characters and locations dropped
+  function appliedSetup(scene: SceneCard): SceneSetup {
+    const missing = new Set(scene.portraits.filter((p) => p.missing).map((p) => p.key));
+    return {
+      ...scene.setup,
+      locationId: scene.locationMissing ? null : scene.setup.locationId,
+      spotlightIds: scene.setup.spotlightIds.filter((id) => !missing.has(id)),
+    };
+  }
+
   // The card whose setup is what the display has right now
   function markActive() {
     if (!state || !scenes) return;
     const row = state as Parameters<typeof matchesSetup>[0];
     for (const card of document.querySelectorAll<HTMLElement>('#scenesList [data-scene-id]')) {
       const scene = scenes.find((s) => s.id === card.dataset.sceneId);
-      card.classList.toggle('is-active', !!scene && matchesSetup(row, scene.setup));
+      card.classList.toggle('is-active', !!scene && matchesSetup(row, appliedSetup(scene)));
     }
   }
 
+  let scenesLoadFailed = false;
   async function loadScenes() {
     try {
       const res = await fetch('/api/scenes');
@@ -502,6 +513,9 @@ const { locations, party, formerParty, npcs } = Astro.props;
       renderScenes();
     } catch (error) {
       console.error('Error loading scenes:', error);
+      if (!scenes) $('scenesEmpty')!.hidden = false;
+      if (!scenesLoadFailed) alert('Could not load the scenes');
+      scenesLoadFailed = true;
     }
   }
 
