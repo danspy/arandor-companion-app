@@ -1,9 +1,9 @@
 import type { APIRoute } from 'astro';
 import crypto from 'node:crypto';
-import { db, CampaignProgress, Character, DMScreenState, Event, Location, NPC, eq, inArray, sql } from '@/db';
+import { db, CampaignProgress, Character, DiaryEntry, DMScreenState, Event, Location, NPC, eq, inArray, sql } from '@/db';
 import { currentEntry, getCombatState, getEntries, healthStatus } from '../../../lib/combat';
 import { nextSession } from '../../../lib/next-session';
-import type { ScreenMode } from '../../../lib/scenes';
+import { diaryExcerpt, diaryImage, type LastSession, type ScreenMode } from '../../../lib/scenes';
 import { characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../../lib/spotlight';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
@@ -89,12 +89,20 @@ export const GET: APIRoute = async ({ request }) => {
       next = nextSession(events, now);
     }
 
+    // "Title + last session": the chosen diary entry as it is now (a deleted one is left out)
+    const start = mode === 'start' ? (screen?.startScreen ?? null) : null;
+    let lastSession: LastSession | null = null;
+    if (start?.diaryEntryId) {
+      const entry = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, start.diaryEntryId)).get();
+      if (entry) lastSession = { session: entry.session, title: entry.title, excerpt: diaryExcerpt(entry), imageUrl: diaryImage(entry) };
+    }
+
     const placeholder = screen?.placeholderImageUrl ?? null;
     const payload = {
       screenVisible: screen?.screenVisible ?? false,
       mode,
       nextSession: next,
-      startScreen: screen?.screenMode === 'start' ? (screen.startScreen ?? null) : null,
+      startScreen: start && { ...start, lastSession },
       // Older wallpapers were saved inline as data: URLs (megabytes); serve those separately
       // so they are downloaded once and cached, not with every poll.
       wallpaperUrl: placeholder?.startsWith('data:')

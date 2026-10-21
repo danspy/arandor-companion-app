@@ -4,6 +4,8 @@ import {
   normalizeSetup,
   setupToStateUpdate,
   snapshotSetup,
+  diaryExcerpt,
+  diaryImage,
   startDefaults,
   validateScene,
   validateStartScreen,
@@ -93,6 +95,22 @@ test.describe('Scenes logic', () => {
     expect(validateStartScreen({ ...ok, recap: 'x'.repeat(5001) }).ok).toBe(false);
     expect(validateStartScreen({ ...ok, title: 'x'.repeat(121) }).ok).toBe(false);
     expect(validateStartScreen(ok).ok).toBe(true);
+    expect(validateStartScreen({ ...ok, diaryEntryId: 'abc' })).toMatchObject({ ok: true, value: { diaryEntryId: 'abc' } });
+    expect(validateStartScreen({ ...ok, diaryEntryId: 7 }).ok).toBe(false);
+    expect(validateStartScreen({ ...ok, diaryEntryId: 'x'.repeat(65) }).ok).toBe(false);
+    expect(validateStartScreen(ok)).toMatchObject({ ok: true, value: { diaryEntryId: null } });
+  });
+
+  test('diary excerpt and picture', () => {
+    expect(diaryExcerpt({ summary: '  They fled.  ', content: 'Long text' })).toBe('They fled.');
+    const md = '## Day one\n- **Belmont** waits at the [gate](/locations/1).\n- ![map](/m.png) Volrak _laughs_.';
+    expect(diaryExcerpt({ summary: null, content: md })).toBe('Day one Belmont waits at the gate. Volrak laughs.');
+    const long = diaryExcerpt({ summary: null, content: 'word '.repeat(200) }, 50);
+    expect(long.length).toBeLessThanOrEqual(51);
+    expect(long).toMatch(/word…$/);
+    expect(diaryImage({ coverImageUrl: '/c.png', galleryUrls: ['/g.png'] })).toBe('/c.png');
+    expect(diaryImage({ coverImageUrl: null, galleryUrls: ['/g.png'] })).toBe('/g.png');
+    expect(diaryImage({ coverImageUrl: null, galleryUrls: [] })).toBeNull();
   });
 
   test('next session from the calendar', () => {
@@ -207,7 +225,7 @@ test.describe('Scenes API', () => {
     expect((await put({ screenMode: 'start', startScreen })).ok()).toBe(true);
     const d = await display();
     expect(d.mode).toBe('start');
-    expect(d.startScreen).toEqual(startScreen);
+    expect(d.startScreen).toEqual({ ...startScreen, diaryEntryId: null, lastSession: null });
     await put({ screenMode: 'live' });
     const live = await display();
     expect(live.mode).toBe('live');
@@ -284,6 +302,26 @@ test.describe('Scenes API', () => {
     expect(d.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(d).toHaveProperty('session');
     expect(typeof d.recap).toBe('string');
+    expect(Array.isArray(d.diary)).toBe(true);
+    if (d.diary.length) {
+      expect(d.diaryEntryId).toBe(d.diary[0].id);
+      expect(d.diary[0]).toEqual(expect.objectContaining({ id: expect.any(String), session: expect.any(Number), excerpt: expect.any(String) }));
+      expect(d.diary.map((e: any) => e.session)).toEqual([...d.diary.map((e: any) => e.session)].sort((a, b) => b - a));
+    }
+  });
+
+  test('last session on display', async () => {
+    const { diary } = await (await dm.request.get('/api/dm-screen/start-defaults')).json();
+    test.skip(!diary.length, 'Needs a diary entry');
+    const entry = diary[diary.length - 1];
+    const startScreen = { title: 'E2E Last', session: 12, date: '2026-10-21', recap: '', showRecap: false, diaryEntryId: entry.id };
+    expect((await put({ screenMode: 'start', startScreen })).ok()).toBe(true);
+    const d = await display();
+    expect(d.startScreen.lastSession).toEqual({ session: entry.session, title: entry.title, excerpt: entry.excerpt, imageUrl: entry.imageUrl });
+    // A deleted (unknown) entry is left out
+    await put({ startScreen: { ...startScreen, diaryEntryId: 'no-such-entry' } });
+    expect((await display()).startScreen.lastSession).toBeNull();
+    await put({ screenMode: 'live' });
   });
 
   test('display keeps screenVisible', async () => {
@@ -355,6 +393,28 @@ test.describe('Display modes', () => {
     await expect(page.locator('#startRecap')).toBeVisible();
     await expect(page.locator('#startRecapText')).toHaveText(recap);
     await expect(page.locator('#startRecapText')).toHaveCSS('white-space', 'pre-line');
+  });
+
+  test('last session with picture', async ({ page }) => {
+    await page.route('**/e2e-diary.png', (route) => route.fulfill({
+      contentType: 'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'),
+    }));
+    const lastSession = { session: 11, title: 'The Keep', excerpt: 'They fled the keep.', imageUrl: '/e2e-diary.png' };
+    const next = await open(page, start({ recap: 'typed recap', showRecap: true, diaryEntryId: 'd1', lastSession }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecapEntry')).toHaveText('Session 11 · The Keep');
+    await expect(page.locator('#startRecapText')).toHaveText('They fled the keep.');
+    await expect(page.locator('body')).toHaveAttribute('data-start-image', '1');
+    await expect(page.locator('.dsp-start-image')).toBeVisible();
+    // Without a picture: the blurred campaign backdrop as before
+    await next(start({ diaryEntryId: 'd1', lastSession: { ...lastSession, imageUrl: null } }));
+    await expect(page.locator('body')).not.toHaveAttribute('data-start-image', '1');
+    await expect(page.locator('#startRecapText')).toHaveText('They fled the keep.');
+    // Back to a plain title card
+    await next(start());
+    await expect(page.locator('#startRecap')).toBeHidden();
+    await expect(page.locator('#startRecapEntry')).toBeHidden();
   });
 
   test('no session number', async ({ page }) => {
@@ -478,8 +538,8 @@ test.describe('DM screen', () => {
     await expect(dialog).toBeVisible();
     await expect(page.locator('#startFormDate')).toHaveValue(today());
     await page.locator('#startFormTitle').fill('E2E The Frozen Gate');
-    await page.locator('#startFormRecap').fill('They fled the keep.');
     await page.locator('input[name="startLayout"][value="recap"]').check();
+    await page.locator('#startFormRecap').fill('They fled the keep.');
     await page.locator('#startShowBtn').click();
     await expect(dialog).toBeHidden();
     await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
@@ -605,6 +665,42 @@ test.describe('DM screen', () => {
     await expect(page.locator('#startSessionDialog')).toBeHidden();
     await page.locator('#startSessionBtn').click();
     await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
+  });
+
+  test('start with the last session', async () => {
+    const { diary } = await (await dm.request.get('/api/dm-screen/start-defaults')).json();
+    test.skip(diary.length < 2, 'Needs two diary entries');
+    // Yesterday's start screen (older tests showed one today), so the dialog starts from the defaults
+    const old = { title: '', session: null, date: '2000-01-01', recap: '', showRecap: false };
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'off', startScreen: old } });
+    const page = await dm.newPage();
+    await page.setViewportSize({ width: 390, height: 844 }); // the dialog on a phone
+    await page.goto('/tools/dm-screen');
+    await page.locator('#startSessionBtn').click();
+    // A new start screen defaults to the newest entry
+    await expect(page.locator('input[name="startLayout"][value="diary"]')).toBeChecked();
+    await expect(page.locator('#startRecapField')).toBeHidden();
+    await expect(page.locator('#startFormDiary')).toHaveValue(diary[0].id);
+    await page.locator('#startFormDiary').selectOption(diary[1].id);
+    await expect(page.locator('#startDiaryExcerpt')).toHaveText(diary[1].excerpt || 'No text in this entry yet.');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.locator('#startFormTitle').fill('E2E Diary');
+    await page.locator('#startShowBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    const d = await (await dm.request.get('/api/display')).json();
+    expect(d.startScreen.diaryEntryId).toBe(diary[1].id);
+    expect(d.startScreen.lastSession.title).toBe(diary[1].title);
+    // Reopened the same day: the chosen entry again; "Title + recap" brings the recap field back
+    await page.locator('#endSessionBtn').waitFor();
+    await setMode('off');
+    await page.reload();
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#startFormDiary')).toHaveValue(diary[1].id);
+    await page.locator('input[name="startLayout"][value="recap"]').check();
+    await expect(page.locator('#startRecapField')).toBeVisible();
+    await expect(page.locator('#startDiaryField')).toBeHidden();
+    await page.locator('#startCancelBtn').click();
     await page.close();
   });
 

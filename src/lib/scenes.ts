@@ -14,7 +14,48 @@ export interface StartScreen {
   date: string; // YYYY-MM-DD
   recap: string;
   showRecap: boolean;
+  // "Title + last session": a diary entry's excerpt, with its image behind the title card.
+  // Only the id is kept; /api/display looks the entry up, so edits to it show up. Missing in
+  // start screens saved before this option existed.
+  diaryEntryId?: string | null;
 }
+
+// The diary entry on the start screen, as /api/display sends it
+export interface LastSession {
+  session: number;
+  title: string;
+  excerpt: string;
+  imageUrl: string | null;
+}
+
+const EXCERPT_MAX = 300;
+
+// Markdown to one line of plain text: no images, link targets, HTML, headings, list markers or emphasis
+function plainText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/(\*\*|__|\*|~~|`)/g, '')
+    .replace(/(^|[^\w])_([^_\n]+)_(?![\w])/g, '$1$2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// A few sentences of a diary entry: its summary, else the start of its text, cut at a word
+export function diaryExcerpt(entry: { summary: string | null; content: string }, max = EXCERPT_MAX): string {
+  const text = plainText(entry.summary?.trim() || entry.content);
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.\u2013\u2014-]+$/, '')}…`;
+}
+
+// The picture of a diary entry: its cover, else the first gallery image
+export const diaryImage = (entry: { coverImageUrl: string | null; galleryUrls: string[] | null }): string | null =>
+  entry.coverImageUrl || entry.galleryUrls?.[0] || null;
 
 export interface SceneSetup {
   locationId: string | null;
@@ -124,7 +165,11 @@ export function validateStartScreen(body: unknown): { ok: true; value: StartScre
   }
   const date = typeof b.date === 'string' ? b.date : '';
   if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Date must be YYYY-MM-DD' };
-  return { ok: true, value: { title, session: session as number | null, date, recap, showRecap: b.showRecap === true } };
+  if (b.diaryEntryId != null && (typeof b.diaryEntryId !== 'string' || b.diaryEntryId.length > 64)) {
+    return { ok: false, error: 'diaryEntryId must be a diary entry id or null' };
+  }
+  const diaryEntryId = typeof b.diaryEntryId === 'string' && b.diaryEntryId ? b.diaryEntryId : null;
+  return { ok: true, value: { title, session: session as number | null, date, recap, showRecap: b.showRecap === true, diaryEntryId } };
 }
 
 // Pre-filled start screen: next session number, today, and the latest session's summary as recap.

@@ -17,6 +17,8 @@ import '../styles/global.css';
   <body class="dsp" data-mode="idle">
     <!-- Blurred campaign image behind the idle screen and the NPC-only scene -->
     <div class="dsp-backdrop" aria-hidden="true"><img id="backdropImg" alt="" /></div>
+    <!-- Start screen with "Title + last session": that diary entry's picture, sharp -->
+    <div class="dsp-start-image" aria-hidden="true"><img id="startImage" alt="" /></div>
     <canvas class="dsp-idle-sparks" id="idleSparks" aria-hidden="true"></canvas>
 
     <!-- Waiting / paused / connecting -->
@@ -36,6 +38,7 @@ import '../styles/global.css';
       <div class="dsp-start-rule" aria-hidden="true"><span></span></div>
       <section class="dsp-start-recap t-panel" id="startRecap" hidden>
         <h2 class="dsp-start-recap-head">Previously…</h2>
+        <p class="dsp-start-recap-entry" id="startRecapEntry" hidden></p>
         <p class="dsp-start-recap-text" id="startRecapText"></p>
       </section>
     </div>
@@ -113,13 +116,14 @@ import '../styles/global.css';
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
       /* Mode switching: idle | start | off | wallpaper | stage */
-      .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks {
+      .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks, .dsp-start-image {
         position: fixed; inset: 0;
         opacity: 0; visibility: hidden;
         transition: opacity .8s var(--ease), visibility 0s linear .8s;
       }
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="start"] :is(#startScreen, .dsp-backdrop, .dsp-idle-sparks),
+      body[data-mode="start"][data-start-image="1"] .dsp-start-image,
       body[data-mode="off"] :is(#offScreen, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="wallpaper"] .dsp-wallpaper,
       body[data-mode="stage"] .dsp-stage,
@@ -206,6 +210,28 @@ import '../styles/global.css';
         to   { transform: scale(1.35) translate3d(-2%, -1.5%, 0); }
       }
       .dsp-start-mark { margin-bottom: 1.2rem; }
+      /* The diary entry's picture: sharp, darkened towards the edges and the bottom so the text
+         stays readable, drifting slowly */
+      .dsp-start-image { z-index: 0; overflow: hidden; }
+      .dsp-start-image img {
+        width: 100%; height: 100%; object-fit: cover;
+        filter: brightness(.62) saturate(1.05);
+        animation: dsp-start-pan 45s ease-in-out infinite alternate;
+      }
+      .dsp-start-image::after {
+        content: ''; position: absolute; inset: 0;
+        background:
+          radial-gradient(ellipse 75% 65% at 50% 45%, rgba(12, 9, 6, .1) 0%, rgba(12, 9, 6, .78) 100%),
+          linear-gradient(180deg, rgba(12, 9, 6, .3) 0%, transparent 30%, transparent 50%, rgba(12, 9, 6, .85) 100%);
+      }
+      @keyframes dsp-start-pan {
+        from { transform: scale(1.02); }
+        to   { transform: scale(1.12) translate3d(1.5%, -1%, 0); }
+      }
+      .dsp-start-recap-entry {
+        margin: -.25rem 0 .7rem; font-size: .95rem; letter-spacing: .18em; text-transform: uppercase;
+        color: var(--text-muted);
+      }
       body:is([data-mode="start"], [data-mode="off"]) .dsp-start-mark {
         animation: dsp-start-mark-in 1.1s var(--ease) both, dsp-start-glow 4s ease-in-out 1.1s infinite;
       }
@@ -598,7 +624,7 @@ import '../styles/global.css';
       @media (prefers-reduced-motion: reduce) {
         .dsp-loc-layer img, .dsp-portrait, .dsp-cast > li, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
         .dsp-cast > li, .dsp-loc-caption { transition: none !important; }
-        .dsp-start > *, .dsp-start-title, .dsp-backdrop img { animation: none !important; }
+        .dsp-start > *, .dsp-start-title, .dsp-backdrop img, .dsp-start-image img { animation: none !important; }
       }
     </style>
 
@@ -611,7 +637,10 @@ import '../styles/global.css';
         screenVisible: boolean;
         mode?: 'off' | 'start' | 'live' | 'pause';
         nextSession?: { date: string; time: string } | null;
-        startScreen?: { title: string; session: number | null; date: string; recap: string; showRecap: boolean } | null;
+        startScreen?: {
+          title: string; session: number | null; date: string; recap: string; showRecap: boolean;
+          lastSession?: { session: number; title: string; excerpt: string; imageUrl: string | null } | null;
+        } | null;
         wallpaperUrl: string | null;
         backdropUrl: string | null;
         location: { name: string; type: string; region: string | null; imageUrl: string | null } | null;
@@ -675,9 +704,25 @@ import '../styles/global.css';
         // The ISO date is a calendar day, not an instant: parse it as local time
         const [y, m, d] = st.date.split('-').map(Number);
         $('startDate').textContent = new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        // "Title + last session": that diary entry instead of the typed recap, its picture behind
+        const last = st.lastSession ?? null;
         const recap = $('startRecap');
-        recap.hidden = !(st.showRecap && st.recap);
-        $('startRecapText').textContent = st.recap; // text only, never HTML
+        recap.hidden = last ? false : !(st.showRecap && st.recap);
+        const entry = $('startRecapEntry');
+        entry.hidden = !last;
+        entry.textContent = last ? `Session ${last.session} · ${last.title}` : '';
+        $('startRecapText').textContent = last ? last.excerpt : st.recap; // text only, never HTML
+        const image = $<HTMLImageElement>('startImage');
+        if (!last?.imageUrl) {
+          image.onload = null; // a picture still loading for an earlier entry
+          delete body.dataset.startImage;
+        } else if (image.getAttribute('src') !== last.imageUrl) {
+          delete body.dataset.startImage; // fade in once loaded, not half drawn
+          image.onload = () => { body.dataset.startImage = '1'; };
+          image.src = last.imageUrl;
+        } else if (image.complete) {
+          body.dataset.startImage = '1';
+        }
         setSparks($<HTMLCanvasElement>('idleSparks'), true);
         setSparks($<HTMLCanvasElement>('nowSparks'), false);
       }

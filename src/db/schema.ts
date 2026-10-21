@@ -263,7 +263,7 @@ export const DMScreenState = sqliteTable('DMScreenState', {
   placeholderImageUrl: text('placeholderImageUrl'), // Wallpaper image when screen is hidden
   screenMode: text('screenMode').notNull().default('live'), // 'off' | 'start' | 'live' | 'pause'; replaces screenVisible. The API creates the row 'off'
   // Shape: StartScreen in src/lib/scenes.ts
-  startScreen: json<{ title: string; session: number | null; date: string; recap: string; showRecap: boolean }>('startScreen'), // Last start screen content, kept after going live
+  startScreen: json<{ title: string; session: number | null; date: string; recap: string; showRecap: boolean; diaryEntryId?: string | null }>('startScreen'), // Last start screen content, kept after going live
   // Timer fields
   showTimer: bool('showTimer').notNull().default(false),
   timerDuration: integer('timerDuration').notNull().default(0), // Timer duration in seconds

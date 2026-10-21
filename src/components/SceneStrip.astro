@@ -77,7 +77,7 @@ const { locations, party, formerParty, npcs } = Astro.props;
       <label for="startFormTitle" class="t-label block mb-2">Title</label>
       <input type="text" id="startFormTitle" maxlength="120" class="t-input w-full px-3 py-2 text-sm" placeholder="e.g. The Frozen Gate" />
     </div>
-    <div>
+    <div id="startRecapField">
       <label for="startFormRecap" class="t-label block mb-2">Recap</label>
       <textarea id="startFormRecap" rows="5" maxlength="5000" class="t-input w-full px-3 py-2 text-sm" placeholder="What happened last time"></textarea>
     </div>
@@ -90,8 +90,20 @@ const { locations, party, formerParty, npcs } = Astro.props;
         <label class="t-body-text text-sm inline-flex items-center gap-2">
           <input type="radio" name="startLayout" value="recap" /> Title + recap
         </label>
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="diary" /> Title + last session
+        </label>
       </div>
     </fieldset>
+    <!-- "Title + last session": a diary entry's excerpt, its picture behind the title card -->
+    <div id="startDiaryField" hidden>
+      <label for="startFormDiary" class="t-label block mb-2">Diary entry</label>
+      <select id="startFormDiary" class="t-input w-full px-3 py-2 text-sm"></select>
+      <div class="start-diary-preview mt-3">
+        <img id="startDiaryImage" alt="" hidden />
+        <p id="startDiaryExcerpt" class="t-body-text text-sm"></p>
+      </div>
+    </div>
     <div class="dm-dialog-actions">
       <!-- type="button": Enter in a field submits with the first submit button, which must be Show -->
       <button type="button" id="startCancelBtn" class="t-btn-secondary">Cancel</button>
@@ -103,6 +115,13 @@ const { locations, party, formerParty, npcs } = Astro.props;
 <!-- Global: the scene cards are drawn by the script and the scene dialog is its own component,
      neither gets this component's scoped attribute -->
 <style is:global>
+  .start-diary-preview { display: flex; gap: .75rem; align-items: flex-start; }
+  .start-diary-preview img {
+    width: 6.5rem; aspect-ratio: 16 / 9; object-fit: cover; flex: none;
+    border: 1px solid var(--border-gold);
+  }
+  .start-diary-preview p { margin: 0; color: var(--text-muted); line-height: 1.45; }
+  @media (max-width: 420px) { .start-diary-preview { flex-direction: column; } .start-diary-preview img { width: 100%; } }
   .dm-dialog {
     margin: auto; /* Tailwind's reset removes the browser's centring margin */
     width: min(32rem, calc(100vw - 2rem));
@@ -270,13 +289,45 @@ const { locations, party, formerParty, npcs } = Astro.props;
     return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   };
 
+  // Diary entries for "Title + last session", newest first (from start-defaults)
+  interface DiaryChoice { id: string; session: number; title: string; excerpt: string; imageUrl: string | null }
+  let diary: DiaryChoice[] = [];
+
+  function fillDiary(selected: string | null) {
+    const select = $<HTMLSelectElement>('startFormDiary')!;
+    select.replaceChildren(...diary.map((e) => new Option(`Session ${e.session} · ${e.title}`, e.id)));
+    if (selected && diary.some((e) => e.id === selected)) select.value = selected;
+    const radio = document.querySelector<HTMLInputElement>('input[name="startLayout"][value="diary"]')!;
+    radio.disabled = !diary.length;
+    showDiaryPreview();
+  }
+
+  function showDiaryPreview() {
+    const entry = diary.find((e) => e.id === $<HTMLSelectElement>('startFormDiary')!.value);
+    const img = $<HTMLImageElement>('startDiaryImage')!;
+    img.hidden = !entry?.imageUrl;
+    if (entry?.imageUrl) img.src = entry.imageUrl;
+    else img.removeAttribute('src');
+    $('startDiaryExcerpt')!.textContent = entry ? entry.excerpt || 'No text in this entry yet.' : '';
+  }
+
+  // The recap field for "Title + recap", the diary picker for "Title + last session"
+  function showLayoutFields() {
+    const layout = document.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value;
+    $('startRecapField')!.hidden = layout === 'diary';
+    $('startDiaryField')!.hidden = layout !== 'diary';
+  }
+
   function fill(s: StartScreen) {
     $<HTMLInputElement>('startFormSession')!.value = s.session == null ? '' : String(s.session);
     $<HTMLInputElement>('startFormTitle')!.value = s.title;
     $<HTMLInputElement>('startFormDate')!.value = s.date;
     $<HTMLTextAreaElement>('startFormRecap')!.value = s.recap;
-    const layout = s.showRecap ? 'recap' : 'title';
+    const diaryId = s.diaryEntryId && diary.some((e) => e.id === s.diaryEntryId) ? s.diaryEntryId : null;
+    fillDiary(diaryId ?? diary[0]?.id ?? null);
+    const layout = diaryId ? 'diary' : s.showRecap ? 'recap' : 'title';
     document.querySelector<HTMLInputElement>(`input[name="startLayout"][value="${layout}"]`)!.checked = true;
+    showLayoutFields();
   }
 
   // Today's start screen again if there is one, else the next session from the diary
@@ -294,22 +345,31 @@ const { locations, party, formerParty, npcs } = Astro.props;
     $('startFormTitle')?.focus();
   }
 
+  // The diary list always comes fresh; the fields from today's start screen if there is one.
+  // New start screens default to "Title + last session" with the newest diary entry.
   async function prefill() {
     const saved = state?.startScreen;
-    if (saved && saved.date === localToday()) {
-      fill(saved);
-    } else {
-      try {
-        const res = await fetch('/api/dm-screen/start-defaults');
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const d = await res.json();
-        fill({ title: '', session: d.session, date: d.date, recap: d.recap, showRecap: !!d.recap });
-      } catch (error) {
-        console.error('Error loading start defaults:', error);
-        fill({ title: '', session: null, date: localToday(), recap: '', showRecap: false });
-      }
+    let defaults: { session: number | null; date: string; recap: string; diaryEntryId: string | null } | null = null;
+    try {
+      const res = await fetch('/api/dm-screen/start-defaults');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      diary = Array.isArray(d.diary) ? d.diary : [];
+      defaults = d;
+    } catch (error) {
+      console.error('Error loading start defaults:', error);
+      diary = [];
     }
+    if (saved && saved.date === localToday()) fill(saved);
+    else if (defaults) fill({ title: '', session: defaults.session, date: defaults.date, recap: defaults.recap, showRecap: !!defaults.recap, diaryEntryId: defaults.diaryEntryId });
+    else fill({ title: '', session: null, date: localToday(), recap: '', showRecap: false });
   }
+
+  document.addEventListener('change', (e) => {
+    const el = e.target as HTMLElement | null;
+    if (el?.id === 'startFormDiary') showDiaryPreview();
+    else if (el instanceof HTMLInputElement && el.name === 'startLayout') showLayoutFields();
+  });
 
   // Delegated once on document: survives client-side navigation without piling up
   document.addEventListener(STATE_EVENT, (e) => {
@@ -357,12 +417,14 @@ const { locations, party, formerParty, npcs } = Astro.props;
     if (form.id !== 'startSessionForm') return;
     e.preventDefault();
     const session = $<HTMLInputElement>('startFormSession')!.value.trim();
+    const layout = form.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value;
     const startScreen: StartScreen = {
       title: $<HTMLInputElement>('startFormTitle')!.value.trim(),
       session: session ? Number(session) : null,
       date: $<HTMLInputElement>('startFormDate')!.value,
       recap: $<HTMLTextAreaElement>('startFormRecap')!.value,
-      showRecap: form.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value === 'recap',
+      showRecap: layout === 'recap',
+      diaryEntryId: layout === 'diary' ? $<HTMLSelectElement>('startFormDiary')!.value || null : null,
     };
     const show = $<HTMLButtonElement>('startShowBtn')!;
     show.disabled = true;

@@ -176,14 +176,21 @@ screen*, *Live* or *Paused*.
 | Now | Buttons | What players see |
 |---|---|---|
 | No session | *Start session* | *Arandor*, *No session running* and, if the calendar has one, the date and time of the next session (never its title or description) |
-| Start screen | *Go live*, *End session* | The title card, optionally with *Previously…* and a recap |
+| Start screen | *Go live*, *End session* | The title card, optionally with *Previously…* and a recap or the last session's diary entry |
 | Live | *Pause*, *End session* | Everything you set up on the DM screen |
 | Paused | *Resume*, *End session* | Your pause wallpaper, or *Short break* |
 
-- **Start session** opens a dialog with the session number, title and date. The recap is
-  prefilled from your latest diary entry; edit it freely. Choose *Title card* or *Title +
-  recap* and press *Show*. Starting again on the same day (for example after *End session*)
-  re-opens the dialog with that day's title, number and recap.
+- **Start session** opens a dialog with the session number, title and date, and what the
+  display shows under the title:
+  - *Title card*: the title alone.
+  - *Title + recap*: a recap you type, prefilled from your latest diary entry's summary.
+  - *Title + last session* (the default when the diary has entries): pick a diary entry, the
+    newest is preselected. Players see its session and title with a short excerpt (its
+    summary, or the start of its text), and its cover picture (else the first gallery picture)
+    fills the screen behind the title card. Later edits to the entry show up on the display.
+
+  Press *Show*. Starting again on the same day (for example after *End session*) re-opens the
+  dialog with that day's choices.
 - **Go live** switches to the real display. **End session** asks for confirmation and takes
   you back to *No session*; location, spotlight, turn order and timer stay as they are.
 
@@ -298,8 +305,9 @@ It also follows the session, see [Scenes and quick actions](#scenes-and-quick-ac
 
 - **No session:** *Arandor*, *No session running* and the date and time of the next session
   from the calendar, if there is one.
-- **Start screen:** the session title as a title card, with a *Previously…* recap if you chose
-  one.
+- **Start screen:** the session title as a title card with embers and a glowing mark, with a
+  *Previously…* recap or the last session's diary entry (and its picture as the background)
+  if you chose one.
 - **Paused:** your wallpaper, or *Short break*.
 - **Live:** the layouts above.
 
