@@ -6,7 +6,6 @@ import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 import PartyPanel from '../../components/PartyPanel.astro';
-import DisplayPreview from '../../components/DisplayPreview.astro';
 import { partyOverview } from '../../lib/party';
 import '../../styles/statblock.css';
 import '../../styles/character-sheet.css';
@@ -50,9 +49,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
   <div class="mb-6">
     
-    <!-- Player Display Link, with a live preview of what the players see -->
-    <div class="t-callout p-4 mb-6 flex flex-col md:flex-row md:items-start gap-4">
-      <div class="flex items-start gap-3 flex-1 min-w-0">
+    <!-- Player Display Link -->
+    <div class="t-callout p-4 mb-6">
+      <div class="flex items-start gap-3">
         <svg class="w-6 h-6 shrink-0 mt-0.5" style="color:var(--accent);" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
         </svg>
@@ -82,7 +81,6 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           </div>
         </div>
       </div>
-      <DisplayPreview class="md:w-80 lg:w-96 shrink-0" />
     </div>
   </div>
 

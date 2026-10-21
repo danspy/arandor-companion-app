@@ -3,7 +3,7 @@
 // login). Shows whatever the DM picks on /tools/dm-screen; it polls /api/display, which only
 // contains what players may see (health bands, never exact HP).
 // /display?preview is the same page as a small live thumbnail on the DM screen: it never asks
-// to keep the screen awake, goes full screen or hides the cursor.
+// to keep the screen awake, goes full screen, hides the cursor or draws the idle sparks.
 import '../styles/global.css';
 ---
 
@@ -511,6 +511,8 @@ import '../styles/global.css';
       const POLL_MS = 2000;
       const MAX_BACKOFF_MS = 30000;
       const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // /display?preview: the DM screen's thumbnail (no sparks, wake lock, full screen, cursor hiding)
+      const preview = new URLSearchParams(location.search).has('preview');
       const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T;
       const body = document.body;
 
@@ -530,7 +532,7 @@ import '../styles/global.css';
       // ── Sparks: only run where they are visible ─────────────────────────
       const sparks = new Map<HTMLCanvasElement, () => void>();
       function setSparks(canvas: HTMLCanvasElement, on: boolean) {
-        if (reduceMotion) return;
+        if (reduceMotion || preview) return;
         if (on && !sparks.has(canvas)) sparks.set(canvas, startSparks(canvas));
         if (!on && sparks.has(canvas)) { sparks.get(canvas)!(); sparks.delete(canvas); }
       }
@@ -1042,7 +1044,6 @@ import '../styles/global.css';
 
       // ── TV conveniences: stay awake, full screen on F, hide idle cursor ──
       // Not in the DM screen's preview: that's a thumbnail, not the TV.
-      const preview = new URLSearchParams(location.search).has('preview');
       let wakeLock: { release(): Promise<void> } | null = null;
       async function keepAwake() {
         if (preview) return;
