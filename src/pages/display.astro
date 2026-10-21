@@ -19,6 +19,8 @@ import '../styles/global.css';
   <body class="dsp" data-mode="idle">
     <!-- Blurred campaign image behind the idle screen and the NPC-only scene -->
     <div class="dsp-backdrop" aria-hidden="true"><img id="backdropImg" alt="" /></div>
+    <!-- Start screen with "Title + last session": that diary entry's picture, sharp -->
+    <div class="dsp-start-image" aria-hidden="true"><img id="startImage" alt="" /></div>
     <canvas class="dsp-idle-sparks" id="idleSparks" aria-hidden="true"></canvas>
 
     <!-- Waiting / paused / connecting -->
@@ -26,6 +28,29 @@ import '../styles/global.css';
       <div class="dsp-idle-mark" aria-hidden="true"></div>
       <h1 class="dsp-idle-title" id="idleTitle">Connecting…</h1>
       <p class="dsp-idle-text" id="idleText"></p>
+    </div>
+
+    <!-- Session start: title card, optionally with a recap of the last session -->
+    <div class="dsp-start" id="startScreen">
+      <div class="dsp-idle-mark dsp-start-mark" aria-hidden="true"></div>
+      <p class="dsp-start-campaign" id="startCampaign">Arandor</p>
+      <p class="dsp-start-session" id="startSession" hidden></p>
+      <h1 class="dsp-start-title" id="startTitle"></h1>
+      <p class="dsp-start-date" id="startDate"></p>
+      <div class="dsp-start-rule" aria-hidden="true"><span></span></div>
+      <section class="dsp-start-recap t-panel" id="startRecap" hidden>
+        <h2 class="dsp-start-recap-head">Previously…</h2>
+        <p class="dsp-start-recap-entry" id="startRecapEntry" hidden></p>
+        <p class="dsp-start-recap-text" id="startRecapText"></p>
+      </section>
+    </div>
+
+    <!-- No session running: the campaign and, if planned, the next game night -->
+    <div class="dsp-start" id="offScreen">
+      <div class="dsp-idle-mark dsp-start-mark" aria-hidden="true"></div>
+      <p class="dsp-start-campaign" id="offCampaign">Arandor</p>
+      <h1 class="dsp-start-title" id="offTitle">No session running</h1>
+      <p class="dsp-start-date" id="offNext" hidden></p>
     </div>
 
     <!-- DM hid the screen and set a wallpaper -->
@@ -92,13 +117,16 @@ import '../styles/global.css';
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
-      /* Mode switching: idle | hidden | wallpaper | stage */
-      .dsp-idle, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks {
+      /* Mode switching: idle | start | off | wallpaper | stage */
+      .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks, .dsp-start-image {
         position: fixed; inset: 0;
         opacity: 0; visibility: hidden;
         transition: opacity .8s var(--ease), visibility 0s linear .8s;
       }
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
+      body[data-mode="start"] :is(#startScreen, .dsp-backdrop, .dsp-idle-sparks),
+      body[data-mode="start"][data-start-image="1"] .dsp-start-image,
+      body[data-mode="off"] :is(#offScreen, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="wallpaper"] .dsp-wallpaper,
       body[data-mode="stage"] .dsp-stage,
       body[data-mode="stage"]:is([data-scene="cast"], [data-scene="none"]) .dsp-backdrop {
@@ -142,6 +170,118 @@ import '../styles/global.css';
         margin: 0; text-shadow: 0 .2rem 2rem rgba(0, 0, 0, .6);
       }
       .dsp-idle-text { margin: 1rem 0 0; font-size: 1.15rem; color: var(--text-muted); max-width: 36ch; }
+
+      /* ── Start screen (and the no-session screen, same look) ──────── */
+      .dsp-start {
+        z-index: 2;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-align: center; padding: 2rem; gap: .6rem;
+      }
+      .dsp-start [hidden] { display: none; }
+      .dsp-start-campaign, .dsp-start-session {
+        margin: 0; font-size: 1.1rem; letter-spacing: .3em; text-transform: uppercase; color: var(--accent);
+      }
+      .dsp-start-title {
+        font-family: var(--font-display); font-style: italic; font-weight: 600;
+        font-size: 4.2rem; line-height: 1.05; color: var(--text-strong);
+        margin: .4rem 0 0; max-width: 24ch; text-wrap: balance;
+        text-shadow: 0 .2rem 2rem rgba(0, 0, 0, .6);
+      }
+      .dsp-start-date { margin: 0; font-size: 1.15rem; color: var(--text-muted); }
+      .dsp-start-recap {
+        margin-top: 1.5rem; width: min(52rem, 100%); min-height: 0; flex: 0 1 auto;
+        display: flex; flex-direction: column; padding: 1.25rem 1.75rem; text-align: left;
+        background-color: rgba(20, 15, 10, .78);
+      }
+      .dsp-start-recap-head {
+        margin: 0 0 .6rem; font-family: var(--font-display); font-style: italic; font-weight: 600;
+        font-size: 1.4rem; color: var(--accent);
+      }
+      .dsp-start-recap-text {
+        margin: 0; min-height: 0; overflow-y: auto; white-space: pre-line;
+        font-size: 1.2rem; line-height: 1.5; color: var(--text-body);
+      }
+
+      /* Opening: the backdrop drifts slowly, the mark breathes and the title card rises line by
+         line (the animations start each time the screen switches to start or off) */
+      body:is([data-mode="start"], [data-mode="off"]) .dsp-backdrop img {
+        animation: dsp-start-drift 40s ease-in-out infinite alternate;
+      }
+      @keyframes dsp-start-drift {
+        from { transform: scale(1.2); }
+        to   { transform: scale(1.35) translate3d(-2%, -1.5%, 0); }
+      }
+      .dsp-start-mark { margin-bottom: 1.2rem; }
+      /* The diary entry's picture: sharp, darkened towards the edges and the bottom so the text
+         stays readable, drifting slowly */
+      .dsp-start-image { z-index: 0; overflow: hidden; }
+      .dsp-start-image img {
+        width: 100%; height: 100%; object-fit: cover;
+        filter: brightness(.62) saturate(1.05);
+        animation: dsp-start-pan 45s ease-in-out infinite alternate;
+      }
+      .dsp-start-image::after {
+        content: ''; position: absolute; inset: 0;
+        background:
+          radial-gradient(ellipse 75% 65% at 50% 45%, rgba(12, 9, 6, .1) 0%, rgba(12, 9, 6, .78) 100%),
+          linear-gradient(180deg, rgba(12, 9, 6, .3) 0%, transparent 30%, transparent 50%, rgba(12, 9, 6, .85) 100%);
+      }
+      @keyframes dsp-start-pan {
+        from { transform: scale(1.02); }
+        to   { transform: scale(1.12) translate3d(1.5%, -1%, 0); }
+      }
+      .dsp-start-recap-entry {
+        margin: -.25rem 0 .7rem; font-size: .95rem; letter-spacing: .18em; text-transform: uppercase;
+        color: var(--text-muted);
+      }
+      body:is([data-mode="start"], [data-mode="off"]) .dsp-start-mark {
+        animation: dsp-start-mark-in 1.1s var(--ease) both, dsp-start-glow 4s ease-in-out 1.1s infinite;
+      }
+      @keyframes dsp-start-mark-in {
+        from { opacity: 0; transform: rotate(-135deg) scale(.4); }
+        to   { opacity: 1; transform: rotate(45deg); }
+      }
+      @keyframes dsp-start-glow {
+        50% { box-shadow: 0 0 5rem rgba(201, 144, 50, .45); border-color: var(--gold); }
+      }
+      body:is([data-mode="start"], [data-mode="off"]) .dsp-start > :not(.dsp-start-mark) {
+        animation: dsp-start-in 1.1s var(--ease) both;
+      }
+      .dsp-start > :nth-child(2) { animation-delay: .35s !important; }
+      .dsp-start > :nth-child(3) { animation-delay: .6s !important; }
+      .dsp-start > :nth-child(4) { animation-delay: .85s !important; }
+      .dsp-start > :nth-child(5) { animation-delay: 1.15s !important; }
+      .dsp-start > :nth-child(6) { animation-delay: 1.4s !important; }
+      .dsp-start > :nth-child(7) { animation-delay: 1.8s !important; }
+      @keyframes dsp-start-in {
+        from { opacity: 0; transform: translateY(1.2rem); filter: blur(6px); }
+        to   { opacity: 1; transform: none; filter: none; }
+      }
+      /* The title catches the firelight now and then */
+      body[data-mode="start"] .dsp-start-title {
+        background: linear-gradient(100deg, var(--text-strong) 40%, #ffe3a3 50%, var(--text-strong) 60%) 0 0 / 300% 100%;
+        -webkit-background-clip: text; background-clip: text; color: transparent;
+        animation: dsp-start-in 1.1s var(--ease) both, dsp-start-shine 7s ease-in-out 2s infinite;
+        text-shadow: none; filter: drop-shadow(0 .2rem 1.5rem rgba(0, 0, 0, .6));
+      }
+      @keyframes dsp-start-shine {
+        0% { background-position: 100% 0; }
+        35%, 100% { background-position: 0 0; }
+      }
+      .dsp-start-rule {
+        display: flex; align-items: center; justify-content: center; gap: .8rem;
+        width: min(22rem, 60%); margin: .6rem 0 0;
+      }
+      .dsp-start-rule::before, .dsp-start-rule::after {
+        content: ''; flex: 1; height: 1px;
+        background: linear-gradient(90deg, transparent, var(--border-gold));
+      }
+      .dsp-start-rule::after { transform: scaleX(-1); }
+      .dsp-start-rule span {
+        width: .55rem; height: .55rem; transform: rotate(45deg);
+        background: var(--gold); box-shadow: 0 0 .8rem rgba(201, 144, 50, .8);
+      }
+      body[data-mode="start"] .dsp-start-recap { box-shadow: 0 0 4rem rgba(0, 0, 0, .5), 0 0 2rem rgba(201, 144, 50, .08); }
 
       /* ── Wallpaper ─────────────────────────────────────────────────── */
       .dsp-wallpaper { z-index: 3; background: #000; }
@@ -440,7 +580,7 @@ import '../styles/global.css';
         body[data-location="1"] .dsp-cast { left: 1rem; right: 1rem; bottom: 1rem; }
         body[data-location="0"] .dsp-cast { inset: 1rem; }
         body[data-side="1"] .dsp-cast, body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + .75rem); }
-        .dsp-idle-title { font-size: 2.4rem; }
+        .dsp-idle-title, .dsp-start-title { font-size: 2.4rem; }
       }
 
       /* ── Portrait screens (phones, tablets upright): one column, page scrolls.
@@ -477,7 +617,7 @@ import '../styles/global.css';
         .dsp-now-name { font-size: min(3.3rem, 11vw); }
         .dsp-loc-caption { left: 1.25rem; right: 1.25rem; bottom: 1.25rem; }
         body[data-cast="1"] .dsp-loc-caption { top: 1.25rem; }
-        .dsp-idle-title { font-size: min(4.2rem, 11vw); }
+        .dsp-idle-title, .dsp-start-title { font-size: min(4.2rem, 11vw); }
       }
 
       /* Touch screens have no F key */
@@ -486,6 +626,7 @@ import '../styles/global.css';
       @media (prefers-reduced-motion: reduce) {
         .dsp-loc-layer img, .dsp-portrait, .dsp-cast > li, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
         .dsp-cast > li, .dsp-loc-caption { transition: none !important; }
+        .dsp-start > *, .dsp-start-title, .dsp-backdrop img, .dsp-start-image img { animation: none !important; }
       }
     </style>
 
@@ -496,6 +637,12 @@ import '../styles/global.css';
       type Health = 'healthy' | 'injured' | 'hurt' | 'bloodied' | 'unconscious' | 'dead' | null;
       interface DisplayState {
         screenVisible: boolean;
+        mode?: 'off' | 'start' | 'live' | 'pause';
+        nextSession?: { date: string; time: string } | null;
+        startScreen?: {
+          title: string; session: number | null; date: string; recap: string; showRecap: boolean;
+          lastSession?: { session: number; title: string; excerpt: string; imageUrl: string | null } | null;
+        } | null;
         wallpaperUrl: string | null;
         backdropUrl: string | null;
         location: { name: string; type: string; region: string | null; imageUrl: string | null } | null;
@@ -552,10 +699,69 @@ import '../styles/global.css';
         img.hidden = !url;
       }
 
+      function showStart(st: NonNullable<DisplayState['startScreen']>) {
+        body.dataset.mode = 'start';
+        $('startTitle').textContent = st.title;
+        const session = $('startSession');
+        session.hidden = st.session == null;
+        session.textContent = st.session == null ? '' : `Session ${st.session}`;
+        // The ISO date is a calendar day, not an instant: parse it as local time
+        const [y, m, d] = st.date.split('-').map(Number);
+        $('startDate').textContent = new Date(y, m - 1, d).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+        // "Title + last session": that diary entry instead of the typed recap, its picture behind
+        const last = st.lastSession ?? null;
+        const recap = $('startRecap');
+        recap.hidden = last ? false : !(st.showRecap && st.recap);
+        const entry = $('startRecapEntry');
+        entry.hidden = !last;
+        entry.textContent = last ? `Session ${last.session} · ${last.title}` : '';
+        $('startRecapText').textContent = last ? last.excerpt : st.recap; // text only, never HTML
+        const image = $<HTMLImageElement>('startImage');
+        if (!last?.imageUrl) {
+          image.onload = null; // a picture still loading for an earlier entry
+          delete body.dataset.startImage;
+        } else if (image.getAttribute('src') !== last.imageUrl) {
+          delete body.dataset.startImage; // fade in once loaded, not half drawn
+          image.onload = () => { body.dataset.startImage = '1'; };
+          image.src = last.imageUrl;
+        } else if (image.complete) {
+          body.dataset.startImage = '1';
+        }
+        setSparks($<HTMLCanvasElement>('idleSparks'), true);
+        setSparks($<HTMLCanvasElement>('nowSparks'), false);
+      }
+
+      function showOff(next: DisplayState['nextSession']) {
+        body.dataset.mode = 'off';
+        const line = $('offNext');
+        line.hidden = !next;
+        if (next) {
+          // Calendar day and wall-clock time: parse as local time, like the start screen's date
+          const [y, m, d] = next.date.split('-').map(Number);
+          const day = new Date(y, m - 1, d);
+          const weekday = day.toLocaleDateString('en-GB', { weekday: 'long' });
+          const date = day.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' });
+          line.textContent = `Next session: ${weekday}, ${date} · ${next.time}`; // Friday, 23 October · 19:00
+        }
+        setSparks($<HTMLCanvasElement>('idleSparks'), true);
+        setSparks($<HTMLCanvasElement>('nowSparks'), false);
+      }
+
       function render(s: DisplayState) {
         setBackdrop(s.backdropUrl);
 
-        if (!s.screenVisible) {
+        const fallback = s.screenVisible === false ? 'pause' : 'live';
+        const mode = s.mode === 'start' && !s.startScreen ? fallback : (s.mode ?? fallback);
+        if (mode === 'start' && s.startScreen) {
+          showStart(s.startScreen);
+          return;
+        }
+        if (mode === 'off') {
+          showOff(s.nextSession ?? null);
+          return;
+        }
+
+        if (mode === 'pause') {
           if (s.wallpaperUrl) {
             const img = $<HTMLImageElement>('wallpaperImg');
             if (img.getAttribute('src') !== s.wallpaperUrl) img.src = s.wallpaperUrl;

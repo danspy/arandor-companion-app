@@ -2,6 +2,9 @@
 // DM screen: the whole active party at a glance (HP, AC, initiative, speed, passives, saves).
 // A name opens that character's sheet in the side panel (src/lib/statblock-panel.ts); the
 // sheets are rendered here into <template>s, so opening one needs no request.
+// "Sync all" pulls the whole party from D&D Beyond (/api/characters/sync-all); opening the DM
+// screen asks for the automatic sync (at most every 15 minutes). Either way only this panel is
+// refreshed afterwards, so nothing else on the DM screen (timer, side panel, music) is touched.
 import type { PartyRow } from '../lib/party';
 import { signed } from '../lib/character-rolls';
 import { publicSheet } from '../lib/character-sheet';
@@ -9,8 +12,12 @@ import CombatStrip from './character/CombatStrip.astro';
 import AbilityCards from './character/AbilityCards.astro';
 import PrivateSheet from './character/PrivateSheet.astro';
 
-interface Props { rows: PartyRow[] }
-const { rows } = Astro.props;
+interface Props {
+  rows: PartyRow[];
+  syncIds: string[]; // the characters with a D&D Beyond link
+  syncedAt: Date | null; // the oldest of their last syncs: the whole table is at least this fresh
+}
+const { rows, syncIds, syncedAt } = Astro.props;
 const SAVES = [['str', 'STR'], ['dex', 'DEX'], ['con', 'CON'], ['int', 'INT'], ['wis', 'WIS'], ['cha', 'CHA']] as const;
 const PASSIVES = [['perception', 'Perc'], ['investigation', 'Inv'], ['insight', 'Ins']] as const;
 const hpTone = (r: PartyRow) => {
@@ -21,13 +28,25 @@ const hpTone = (r: PartyRow) => {
 ---
 {rows.length > 0 && (
   <section id="party-panel" class="t-panel p-6 mb-6" aria-label="Party">
-    <h2 class="t-section-h text-xl mb-1 flex items-center gap-2">
-      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
-      </svg>
-      Party
-    </h2>
-    <p class="t-faint text-xs mb-4">From D&D Beyond as of the last sync. The highest passive in each column is highlighted.</p>
+    <div class="flex items-center justify-between gap-3 mb-1">
+      <h2 class="t-section-h text-xl flex items-center gap-2">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"></path>
+        </svg>
+        Party
+      </h2>
+      {syncIds.length > 0 && (
+        <button type="button" class="t-btn-secondary text-xs inline-flex items-center gap-1.5 shrink-0" data-party-sync title="Sync every party character from D&D Beyond now">
+          <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+          Sync all
+        </button>
+      )}
+    </div>
+    <p class="t-faint text-xs mb-4">
+      <span data-party-synced>From D&D Beyond{syncedAt ? <>, synced <time datetime={syncedAt.toISOString()}>{syncedAt.toISOString().slice(0, 16).replace('T', ' ')} UTC</time></> : ' (not synced yet)'}.</span>
+      The highest passive in each column is highlighted.
+    </p>
+    <p class="party-sync-status text-xs mb-3" data-party-sync-status role="status" aria-live="polite" hidden></p>
     <div class="party-scroll">
       <table class="party-table">
         <thead>
@@ -43,7 +62,7 @@ const hpTone = (r: PartyRow) => {
         </thead>
         <tbody>
           {rows.map((r) => (
-            <tr data-character-id={r.id}>
+            <tr data-character-id={r.id} data-sync-id={syncIds.includes(r.id) ? r.id : undefined}>
               <th scope="row" class="party-name"><a href={`/characters/${r.id}`} data-party-sheet={r.id} title="Show the sheet in the side panel">{r.name}</a></th>
               <td class="party-hp">
                 {r.hp != null && r.maxHp ? (
@@ -91,4 +110,83 @@ const hpTone = (r: PartyRow) => {
   .party-hp { min-width: 6.5rem; }
   .party-hp-num { display: block; color: var(--text-muted); margin-bottom: 0.2rem; }
   .party-hp .cs-hp-bar { display: block; height: 5px; }
+  .party-sync-status { color: var(--text-muted); }
+  .party-sync-status.is-error { color: var(--danger); }
 </style>
+
+<script>
+  import { autoSyncCharacters } from '../lib/auto-sync';
+
+  let running = false;
+  let lastStatus: { text: string; error: boolean } | null = null;
+
+  // The sync time in the reader's own clock ("today 20:08", or the date if older)
+  function showSyncTime(panel: HTMLElement) {
+    const time = panel.querySelector<HTMLTimeElement>('[data-party-synced] time');
+    if (!time) return;
+    const at = new Date(time.dateTime);
+    const clock = at.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    time.textContent = at.toDateString() === new Date().toDateString() ? `today ${clock}` : `${at.toLocaleDateString([], { day: 'numeric', month: 'short' })}, ${clock}`;
+  }
+
+  function showStatus(panel: HTMLElement) {
+    const status = panel.querySelector<HTMLElement>('[data-party-sync-status]');
+    const button = panel.querySelector<HTMLButtonElement>('[data-party-sync]');
+    if (button) button.disabled = running;
+    if (!status) return;
+    status.hidden = !lastStatus;
+    status.textContent = lastStatus?.text ?? '';
+    status.classList.toggle('is-error', !!lastStatus?.error);
+  }
+
+  // Swap in a fresh copy of the panel from the server, leaving the rest of the DM screen alone
+  // (a soft reload would re-render all of it: typed values, the open side panel and the combat view)
+  async function refreshPanel() {
+    const response = await fetch(location.pathname + location.search, { headers: { Accept: 'text/html' } });
+    if (!response.ok) return;
+    const fresh = new DOMParser().parseFromString(await response.text(), 'text/html').getElementById('party-panel');
+    const panel = document.getElementById('party-panel');
+    if (!fresh || !panel) return;
+    const copy = document.importNode(fresh, true);
+    panel.replaceWith(copy);
+    showSyncTime(copy);
+    showStatus(copy);
+  }
+
+  async function syncAll() {
+    if (running) return;
+    running = true;
+    lastStatus = { text: 'Syncing the party from D&D Beyond…', error: false };
+    showStatus(document.getElementById('party-panel')!);
+    try {
+      const response = await fetch('/api/characters/sync-all', { method: 'POST' });
+      if (!response.ok) throw new Error((await response.json().catch(() => null))?.error ?? `HTTP ${response.status}`);
+      const { synced, failed } = await response.json() as { synced: number; failed: { name: string }[] };
+      lastStatus = {
+        text: `Synced ${synced}` + (failed.length ? ` · ${failed.length} failed: ${failed.map((f) => f.name).join(', ')}` : ''),
+        error: failed.length > 0,
+      };
+    } catch (error) {
+      lastStatus = { text: `Sync failed: ${error instanceof Error ? error.message : error}`, error: true };
+    }
+    running = false;
+    await refreshPanel().catch(() => {});
+    const panel = document.getElementById('party-panel');
+    if (panel) showStatus(panel);
+  }
+
+  // Delegated: the button is replaced along with the panel
+  document.addEventListener('click', (e) => {
+    if ((e.target as HTMLElement).closest?.('#party-panel [data-party-sync]')) void syncAll();
+  });
+
+  document.addEventListener('astro:page-load', () => {
+    const panel = document.getElementById('party-panel');
+    if (!panel) return;
+    lastStatus = null;
+    showSyncTime(panel);
+    showStatus(panel);
+    const ids = [...panel.querySelectorAll<HTMLElement>('[data-sync-id]')].map((r) => r.dataset.syncId!);
+    void autoSyncCharacters(ids, refreshPanel);
+  });
+</script>

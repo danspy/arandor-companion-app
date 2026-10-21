@@ -261,12 +261,30 @@ export const DMScreenState = sqliteTable('DMScreenState', {
   showInitiativeTracker: bool('showInitiativeTracker').notNull().default(false),
   screenVisible: bool('screenVisible').notNull().default(true), // Content or placeholder on player display
   placeholderImageUrl: text('placeholderImageUrl'), // Wallpaper image when screen is hidden
+  screenMode: text('screenMode').notNull().default('live'), // 'off' | 'start' | 'live' | 'pause'; replaces screenVisible. The API creates the row 'off'
+  // Shape: StartScreen in src/lib/scenes.ts
+  startScreen: json<{ title: string; session: number | null; date: string; recap: string; showRecap: boolean; diaryEntryId?: string | null }>('startScreen'), // Last start screen content, kept after going live
   // Timer fields
   showTimer: bool('showTimer').notNull().default(false),
   timerDuration: integer('timerDuration').notNull().default(0), // Timer duration in seconds
   timerStartedAt: integer('timerStartedAt'), // Unix timestamp when timer started
   timerPausedAt: integer('timerPausedAt'), // Unix timestamp when timer was paused
   timerStatus: text('timerStatus').notNull().default('stopped'), // 'running' | 'paused' | 'stopped'
+  updatedAt: now('updatedAt'),
+});
+
+// Saved display setup (location + spotlight); applying one replaces the live setup.
+export const Scene = sqliteTable('Scene', {
+  id: text('id').primaryKey(),
+  name: text('name').notNull(),
+  sortOrder: integer('sortOrder').notNull(),
+  locationId: text('locationId'),
+  locationHidden: bool('locationHidden').notNull().default(false),
+  spotlightIds: jsonArray('spotlightIds'), // NPC id or `character:<id>`, like DMScreenState.spotlightNpcIds
+  hiddenIds: jsonArray('hiddenIds'),
+  focusIds: jsonArray('focusIds'),
+  npcsHidden: bool('npcsHidden').notNull().default(false),
+  createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 });
 

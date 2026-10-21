@@ -16,8 +16,9 @@ don't have to be typed in twice.
 
 | Sync | What | Triggered by | Who |
 |---|---|---|---|
-| Automatic sync | Everything the button syncs | Opening the dashboard, the Characters page or a character page, at most once per 15 minutes per character | Anyone (the visit only triggers it; no data is sent back) |
+| Automatic sync | Everything the button syncs | Opening the dashboard, the Characters page, a character page or the DM screen, at most once per 15 minutes per character | Anyone (the visit only triggers it; no data is sent back) |
 | **Sync from D&D Beyond** button | Level, HP, max HP, ability scores, the character sheet | Character page | Owner or admin |
+| **Sync all** | The same, for every active party character with a link, at once (no 15-minute wait); also the HP of their initiative tracker entries | Party panel on the DM screen | DM or admin |
 | HP sync | Current, max and temp HP, death saves | **Sync HP** in the initiative tracker or DM screen; automatically every 10 s while combat is active | DM or admin |
 
 **D&D Beyond is the truth.** Every sync replaces HP and ability scores, including scores

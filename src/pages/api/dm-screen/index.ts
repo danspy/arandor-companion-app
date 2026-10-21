@@ -1,9 +1,14 @@
 import type { APIRoute } from 'astro';
 import { db, DMScreenState, eq } from '@/db';
-import { getUserRole } from '../../lib/auth';
-import { requireDungeonmasterOrAdmin } from '../../lib/middleware';
+import { getUserRole } from '../../../lib/auth';
+import { requireDungeonmasterOrAdmin } from '../../../lib/middleware';
+import { validateStartScreen, type ScreenMode } from '../../../lib/scenes';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
+const MODES: ScreenMode[] = ['off', 'start', 'live', 'pause'];
+
+const json = (body: unknown, status = 200) =>
+  new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 // GET - Fetch current DM Screen state (DM/Admin only). The player display reads the public,
 // filtered /api/display instead, so hidden locations and NPCs never reach players.
@@ -14,7 +19,7 @@ export const GET: APIRoute = async ({ cookies }) => {
   try {
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     
-    // Create default state if it doesn't exist
+    // Create default state if it doesn't exist: no session running
     if (!state) {
       await db.insert(DMScreenState).values({
         id: DM_SCREEN_STATE_ID,
@@ -22,7 +27,8 @@ export const GET: APIRoute = async ({ cookies }) => {
         spotlightNpcIds: [],
         customAssets: [],
         showInitiativeTracker: false,
-        screenVisible: true,
+        screenVisible: false,
+        screenMode: 'off',
         placeholderImageUrl: null,
         showTimer: false,
         timerDuration: 0,
@@ -41,7 +47,9 @@ export const GET: APIRoute = async ({ cookies }) => {
         spotlightNpcIds: [], 
         customAssets: [], 
         showInitiativeTracker: false,
-        screenVisible: true,
+        screenVisible: false,
+        screenMode: 'off',
+        startScreen: null,
         placeholderImageUrl: null,
         showTimer: false,
         timerDuration: 0,
@@ -79,7 +87,21 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
 
   try {
     const updates = await request.json();
-    
+
+    // Screen mode and the legacy screenVisible flag stay in sync both ways
+    if (updates.screenMode !== undefined && !MODES.includes(updates.screenMode)) {
+      return json({ error: 'screenMode must be off, start, live or pause' }, 400);
+    }
+    if (updates.startScreen !== undefined) {
+      const checked = validateStartScreen(updates.startScreen);
+      if (!checked.ok) return json({ error: checked.error }, 400);
+      updates.startScreen = checked.value;
+    }
+    if (updates.screenMode === undefined && updates.screenVisible !== undefined) {
+      updates.screenMode = updates.screenVisible ? 'live' : 'pause';
+    }
+    if (updates.screenMode !== undefined) updates.screenVisible = updates.screenMode === 'live' || updates.screenMode === 'start';
+
     // Fetch current state
     let state = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
 
@@ -128,7 +150,9 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
         focusNpcIds: updates.focusNpcIds ?? [],
         customAssets: updates.customAssets ?? [],
         showInitiativeTracker: updates.showInitiativeTracker ?? false,
-        screenVisible: updates.screenVisible ?? true,
+        screenVisible: updates.screenVisible ?? false,
+        screenMode: updates.screenMode ?? 'off',
+        startScreen: updates.startScreen ?? null,
         placeholderImageUrl: updates.placeholderImageUrl ?? null,
         showTimer: updates.showTimer ?? false,
         timerDuration: updates.timerDuration ?? 0,
@@ -150,6 +174,8 @@ export const PUT: APIRoute = async ({ request, cookies }) => {
           customAssets: updates.customAssets !== undefined ? updates.customAssets : state.customAssets,
           showInitiativeTracker: updates.showInitiativeTracker !== undefined ? updates.showInitiativeTracker : state.showInitiativeTracker,
           screenVisible: updates.screenVisible !== undefined ? updates.screenVisible : state.screenVisible,
+          screenMode: updates.screenMode !== undefined ? updates.screenMode : state.screenMode,
+          startScreen: updates.startScreen !== undefined ? updates.startScreen : state.startScreen,
           placeholderImageUrl: updates.placeholderImageUrl !== undefined ? updates.placeholderImageUrl : state.placeholderImageUrl,
           showTimer: updates.showTimer !== undefined ? updates.showTimer : state.showTimer,
           timerDuration: updates.timerDuration !== undefined ? updates.timerDuration : state.timerDuration,

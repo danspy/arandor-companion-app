@@ -1,0 +1,215 @@
+---
+// DM screen: the dialog that builds or edits a saved scene (location + spotlight with hide/focus
+// marks). Used by SceneStrip.astro only, through two events on `document`:
+// - `scene-dialog:open` (detail: { title, id?, name, setup }) opens it; no id = a new scene
+// - `scene-dialog:saved` (detail: the scene card from the API, plus `created`) after a save
+import Button from './Button.astro';
+import type { Character, NPC } from '@/db';
+import { characterKey, characterSubtitle, npcSubtitle } from '../lib/spotlight';
+
+interface Props {
+  locations: { id: string; name: string; type: string }[];
+  party: (typeof Character.$inferSelect)[];
+  formerParty: (typeof Character.$inferSelect)[];
+  npcs: (typeof NPC.$inferSelect)[];
+}
+const { locations, party, formerParty, npcs } = Astro.props;
+---
+
+<dialog id="sceneDialog" class="dm-dialog t-modal-panel" aria-labelledby="sceneDialogTitle">
+  <form method="dialog" id="sceneForm" class="dm-dialog-body space-y-4">
+    <h2 id="sceneDialogTitle" class="dm-dialog-title">New scene</h2>
+    <div>
+      <label for="sceneName" class="t-label block mb-2">Name</label>
+      <input type="text" id="sceneName" required maxlength="80" class="t-input w-full px-3 py-2 text-sm" placeholder="e.g. Ambush at the bridge" />
+    </div>
+    <div>
+      <label for="sceneLocation" class="t-label block mb-2">Location</label>
+      <select id="sceneLocation" class="t-input w-full px-3 py-2 text-sm">
+        <option value="">-- None --</option>
+        {locations.map((l) => <option value={l.id}>{l.name} ({l.type})</option>)}
+      </select>
+      <label class="t-body-text text-sm inline-flex items-center gap-2 mt-2">
+        <input type="checkbox" id="sceneLocationHidden" /> Hide the location from players
+      </label>
+    </div>
+    <div>
+      <label for="sceneSpotlightSelect" class="t-label block mb-2">Spotlight</label>
+      <div class="flex gap-2">
+        <select id="sceneSpotlightSelect" class="t-input flex-1 min-w-0 px-3 py-2 text-sm">
+          <option value="">-- Select --</option>
+          {/* Same groups and values (spotlight keys) as the Spotlight panel's picker */}
+          {party.length > 0 && (
+            <optgroup label="Party">
+              {party.map((c) => <option value={characterKey(c.id)} data-name={c.name} data-party>{c.name} ({characterSubtitle(c)})</option>)}
+            </optgroup>
+          )}
+          <optgroup label="NPCs">
+            {npcs.map((n) => <option value={n.id} data-name={n.name}>{n.name} ({npcSubtitle(n)})</option>)}
+          </optgroup>
+          {formerParty.length > 0 && (
+            <optgroup label="Former party members">
+              {formerParty.map((c) => <option value={characterKey(c.id)} data-name={c.name} data-party>{c.name} ({characterSubtitle(c)})</option>)}
+            </optgroup>
+          )}
+        </select>
+        <Button variant="secondary" size="sm" id="sceneSpotlightAdd">Add</Button>
+      </div>
+      <ul id="sceneSpotlightList" class="space-y-2 mt-3"></ul>
+      <p id="sceneSpotlightEmpty" class="t-faint text-sm mt-3">Nobody in the spotlight</p>
+      <label class="t-body-text text-sm inline-flex items-center gap-2 mt-2">
+        <input type="checkbox" id="sceneNpcsHidden" /> Hide the whole spotlight from players
+      </label>
+    </div>
+    <div class="dm-dialog-actions">
+      <button type="button" id="sceneCancelBtn" class="t-btn-secondary">Cancel</button>
+      <Button variant="primary" type="submit" id="sceneSaveBtn">Save</Button>
+    </div>
+  </form>
+</dialog>
+
+<script>
+  import { normalizeSetup, type SceneSetup } from '../lib/scenes';
+
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+  const EYE_OFF = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>';
+  const FOCUS = '<circle cx="12" cy="12" r="8" stroke-width="2"></circle><circle cx="12" cy="12" r="3" stroke-width="2"></circle><path stroke-linecap="round" stroke-width="2" d="M12 2v3M12 19v3M2 12h3M19 12h3"></path>';
+  const CROSS = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
+
+  // The scene being edited; id null = a new one
+  let editingId: string | null = null;
+  let draft: SceneSetup = normalizeSetup({ locationId: null, locationHidden: false, spotlightIds: [], hiddenIds: [], focusIds: [], npcsHidden: false });
+
+  const pickerOptions = () => [...($<HTMLSelectElement>('sceneSpotlightSelect')?.querySelectorAll('option') ?? [])].filter((o) => o.value);
+
+  function iconButton(mark: string, pressed: boolean | null, label: string, paths: string) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = `t-icon-btn${mark === 'remove' ? ' t-icon-btn-danger' : ''}`;
+    b.dataset.mark = mark;
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    if (pressed !== null) {
+      b.setAttribute('aria-pressed', String(pressed));
+      if (pressed) b.style.cssText = 'color:var(--gold);border-color:var(--border-gold)';
+    }
+    b.innerHTML = `<svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+    return b;
+  }
+
+  // Spotlight rows in order, each with focus / hide / remove; the picker only offers the others
+  function renderSpotlight() {
+    const list = $('sceneSpotlightList');
+    if (!list) return;
+    const byKey = new Map(pickerOptions().map((o) => [o.value, o]));
+    list.replaceChildren(
+      ...draft.spotlightIds.map((key) => {
+        const option = byKey.get(key);
+        const hidden = draft.hiddenIds.includes(key);
+        const focused = draft.focusIds.includes(key);
+        const li = document.createElement('li');
+        li.className = 't-row p-2 pl-3 flex items-center justify-between gap-2';
+        li.dataset.key = key;
+        const name = document.createElement('p');
+        name.className = 't-body-text text-sm font-medium min-w-0 truncate';
+        name.textContent = option?.dataset.name ?? 'Deleted';
+        if (!option) name.classList.add('t-faint');
+        if (option?.hasAttribute('data-party')) name.insertAdjacentHTML('beforeend', ' <span class="t-badge ml-1">Party</span>');
+        if (hidden) name.insertAdjacentHTML('beforeend', ' <span class="t-badge ml-1">Hidden</span>');
+        if (focused) name.insertAdjacentHTML('beforeend', ' <span class="t-badge t-badge-gold ml-1">Focus</span>');
+        const buttons = document.createElement('div');
+        buttons.className = 'flex items-center gap-1 shrink-0';
+        buttons.append(
+          iconButton('focus', focused, focused ? 'End focus' : 'Focus', FOCUS),
+          iconButton('hidden', hidden, hidden ? 'Show to players' : 'Hide from players', EYE_OFF),
+          iconButton('remove', null, 'Remove from the scene', CROSS),
+        );
+        li.append(name, buttons);
+        return li;
+      }),
+    );
+    $('sceneSpotlightEmpty')?.classList.toggle('hidden', draft.spotlightIds.length > 0);
+    const select = $<HTMLSelectElement>('sceneSpotlightSelect');
+    for (const o of pickerOptions()) o.disabled = draft.spotlightIds.includes(o.value);
+    if (select?.selectedOptions[0]?.disabled) select.value = '';
+  }
+
+  function open(detail: { title: string; id?: string; name: string; setup: SceneSetup }) {
+    const dialog = $<HTMLDialogElement>('sceneDialog');
+    if (!dialog || dialog.open) return;
+    editingId = detail.id ?? null;
+    draft = normalizeSetup(detail.setup);
+    $('sceneDialogTitle')!.textContent = detail.title;
+    $<HTMLInputElement>('sceneName')!.value = detail.name;
+    // A deleted location gets a stand-in option, so saving other changes doesn't drop it unasked
+    const location = $<HTMLSelectElement>('sceneLocation')!;
+    location.querySelector('option[data-missing]')?.remove();
+    location.value = draft.locationId ?? '';
+    if (location.value !== (draft.locationId ?? '')) {
+      const missing = new Option('Deleted location', draft.locationId!);
+      missing.dataset.missing = '';
+      location.add(missing);
+      location.value = draft.locationId!;
+    }
+    $<HTMLInputElement>('sceneLocationHidden')!.checked = draft.locationHidden;
+    $<HTMLInputElement>('sceneNpcsHidden')!.checked = draft.npcsHidden;
+    $<HTMLSelectElement>('sceneSpotlightSelect')!.value = '';
+    renderSpotlight();
+    dialog.showModal();
+    $('sceneName')?.focus();
+  }
+
+  document.addEventListener('scene-dialog:open', (e) => open((e as CustomEvent).detail));
+
+  const toggle = (list: string[], key: string) => (list.includes(key) ? list.filter((k) => k !== key) : [...list, key]);
+
+  document.addEventListener('click', (e) => {
+    const target = e.target as Element | null;
+    if (!target?.closest?.('#sceneDialog')) return;
+    if (target.closest('#sceneCancelBtn')) return $<HTMLDialogElement>('sceneDialog')?.close();
+    if (target.closest('#sceneSpotlightAdd')) {
+      const select = $<HTMLSelectElement>('sceneSpotlightSelect')!;
+      if (!select.value) return;
+      draft = normalizeSetup({ ...draft, spotlightIds: [...draft.spotlightIds, select.value] });
+      select.value = '';
+      return renderSpotlight();
+    }
+    const btn = target.closest<HTMLElement>('#sceneSpotlightList [data-mark]');
+    const key = btn?.closest<HTMLElement>('[data-key]')?.dataset.key;
+    if (!btn || !key) return;
+    if (btn.dataset.mark === 'focus') draft = { ...draft, focusIds: toggle(draft.focusIds, key) };
+    else if (btn.dataset.mark === 'hidden') draft = { ...draft, hiddenIds: toggle(draft.hiddenIds, key) };
+    else draft = normalizeSetup({ ...draft, spotlightIds: draft.spotlightIds.filter((k) => k !== key) });
+    renderSpotlight();
+  });
+
+  document.addEventListener('submit', async (e) => {
+    if ((e.target as HTMLElement).id !== 'sceneForm') return;
+    e.preventDefault();
+    const setup = normalizeSetup({
+      ...draft,
+      locationId: $<HTMLSelectElement>('sceneLocation')!.value || null,
+      locationHidden: $<HTMLInputElement>('sceneLocationHidden')!.checked,
+      npcsHidden: $<HTMLInputElement>('sceneNpcsHidden')!.checked,
+    });
+    const name = $<HTMLInputElement>('sceneName')!.value.trim();
+    const save = $<HTMLButtonElement>('sceneSaveBtn')!;
+    save.disabled = true;
+    try {
+      const res = await fetch(editingId ? `/api/scenes/${encodeURIComponent(editingId)}` : '/api/scenes', {
+        method: editingId ? 'PUT' : 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, setup }),
+      });
+      const body = await res.json().catch(() => ({}));
+      if (!res.ok) return alert(body.error || 'Could not save the scene');
+      $<HTMLDialogElement>('sceneDialog')?.close();
+      document.dispatchEvent(new CustomEvent('scene-dialog:saved', { detail: { ...body, created: !editingId } }));
+    } catch (error) {
+      console.error('Error saving scene:', error);
+      alert('Could not save the scene');
+    } finally {
+      save.disabled = false;
+    }
+  });
+</script>
