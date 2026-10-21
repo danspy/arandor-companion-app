@@ -2,6 +2,17 @@ What's new in the Arandor Companion App, newest first.
 
 ## October 2026
 
+### DM screen: sessions and scenes
+- A session on the player display: *No session running* (with the date and time of the next
+  session from the calendar), a start screen with the title and an optional *Previously…*
+  recap, then live, with *Pause* and *Resume* for breaks and *End session* when you are done
+- Start a session from the DM screen with number, title and date; the recap is prefilled from
+  your latest diary entry
+- Saved scenes: a location plus a spotlight, applied in one click; save what is on the display
+  now or build one, edit, reorder (drag, or buttons on phones) and delete
+- Applying a scene never changes the session and leaves turn order and timer alone
+- *Hide screen* is now *Pause screen*: the wallpaper (or *Short break*) shown while paused
+
 ### Bestiary
 - Stat blocks for monsters and NPCs, only for the DM: paste them from D&D Beyond (2024 Monster
   Manual) or type in your own, with a live preview

@@ -1,0 +1,183 @@
+// Saved display scenes and the start screen of the DM screen. Pure logic, shared by the API
+// routes and the browser, so nothing server-only may be imported here (types only).
+
+import type { DMScreenState } from '@/db';
+
+type DMScreenStateRow = typeof DMScreenState.$inferSelect;
+
+// off: no session running · start: title card · live: the table · pause: wallpaper or break card
+export type ScreenMode = 'off' | 'start' | 'live' | 'pause';
+
+export interface StartScreen {
+  title: string;
+  session: number | null;
+  date: string; // YYYY-MM-DD
+  recap: string;
+  showRecap: boolean;
+  // "Title + last session": a diary entry's excerpt, with its image behind the title card.
+  // Only the id is kept; /api/display looks the entry up, so edits to it show up. Missing in
+  // start screens saved before this option existed.
+  diaryEntryId?: string | null;
+}
+
+// The diary entry on the start screen, as /api/display sends it
+export interface LastSession {
+  session: number;
+  title: string;
+  excerpt: string;
+  imageUrl: string | null;
+}
+
+const EXCERPT_MAX = 300;
+
+// Markdown to one line of plain text: no images, link targets, HTML, headings, list markers or emphasis
+function plainText(md: string): string {
+  return md
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/^\s{0,3}(#{1,6}|>|[-*+]|\d+\.)\s+/gm, '')
+    .replace(/(\*\*|__|\*|~~|`)/g, '')
+    .replace(/(^|[^\w])_([^_\n]+)_(?![\w])/g, '$1$2')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// A few sentences of a diary entry: its summary, else the start of its text, cut at a word
+export function diaryExcerpt(entry: { summary: string | null; content: string }, max = EXCERPT_MAX): string {
+  const text = plainText(entry.summary?.trim() || entry.content);
+  if (text.length <= max) return text;
+  const cut = text.slice(0, max);
+  const space = cut.lastIndexOf(' ');
+  return `${(space > max * 0.6 ? cut.slice(0, space) : cut).replace(/[\s,;:.\u2013\u2014-]+$/, '')}…`;
+}
+
+// The picture of a diary entry: its cover, else the first gallery image
+export const diaryImage = (entry: { coverImageUrl: string | null; galleryUrls: string[] | null }): string | null =>
+  entry.coverImageUrl || entry.galleryUrls?.[0] || null;
+
+export interface SceneSetup {
+  locationId: string | null;
+  locationHidden: boolean;
+  spotlightIds: string[]; // NPC id or `character:<id>`, same keys as the live spotlight
+  hiddenIds: string[];
+  focusIds: string[];
+  npcsHidden: boolean;
+}
+
+const strings = (v: unknown): string[] => (Array.isArray(v) ? v.filter((x): x is string => typeof x === 'string') : []);
+
+// Spotlight without duplicates; hidden/focus marks only on entries that are in the spotlight.
+export function normalizeSetup(s: SceneSetup): SceneSetup {
+  const spotlightIds = [...new Set(s.spotlightIds)];
+  const inSpotlight = new Set(spotlightIds);
+  return {
+    ...s,
+    spotlightIds,
+    hiddenIds: [...new Set(s.hiddenIds)].filter((id) => inSpotlight.has(id)),
+    focusIds: [...new Set(s.focusIds)].filter((id) => inSpotlight.has(id)),
+  };
+}
+
+export function snapshotSetup(state: DMScreenStateRow): SceneSetup {
+  return normalizeSetup({
+    locationId: state.currentLocationId ?? null,
+    locationHidden: !!state.locationHidden,
+    spotlightIds: strings(state.spotlightNpcIds),
+    hiddenIds: strings(state.hiddenNpcIds),
+    focusIds: strings(state.focusNpcIds),
+    npcsHidden: !!state.npcsHidden,
+  });
+}
+
+// The DMScreenState fields a scene replaces. Initiative tracker, timer and the screen mode are not
+// touched: a scene can be prepared while off or paused and players see it once the DM goes live.
+export function setupToStateUpdate(
+  s: SceneSetup,
+  exists: { npcIds: Set<string>; characterIds: Set<string>; locationIds: Set<string> },
+) {
+  const known = (id: string) =>
+    id.startsWith('character:') ? exists.characterIds.has(id.slice('character:'.length)) : exists.npcIds.has(id);
+  const n = normalizeSetup({ ...s, spotlightIds: s.spotlightIds.filter(known) });
+  return {
+    currentLocationId: n.locationId && exists.locationIds.has(n.locationId) ? n.locationId : null,
+    locationHidden: n.locationHidden,
+    spotlightNpcIds: n.spotlightIds,
+    hiddenNpcIds: n.hiddenIds,
+    focusNpcIds: n.focusIds,
+    npcsHidden: n.npcsHidden,
+  };
+}
+
+const sameSet = (a: string[], b: string[]) => a.length === b.length && a.every((x) => b.includes(x));
+
+// Spotlight order matters, the order of the marks does not.
+export function matchesSetup(state: DMScreenStateRow, s: SceneSetup): boolean {
+  const live = snapshotSetup(state);
+  const want = normalizeSetup(s);
+  return (
+    live.locationId === want.locationId &&
+    live.locationHidden === want.locationHidden &&
+    live.npcsHidden === want.npcsHidden &&
+    live.spotlightIds.length === want.spotlightIds.length &&
+    live.spotlightIds.every((id, i) => id === want.spotlightIds[i]) &&
+    sameSet(live.hiddenIds, want.hiddenIds) &&
+    sameSet(live.focusIds, want.focusIds)
+  );
+}
+
+export function validateScene(
+  body: unknown,
+): { ok: true; name: string; setup: SceneSetup } | { ok: false; error: string } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const name = typeof b.name === 'string' ? b.name.trim() : '';
+  if (name.length < 1 || name.length > 80) return { ok: false, error: 'Name must be 1 to 80 characters' };
+  const raw = b.setup;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'Setup is required' };
+  const r = raw as Record<string, unknown>;
+  for (const k of ['spotlightIds', 'hiddenIds', 'focusIds']) {
+    if (r[k] !== undefined && !(Array.isArray(r[k]) && (r[k] as unknown[]).every((x) => typeof x === 'string'))) {
+      return { ok: false, error: `${k} must be a list of ids` };
+    }
+  }
+  if (r.locationId != null && typeof r.locationId !== 'string') return { ok: false, error: 'locationId must be text or null' };
+  const setup = normalizeSetup({
+    locationId: typeof r.locationId === 'string' && r.locationId ? r.locationId : null,
+    locationHidden: r.locationHidden === true,
+    spotlightIds: strings(r.spotlightIds),
+    hiddenIds: strings(r.hiddenIds),
+    focusIds: strings(r.focusIds),
+    npcsHidden: r.npcsHidden === true,
+  });
+  return { ok: true, name, setup };
+}
+
+export function validateStartScreen(body: unknown): { ok: true; value: StartScreen } | { ok: false; error: string } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const title = typeof b.title === 'string' ? b.title.trim() : '';
+  if (title.length > 120) return { ok: false, error: 'Title is too long (max 120 characters)' };
+  const recap = typeof b.recap === 'string' ? b.recap : '';
+  if (recap.length > 5000) return { ok: false, error: 'Recap is too long (max 5000 characters)' };
+  const session = b.session ?? null;
+  if (session !== null && !(Number.isInteger(session) && (session as number) >= 1)) {
+    return { ok: false, error: 'Session must be a whole number of at least 1' };
+  }
+  const date = typeof b.date === 'string' ? b.date : '';
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return { ok: false, error: 'Date must be YYYY-MM-DD' };
+  if (b.diaryEntryId != null && (typeof b.diaryEntryId !== 'string' || b.diaryEntryId.length > 64)) {
+    return { ok: false, error: 'diaryEntryId must be a diary entry id or null' };
+  }
+  const diaryEntryId = typeof b.diaryEntryId === 'string' && b.diaryEntryId ? b.diaryEntryId : null;
+  return { ok: true, value: { title, session: session as number | null, date, recap, showRecap: b.showRecap === true, diaryEntryId } };
+}
+
+// Pre-filled start screen: next session number, today, and the latest session's summary as recap.
+export function startDefaults(
+  diary: { session: number; summary: string | null }[],
+  today: string,
+): { session: number | null; date: string; recap: string } {
+  if (!diary.length) return { session: null, date: today, recap: '' };
+  const last = diary.reduce((a, b) => (b.session > a.session ? b : a));
+  return { session: last.session + 1, date: today, recap: last.summary ?? '' };
+}

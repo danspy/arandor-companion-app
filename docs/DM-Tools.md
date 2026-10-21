@@ -155,13 +155,61 @@ about 2 seconds.
   previous/next turn, sync HP) and the current and next combatant right in the panel.
 - **Timer:** show a countdown on the display; set minutes, start, pause, reset. The server
   sets the start time, so the countdown matches on every device even if their clocks differ.
-- **Hide screen:** shows a wallpaper (upload an image or give a URL) instead of the content,
-  e.g. during breaks. Uploaded wallpapers are saved as files (older ones were stored inside the
+- **Pause screen:** the wallpaper (upload an image or give a URL) the display shows while the
+  session is paused, e.g. during breaks. Without one it shows *Short break*. Uploaded wallpapers are saved as files (older ones were stored inside the
   screen settings, which made every display refresh download them again).
 - **Clear player display** removes location, NPCs and initiative at once and resets the
   hidden marks.
 - **Music:** a small panel to play table music from the DM screen; see [Music](#music). It
   only controls the music on your own device and never appears on the player display.
+
+## Scenes and quick actions
+
+A strip under the party panel: **Quick actions** (the session) on the left, your saved
+**Scenes** on the right. On a phone they stack.
+
+### Session
+
+The player display follows a session. The badge shows where you are: *No session*, *Start
+screen*, *Live* or *Paused*.
+
+| Now | Buttons | What players see |
+|---|---|---|
+| No session | *Start session* | *Arandor*, *No session running* and, if the calendar has one, the date and time of the next session (never its title or description) |
+| Start screen | *Go live*, *End session* | The title card, optionally with *Previously…* and a recap or the last session's diary entry |
+| Live | *Pause*, *End session* | Everything you set up on the DM screen |
+| Paused | *Resume*, *End session* | Your pause wallpaper, or *Short break* |
+
+- **Start session** opens a dialog with the session number, title and date, and what the
+  display shows under the title:
+  - *Title card*: the title alone.
+  - *Title + recap*: a recap you type, prefilled from your latest diary entry's summary.
+  - *Title + last session* (the default when the diary has entries): pick a diary entry, the
+    newest is preselected. Players see its session and title with a short excerpt (its
+    summary, or the start of its text), and its cover picture (else the first gallery picture)
+    fills the screen behind the title card. Later edits to the entry show up on the display.
+
+  Press *Show*. Starting again on the same day (for example after *End session*) re-opens the
+  dialog with that day's choices.
+- **Go live** switches to the real display. **End session** asks for confirmation and takes
+  you back to *No session*; location, spotlight, turn order and timer stay as they are.
+
+### Scenes
+
+A scene is a location plus a spotlight, ready to apply in one click.
+
+- **Save current as scene** stores the setup on the DM screen now, including entries you have
+  hidden from players (not just what the display shows). **New scene** builds one from
+  scratch. Pencil to edit: name, location (and whether it is hidden), and the spotlight with
+  the hide and focus marks per entry.
+- Each card shows the location thumbnail, the name and the portraits. A **CURRENT** highlight
+  marks the scene the display matches right now.
+- **Apply** replaces the location and spotlight. It never changes the session (you can prepare
+  scenes while paused or before going live), and the turn order and timer are untouched.
+- **Reorder** by dragging a card; on phones use the up and down buttons. **Delete** asks for
+  confirmation.
+- If an NPC, character or location in a scene was deleted later, it shows greyed out and is
+  skipped when you apply the scene.
 
 ## Music
 
@@ -253,6 +301,16 @@ stopped*.
 Players never see exact HP of others on the display, only the health status above. With
 nothing selected it shows *Awaiting DM…*.
 
+It also follows the session, see [Scenes and quick actions](#scenes-and-quick-actions):
+
+- **No session:** *Arandor*, *No session running* and the date and time of the next session
+  from the calendar, if there is one.
+- **Start screen:** the session title as a title card with embers and a glowing mark, with a
+  *Previously…* recap or the last session's diary entry (and its picture as the background)
+  if you chose one.
+- **Paused:** your wallpaper, or *Short break*.
+- **Live:** the layouts above.
+
 The display checks `/api/display` every 2 seconds. That one response holds everything it shows
 and is about 1–2 KB, or an empty *304 Not Modified* when nothing changed, so a display can run
 all evening on a phone hotspot. If the server can't be reached it retries with growing pauses
@@ -264,7 +322,7 @@ and picks up again on its own.
 - Open the display on its screen before the players arrive, and use the browser's full-screen
   mode (F11 on most computers).
 - Start combat in the tracker first, then switch on *Initiative* in the DM screen.
-- Use *Hide screen* for breaks, and *Clear player display* between scenes.
+- Use *Pause* for breaks, and save a scene for each place you will visit.
 
 ## Troubleshooting
 
