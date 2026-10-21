@@ -1,7 +1,9 @@
 import type { APIRoute } from 'astro';
 import crypto from 'node:crypto';
-import { db, CampaignProgress, Character, DMScreenState, Location, NPC, eq, inArray } from '@/db';
+import { db, CampaignProgress, Character, DiaryEntry, DMScreenState, Event, Location, NPC, eq, inArray, sql } from '@/db';
 import { currentEntry, getCombatState, getEntries, healthStatus } from '../../../lib/combat';
+import { nextSession } from '../../../lib/next-session';
+import { diaryExcerpt, diaryImage, type LastSession, type ScreenMode } from '../../../lib/scenes';
 import { characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../../lib/spotlight';
 
 const DM_SCREEN_STATE_ID = 'current-dm-screen';
@@ -15,19 +17,25 @@ export const GET: APIRoute = async ({ request }) => {
     const screen = await db.select().from(DMScreenState).where(eq(DMScreenState.id, DM_SCREEN_STATE_ID)).get();
     const campaign = await db.select({ heroImageUrl: CampaignProgress.heroImageUrl }).from(CampaignProgress).limit(1).get();
 
+    // The stage (location, spotlight, initiative, timer) only while the session is live; the
+    // other modes show their own screen and must not leak what the DM is preparing. No row yet
+    // means no session.
+    const mode = (screen?.screenMode ?? 'off') as ScreenMode;
+    const live = mode === 'live';
+
     // Focus: only the focused spotlight entries; the rest stays set up on the DM screen
     const focusKeys = new Set((screen?.focusNpcIds ?? []) as string[]);
     const only = focusKeys.size > 0;
 
     // Hidden on the DM screen = never sent to the display
-    const location = screen?.currentLocationId && !screen.locationHidden && !only
+    const location = live && screen?.currentLocationId && !screen.locationHidden && !only
       ? await db.select({ name: Location.name, type: Location.type, region: Location.region, imageUrl: Location.imageUrl })
           .from(Location).where(eq(Location.id, screen.currentLocationId)).get()
       : undefined;
 
     // The spotlight: NPCs and party characters, in the order the DM added them
     const hiddenKeys = new Set((screen?.hiddenNpcIds ?? []) as string[]);
-    const keys = screen?.npcsHidden ? [] : ((screen?.spotlightNpcIds ?? []) as string[])
+    const keys = !live || screen?.npcsHidden ? [] : ((screen?.spotlightNpcIds ?? []) as string[])
       .filter((key) => !hiddenKeys.has(key) && (!only || focusKeys.has(key)));
     const parsed = keys.map((key) => ({ key, ...parseSpotlightKey(key) }));
     const npcIds = parsed.filter((p) => p.kind === 'npc').map((p) => p.id);
@@ -53,7 +61,7 @@ export const GET: APIRoute = async ({ request }) => {
     });
 
     let initiative = null;
-    if (screen?.showInitiativeTracker && !only) {
+    if (live && screen?.showInitiativeTracker && !only) {
       const [entries, combat] = await Promise.all([getEntries(), getCombatState()]);
       const current = currentEntry(entries, combat);
       initiative = {
@@ -72,9 +80,29 @@ export const GET: APIRoute = async ({ request }) => {
       };
     }
 
+    // No session running: the next game night from the calendar (date and time only)
+    let next = null;
+    if (mode === 'off') {
+      const now = new Date();
+      const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+      const events = await db.select({ date: Event.date, time: Event.time }).from(Event).where(sql`${Event.date} >= ${today}`);
+      next = nextSession(events, now);
+    }
+
+    // "Title + last session": the chosen diary entry as it is now (a deleted one is left out)
+    const start = mode === 'start' ? (screen?.startScreen ?? null) : null;
+    let lastSession: LastSession | null = null;
+    if (start?.diaryEntryId) {
+      const entry = await db.select().from(DiaryEntry).where(eq(DiaryEntry.id, start.diaryEntryId)).get();
+      if (entry) lastSession = { session: entry.session, title: entry.title, excerpt: diaryExcerpt(entry), imageUrl: diaryImage(entry) };
+    }
+
     const placeholder = screen?.placeholderImageUrl ?? null;
     const payload = {
-      screenVisible: screen?.screenVisible ?? true,
+      screenVisible: screen?.screenVisible ?? false,
+      mode,
+      nextSession: next,
+      startScreen: start && { ...start, lastSession },
       // Older wallpapers were saved inline as data: URLs (megabytes); serve those separately
       // so they are downloaded once and cached, not with every poll.
       wallpaperUrl: placeholder?.startsWith('data:')
@@ -84,7 +112,7 @@ export const GET: APIRoute = async ({ request }) => {
       location: location ?? null,
       npcs,
       initiative,
-      timer: screen?.showTimer && !only
+      timer: live && screen?.showTimer && !only
         ? {
             status: screen.timerStatus,
             duration: screen.timerDuration,

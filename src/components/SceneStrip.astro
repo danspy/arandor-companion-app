@@ -1,0 +1,705 @@
+---
+// DM screen: quick actions for the player display (session lifecycle: off → start → live ⇄ pause →
+// off) next to the saved scenes. Each button sends the mode it leads to, never a toggle.
+// Talks to the DM screen page only through the `dm-screen:state` event on `document` (detail: the
+// full DM screen state row): the page fires it after loading or changing the state, this strip
+// fires it after its own changes so the page can redraw.
+import Button from './Button.astro';
+import SceneDialog from './SceneDialog.astro';
+import type { Character, NPC } from '@/db';
+
+interface Props {
+  locations: { id: string; name: string; type: string; imageUrl: string | null }[];
+  party: (typeof Character.$inferSelect)[];
+  formerParty: (typeof Character.$inferSelect)[];
+  npcs: (typeof NPC.$inferSelect)[];
+}
+// The lists are for the scene dialog (location select, spotlight picker)
+const { locations, party, formerParty, npcs } = Astro.props;
+---
+
+<section id="sceneStrip" class="t-panel p-6 mb-6 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6" aria-label="Quick actions and scenes">
+  <div id="quickActions">
+    <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      Quick actions
+      <span id="screenModeBadge" class="t-badge ml-auto" aria-live="polite" style="display:none"></span>
+    </h2>
+    <!-- Which buttons show depends on the mode (see render); invisible until the first state arrives -->
+    <div id="quickActionButtons" class="flex gap-2" style="visibility:hidden">
+      <Button variant="primary" size="sm" id="startSessionBtn" class="flex-1">Start session</Button>
+      <Button variant="warning" size="sm" id="pauseBtn" class="flex-1">Pause</Button>
+      <Button variant="secondary" size="sm" id="endSessionBtn" class="flex-1">End session</Button>
+    </div>
+    <p class="t-faint text-xs mt-2">
+      Start session shows a title card on the player display. Pause shows the wallpaper below (or a short break card).
+      End session shows the next game night from the calendar.
+    </p>
+  </div>
+
+  <div id="scenesHalf">
+    <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+      </svg>
+      Scenes
+    </h2>
+    <div class="flex flex-wrap gap-2 mb-3">
+      <Button variant="secondary" size="sm" id="saveCurrentSceneBtn">Save current as scene</Button>
+      <Button variant="secondary" size="sm" icon="add" id="newSceneBtn">New scene</Button>
+    </div>
+    <p id="scenesEmpty" class="t-faint text-sm" hidden>
+      A scene is a location and a spotlight you set up before the session. Save the current display or build one, then put it on the display with Apply.
+    </p>
+    <!-- Cards are drawn by the script (renderScenes) -->
+    <ul id="scenesList" class="scene-list"></ul>
+  </div>
+</section>
+
+<SceneDialog locations={locations} party={party} formerParty={formerParty} npcs={npcs} />
+
+<dialog id="startSessionDialog" class="dm-dialog t-modal-panel" aria-labelledby="startSessionDialogTitle">
+  <form method="dialog" id="startSessionForm" class="dm-dialog-body space-y-4">
+    <h2 id="startSessionDialogTitle" class="dm-dialog-title">Start session</h2>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="startFormSession" class="t-label block mb-2">Session</label>
+        <input type="number" id="startFormSession" min="1" step="1" inputmode="numeric" class="t-input w-full px-3 py-2 text-sm" placeholder="–" />
+      </div>
+      <div>
+        <label for="startFormDate" class="t-label block mb-2">Date</label>
+        <input type="date" id="startFormDate" required class="t-input w-full px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div>
+      <label for="startFormTitle" class="t-label block mb-2">Title</label>
+      <input type="text" id="startFormTitle" maxlength="120" class="t-input w-full px-3 py-2 text-sm" placeholder="e.g. The Frozen Gate" />
+    </div>
+    <div id="startRecapField">
+      <label for="startFormRecap" class="t-label block mb-2">Recap</label>
+      <textarea id="startFormRecap" rows="5" maxlength="5000" class="t-input w-full px-3 py-2 text-sm" placeholder="What happened last time"></textarea>
+    </div>
+    <fieldset>
+      <legend class="t-label mb-2">On the display</legend>
+      <div class="flex flex-wrap gap-x-6 gap-y-2">
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="title" /> Title card
+        </label>
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="recap" /> Title + recap
+        </label>
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="diary" /> Title + last session
+        </label>
+      </div>
+    </fieldset>
+    <!-- "Title + last session": a diary entry's excerpt, its picture behind the title card -->
+    <div id="startDiaryField" hidden>
+      <label for="startFormDiary" class="t-label block mb-2">Diary entry</label>
+      <select id="startFormDiary" class="t-input w-full px-3 py-2 text-sm"></select>
+      <div class="start-diary-preview mt-3">
+        <img id="startDiaryImage" alt="" hidden />
+        <p id="startDiaryExcerpt" class="t-body-text text-sm"></p>
+      </div>
+    </div>
+    <div class="dm-dialog-actions">
+      <!-- type="button": Enter in a field submits with the first submit button, which must be Show -->
+      <button type="button" id="startCancelBtn" class="t-btn-secondary">Cancel</button>
+      <Button variant="primary" type="submit" id="startShowBtn">Show</Button>
+    </div>
+  </form>
+</dialog>
+
+<!-- Global: the scene cards are drawn by the script and the scene dialog is its own component,
+     neither gets this component's scoped attribute -->
+<style is:global>
+  .start-diary-preview { display: flex; gap: .75rem; align-items: flex-start; }
+  .start-diary-preview img {
+    width: 6.5rem; aspect-ratio: 16 / 9; object-fit: cover; flex: none;
+    border: 1px solid var(--border-gold);
+  }
+  .start-diary-preview p { margin: 0; color: var(--text-muted); line-height: 1.45; }
+  @media (max-width: 420px) { .start-diary-preview { flex-direction: column; } .start-diary-preview img { width: 100%; } }
+  .dm-dialog {
+    margin: auto; /* Tailwind's reset removes the browser's centring margin */
+    width: min(32rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    color: var(--text-body);
+  }
+  .dm-dialog::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+  .dm-dialog[open] { animation: dm-dialog-in 0.2s ease-out both; }
+  @keyframes dm-dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .dm-dialog-body { padding: 1.5rem; }
+  .dm-dialog-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .dm-dialog input[type='radio'], .dm-dialog input[type='checkbox'] { accent-color: var(--gold); }
+  .dm-dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; }
+
+  /* Scene cards: handle · thumbnail · name and portraits · actions */
+  .scene-list { display: grid; gap: 0.5rem; }
+  .scene-card {
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0.75rem 0.5rem 0.5rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+  }
+  .scene-card:hover { border-color: var(--border-gold); }
+  .scene-card.is-active { border-color: var(--gold); box-shadow: inset 3px 0 0 var(--gold); }
+  .scene-card.is-dragging { opacity: 0.4; }
+  .scene-card.is-drop-target { border-color: var(--gold); border-style: dashed; }
+  .scene-handle { color: var(--text-faint); cursor: grab; display: flex; }
+  .scene-thumb {
+    width: 4.5rem;
+    aspect-ratio: 16 / 10;
+    border-radius: 2px;
+    overflow: hidden;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text-faint);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scene-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .scene-name { color: var(--text-strong); font-weight: 600; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .scene-current { display: none; flex: none; margin-left: 0.5rem; }
+  .scene-card.is-active .scene-current { display: inline-block; }
+  .scene-portraits { display: flex; align-items: center; gap: 0.25rem; margin-top: 0.3rem; min-height: 1.75rem; overflow: hidden; }
+  .scene-portrait {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    overflow: hidden;
+    flex: none;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-gold);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .scene-portrait img { width: 100%; height: 100%; object-fit: cover; }
+  .scene-portrait.is-missing, .scene-thumb.is-missing { opacity: 0.4; }
+  .scene-more, .scene-nobody { color: var(--text-faint); font-size: 0.75rem; }
+  .scene-more { margin-left: 0.15rem; }
+  .scene-actions { display: flex; align-items: center; gap: 0.25rem; }
+  .scene-actions .t-icon-btn { width: 2rem; height: 2rem; }
+  .scene-actions .t-icon-btn:disabled { opacity: 0.35; cursor: default; }
+  /* Phones and touch screens can't drag: up/down buttons instead of the handle */
+  #scenesList .scene-move { display: none; }
+  @media (max-width: 639px), (pointer: coarse) {
+    #scenesList .scene-move { display: inline-flex; }
+    .scene-handle { display: none; }
+    .scene-card { grid-template-columns: auto minmax(0, 1fr); }
+    .scene-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .dm-dialog[open] { animation: none; }
+  }
+</style>
+
+<script>
+  import { matchesSetup, snapshotSetup, type SceneSetup, type ScreenMode, type StartScreen } from '../lib/scenes';
+
+  const STATE_EVENT = 'dm-screen:state';
+  const MODE_LABEL: Record<ScreenMode, [string, string]> = {
+    off: ['No session', ''],
+    start: ['Start screen', 't-badge-gold'],
+    live: ['Live', 't-badge-green'],
+    pause: ['Paused', 't-badge-red'],
+  };
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+
+  // Last state seen (from the page or our own requests)
+  let state: { screenMode?: ScreenMode; screenVisible?: boolean; startScreen?: StartScreen | null } | null = null;
+  const modeOf = (s: NonNullable<typeof state>): ScreenMode => s.screenMode ?? (s.screenVisible === false ? 'pause' : 'live');
+
+  function render() {
+    if (!state) return;
+    const mode = modeOf(state);
+    const buttons = $('quickActionButtons');
+    if (buttons) buttons.style.visibility = '';
+    const badge = $('screenModeBadge');
+    if (badge) {
+      const [label, tone] = MODE_LABEL[mode];
+      badge.textContent = label;
+      badge.className = `t-badge ${tone} ml-auto`;
+      badge.style.display = ''; // .t-badge sets display, so not the hidden attribute
+    }
+    // off: Start session · start: Go live, End session · live: Pause, End session · pause: Resume, End session
+    const show = (el: HTMLElement | null, on: boolean) => el && (el.style.display = on ? '' : 'none');
+    // data-target: the mode a click leads to (none = open the start dialog)
+    const start = $('startSessionBtn');
+    if (start) {
+      start.textContent = mode === 'start' ? 'Go live' : 'Start session';
+      start.dataset.target = mode === 'start' ? 'live' : '';
+    }
+    show(start, mode === 'off' || mode === 'start');
+    const pause = $('pauseBtn');
+    if (pause) {
+      pause.textContent = mode === 'pause' ? 'Resume' : 'Pause';
+      pause.dataset.target = mode === 'pause' ? 'live' : 'pause';
+      pause.setAttribute('aria-pressed', String(mode === 'pause'));
+    }
+    show(pause, mode === 'live' || mode === 'pause');
+    show($('endSessionBtn'), mode !== 'off');
+  }
+
+  async function put(updates: Record<string, unknown>): Promise<boolean> {
+    try {
+      const res = await fetch('/api/dm-screen', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error || 'Could not update the player display');
+        return false;
+      }
+      document.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: await res.json() }));
+      return true;
+    } catch (error) {
+      console.error('Error updating screen mode:', error);
+      alert('Could not update the player display');
+      return false;
+    }
+  }
+
+  const localToday = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  // Diary entries for "Title + last session", newest first (from start-defaults)
+  interface DiaryChoice { id: string; session: number; title: string; excerpt: string; imageUrl: string | null }
+  let diary: DiaryChoice[] = [];
+
+  function fillDiary(selected: string | null) {
+    const select = $<HTMLSelectElement>('startFormDiary')!;
+    select.replaceChildren(...diary.map((e) => new Option(`Session ${e.session} · ${e.title}`, e.id)));
+    if (selected && diary.some((e) => e.id === selected)) select.value = selected;
+    const radio = document.querySelector<HTMLInputElement>('input[name="startLayout"][value="diary"]')!;
+    radio.disabled = !diary.length;
+    showDiaryPreview();
+  }
+
+  function showDiaryPreview() {
+    const entry = diary.find((e) => e.id === $<HTMLSelectElement>('startFormDiary')!.value);
+    const img = $<HTMLImageElement>('startDiaryImage')!;
+    img.hidden = !entry?.imageUrl;
+    if (entry?.imageUrl) img.src = entry.imageUrl;
+    else img.removeAttribute('src');
+    $('startDiaryExcerpt')!.textContent = entry ? entry.excerpt || 'No text in this entry yet.' : '';
+  }
+
+  // The recap field for "Title + recap", the diary picker for "Title + last session"
+  function showLayoutFields() {
+    const layout = document.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value;
+    $('startRecapField')!.hidden = layout === 'diary';
+    $('startDiaryField')!.hidden = layout !== 'diary';
+  }
+
+  function fill(s: StartScreen) {
+    $<HTMLInputElement>('startFormSession')!.value = s.session == null ? '' : String(s.session);
+    $<HTMLInputElement>('startFormTitle')!.value = s.title;
+    $<HTMLInputElement>('startFormDate')!.value = s.date;
+    $<HTMLTextAreaElement>('startFormRecap')!.value = s.recap;
+    const diaryId = s.diaryEntryId && diary.some((e) => e.id === s.diaryEntryId) ? s.diaryEntryId : null;
+    fillDiary(diaryId ?? diary[0]?.id ?? null);
+    const layout = diaryId ? 'diary' : s.showRecap ? 'recap' : 'title';
+    document.querySelector<HTMLInputElement>(`input[name="startLayout"][value="${layout}"]`)!.checked = true;
+    showLayoutFields();
+  }
+
+  // Today's start screen again if there is one, else the next session from the diary
+  let opening = false;
+  async function openStartDialog() {
+    const dialog = $<HTMLDialogElement>('startSessionDialog');
+    if (!dialog || dialog.open || opening) return; // double click: one prefill, one dialog
+    opening = true;
+    try {
+      await prefill();
+    } finally {
+      opening = false;
+    }
+    dialog.showModal();
+    $('startFormTitle')?.focus();
+  }
+
+  // The diary list always comes fresh; the fields from today's start screen if there is one.
+  // New start screens default to "Title + last session" with the newest diary entry.
+  async function prefill() {
+    const saved = state?.startScreen;
+    let defaults: { session: number | null; date: string; recap: string; diaryEntryId: string | null } | null = null;
+    try {
+      const res = await fetch('/api/dm-screen/start-defaults');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const d = await res.json();
+      diary = Array.isArray(d.diary) ? d.diary : [];
+      defaults = d;
+    } catch (error) {
+      console.error('Error loading start defaults:', error);
+      diary = [];
+    }
+    if (saved && saved.date === localToday()) fill(saved);
+    else if (defaults) fill({ title: '', session: defaults.session, date: defaults.date, recap: defaults.recap, showRecap: !!defaults.recap, diaryEntryId: defaults.diaryEntryId });
+    else fill({ title: '', session: null, date: localToday(), recap: '', showRecap: false });
+  }
+
+  document.addEventListener('change', (e) => {
+    const el = e.target as HTMLElement | null;
+    if (el?.id === 'startFormDiary') showDiaryPreview();
+    else if (el instanceof HTMLInputElement && el.name === 'startLayout') showLayoutFields();
+  });
+
+  // Delegated once on document: survives client-side navigation without piling up
+  document.addEventListener(STATE_EVENT, (e) => {
+    state = (e as CustomEvent).detail;
+    render();
+    markActive();
+  });
+
+  // One mode change at a time, so a double click on Pause can't pause and then resume
+  let busy = false;
+  async function setMode(target: ScreenMode) {
+    if (busy) return;
+    busy = true;
+    try {
+      await put({ screenMode: target });
+    } finally {
+      busy = false;
+    }
+  }
+
+  async function endSession() {
+    if (busy) return;
+    const ok = await window.arandorConfirm('End the session?', {
+      detail: 'The player display shows "No session running" and the next game night. Location, spotlight, turn order and timer stay as they are.',
+      confirmLabel: 'End session',
+      danger: true,
+    });
+    if (ok) await setMode('off');
+  }
+
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn, #endSessionBtn, #startCancelBtn');
+    if (btn?.id === 'startCancelBtn') return $<HTMLDialogElement>('startSessionDialog')?.close();
+    if (!btn || !state) return;
+    // The second click of a double click (detail 2) would undo the first once the button redraws
+    if ((e as MouseEvent).detail > 1) return;
+    const target = (btn as HTMLElement).dataset.target as ScreenMode | undefined;
+    if (btn.id === 'endSessionBtn') await endSession();
+    else if (target) await setMode(target);
+    else await openStartDialog();
+  });
+
+  document.addEventListener('submit', async (e) => {
+    const form = e.target as HTMLFormElement;
+    if (form.id !== 'startSessionForm') return;
+    e.preventDefault();
+    const session = $<HTMLInputElement>('startFormSession')!.value.trim();
+    const layout = form.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value;
+    const startScreen: StartScreen = {
+      title: $<HTMLInputElement>('startFormTitle')!.value.trim(),
+      session: session ? Number(session) : null,
+      date: $<HTMLInputElement>('startFormDate')!.value,
+      recap: $<HTMLTextAreaElement>('startFormRecap')!.value,
+      showRecap: layout === 'recap',
+      diaryEntryId: layout === 'diary' ? $<HTMLSelectElement>('startFormDiary')!.value || null : null,
+    };
+    const show = $<HTMLButtonElement>('startShowBtn')!;
+    show.disabled = true;
+    try {
+      if (await put({ screenMode: 'start', startScreen })) $<HTMLDialogElement>('startSessionDialog')?.close();
+    } finally {
+      show.disabled = false;
+    }
+  });
+
+  // ── Scenes ─────────────────────────────────────────────────────────────────────────────────
+
+  interface SceneCard {
+    id: string;
+    name: string;
+    setup: SceneSetup;
+    location: { id: string; name: string; imageUrl: string | null } | null;
+    locationMissing: boolean;
+    portraits: { key: string; name: string; avatarUrl: string | null; missing: boolean }[];
+  }
+  const MAX_PORTRAITS = 5;
+  const ICONS = {
+    handle: '<path stroke-linecap="round" stroke-width="2" d="M9 6h.01M9 12h.01M9 18h.01M15 6h.01M15 12h.01M15 18h.01"></path>',
+    location: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>',
+    up: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>',
+    down: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>',
+    edit: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>',
+    delete: '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>',
+  };
+  const svg = (paths: string, size = 'w-4 h-4') =>
+    `<svg class="${size} pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">${paths}</svg>`;
+
+  // The DM's scenes in their order; null until loaded
+  let scenes: SceneCard[] | null = null;
+
+  function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text?: string) {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function image(src: string) {
+    const img = document.createElement('img');
+    img.src = src;
+    img.alt = '';
+    img.loading = 'lazy';
+    return img;
+  }
+
+  function actionButton(action: string, label: string, icon: string, extra = '') {
+    const b = el('button', `t-icon-btn ${extra}`.trim());
+    b.type = 'button';
+    b.dataset.action = action;
+    b.title = label;
+    b.setAttribute('aria-label', label);
+    b.innerHTML = svg(icon);
+    return b;
+  }
+
+  function buildCard(scene: SceneCard, index: number, count: number): HTMLLIElement {
+    const li = el('li', 'scene-card');
+    li.dataset.sceneId = scene.id;
+    li.draggable = true;
+
+    const handle = el('span', 'scene-handle');
+    handle.title = 'Drag to reorder';
+    handle.innerHTML = svg(ICONS.handle, 'w-5 h-5');
+
+    // Missing references stay visible, greyed out, so the DM sees why the display is emptier
+    const thumb = el('div', 'scene-thumb');
+    if (scene.location?.imageUrl) thumb.append(image(scene.location.imageUrl));
+    else thumb.innerHTML = svg(ICONS.location, 'w-5 h-5');
+    if (scene.locationMissing) {
+      thumb.classList.add('is-missing');
+      thumb.title = 'Deleted';
+    } else {
+      thumb.title = scene.location?.name ?? 'No location';
+    }
+
+    const main = el('div', 'min-w-0');
+    const name = el('p', 'scene-name', scene.name);
+    name.title = scene.name;
+    const current = el('span', 't-badge t-badge-gold scene-current', 'Current');
+    const title = el('div', 'flex items-center min-w-0');
+    title.append(name, current);
+    const portraits = el('div', 'scene-portraits');
+    for (const p of scene.portraits.slice(0, MAX_PORTRAITS)) {
+      const face = el('span', `scene-portrait${p.missing ? ' is-missing' : ''}`);
+      face.title = p.missing ? 'Deleted' : p.name;
+      if (p.avatarUrl) face.append(image(p.avatarUrl));
+      else face.textContent = p.missing ? '?' : p.name.charAt(0).toUpperCase();
+      portraits.append(face);
+    }
+    if (scene.portraits.length > MAX_PORTRAITS) portraits.append(el('span', 'scene-more', `+${scene.portraits.length - MAX_PORTRAITS}`));
+    if (!scene.portraits.length) portraits.append(el('span', 'scene-nobody', 'Nobody in the spotlight'));
+    main.append(title, portraits);
+
+    const actions = el('div', 'scene-actions');
+    const up = actionButton('up', 'Move up', ICONS.up, 'scene-move');
+    up.disabled = index === 0;
+    const down = actionButton('down', 'Move down', ICONS.down, 'scene-move');
+    down.disabled = index === count - 1;
+    const apply = el('button', 't-btn-primary text-xs px-3 py-1.5 ml-1', 'Apply');
+    apply.type = 'button';
+    apply.dataset.action = 'apply';
+    apply.title = 'Put this scene on the display (the session mode stays as it is)';
+    actions.append(up, down, actionButton('edit', 'Edit scene', ICONS.edit), actionButton('delete', 'Delete scene', ICONS.delete, 't-icon-btn-danger'), apply);
+
+    li.append(handle, thumb, main, actions);
+    return li;
+  }
+
+  function renderScenes() {
+    const list = $('scenesList');
+    if (!list || !scenes) return;
+    list.replaceChildren(...scenes.map((s, i) => buildCard(s, i, scenes!.length)));
+    $('scenesEmpty')!.hidden = scenes.length > 0;
+    markActive();
+  }
+
+  // The setup as Apply puts it on the display: deleted NPCs, characters and locations dropped
+  function appliedSetup(scene: SceneCard): SceneSetup {
+    const missing = new Set(scene.portraits.filter((p) => p.missing).map((p) => p.key));
+    return {
+      ...scene.setup,
+      locationId: scene.locationMissing ? null : scene.setup.locationId,
+      spotlightIds: scene.setup.spotlightIds.filter((id) => !missing.has(id)),
+    };
+  }
+
+  // The card whose setup is what the display has right now
+  function markActive() {
+    if (!state || !scenes) return;
+    const row = state as Parameters<typeof matchesSetup>[0];
+    for (const card of document.querySelectorAll<HTMLElement>('#scenesList [data-scene-id]')) {
+      const scene = scenes.find((s) => s.id === card.dataset.sceneId);
+      card.classList.toggle('is-active', !!scene && matchesSetup(row, appliedSetup(scene)));
+    }
+  }
+
+  let scenesLoadFailed = false;
+  async function loadScenes() {
+    try {
+      const res = await fetch('/api/scenes');
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      scenes = await res.json();
+      renderScenes();
+    } catch (error) {
+      console.error('Error loading scenes:', error);
+      if (!scenes) $('scenesEmpty')!.hidden = false;
+      if (!scenesLoadFailed) alert('Could not load the scenes');
+      scenesLoadFailed = true;
+    }
+  }
+
+  async function request(url: string, init: RequestInit, failure: string): Promise<Response | null> {
+    try {
+      const res = await fetch(url, { headers: { 'Content-Type': 'application/json' }, ...init });
+      if (res.ok) return res;
+      const body = await res.json().catch(() => ({}));
+      alert(body.error || failure);
+    } catch (error) {
+      console.error(`${failure}:`, error);
+      alert(failure);
+    }
+    return null;
+  }
+
+  // Location and spotlight panels redraw from the returned state; the screen mode is untouched
+  let applying = false;
+  async function applyScene(id: string) {
+    if (applying) return;
+    applying = true;
+    try {
+      const res = await request(`/api/scenes/${encodeURIComponent(id)}/apply`, { method: 'POST' }, 'Could not apply the scene');
+      if (res) document.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: await res.json() }));
+    } finally {
+      applying = false;
+    }
+  }
+
+  async function deleteScene(scene: SceneCard) {
+    const ok = await window.arandorConfirm(`Delete the scene "${scene.name}"?`, {
+      detail: 'The player display stays as it is.',
+      confirmLabel: 'Delete',
+      danger: true,
+    });
+    if (!ok) return;
+    if (await request(`/api/scenes/${encodeURIComponent(scene.id)}`, { method: 'DELETE' }, 'Could not delete the scene')) {
+      scenes = scenes!.filter((s) => s.id !== scene.id);
+      renderScenes();
+    }
+  }
+
+  // Shown at once; if the server refuses, the list is reloaded from it
+  async function moveScene(from: number, to: number) {
+    if (!scenes || from === to || to < 0 || to >= scenes.length) return;
+    const [moved] = scenes.splice(from, 1);
+    scenes.splice(to, 0, moved);
+    renderScenes();
+    const ok = await request('/api/scenes/order', { method: 'PUT', body: JSON.stringify({ ids: scenes.map((s) => s.id) }) }, 'Could not reorder the scenes');
+    if (!ok) await loadScenes();
+  }
+
+  const emptySetup = (): SceneSetup => ({ locationId: null, locationHidden: false, spotlightIds: [], hiddenIds: [], focusIds: [], npcsHidden: false });
+  const openSceneDialog = (detail: { title: string; id?: string; name: string; setup: SceneSetup }) =>
+    document.dispatchEvent(new CustomEvent('scene-dialog:open', { detail }));
+
+  document.addEventListener('scene-dialog:saved', (e) => {
+    const { created, ...card } = (e as CustomEvent).detail as SceneCard & { created: boolean };
+    if (!scenes) return void loadScenes();
+    scenes = created ? [...scenes, card] : scenes.map((s) => (s.id === card.id ? card : s));
+    renderScenes();
+  });
+
+  document.addEventListener('click', async (e) => {
+    const target = e.target as Element | null;
+    if (target?.closest?.('#saveCurrentSceneBtn')) {
+      if (state) openSceneDialog({ title: 'Save current as scene', name: '', setup: snapshotSetup(state as Parameters<typeof snapshotSetup>[0]) });
+      return;
+    }
+    if (target?.closest?.('#newSceneBtn')) return openSceneDialog({ title: 'New scene', name: '', setup: emptySetup() });
+    const btn = target?.closest?.<HTMLElement>('#scenesList [data-action]');
+    const id = btn?.closest<HTMLElement>('[data-scene-id]')?.dataset.sceneId;
+    const index = scenes?.findIndex((s) => s.id === id) ?? -1;
+    if (!btn || !scenes || index < 0) return;
+    const scene = scenes[index];
+    switch (btn.dataset.action) {
+      case 'apply': return applyScene(scene.id);
+      case 'edit': return openSceneDialog({ title: 'Edit scene', id: scene.id, name: scene.name, setup: scene.setup });
+      case 'delete': return deleteScene(scene);
+      case 'up': return moveScene(index, index - 1);
+      case 'down': return moveScene(index, index + 1);
+    }
+  });
+
+  // Native drag and drop between cards: the dragged card takes the place of the one it's dropped on
+  let draggedId: string | null = null;
+  const cardOf = (e: Event) => (e.target as Element | null)?.closest?.<HTMLElement>('#scenesList [data-scene-id]') ?? null;
+  const clearDropTargets = () => document.querySelectorAll('#scenesList .is-drop-target').forEach((c) => c.classList.remove('is-drop-target'));
+  document.addEventListener('dragstart', (e) => {
+    const card = cardOf(e);
+    if (!card) return;
+    draggedId = card.dataset.sceneId!;
+    e.dataTransfer?.setData('text/plain', draggedId);
+    if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move';
+    card.classList.add('is-dragging');
+  });
+  document.addEventListener('dragover', (e) => {
+    const card = cardOf(e);
+    if (!card || !draggedId) return;
+    e.preventDefault();
+    if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
+    if (card.dataset.sceneId !== draggedId && !card.classList.contains('is-drop-target')) {
+      clearDropTargets();
+      card.classList.add('is-drop-target');
+    }
+  });
+  document.addEventListener('drop', (e) => {
+    const card = cardOf(e);
+    if (!card || !draggedId || !scenes) return;
+    e.preventDefault();
+    const from = scenes.findIndex((s) => s.id === draggedId);
+    const to = scenes.findIndex((s) => s.id === card.dataset.sceneId);
+    if (from >= 0 && to >= 0) moveScene(from, to);
+  });
+  document.addEventListener('dragend', () => {
+    draggedId = null;
+    clearDropTargets();
+    document.querySelectorAll('#scenesList .is-dragging').forEach((c) => c.classList.remove('is-dragging'));
+  });
+
+  // First load and every client-side navigation back to the DM screen
+  document.addEventListener('astro:page-load', () => {
+    if ($('scenesList')) loadScenes();
+  });
+</script>
