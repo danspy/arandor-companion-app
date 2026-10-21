@@ -1,12 +1,14 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:4323';
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: false,
   retries: 1,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:4323',
+    baseURL,
     trace: 'on-first-retry',
   },
   projects: [
@@ -21,7 +23,7 @@ export default defineConfig({
   ],
   webServer: {
     command: 'DATABASE_FILE=./data/content.db HOST=0.0.0.0 PORT=4323 node dist/server/entry.mjs',
-    url: 'http://localhost:4323',
+    url: baseURL,
     reuseExistingServer: true,
     timeout: 15000,
   },
