@@ -167,12 +167,17 @@ Agreed with the user in chat. Supersedes the *Mini bar* and *Dashboard* views ab
 - A 56×56 **music button** (the dice button's look) sits bottom left on every `Layout` page, for
   visitors too, whenever there is something to play (a queue, or a non-empty site playlist).
   In the installed app (≤ 1024px) it sits on the left just above the dock and tucks with it.
-- Tapping it slides the player (mini bar, and its queue panel) open or shut above it; the choice
-  is remembered per viewer (`localStorage` `arandor.music.open`).
+- Tapping it slides the mini bar out to its right, on the same bottom line and as tall as the
+  button (revised after feedback on dev: no stacking above the button). The queue panel opens
+  upwards above the row. The choice is remembered per viewer (`localStorage` `arandor.music.open`).
+  Phones (< 600px): the bar fills the room up to the dice button with title, play/pause, next and
+  the queue arrow; previous and stop move to the top of the queue panel. Touch targets ≥ 44px.
+  Installed app: the row sits 30px above the dock so the bar clears the dice seal and runs to
+  the right edge.
 - With an empty queue the store **cues** the site playlist (fetched from `GET /api/music/site`):
   paused, no autoplay, no player built until Play; never saved (`state.cued`).
 - Any request for playback (`music:play`: a playlist, Play, a queue entry, media keys) slides the
   player open. It can be shut while playing: the button shows an equaliser; a playing YouTube
-  video stays visible (≥ 200×200) right above the button.
+  video stays visible (≥ 200×200) above the button row.
 - The dashboard `TavernMusic` panel and the "Show on the dashboard" switch are gone. The
   `Playlist.showOnDashboard` column stays (unused, no migration); PATCH no longer accepts it.

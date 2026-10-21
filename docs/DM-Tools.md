@@ -196,10 +196,10 @@ does the same import and puts the new tracks where the entry was. Longer lists a
 links (a list id cut short when copying) cannot be read; the error message says to check that
 the link is complete (copy it via *Share → Copy link*) and that the playlist is public or unlisted.
 
-**YouTube tracks** play in a video window above the mini bar. YouTube's terms say a playing
+**YouTube tracks** play in a video window above the music button and mini bar. YouTube's terms say a playing
 player must be visible and at least 200×200 pixels, so the window cannot be hidden or made
 smaller than that while it plays (the ▾ button shrinks it to exactly that size), not even on
-the DM screen, and it stays right above the music button when you shut the player. While the music is **paused** the window is hidden and comes back when you press
+the DM screen, and it stays above the music button when you shut the player. While the music is **paused** the window is hidden and comes back when you press
 Play. Files have no such window, so use uploads when you want music without any picture on the
 screen you share.
 

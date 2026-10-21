@@ -28,12 +28,14 @@ bar**:
 - While you scroll down the bar slides away and only a small, dimmed dice stays at the bottom;
   the bar comes back as soon as you scroll up (or tap the dice).
 - A dark gradient behind the phone's status bar keeps the clock and battery readable.
-- The **music button** (see [Music](User-Guide.md#music)) sits on the left just above the bottom
-  bar, clear of the dice seal in its middle, and drops (smaller, dimmed) with the bar when it
-  slides away. The player slides open above it. Notifications (toasts) appear above the button
-  (or the open player), and pages get extra space at the end so the last content is never
-  hidden behind them. While the dice panel is open the music button and player step aside; a
-  playing YouTube video stays visible.
+- The **music button** (see [Music](User-Guide.md#music)) sits on the left above the bottom bar.
+  Its mini bar slides out to the right on the same line. That line is a little higher than in
+  a browser (30px above the bar) so the bar can run past the dice seal, which pokes out of the
+  bar's middle, to the right edge. When the bottom bar slides away, a shut music button drops
+  (smaller, dimmed) to the bottom edge with it; an open player stays just above the small dice.
+  Notifications (toasts) appear above the button row, and pages get extra space at the end so
+  the last content is never hidden behind it. While the dice panel is open the music button and
+  player step aside; a playing YouTube video stays visible.
 
 In a normal browser none of this appears: the top navigation and the dice button in the bottom
 right corner stay as they are.
@@ -61,12 +63,13 @@ The manifest is `public/manifest.webmanifest`; the iOS tags are in `src/layouts/
 - Safe areas (notch, home indicator) come from `env(safe-area-inset-*)`, exposed as
   `--safe-top` and friends in `src/styles/global.css`. The main area gets bottom padding so the
   floating buttons never cover content.
-- The music button and player (`src/components/MusicPlayer.astro`) take their position from
-  `--music-bottom` (above `--pwa-dock-height` in standalone mode, near the bottom edge under
-  `html.pwa-dock-tucked`) and publish `--music-bar-top` (top of the button, or of the mini bar
-  while open), which the toasts in `ConfirmDialog.astro` stay above. The page clearance is
-  `--pwa-floating-menu-clearance` on `main`; button and player are hidden (`visibility`) while
-  `#dice-fab` is expanded.
+- The music button row (`src/components/MusicPlayer.astro`) takes its position from
+  `--music-bottom` (30px above `--pwa-dock-height` in standalone mode; under
+  `html.pwa-dock-tucked` near the bottom edge while shut, 66px while open) and the bar's width
+  from `--music-bar-max` (up to the dice button, or to the right edge in standalone mode). It
+  publishes `--music-bar-top` (top of the row), which the toasts in `ConfirmDialog.astro` stay
+  above. The page clearance is `--pwa-floating-menu-clearance` on `main`; the row is hidden
+  (`visibility`) while `#dice-fab` is expanded.
 - Component: `src/components/PWADock.astro` (bar and menu sheet). In standalone mode
   `DiceFab.astro` restyles its button as the hexagon and centres it over the bar's middle seat;
   the bar height is `--pwa-dock-height` in `global.css`.

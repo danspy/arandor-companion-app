@@ -141,13 +141,15 @@ diary appearances. DMs can complete, fail, reactivate, edit and delete a quest f
 
 **The music button** sits at the bottom left of every page (the dice button's twin on the
 other side), for everyone, also without a login, as long as there is something to play. Tap it
-to slide the player open or shut; the app remembers which you chose. When nothing else is
+to slide the mini bar out to its right (or back in); the app remembers which you chose. When nothing else is
 loaded, the player holds the **Tavern music** site playlist, paused: one tap on Play starts it.
 If the site playlist is empty and nothing else is loaded, there is no button.
 
-**The player** (the mini bar above the button) has previous / play-pause / next, volume (wider
-screens), a thin progress line along its bottom edge, and the arrow for the queue (seek,
-shuffle, repeat, jump to a track). Music keeps playing while you move between pages. Starting
+**The player** (the mini bar next to the button) has previous / play-pause / next, volume (wider
+screens), a thin progress line along its bottom edge, and the arrow that opens the queue above
+it (seek, shuffle, repeat, jump to a track). On a phone the bar fills the space up to the dice
+button and keeps the title, play/pause, next and the arrow; previous and × are at the top of the
+queue. Music keeps playing while you move between pages. Starting
 music anywhere (Tools → Music, the DM screen, your headset's play key) slides the player open;
 you can shut it again while it plays, and the button then shows a moving **equaliser**. The ×
 stops the music and shuts the player (Tavern music is ready again). After a full reload (or
@@ -162,8 +164,8 @@ after reopening the app) the music comes back **paused**; it never starts by its
   be added as one entry, or imported as separate tracks (up to 200).
 - Drag tracks to reorder, click a title to rename, × removes. **Play** and **Shuffle** start the
   playlist; the DM screen has its own small music panel ([DM tools](DM-Tools.md#music)).
-- **YouTube tracks** show a small video window above the player while they play, and right
-  above the music button while the player is shut. That is required by YouTube. It disappears
+- **YouTube tracks** show a small video window above the music button while they play, whether
+  the player is open or shut. That is required by YouTube. It disappears
   while the music is paused.
 - Admins can make any playlist the **site playlist** that the dashboard plays.
 
