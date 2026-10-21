@@ -86,7 +86,7 @@ export function mountMusicPicker(host: HTMLElement): void {
   }
 
   function sync(s: MusicState) {
-    const here = !!selected && s.source?.playlistId === selected.id;
+    const here = !!selected && !s.cued && s.source?.playlistId === selected.id;
     list.querySelectorAll<HTMLElement>('[data-dmm-row]').forEach((row, i) => {
       const cur = here && s.queue[s.index]?.id === tracks[i]?.id;
       if (cur) row.setAttribute('aria-current', 'true'); else row.removeAttribute('aria-current');
@@ -120,8 +120,8 @@ export function mountMusicPicker(host: HTMLElement): void {
 
   toggleBtn.addEventListener('click', () => {
     const s = music.getState();
-    // Nothing queued yet: start the selected playlist instead
-    if (!s.queue.length && selected && tracks.length) music.playPlaylist({ id: selected.id, name: selected.name, tracks }, 0);
+    // Nothing chosen yet (empty, or only the site playlist cued): start the selected playlist instead
+    if ((!s.queue.length || s.cued) && selected && tracks.length) music.playPlaylist({ id: selected.id, name: selected.name, tracks }, 0);
     else music.toggle();
   });
   seek.addEventListener('input', () => { seeking = true; posLabel.textContent = fmtTime(Number(seek.value)); });

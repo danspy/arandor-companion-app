@@ -5,6 +5,9 @@
 // The store lives as long as the page does. Thanks to ClientRouter and the persisted
 // #music-root it survives page changes; after a full page load it is rebuilt from
 // localStorage `arandor.music` and comes back paused (never autoplays).
+//
+// With nothing else in the queue, the site playlist ("Tavern music") is cued: loaded paused,
+// so one press on play starts it. A cued queue is never saved; it is cued afresh on each load.
 import { createAudioBackend, type MusicBackend } from './audio-backend';
 import { createYouTubeBackend } from './youtube-backend';
 
@@ -26,6 +29,9 @@ export type MusicState = {
   youtubeVisible: boolean;
   /** Inside a YouTube playlist track: the title of the video playing now, else null. */
   videoTitle: string | null;
+  /** The queue is the site playlist, cued automatically while nothing else was loaded and not
+   *  played yet. Views treat it as "nothing chosen"; it is never saved. */
+  cued: boolean;
 };
 
 export type RepeatMode = MusicState['repeat'];
@@ -48,7 +54,7 @@ export interface MusicStore {
   setVolume(v: number): void;
   setShuffle(b: boolean): void;
   setRepeat(m: RepeatMode): void;
-  /** Stops playback and clears the queue (the mini bar disappears). */
+  /** Stops playback and clears the queue; the site playlist is then cued again (paused). */
   stop(): void;
 }
 
@@ -66,6 +72,9 @@ export function fmtTime(sec: number): string {
 }
 
 export const MUSIC_STATE_EVENT = 'music:state';
+/** Dispatched on `document` whenever someone asks for playback (play, a playlist, a queue entry,
+ *  media keys), wherever it came from; the player opens on it. Not for automatic track changes. */
+export const MUSIC_PLAY_EVENT = 'music:play';
 const STORAGE_KEY = 'arandor.music';
 const TIME_EMIT_MS = 250; // time updates: at most 4 events per second
 const SAVE_TIME_MS = 5000; // position-only changes: saved at most every 5 seconds
@@ -96,6 +105,9 @@ const isTrack = (t: any): t is QueueTrack =>
   t && typeof t.id === 'string' && typeof t.title === 'string' && typeof t.ref === 'string' &&
   (t.kind === 'file' || t.kind === 'youtube_video' || t.kind === 'youtube_playlist');
 
+const pickTracks = (p: any): QueueTrack[] =>
+  (Array.isArray(p?.tracks) ? p.tracks : []).filter(isTrack).map(({ id, kind, title, ref }: QueueTrack) => ({ id, kind, title, ref }));
+
 function createStore(): MusicStore {
   const saved = readSaved();
   const state: MusicState = {
@@ -110,6 +122,7 @@ function createStore(): MusicStore {
     repeat: saved.repeat === 'all' || saved.repeat === 'one' ? saved.repeat : 'off',
     youtubeVisible: false,
     videoTitle: null,
+    cued: false,
   };
 
   let original: QueueTrack[] = []; // the playlist's own order, for switching shuffle off
@@ -138,7 +151,9 @@ function createStore(): MusicStore {
       // keep it as it is and only update the settings.
       const data = restorePending && !touched
         ? { ...saved, volume, shuffle, repeat }
-        : { volume, shuffle, repeat, source, queue, index, position };
+        : state.cued
+          ? { volume, shuffle, repeat, source: null, queue: [], index: 0, position: 0 }
+          : { volume, shuffle, repeat, source, queue, index, position };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
     } catch { /* storage full or blocked: the player still works */ }
   }
@@ -340,6 +355,7 @@ function createStore(): MusicStore {
   // ── Public API ──
   function stop() {
     touched = true;
+    state.cued = false;
     loadSeq++;
     loadingSeq = 0;
     wantPlay = false;
@@ -349,6 +365,14 @@ function createStore(): MusicStore {
     Object.assign(state, { source: null, queue: [], index: 0, playing: false, position: 0, duration: 0, youtubeVisible: false, videoTitle: null });
     clearMediaSession();
     emit();
+    void cueSite();
+  }
+
+  /** The user asks for playback: the queue is theirs now (saved), and the player opens. */
+  function requested() {
+    touched = true;
+    state.cued = false;
+    document.dispatchEvent(new CustomEvent(MUSIC_PLAY_EVENT));
   }
 
   const store: MusicStore = {
@@ -356,7 +380,7 @@ function createStore(): MusicStore {
     playPlaylist(p, startIndex = 0, opts) {
       const tracks = (p.tracks ?? []).filter(isTrack).map(({ id, kind, title, ref }) => ({ id, kind, title, ref }));
       if (!tracks.length) return;
-      touched = true;
+      requested();
       const start = Math.min(Math.max(0, Math.floor(startIndex) || 0), tracks.length - 1);
       original = tracks;
       failed = new Set();
@@ -377,7 +401,7 @@ function createStore(): MusicStore {
     },
     play() {
       if (!state.queue.length) return;
-      touched = true;
+      requested();
       const cur = state.queue[state.index];
       const b = backend && cur && backendKind === kindOf(cur) ? backend : null;
       if (!b) return void loadCurrent(true, state.position);
@@ -401,6 +425,7 @@ function createStore(): MusicStore {
     next() {
       if (!state.queue.length) return;
       touched = true;
+      state.cued = false;
       if (backend?.nextInList?.()) return;
       state.index = (state.index + 1) % state.queue.length;
       void loadCurrent(wantPlay);
@@ -408,6 +433,7 @@ function createStore(): MusicStore {
     prev() {
       if (!state.queue.length) return;
       touched = true;
+      state.cued = false;
       if (backend?.prevInList?.()) return;
       if (state.position > PREV_RESTARTS_AFTER) return store.seek(0);
       state.index = state.index > 0 ? state.index - 1 : state.repeat === 'all' ? state.queue.length - 1 : 0;
@@ -415,7 +441,7 @@ function createStore(): MusicStore {
     },
     jump(index) {
       if (!state.queue[index]) return;
-      touched = true;
+      requested();
       state.index = index;
       void loadCurrent(true);
     },
@@ -464,7 +490,42 @@ function createStore(): MusicStore {
       keep = (await restoreSaved()) === 'offline';
     } catch { /* unexpected: fall through */ }
     // Offline: the saved state stays as it is (save() keeps it) for the next page load.
-    if (!keep) restorePending = false;
+    if (!keep) {
+      restorePending = false;
+      await cueSite(siteOnce);
+    }
+    siteOnce = null;
+  }
+
+  // The site playlist as GET /api/music/site answers it (playlist or null); throws when offline.
+  async function fetchSite(): Promise<any> {
+    const res = await fetch('/api/music/site', { headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`site ${res.status}`);
+    return (await res.json())?.playlist ?? null;
+  }
+  let siteOnce: Promise<any> | null = null; // the restore's request, reused by the first cue
+
+  /** With an empty queue, loads the site playlist paused (no player is built until play). */
+  async function cueSite(site?: Promise<any> | null) {
+    if (state.queue.length) return;
+    const seq = loadSeq;
+    let p: any;
+    try {
+      p = await (site ?? fetchSite());
+    } catch {
+      return; // offline: nothing to cue
+    }
+    // Something else was loaded (or stopped again) meanwhile
+    if (state.queue.length || seq !== loadSeq || !p || typeof p.id !== 'string') return;
+    const tracks = pickTracks(p);
+    if (!tracks.length) return;
+    state.cued = true;
+    original = tracks;
+    failed = new Set();
+    state.source = { playlistId: p.id, name: typeof p.name === 'string' ? p.name : '' };
+    state.queue = state.shuffle ? shuffled(tracks) : tracks;
+    Object.assign(state, { index: 0, playing: false, position: 0, duration: 0, youtubeVisible: false, videoTitle: null });
+    emit();
   }
 
   async function restoreSaved(): Promise<'offline' | void> {
@@ -501,11 +562,8 @@ function createStore(): MusicStore {
   // Checks without requests that fail (no 401/404 noise in the console): site playlist first,
   // then the viewer's list, then the playlist itself.
   async function fetchPlaylistTracks(id: string): Promise<QueueTrack[] | null> {
-    const pick = (p: any): QueueTrack[] =>
-      (Array.isArray(p?.tracks) ? p.tracks : []).filter(isTrack).map(({ id, kind, title, ref }: QueueTrack) => ({ id, kind, title, ref }));
-    const site = await fetch('/api/music/site', { headers: { Accept: 'application/json' } });
-    if (!site.ok) throw new Error(`site ${site.status}`);
-    const sitePl = (await site.json())?.playlist;
+    const pick = pickTracks;
+    const sitePl = await (siteOnce ??= fetchSite());
     if (sitePl?.id === id) return pick(sitePl);
     if (!document.getElementById('logoutBtn')) return null; // visitor: only the site playlist
     const list = await fetch('/api/music/playlists', { headers: { Accept: 'application/json' } });

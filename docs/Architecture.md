@@ -33,7 +33,7 @@ src/
   components/
     dashboard/      the dashboard sections (hero, recap, party, chronicle, quests, factions, stats)
     DiceFab.astro   floating dice button and result banner
-    MusicPlayer.astro  audio element, YouTube tile and mini bar (persisted across pages)
+    MusicPlayer.astro  music button, mini bar, audio element and YouTube tile (persisted across pages)
     PWADock.astro   bottom bar and menu of the installed app
     PageHero.astro, SceneBackdrop.astro            page header images
     ConfirmDialog.astro, Button.astro
@@ -128,12 +128,16 @@ announces changes with `arandor:dice-presets-changed`.
 ## The music player
 
 One store per browser tab (`src/lib/music/player.ts`) owns the queue and all playback. The
-views (mini bar in `MusicPlayer.astro`, Tools → Music, the dashboard strip, the DM screen panel)
-only call its methods and listen for the `music:state` event. Two backends sit behind it: an
+views (music button and mini bar in `MusicPlayer.astro`, Tools → Music, the DM screen panel)
+only call its methods and listen for the `music:state` event; `music:play` tells the button to
+slide the player open whenever someone asks for playback. Two backends sit behind it: an
 `<audio>` element for uploaded files (`audio-backend.ts`) and the YouTube IFrame player
 (`youtube-backend.ts`). `#music-root` is `transition:persist`, and the map page is an ordinary
 client-side navigation too, so nothing is interrupted. After a full page load the store is
 rebuilt from `localStorage` (`arandor.music`) and comes back paused; it never autoplays.
+With nothing loaded, the store cues the site playlist from `GET /api/music/site` (paused, no
+player built yet; `state.cued`); a cued queue is never saved. Whether the player is open is a
+per-viewer setting (`arandor.music.open`).
 Playlist rules (who may view or edit) are in `lib/music/access.ts`, uploads and their limits in
 `lib/music/formats.ts`; see the [API reference](API-Reference.md#music).
 

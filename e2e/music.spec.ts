@@ -75,6 +75,7 @@ test.describe('Music helpers', () => {
 
 // ── Music API (test server only: creates and deletes playlists) ─────────────
 const E = process.env;
+if (process.env.E2E_BASE_URL) test.use({ baseURL: process.env.E2E_BASE_URL });
 const haveAccounts = !!(E.E2E_ADMIN && E.E2E_ADMIN_PASSWORD && E.E2E_DM && E.E2E_DM_PASSWORD && E.E2E_PLAYER && E.E2E_PLAYER_PASSWORD && E.E2E_PLAYER2 && E.E2E_PLAYER2_PASSWORD);
 
 async function login(context: BrowserContext, username: string, password: string) {
@@ -152,6 +153,9 @@ test.describe('Music API', () => {
     for (const data of [{ name: '' }, { name: '   ' }, { name: 'a'.repeat(81) }, { name: uname(), visibility: 'secret' }]) {
       expect((await player.request.post('/api/music/playlists', { data })).status(), JSON.stringify(data).slice(0, 40)).toBe(400);
     }
+    // The dashboard switch is gone: showOnDashboard alone is nothing to change
+    const site = (await (await dm.request.get('/api/music/site')).json()).playlist;
+    expect((await dm.request.patch(`/api/music/playlists/${site.id}`, { data: { showOnDashboard: false } })).status()).toBe(400);
   });
 
   test('import: YouTube video ids become separate tracks', async ({ request }) => {
@@ -338,6 +342,14 @@ test.describe('Music API', () => {
 // YouTube playlists (they can't play from the test server: error 150). Mirrors YouTube:
 // loadPlaylist/nextVideo/previousVideo and seekTo from CUED start playback; cuePlaylist doesn't.
 // getPlaylist() returns window.__ytLists[listId] when a test sets it.
+/** Clicks a player control. On narrow screens previous and stop live in the queue panel, which is
+ *  opened first. */
+async function control(page: import('@playwright/test').Page, name: string) {
+  const b = page.getByRole('button', { name, exact: true });
+  if (!(await b.isVisible())) await page.locator('#music-expand').click();
+  await b.click();
+}
+
 const FAKE_YT_API = `(() => {
   const calls = window.__ytCalls = [];
   class Player {
@@ -448,7 +460,7 @@ test.describe('Music player', () => {
     await page.getByRole('button', { name: 'Next track' }).click();
     await expect(page.locator('#music-title')).toHaveText('Wind');
     await expect.poll(() => paused(page)).toBe(false);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(page.locator('#music-bar')).toBeHidden();
     expect(await paused(page)).toBe(true);
   });
@@ -462,7 +474,7 @@ test.describe('Music player', () => {
     const a = await frac();
     await page.waitForTimeout(1500);
     expect(await frac()).toBeGreaterThan(a);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
     await expect(page.locator('#music-bar')).toBeHidden();
   });
 
@@ -503,7 +515,7 @@ test.describe('Music player', () => {
     await expect.poll(async () => (await st(page)).duration).toBe(100);
     await playQueue(page, q);
     await expectProgress(page);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('switching to YouTube while a file is loading: time is still reported (fake YouTube API)', async ({ page }) => {
@@ -520,7 +532,7 @@ test.describe('Music player', () => {
     await playQueue(page, q);
     await expect(page.locator('#music-title')).toHaveText('Rain');
     await expectProgress(page);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('paused YouTube playlist: next/prev cue the entry and stay paused and hidden (fake YouTube API)', async ({ page }) => {
@@ -548,14 +560,14 @@ test.describe('Music player', () => {
     expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
     expect(c[0].arg).toMatchObject({ list: 'PLfake', index: 2, startSeconds: 0 });
     // Paused (cued): prev cues entry b
-    await page.getByRole('button', { name: 'Previous track' }).click();
+    await control(page, 'Previous track');
     await expect(page.locator('#music-title')).toHaveText('Entry b');
     c = await calls();
     expect(c.map((x) => x.name)).toEqual(['cuePlaylist']);
     expect(c[0].arg).toMatchObject({ index: 1, startSeconds: 0 });
     // Cued, more than 3 s in: prev restarts the entry by cueing it (seekTo would start it)
     await page.evaluate(() => { (window as any).__ytPlayer.t = 10; });
-    await page.getByRole('button', { name: 'Previous track' }).click();
+    await control(page, 'Previous track');
     await expect.poll(async () => (await calls()).map((x) => x.name)).toEqual(['cuePlaylist']);
     await page.waitForTimeout(300);
     const s = await st();
@@ -564,7 +576,7 @@ test.describe('Music player', () => {
     expect(s.position).toBe(0);
     await expect(page.locator('#music-yt-tile')).toBeHidden();
     expect(await page.evaluate(() => (window as any).__ytPlayer.state)).not.toBe(1);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   test('pause during an autoplay load keeps the tile until YouTube has paused (fake YouTube API)', async ({ page }) => {
@@ -585,7 +597,7 @@ test.describe('Music player', () => {
     await expect(page.locator('#music-yt-tile')).toBeHidden({ timeout: 5000 });
     expect(await page.evaluate(() => (window as any).__ytPlayer.state)).toBe(2);
     expect(await page.evaluate(() => (window as any).__bad)).toBe(0);
-    await page.getByRole('button', { name: 'Stop and close player' }).click();
+    await control(page, 'Stop and close player');
   });
 
   // ── YouTube (real youtube.com; desktop Chromium only) ──
@@ -809,33 +821,43 @@ test.describe('Music player', () => {
       const cdp = await page.context().newCDPSession(page);
       await cdp.send('Emulation.setEmulatedMedia', { features: [{ name: 'display-mode', value: 'standalone' }] });
       if (await page.evaluate(() => matchMedia('(display-mode: standalone)').matches)) return;
-      const origin = new URL(test.info().project.use.baseURL ?? 'http://127.0.0.1:4340').origin;
+      const origin = new URL(E.E2E_BASE_URL ?? test.info().project.use.baseURL ?? 'http://127.0.0.1:4340').origin;
       await page.route((u) => u.origin === origin, async (route) => {
-        const res = await route.fetch();
-        if (!/text\/(css|html)/.test(res.headers()['content-type'] ?? '')) return route.fulfill({ response: res });
-        const body = (await res.text()).replace(/\(display-mode:\s*standalone\)/g, '(min-width: 0px)');
-        return route.fulfill({ response: res, body });
+        try {
+          const res = await route.fetch();
+          if (!/text\/(css|html)/.test(res.headers()['content-type'] ?? '')) return await route.fulfill({ response: res });
+          const body = (await res.text()).replace(/\(display-mode:\s*standalone\)/g, '(min-width: 0px)');
+          return await route.fulfill({ response: res, body });
+        } catch {
+          // The page moved on (navigation, aborted media request) before the answer was handed over
+        }
       });
     }
     async function tucked(page: import('@playwright/test').Page, on: boolean) {
       await page.evaluate((on) => document.documentElement.classList.toggle('pwa-dock-tucked', on), on);
       await page.waitForTimeout(450); // the bar, the seal and the player slide (0.3 s)
     }
-    /** The mini bar meets neither the dock bar nor the dice seal and lies fully inside the viewport. */
+    /** The music button and (open) the mini bar meet neither the dock bar nor the dice seal and lie
+     *  fully inside the viewport; the button is at least 44px to tap. */
     async function clear(page: import('@playwright/test').Page, state: string) {
       const vp = page.viewportSize()!;
-      const bar = await box(page, '#music-bar');
       const seal = await box(page, '#dice-fab-root button#dice-fab');
-      expect(meets(bar, seal), `${state}: mini bar meets the dice seal`).toBe(false);
       const dock = page.locator('.pwa-dock-root .pwa-dock-bar');
-      if (await dock.isVisible()) {
-        const d = await dock.boundingBox();
-        if (d && d.y < vp.height) expect(meets(bar, d), `${state}: mini bar meets the dock`).toBe(false);
+      const d = (await dock.isVisible()) ? await dock.boundingBox() : null;
+      const sels = ['#music-fab', ...(await page.locator('#music-bar').isVisible() ? ['#music-bar'] : [])];
+      for (const sel of sels) {
+        const b = await box(page, sel);
+        expect(meets(b, seal), `${state}: ${sel} meets the dice seal`).toBe(false);
+        if (d && d.y < vp.height) expect(meets(b, d), `${state}: ${sel} meets the dock`).toBe(false);
+        expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= vp.width && b.y + b.height <= vp.height, `${state}: ${sel} inside the viewport`).toBe(true);
+        expect(Math.min(b.width, b.height), `${state}: ${sel} at least 44px`).toBeGreaterThanOrEqual(44);
       }
-      expect(bar.x >= 0 && bar.y >= 0 && bar.x + bar.width <= vp.width && bar.y + bar.height <= vp.height, `${state}: mini bar inside the viewport`).toBe(true);
+      const f = await box(page, '#music-fab');
+      expect(f.x, `${state}: music button on the left`).toBeLessThan(seal.x);
     }
 
-    test('mini bar, toasts, page end and YouTube tile clear the dock and the dice seal', async ({ page }) => {
+    test('music button, mini bar, toasts, page end and YouTube tile clear the dock and the dice seal', async ({ page }) => {
+      test.slow(); // every request of the page goes through the route above
       await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
       await standalone(page);
       await start(page);
@@ -844,9 +866,29 @@ test.describe('Music player', () => {
       await expect(page.locator('#music-progress')).toBeVisible();
       await page.waitForTimeout(450);
       await clear(page, 'dock shown');
+      // The button sits above the dock, on the left; the bar to its right on the same bottom line,
+      // running over the dice seal (clear of it) towards the right edge
+      const dockBox = await box(page, '.pwa-dock-root .pwa-dock-bar');
+      const shown = await box(page, '#music-fab');
+      const barBox = await box(page, '#music-bar');
+      expect(shown.y + shown.height, 'button above the dock').toBeLessThanOrEqual(dockBox.y);
+      expect(dockBox.y - (shown.y + shown.height), 'button close to the dock').toBeLessThanOrEqual(34);
+      expect(barBox.x, 'bar right of the button').toBeGreaterThanOrEqual(shown.x + shown.width);
+      expect(Math.abs(barBox.y + barBox.height - (shown.y + shown.height)), 'same bottom line').toBeLessThanOrEqual(1);
+      expect(page.viewportSize()!.width - (barBox.x + barBox.width), 'bar reaches the right side').toBeLessThanOrEqual(20);
       await tucked(page, true);
       await clear(page, 'dock tucked');
+      // Shut: only the button, still clear of everything; it drops with the dock when that tucks away
+      await page.locator('#music-fab').click();
+      await expect(page.locator('#music-bar')).not.toBeVisible();
+      await page.waitForTimeout(400);
+      await clear(page, 'shut, dock tucked');
+      expect((await box(page, '#music-fab')).y, 'button drops with the dock').toBeGreaterThan(shown.y + 30);
       await tucked(page, false);
+      await clear(page, 'shut, dock shown');
+      await page.locator('#music-fab').click();
+      await expect(page.locator('#music-bar')).toBeVisible();
+      await page.waitForTimeout(400);
 
       // A toast never covers the mini bar
       await page.evaluate(() => window.alert('Skipped: Ghost (not playable)'));
@@ -867,13 +909,15 @@ test.describe('Music player', () => {
       await page.evaluate(() => scrollTo(0, 0));
       await page.waitForTimeout(300);
 
-      // The dice panel opens over the player: bar and queue step aside rather than peek out around it
+      // The dice panel opens over the player: button, bar and queue step aside rather than peek out around it
       await page.locator('#dice-fab').click();
       await expect(page.locator('#dice-fab-panel')).toBeVisible();
       await expect(page.locator('#music-bar')).not.toBeVisible();
+      await expect(page.locator('#music-fab')).not.toBeVisible();
       await page.locator('#dice-fab').click();
       await expect(page.locator('#dice-fab-panel')).toBeHidden();
       await expect(page.locator('#music-bar')).toBeVisible();
+      await expect(page.locator('#music-fab')).toBeVisible();
 
       // The YouTube tile sits above the mini bar, clear of the dock and the seal
       await page.evaluate(() => window.__music.playPlaylist({ id: 'yt', name: 'YT', tracks: [{ id: 'yt-v', kind: 'youtube_video', title: 'Fake video', ref: 'vid' }] as any }));
@@ -887,8 +931,20 @@ test.describe('Music player', () => {
         expect(tile.y >= 0 && tile.x + tile.width <= page.viewportSize()!.width, 'tile inside the viewport').toBe(true);
         await clear(page, `YouTube, dock ${t ? 'tucked' : 'shown'}`);
       }
+      // Shut while the video plays: the tile stays, right above the button
+      await page.locator('#music-fab').click();
+      await page.waitForTimeout(400);
+      await expect(page.locator('#music-yt-tile')).toBeVisible();
+      for (const t of [false, true]) {
+        await tucked(page, t);
+        const tile = await box(page, '#music-yt-tile');
+        expect(tile.y + tile.height, 'tile above the button').toBeLessThanOrEqual((await box(page, '#music-fab')).y);
+        expect(meets(tile, await box(page, '#dice-fab')), 'tile meets the seal').toBe(false);
+        await clear(page, `YouTube shut, dock ${t ? 'tucked' : 'shown'}`);
+      }
+      await page.locator('#music-fab').click();
       await tucked(page, false);
-      await page.getByRole('button', { name: 'Stop and close player' }).click();
+      await control(page, 'Stop and close player');
     });
   });
 
@@ -925,14 +981,17 @@ test.describe('Music player', () => {
     await expect(page.locator('#music-bar')).toBeVisible();
     errors.length = 0; // the aborted request logs a network error
 
-    // The saved playlist is gone: the saved state is dropped silently
+    // The saved playlist is gone: the saved state is dropped silently (and the site playlist, if
+    // it has tracks, is cued in its place, unsaved)
     const del = await owner.request.delete(`/api/music/playlists/${playlist.id}`);
     expect(del.ok()).toBe(true);
+    const gone = playlist.id;
     playlist = undefined as any;
     await page.reload();
     await page.waitForFunction(() => !!window.__music);
     await page.waitForTimeout(800);
-    await expect(page.locator('#music-bar')).toBeHidden();
+    await expect(page.locator('#music-title')).not.toHaveText('Rain');
+    expect((await page.evaluate(() => window.__music.getState())).source?.playlistId).not.toBe(gone);
     expect(await page.evaluate(() => JSON.parse(localStorage.getItem('arandor.music') ?? '{}').source ?? null)).toBeNull();
     expect(errors).toEqual([]);
   });
@@ -1074,6 +1133,7 @@ test.describe('Music page', () => {
     await expect(page.locator('#mp-public')).toBeChecked();
     await expect(page.locator('#mp-delete')).toBeHidden();
     await expect(page.locator('#mp-site')).toBeHidden();
+    await expect(page.locator('#mp-dashboard')).toHaveCount(0); // no dashboard switch any more
 
     // a private playlist of player2: only the admin sees it, under "All others"
     const p2 = await browserlessCreate(context);
@@ -1182,215 +1242,235 @@ test.describe('Music page', () => {
   });
 });
 
-test.describe('Dashboard music', () => {
-  test.skip(!haveAccounts, 'Needs E2E accounts (test server only)');
-  test.skip(({ isMobile }) => isMobile, 'Desktop flow');
+// ── Music button (bottom left, everyone, every Layout page) ──────────────────
+// The site playlist is stubbed (route), so these run as a visitor and change no data.
+test.describe('Music button', () => {
   test.describe.configure({ mode: 'serial' });
 
-  let admin: BrowserContext, dm: BrowserContext;
-  let siteId = '';
-  let originalIds: string[] = [];
-  const added: string[] = [];
-
-  async function siteTracks(): Promise<any[]> {
-    return (await (await admin.request.get('/api/music/site')).json()).playlist.tracks;
+  type Box = { x: number; y: number; width: number; height: number };
+  const meets = (a: Box, b: Box) => a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
+  const box = async (page: import('@playwright/test').Page, sel: string) => (await page.locator(sel).boundingBox())!;
+  const st = (page: import('@playwright/test').Page) => page.evaluate(() => window.__music.getState());
+  const audio = (page: import('@playwright/test').Page) => page.locator('#music-audio');
+  const currentTime = (page: import('@playwright/test').Page) => audio(page).evaluate((a: HTMLAudioElement) => a.currentTime);
+  const fab = (page: import('@playwright/test').Page) => page.locator('#music-fab');
+  const bar = (page: import('@playwright/test').Page) => page.locator('#music-bar');
+  /** The open bar sits right of the button on the same bottom line; with a dice button on the right
+   *  (not in the installed app) it stays clear of it, and on phones it fills the room up to it. */
+  async function expectRow(page: import('@playwright/test').Page) {
+    await page.mouse.move(page.viewportSize()!.width / 2, 1); // off the button (hover tilts it)
+    await page.waitForTimeout(400); // the slide
+    const f = await box(page, '#music-fab'), b = await box(page, '#music-bar'), d = await box(page, '#dice-fab');
+    expect(b.x, 'bar right of the button').toBeGreaterThanOrEqual(f.x + f.width);
+    expect(b.x - (f.x + f.width), 'bar next to the button').toBeLessThanOrEqual(12);
+    expect(Math.abs(b.y + b.height - (f.y + f.height)), 'same bottom line').toBeLessThanOrEqual(1);
+    expect(Math.round(b.height), 'as tall as the button').toBe(56);
+    expect(meets(b, d), 'bar meets the dice button').toBe(false);
+    expect(b.x + b.width, 'bar left of the dice button').toBeLessThanOrEqual(d.x - 8);
+    if (page.viewportSize()!.width < 600) expect(d.x - (b.x + b.width), 'bar fills the room up to the dice button').toBeLessThanOrEqual(16);
+    // every control in the bar is visible inside it and, on touch screens, 44px or more
+    const touch = await page.evaluate(() => matchMedia('(pointer: coarse)').matches);
+    for (const btn of await page.locator('#music-bar button').all()) {
+      if (!(await btn.isVisible())) continue;
+      const bb = (await btn.boundingBox())!;
+      expect(bb.x + bb.width, 'control inside the bar').toBeLessThanOrEqual(b.x + b.width + 0.5);
+      if (touch) expect(Math.min(bb.width, bb.height), 'control at least 44px').toBeGreaterThanOrEqual(44);
+    }
   }
-  async function removeAll(ids: string[]) {
-    for (const id of ids) await admin.request.delete(`/api/music/tracks/${id}`);
+
+  const SITE = {
+    id: 'e2e-site', name: 'Tavern music', tracks: [
+      { id: 'e2e-s1', kind: 'file', title: 'Site One', ref: '/uploads/music/e2e-site-one.wav' },
+      { id: 'e2e-s2', kind: 'file', title: 'Site Two', ref: '/uploads/music/e2e-site-two.wav' },
+    ],
+  };
+  async function stubSite(page: import('@playwright/test').Page, playlist: unknown = SITE) {
+    await page.route('**/api/music/site', (r) => r.fulfill({ json: { playlist } }));
+    await page.route('**/uploads/music/e2e-*.wav', (r) => r.fulfill({ contentType: 'audio/wav', body: wav(20) }));
+  }
+  async function open(page: import('@playwright/test').Page, stub: unknown = SITE) {
+    await stubSite(page, stub);
+    await page.goto('/');
+    await page.waitForFunction(() => !!window.__music);
   }
 
-  test.beforeAll(async ({ browser }) => {
-    [admin, dm] = await Promise.all([browser.newContext(), browser.newContext()]);
-    await login(admin, E.E2E_ADMIN!, E.E2E_ADMIN_PASSWORD!);
-    await login(dm, E.E2E_DM!, E.E2E_DM_PASSWORD!);
-    const site = (await (await admin.request.get('/api/music/site')).json()).playlist;
-    siteId = site.id;
-    originalIds = site.tracks.map((t: any) => t.id);
+  test('the site playlist waits, paused, behind the button', async ({ page }) => {
+    await open(page);
+    await expect(page.locator('#tavern-music')).toHaveCount(0); // the dashboard panel is gone
+    await expect(fab(page)).toBeVisible();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(bar(page)).not.toBeVisible();
+    await expect.poll(async () => (await st(page)).queue.map((t) => t.title)).toEqual(['Site One', 'Site Two']);
+    const s = await st(page);
+    expect(s.cued).toBe(true);
+    expect(s.playing).toBe(false);
+    expect(await audio(page).evaluate((a: HTMLAudioElement) => a.currentSrc)).toBe(''); // nothing loaded yet
+
+    // The dice button's twin, on the other side, clear of it
+    await fab(page).evaluate((el) => Promise.all(el.getAnimations().map((a) => a.finished))); // the pop-in
+    const f = await box(page, '#music-fab');
+    expect(Math.round(f.width)).toBe(56);
+    expect(Math.round(f.height)).toBe(56);
+    expect(f.x).toBeLessThan(page.viewportSize()!.width / 2);
+    expect(meets(f, await box(page, '#dice-fab')), 'music button meets the dice button').toBe(false);
+
+    await fab(page).click();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(bar(page)).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Site One');
+    await expect(page.locator('#music-toggle')).toHaveAttribute('aria-label', 'Play');
+    await expectRow(page);
+    await page.waitForTimeout(500);
+    expect((await st(page)).playing).toBe(false); // never autoplays
+
+    // A cued queue is not saved: each load cues the site playlist afresh
+    await page.evaluate(() => window.dispatchEvent(new Event('pagehide')));
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('arandor.music') ?? '{}'));
+    expect(saved.source ?? null).toBeNull();
+    expect(saved.queue ?? []).toEqual([]);
+
+    // Open or shut is remembered
+    await page.reload();
+    await expect(bar(page)).toBeVisible();
+    await expect(page.locator('#music-title')).toHaveText('Site One');
+    await fab(page).click();
+    await expect(bar(page)).not.toBeVisible();
+    await page.reload();
+    await expect(fab(page)).toBeVisible();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(bar(page)).not.toBeVisible();
+    // Shut, the player is out of the tab order
+    expect(await page.locator('#music-drawer').evaluate((d: HTMLElement) => d.inert)).toBe(true);
   });
 
-  test.afterAll(async () => {
-    await removeAll(added);
-    await Promise.all([admin, dm].map((c) => c?.close()));
-  });
+  test('one tap on play; shut while playing shows the equaliser; ✕ cues the site playlist again', async ({ page, isMobile }) => {
+    await open(page);
+    await fab(page).click();
+    await page.locator('#music-toggle').click();
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.3);
+    expect((await st(page)).cued).toBe(false);
+    await expect(fab(page)).toHaveClass(/is-playing/);
 
-  test('empty site playlist: nobody sees the panel, not even a dm', async ({ browser }) => {
-    // The site playlist must be empty for this test; existing tracks are not deleted (they could be real data)
-    test.skip(originalIds.length > 0, 'Site playlist already has tracks');
-    const visitor = await browser.newContext();
-    const vp = await visitor.newPage();
-    await vp.goto('/');
-    await expect(vp.locator('h1').first()).toBeVisible();
-    await expect(vp.locator('#tavern-music')).toHaveCount(0);
-    await visitor.close();
+    // Shut while playing: only the button, with the equaliser; the music goes on
+    await fab(page).click();
+    await expect(bar(page)).not.toBeVisible();
+    await expect(page.locator('#music-fab .music-fab-eq')).toBeVisible();
+    await expect(page.locator('#music-fab .music-fab-note')).toBeHidden();
+    await expect(fab(page)).toHaveAttribute('aria-label', 'Music player (playing)');
+    const t1 = await currentTime(page);
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(t1);
 
-    const page = await dm.newPage();
-    await page.goto('/');
-    await expect(page.locator('h1').first()).toBeVisible();
-    await expect(page.locator('#tavern-music')).toHaveCount(0);
-    await page.close();
-  });
-
-  test('show on dashboard: admins and dms can switch the panel off and on', async ({ browser }) => {
-    const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
-      multipart: { file: { name: 'Toggle.wav', mimeType: 'audio/wav', buffer: wav(5) } },
-    });
-    expect(res.status()).toBe(201);
-    added.push((await res.json()).results[0].track.id);
-    const visitor = await browser.newContext();
-    try {
-      // API rules: only booleans, only the site playlist, only its editors
-      expect((await dm.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: 'no' } })).status()).toBe(400);
-      const own = await (await dm.request.post('/api/music/playlists', { data: { name: `E2E toggle ${Date.now()}`, visibility: 'public' } })).json();
-      expect((await dm.request.patch(`/api/music/playlists/${own.id}`, { data: { showOnDashboard: false } })).status()).toBe(400);
-      await dm.request.delete(`/api/music/playlists/${own.id}`);
-      const player = await browser.newContext();
-      await login(player, E.E2E_PLAYER!, E.E2E_PLAYER_PASSWORD!);
-      expect((await player.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: false } })).status()).toBe(403);
-      await player.close();
-
-      // dm switches it off on Tools → Music; the dashboard hides the panel for everyone
-      const page = await dm.newPage();
-      await page.goto(`/tools/music?playlist=${siteId}`);
-      const box = page.locator('#mp-dashboard');
-      await expect(box).toBeVisible();
-      await expect(box).toBeChecked();
-      await box.uncheck();
-      await expect.poll(async () => (await (await admin.request.get(`/api/music/playlists/${siteId}`)).json()).showOnDashboard).toBe(false);
-      await page.reload();
-      await expect(page.locator('#mp-dashboard')).not.toBeChecked();
-
-      const vp = await visitor.newPage();
-      await vp.goto('/');
-      await expect(vp.locator('h1').first()).toBeVisible();
-      await expect(vp.locator('#tavern-music')).toHaveCount(0);
-      await page.goto('/');
-      await expect(page.locator('h1').first()).toBeVisible();
-      await expect(page.locator('#tavern-music')).toHaveCount(0);
-
-      // and on again
-      await page.goto(`/tools/music?playlist=${siteId}`);
-      await page.locator('#mp-dashboard').check();
-      await expect.poll(async () => (await (await admin.request.get(`/api/music/playlists/${siteId}`)).json()).showOnDashboard).toBe(true);
-      await vp.goto('/');
-      await expect(vp.locator('#tavern-music')).toBeVisible();
-
-      // other playlists have no such switch
-      const mine = await (await dm.request.post('/api/music/playlists', { data: { name: `E2E noswitch ${Date.now()}` } })).json();
-      await page.goto(`/tools/music?playlist=${mine.id}`);
-      await expect(page.locator('#mp-name')).toBeVisible();
-      await expect(page.locator('#mp-dashboard-row')).toBeHidden();
-      await dm.request.delete(`/api/music/playlists/${mine.id}`);
-      await page.close();
-    } finally {
-      await admin.request.patch(`/api/music/playlists/${siteId}`, { data: { showOnDashboard: true } });
-      await visitor.close();
-      await removeAll(added.splice(0));
+    // A soft page change keeps the button, its state and the playback
+    await page.evaluate(() => ((window as any).__noReload = true));
+    if (isMobile) {
+      await page.locator('#mobileMenuBtn').click();
+      await page.locator('#mobileMenu a[href="/characters"]').click();
+    } else {
+      await page.locator('[data-testid="desktop-nav"] a[href="/characters"]').click();
     }
+    await page.waitForURL('**/characters');
+    expect(await page.evaluate(() => (window as any).__noReload)).toBe(true);
+    await expect(fab(page)).toBeVisible();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    const t2 = await currentTime(page);
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(t2);
+
+    // ✕ stops and shuts; the site playlist is cued again
+    await fab(page).click();
+    await control(page, 'Stop and close player');
+    await expect(bar(page)).not.toBeVisible();
+    await expect(fab(page)).toBeVisible();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(fab(page)).not.toHaveClass(/is-playing/);
+    await expect.poll(async () => (await st(page)).cued).toBe(true);
+    const s = await st(page);
+    expect(s.playing).toBe(false);
+    expect(s.queue[s.index].title).toBe('Site One');
   });
 
-  test('visitor plays the site playlist from the dashboard', async ({ browser }) => {
-    for (const name of ['Dash One.wav', 'Dash Two.wav']) {
-      const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
-        multipart: { file: { name, mimeType: 'audio/wav', buffer: wav(20) } },
-      });
-      expect(res.status()).toBe(201);
-      added.push((await res.json()).results[0].track.id);
-    }
-    const tracks = await siteTracks();
-    const first = tracks[0].title;
+  test('nothing to play: no button; playback started elsewhere brings it, open', async ({ page }) => {
+    await open(page, { ...SITE, tracks: [] });
+    await page.waitForTimeout(800);
+    await expect(fab(page)).toBeHidden();
+    await expect(bar(page)).toBeHidden();
+    // (no site playlist at all: the same)
+    await page.unroute('**/api/music/site');
+    await page.route('**/api/music/site', (r) => r.fulfill({ json: { playlist: null } }));
+    await page.reload();
+    await page.waitForFunction(() => !!window.__music);
+    await page.waitForTimeout(800);
+    await expect(fab(page)).toBeHidden();
 
-    const visitor = await browser.newContext();
-    const page = await visitor.newPage();
-    await page.goto('/');
-    const panel = page.locator('#tavern-music');
-    await expect(panel).toContainText('Tavern music');
-    await expect(panel.getByRole('link', { name: 'Edit' })).toHaveCount(0);
-    await panel.locator('[data-tm-play]').click();
-    await expect(page.locator('#music-bar')).toBeVisible();
-    await expect(page.locator('#music-title')).toHaveText(first);
-
-    // click a row: plays from it and marks it
-    await panel.locator('summary').click();
-    const rows = panel.locator('[data-tm-row]');
-    await expect(rows).toHaveCount(tracks.length);
-    await rows.last().click();
-    await expect(page.locator('#music-title')).toHaveText(tracks[tracks.length - 1].title);
-    await expect(rows.last()).toHaveAttribute('aria-current', 'true');
-    await expect(rows.first()).not.toHaveAttribute('aria-current', 'true');
-
-    // visitors cannot open the Music tool
-    await page.goto('/tools/music');
-    await expect(page).toHaveURL(/\/login/);
-    await visitor.close();
-
-    // dm sees Edit
-    const dmPage = await dm.newPage();
-    await dmPage.goto('/');
-    await expect(dmPage.locator('#tavern-music').getByRole('link', { name: 'Edit' })).toHaveAttribute('href', `/tools/music?playlist=${siteId}`);
-    await dmPage.close();
-
-    await removeAll(added.splice(0));
-    expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
+    // e.g. from Tools → Music or the DM screen
+    await page.evaluate((tracks) => window.__music.playPlaylist({ id: 'elsewhere', name: 'Elsewhere', tracks: tracks as any }), SITE.tracks);
+    await expect(fab(page)).toBeVisible();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(bar(page)).toBeVisible();
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.2);
+    await control(page, 'Stop and close player');
+    await expect(fab(page)).toBeHidden();
   });
 
-  test('panel shows whether the site playlist is playing, paused or idle', async ({ browser }) => {
-    for (const name of ['State One.wav', 'State Two.wav']) {
-      const res = await admin.request.post(`/api/music/playlists/${siteId}/tracks`, {
-        multipart: { file: { name, mimeType: 'audio/wav', buffer: wav(20) } },
-      });
-      expect(res.status()).toBe(201);
-      added.push((await res.json()).results[0].track.id);
+  test('playback started elsewhere slides the shut player open', async ({ page }) => {
+    await open(page);
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await page.evaluate(() => window.__music.play()); // e.g. a headset's play key
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'true');
+    await expect(bar(page)).toBeVisible();
+    await expect.poll(() => currentTime(page)).toBeGreaterThan(0.2);
+    // It can be shut again while it plays, and stays shut on the next track
+    await fab(page).click();
+    await page.evaluate(() => window.__music.next());
+    await expect(page.locator('#music-title')).toHaveText('Site Two');
+    await page.waitForTimeout(400);
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await page.evaluate(() => window.__music.stop());
+  });
+
+  test('shut while YouTube plays: the video tile stays visible beside the button (fake YouTube API)', async ({ page }) => {
+    await page.route('https://www.youtube.com/iframe_api', (r) => r.fulfill({ contentType: 'text/javascript', body: FAKE_YT_API }));
+    await open(page);
+    await page.evaluate(() => window.__music.playPlaylist({ id: 'yt', name: 'YT', tracks: [{ id: 'yt-v', kind: 'youtube_video', title: 'Fake video', ref: 'vid' }] as any }));
+    await expect.poll(async () => (await st(page)).playing).toBe(true);
+    const tile = page.locator('#music-yt-tile');
+    await expect(tile).toBeVisible();
+    await fab(page).click();
+    await expect(fab(page)).toHaveAttribute('aria-expanded', 'false');
+    await expect(bar(page)).not.toBeVisible();
+    await page.waitForTimeout(400); // the slide
+    await expect(tile).toBeVisible();
+    const frame = await box(page, '#music-yt-frame');
+    expect(frame.width, 'video at least 200 wide').toBeGreaterThanOrEqual(200);
+    expect(frame.height, 'video at least 200 high').toBeGreaterThanOrEqual(200);
+    const t = await box(page, '#music-yt-tile');
+    const f = await box(page, '#music-fab');
+    expect(meets(t, f), 'tile meets the button').toBe(false);
+    expect(t.y + t.height, 'tile right above the button').toBeLessThanOrEqual(f.y);
+    expect(f.y - (t.y + t.height), 'nothing between tile and button').toBeLessThanOrEqual(12);
+    expect(t.x >= 0 && t.y >= 0 && t.x + t.width <= page.viewportSize()!.width, 'tile inside the viewport').toBe(true);
+    expect(meets(t, await box(page, '#dice-fab')), 'tile meets the dice button').toBe(false);
+    // Paused: the tile goes (YouTube allows that); the button stays
+    await page.evaluate(() => window.__music.pause());
+    await expect(tile).toBeHidden();
+    await expect(fab(page)).toBeVisible();
+    await page.evaluate(() => window.__music.stop());
+  });
+
+  test('tablet: button, player and dice button keep clear of each other', async ({ page }) => {
+    await page.setViewportSize({ width: 820, height: 1180 });
+    await open(page);
+    await fab(page).click();
+    await page.locator('#music-expand').click();
+    await expect(page.locator('#music-panel')).toBeVisible();
+    await page.waitForTimeout(400);
+    const dice = await box(page, '#dice-fab');
+    for (const sel of ['#music-fab', '#music-bar', '#music-panel']) {
+      const b = await box(page, sel);
+      expect(meets(b, dice), `${sel} meets the dice button`).toBe(false);
+      expect(b.x >= 0 && b.y >= 0 && b.x + b.width <= 820 && b.y + b.height <= 1180, `${sel} inside the viewport`).toBe(true);
     }
-    const tracks = await siteTracks();
-    const visitor = await browser.newContext();
-    try {
-      const page = await visitor.newPage();
-      await page.goto('/');
-      const panel = page.locator('#tavern-music');
-      const main = panel.locator('[data-tm-play]');
-      const now = panel.locator('[data-tm-now]');
-
-      await expect(panel).toHaveAttribute('data-state', 'idle');
-      await expect(main).toHaveText('Play');
-      await expect(main).toHaveAttribute('aria-label', 'Play');
-      await expect(now).toBeHidden();
-
-      await main.click();
-      await expect(panel).toHaveAttribute('data-state', 'playing');
-      await expect(main).toHaveText('Pause');
-      await expect(main).toHaveAttribute('aria-label', 'Pause');
-      await expect(now).toBeVisible();
-      await expect(now).toContainText(tracks[0].title);
-      await expect(now).not.toContainText('Paused');
-      await expect(panel.locator('[data-tm-row]').first()).toHaveAttribute('aria-current', 'true');
-      await expect(panel.locator('[data-tm-progress]')).toBeVisible();
-
-      await main.click();
-      await expect(panel).toHaveAttribute('data-state', 'paused');
-      await expect(main).toHaveText('Resume');
-      await expect(main).toHaveAttribute('aria-label', 'Resume');
-      await expect(now).toContainText('Paused');
-      await expect(page.evaluate(() => (window as any).__music.getState().playing)).resolves.toBe(false);
-
-      await main.click();
-      await expect(panel).toHaveAttribute('data-state', 'playing');
-      await expect(main).toHaveText('Pause');
-      await expect(now).not.toContainText('Paused');
-
-      // another playlist takes over: the panel goes back to idle
-      await page.evaluate((t) => (window as any).__music.playPlaylist({ id: 'not-the-site', name: 'Other', tracks: [t] }, 0), {
-        id: tracks[1].id, kind: tracks[1].kind, title: 'Other list track', ref: tracks[1].ref,
-      });
-      await expect(page.locator('#music-title')).toHaveText('Other list track');
-      await expect(panel).toHaveAttribute('data-state', 'idle');
-      await expect(main).toHaveText('Play');
-      await expect(now).toBeHidden();
-      await expect(panel.locator('[data-tm-row][aria-current="true"]')).toHaveCount(0);
-    } finally {
-      await visitor.close();
-      await removeAll(added.splice(0));
-      expect((await siteTracks()).map((t) => t.id)).toEqual(originalIds);
-    }
+    await expectRow(page);
+    expect((await box(page, '#music-panel')).y + (await box(page, '#music-panel')).height, 'queue above the row').toBeLessThanOrEqual((await box(page, '#music-fab')).y);
   });
 });
 

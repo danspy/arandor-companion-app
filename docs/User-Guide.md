@@ -37,7 +37,6 @@ From top to bottom:
 1. **Welcome header** with the last session, the party level and its progress bar
    (DM: edit level/progress and the header image), and the **next session** with a countdown.
    *Add to my calendar* downloads the session for your calendar app.
-   Below it, the **Tavern music** strip (see [Music](#music)); anyone can press Play.
 2. **Combat active** banner while a fight runs (logged in), linking to the initiative tracker.
 3. **Previously on Arandor…**: the latest session's summary and cover image. Next to it,
    **Do you remember…?** brings back a random NPC, place, older session or library document
@@ -140,17 +139,21 @@ diary appearances. DMs can complete, fail, reactivate, edit and delete a quest f
 
 ## Music
 
-**Tavern music** on the dashboard plays the site playlist. It works without a login. It appears
-only while the site playlist has tracks and is switched on for the dashboard. Press
-**Play** (or **Shuffle**) to start; open **Tracks** to start from a song. While it plays the
-strip glows softly, an equalizer moves next to the current title, and the button reads
-**Pause**; when you pause it, it reads **Resume** and a thin line shows how far the song is.
+**The music button** sits at the bottom left of every page (the dice button's twin on the
+other side), for everyone, also without a login, as long as there is something to play. Tap it
+to slide the mini bar out to its right (or back in); the app remembers which you chose. When nothing else is
+loaded, the player holds the **Tavern music** site playlist, paused: one tap on Play starts it.
+If the site playlist is empty and nothing else is loaded, there is no button.
 
-**The mini bar** appears at the bottom left of every page once music plays, and keeps playing
-while you move between pages: previous / play-pause / next, volume (wider screens), a thin
-progress line along its bottom edge, and the arrow for the queue (seek, shuffle, repeat, jump
-to a track). The × stops the music and closes the bar. After a full reload (or after reopening
-the app) the bar comes back **paused**; the music never starts by itself.
+**The player** (the mini bar next to the button) has previous / play-pause / next, volume (wider
+screens), a thin progress line along its bottom edge, and the arrow that opens the queue above
+it (seek, shuffle, repeat, jump to a track). On a phone the bar fills the space up to the dice
+button and keeps the title, play/pause, next and the arrow; previous and × are at the top of the
+queue. Music keeps playing while you move between pages. Starting
+music anywhere (Tools → Music, the DM screen, your headset's play key) slides the player open;
+you can shut it again while it plays, and the button then shows a moving **equaliser**. The ×
+stops the music and shuts the player (Tavern music is ready again). After a full reload (or
+after reopening the app) the music comes back **paused**; it never starts by itself.
 
 **Tools → Music** (`/tools/music`, logged in) is where you make playlists:
 
@@ -161,8 +164,9 @@ the app) the bar comes back **paused**; the music never starts by itself.
   be added as one entry, or imported as separate tracks (up to 200).
 - Drag tracks to reorder, click a title to rename, × removes. **Play** and **Shuffle** start the
   playlist; the DM screen has its own small music panel ([DM tools](DM-Tools.md#music)).
-- **YouTube tracks** show a small video window next to the bar while they play. That is
-  required by YouTube. It disappears while the music is paused.
+- **YouTube tracks** show a small video window above the music button while they play, whether
+  the player is open or shut. That is required by YouTube. It disappears
+  while the music is paused.
 - Admins can make any playlist the **site playlist** that the dashboard plays.
 
 ## Dice
