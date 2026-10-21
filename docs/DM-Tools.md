@@ -128,8 +128,12 @@ about 2 seconds.
   see.
 - **Party:** the active characters in one table: HP, AC, initiative, speed, passive
   Perception, Investigation and Insight, and the six saves. The highest passive in each column is
-  highlighted. The numbers are from the last D&D Beyond sync, and only the DM screen shows them
-  (never the player display).
+  highlighted. The numbers are from D&D Beyond; the panel says when the party was last synced,
+  and only the DM screen shows them (never the player display). Opening the DM screen runs the
+  automatic sync (at most every 15 minutes per character). **Sync all** syncs every party
+  character with a D&D Beyond link right away and then shows e.g. *Synced 4 · 1 failed: Volrak*;
+  their initiative tracker entries get the new HP too. Afterwards only the party panel is
+  refreshed, so the rest of the DM screen (timer, side panel, music) is left as it is.
 - **Location:** pick a location to show its image and name full screen. **Hide from players**
   takes it off the display but keeps it selected; **Show to players** brings it back. It stays
   hidden when you switch to another location, so you can set up the next scene unseen.
