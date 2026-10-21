@@ -17,7 +17,7 @@
 - All scene and dm-screen write routes: `requireDungeonmasterOrAdmin(cookies)` from `src/lib/middleware.ts`.
 - Spotlight keys: NPC id or `character:<id>` (`src/lib/spotlight.ts`), never a new format.
 - Applying a scene never changes `screenMode` (spec addendum), `showInitiativeTracker`, `showTimer`, `timer*`, `placeholderImageUrl`, `customAssets`.
-- `screenVisible` is still written, always as `screenMode !== 'pause'`; `/api/display` keeps returning it.
+- `screenVisible` is still written, always as `screenMode === 'live' || screenMode === 'start'` (spec addendum); `/api/display` keeps returning it.
 - Campaign name on the start screen: `Arandor`. Recap is plain text (no markdown/HTML injection: set via `textContent`).
 - Dark-only app; only colour tokens from `global.css`. Errors on the DM screen use `alert(...)` like the rest of the page.
 - Logged-in e2e tests use `E2E_DM` / `E2E_DM_PASSWORD` and skip when unset; they run only against an isolated test server (see memory: deploy-workflow), never dev/preview/live data.

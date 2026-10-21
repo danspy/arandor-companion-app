@@ -182,7 +182,8 @@ screen*, *Live* or *Paused*.
 
 - **Start session** opens a dialog with the session number, title and date. The recap is
   prefilled from your latest diary entry; edit it freely. Choose *Title card* or *Title +
-  recap* and press *Show*.
+  recap* and press *Show*. Starting again on the same day (for example after *End session*)
+  re-opens the dialog with that day's title, number and recap.
 - **Go live** switches to the real display. **End session** asks for confirmation and takes
   you back to *No session*; location, spotlight, turn order and timer stay as they are.
 
@@ -190,7 +191,8 @@ screen*, *Live* or *Paused*.
 
 A scene is a location plus a spotlight, ready to apply in one click.
 
-- **Save current as scene** stores what is on the display now. **New scene** builds one from
+- **Save current as scene** stores the setup on the DM screen now, including entries you have
+  hidden from players (not just what the display shows). **New scene** builds one from
   scratch. Pencil to edit: name, location (and whether it is hidden), and the spotlight with
   the hide and focus marks per entry.
 - Each card shows the location thumbnail, the name and the portraits. A **CURRENT** highlight
@@ -199,8 +201,8 @@ A scene is a location plus a spotlight, ready to apply in one click.
   scenes while paused or before going live), and the turn order and timer are untouched.
 - **Reorder** by dragging a card; on phones use the up and down buttons. **Delete** asks for
   confirmation.
-- If an NPC or location in a scene was deleted later, it shows greyed out and is skipped when
-  you apply the scene.
+- If an NPC, character or location in a scene was deleted later, it shows greyed out and is
+  skipped when you apply the scene.
 
 ## Music
 
