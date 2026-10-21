@@ -823,10 +823,14 @@ test.describe('Music player', () => {
       if (await page.evaluate(() => matchMedia('(display-mode: standalone)').matches)) return;
       const origin = new URL(E.E2E_BASE_URL ?? test.info().project.use.baseURL ?? 'http://127.0.0.1:4340').origin;
       await page.route((u) => u.origin === origin, async (route) => {
-        const res = await route.fetch();
-        if (!/text\/(css|html)/.test(res.headers()['content-type'] ?? '')) return route.fulfill({ response: res });
-        const body = (await res.text()).replace(/\(display-mode:\s*standalone\)/g, '(min-width: 0px)');
-        return route.fulfill({ response: res, body });
+        try {
+          const res = await route.fetch();
+          if (!/text\/(css|html)/.test(res.headers()['content-type'] ?? '')) return await route.fulfill({ response: res });
+          const body = (await res.text()).replace(/\(display-mode:\s*standalone\)/g, '(min-width: 0px)');
+          return await route.fulfill({ response: res, body });
+        } catch {
+          // The page moved on (navigation, aborted media request) before the answer was handed over
+        }
       });
     }
     async function tucked(page: import('@playwright/test').Page, on: boolean) {
