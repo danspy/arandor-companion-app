@@ -6,6 +6,7 @@ import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 import PartyPanel from '../../components/PartyPanel.astro';
+import SceneStrip from '../../components/SceneStrip.astro';
 import { partyOverview } from '../../lib/party';
 import '../../styles/statblock.css';
 import '../../styles/character-sheet.css';
@@ -85,6 +86,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
   </div>
 
   <PartyPanel rows={partyRows} />
+  <SceneStrip locations={locations} party={party} formerParty={formerParty} npcs={npcs} />
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Location Control -->
@@ -387,35 +389,16 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       </div>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Pause screen (what the display shows while paused) -->
     <div class="t-panel p-6">
       <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        Quick Actions
+        Pause screen
       </h2>
 
       <div class="space-y-4">
-        <!-- Show/Hide Screen Toggle -->
-        <div class="t-inset p-4 rounded-xs">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-2">
-            <label class="t-body-text text-sm font-medium">Screen Visibility</label>
-            <div class="flex items-center gap-2">
-              <span id="screenStatusText" class="t-muted text-sm">Visible</span>
-              <button 
-                id="toggleScreenBtn"
-                class="t-btn-primary text-sm"
-              >
-                Hide screen
-              </button>
-            </div>
-          </div>
-          <p class="t-faint text-xs">
-            Hide the screen to show placeholder image while keeping your data intact.
-          </p>
-        </div>
-        
         <!-- Placeholder Image Upload -->
         <div class="t-inset p-4 rounded-xs">
           <label class="t-label block mb-2">
@@ -450,7 +433,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             </div>
           </div>
           <p class="t-faint text-xs mt-2">
-            Upload an image file or enter an image URL. This appears when the screen is hidden.
+            Upload an image file or enter an image URL. This appears while the screen is paused.
           </p>
         </div>
         
@@ -581,57 +564,45 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       try {
         const response = await fetch('/api/dm-screen');
         if (response.ok) {
-          const state = await response.json();
-          currentState = state;
-          
-          // Update UI
-          updateLocationPreview(state.currentLocationId);
-          updateNpcList(state.spotlightNpcIds);
-          
-          const locationSelect = document.getElementById('locationSelect');
-          const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
-          const placeholderImageInput = document.getElementById('placeholderImageUrl');
-          const showTimerCheckbox = document.getElementById('showTimer');
-          const timerMinutesInput = document.getElementById('timerMinutes');
-          
-          if (locationSelect) locationSelect.value = state.currentLocationId || '';
-          if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
-
-          if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
-          if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
-          if (timerMinutesInput && state.timerDuration !== undefined) {
-            timerMinutesInput.value = Math.floor(state.timerDuration / 60);
-          }
-          
-          // Update screen visibility UI
-          updateScreenVisibilityUI(state.screenVisible !== false); // Default to true if undefined
-          
-          // Update timer display
-          updateTimerDisplay();
+          renderState(await response.json());
+          announceState();
         }
       } catch (error) {
         console.error('Error loading state:', error);
       }
     }
-    
-    // Update screen visibility UI
-    function updateScreenVisibilityUI(isVisible) {
-      const toggleBtn = document.getElementById('toggleScreenBtn');
-      const statusText = document.getElementById('screenStatusText');
+
+    // Tell the scene strip (SceneStrip.astro) about the state; it answers with the same event
+    // after its own changes, and renderState() picks those up
+    function announceState() {
+      document.dispatchEvent(new CustomEvent('dm-screen:state', { detail: currentState }));
+    }
+
+    // Show a state from the server in the whole page
+    function renderState(state) {
+      currentState = state;
+
+      // Update UI
+      updateLocationPreview(state.currentLocationId);
+      updateNpcList(state.spotlightNpcIds);
       
-      if (isVisible) {
-        if (toggleBtn) {
-          toggleBtn.textContent = 'Hide screen';
-          toggleBtn.className = 't-btn-primary text-sm';
-        }
-        if (statusText) statusText.textContent = 'Visible';
-      } else {
-        if (toggleBtn) {
-          toggleBtn.textContent = 'Show screen';
-          toggleBtn.className = 't-btn-gold text-sm';
-        }
-        if (statusText) statusText.textContent = 'Hidden';
+      const locationSelect = document.getElementById('locationSelect');
+      const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+      const placeholderImageInput = document.getElementById('placeholderImageUrl');
+      const showTimerCheckbox = document.getElementById('showTimer');
+      const timerMinutesInput = document.getElementById('timerMinutes');
+      
+      if (locationSelect) locationSelect.value = state.currentLocationId || '';
+      if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
+
+      if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
+      if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
+      if (timerMinutesInput && state.timerDuration !== undefined) {
+        timerMinutesInput.value = Math.floor(state.timerDuration / 60);
       }
+
+      // Update timer display
+      updateTimerDisplay();
     }
     
     // Timer utility functions
@@ -874,6 +845,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         if (response.ok) {
           const newState = await response.json();
           currentState = newState;
+          announceState();
           return true;
         }
         return false;
@@ -1322,19 +1294,6 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       clearAllBtn?.addEventListener('click', clearAllHandler);
       eventHandlers.set('clearAllBtn', clearAllHandler);
       
-      // Toggle screen visibility
-      const toggleScreenBtn = document.getElementById('toggleScreenBtn');
-      const toggleScreenHandler = async () => {
-        const newVisibility = !currentState.screenVisible;
-        const success = await updateState({ screenVisible: newVisibility });
-        
-        if (success) {
-          updateScreenVisibilityUI(newVisibility);
-        }
-      };
-      toggleScreenBtn?.addEventListener('click', toggleScreenHandler);
-      eventHandlers.set('toggleScreenBtn', toggleScreenHandler);
-      
       // Save placeholder image
       const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
       const savePlaceholderHandler = async () => {
@@ -1615,6 +1574,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
     // Runs on the first load and after every client-side navigation (ClientRouter)
     document.addEventListener('astro:page-load', initialize);
+    // State changed by the scene strip (our own announcements carry currentState itself)
+    document.addEventListener('dm-screen:state', (e) => {
+      if (e.detail !== currentState && document.getElementById('locationSelect')) renderState(e.detail);
+    });
     // Stat block buttons in the turn preview (redrawn every few seconds, so delegated)
     document.addEventListener('click', (e) => {
       const btn = e.target.closest?.('.statblock-btn');

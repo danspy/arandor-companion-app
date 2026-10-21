@@ -1,0 +1,240 @@
+---
+// DM screen: quick actions for the player display (start screen, pause) next to the saved scenes.
+// Talks to the DM screen page only through the `dm-screen:state` event on `document` (detail: the
+// full DM screen state row): the page fires it after loading or changing the state, this strip
+// fires it after its own changes so the page can redraw.
+import Button from './Button.astro';
+import type { Character, NPC } from '@/db';
+
+interface Props {
+  locations: { id: string; name: string; type: string; imageUrl: string | null }[];
+  party: (typeof Character.$inferSelect)[];
+  formerParty: (typeof Character.$inferSelect)[];
+  npcs: (typeof NPC.$inferSelect)[];
+}
+// The lists are for the scenes half (location select, spotlight picker)
+---
+
+<section id="sceneStrip" class="t-panel p-6 mb-6 grid lg:grid-cols-[minmax(0,1fr)_minmax(0,2fr)] gap-6" aria-label="Quick actions and scenes">
+  <div id="quickActions">
+    <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+      </svg>
+      Quick actions
+      <span id="screenModeBadge" class="t-badge ml-auto" aria-live="polite" style="display:none"></span>
+    </h2>
+    <div class="grid grid-cols-2 gap-2">
+      <Button variant="primary" size="sm" id="startSessionBtn" class="w-full">Start session</Button>
+      <Button variant="warning" size="sm" id="pauseBtn" class="w-full">Pause</Button>
+    </div>
+    <p class="t-faint text-xs mt-2">
+      Start session shows a title card on the player display. Pause shows the wallpaper below (or a short break card).
+    </p>
+  </div>
+
+  <div id="scenesHalf">
+    <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+      </svg>
+      Scenes
+    </h2>
+  </div>
+</section>
+
+<dialog id="startSessionDialog" class="start-dialog t-modal-panel" aria-labelledby="startSessionDialogTitle">
+  <form method="dialog" id="startSessionForm" class="start-dialog-body space-y-4">
+    <h2 id="startSessionDialogTitle" class="start-dialog-title">Start session</h2>
+    <div class="grid grid-cols-2 gap-3">
+      <div>
+        <label for="startFormSession" class="t-label block mb-2">Session</label>
+        <input type="number" id="startFormSession" min="1" step="1" inputmode="numeric" class="t-input w-full px-3 py-2 text-sm" placeholder="–" />
+      </div>
+      <div>
+        <label for="startFormDate" class="t-label block mb-2">Date</label>
+        <input type="date" id="startFormDate" required class="t-input w-full px-3 py-2 text-sm" />
+      </div>
+    </div>
+    <div>
+      <label for="startFormTitle" class="t-label block mb-2">Title</label>
+      <input type="text" id="startFormTitle" maxlength="120" class="t-input w-full px-3 py-2 text-sm" placeholder="e.g. The Frozen Gate" />
+    </div>
+    <div>
+      <label for="startFormRecap" class="t-label block mb-2">Recap</label>
+      <textarea id="startFormRecap" rows="5" maxlength="5000" class="t-input w-full px-3 py-2 text-sm" placeholder="What happened last time"></textarea>
+    </div>
+    <fieldset>
+      <legend class="t-label mb-2">On the display</legend>
+      <div class="flex flex-wrap gap-x-6 gap-y-2">
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="title" /> Title card
+        </label>
+        <label class="t-body-text text-sm inline-flex items-center gap-2">
+          <input type="radio" name="startLayout" value="recap" /> Title + recap
+        </label>
+      </div>
+    </fieldset>
+    <div class="start-dialog-actions">
+      <button value="cancel" formnovalidate class="t-btn-secondary">Cancel</button>
+      <Button variant="primary" type="submit" id="startShowBtn">Show</Button>
+    </div>
+  </form>
+</dialog>
+
+<style>
+  .start-dialog {
+    margin: auto; /* Tailwind's reset removes the browser's centring margin */
+    width: min(32rem, calc(100vw - 2rem));
+    max-height: calc(100dvh - 2rem);
+    padding: 0;
+    color: var(--text-body);
+  }
+  .start-dialog::backdrop { background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); }
+  .start-dialog[open] { animation: start-dialog-in 0.2s ease-out both; }
+  @keyframes start-dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to   { opacity: 1; transform: none; }
+  }
+  .start-dialog-body { padding: 1.5rem; }
+  .start-dialog-title {
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-size: 1.6rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-strong);
+  }
+  .start-dialog input[type='radio'] { accent-color: var(--gold); }
+  .start-dialog-actions { display: flex; justify-content: flex-end; gap: 0.5rem; padding-top: 0.5rem; }
+  @media (prefers-reduced-motion: reduce) {
+    .start-dialog[open] { animation: none; }
+  }
+</style>
+
+<script>
+  import type { ScreenMode, StartScreen } from '../lib/scenes';
+
+  const STATE_EVENT = 'dm-screen:state';
+  const MODE_LABEL: Record<ScreenMode, [string, string]> = {
+    live: ['Live', 't-badge-green'],
+    start: ['Start screen', 't-badge-gold'],
+    pause: ['Paused', 't-badge-red'],
+  };
+  const $ = <T extends HTMLElement = HTMLElement>(id: string) => document.getElementById(id) as T | null;
+
+  // Last state seen (from the page or our own requests)
+  let state: { screenMode?: ScreenMode; screenVisible?: boolean; startScreen?: StartScreen | null } | null = null;
+  const modeOf = (s: NonNullable<typeof state>): ScreenMode => s.screenMode ?? (s.screenVisible === false ? 'pause' : 'live');
+
+  function render() {
+    if (!state) return;
+    const mode = modeOf(state);
+    const badge = $('screenModeBadge');
+    if (badge) {
+      const [label, tone] = MODE_LABEL[mode];
+      badge.textContent = label;
+      badge.className = `t-badge ${tone} ml-auto`;
+      badge.style.display = ''; // .t-badge sets display, so not the hidden attribute
+    }
+    const start = $('startSessionBtn');
+    if (start) start.textContent = mode === 'start' ? 'Go live' : 'Start session';
+    const pause = $('pauseBtn');
+    if (pause) {
+      pause.textContent = mode === 'pause' ? 'Resume' : 'Pause';
+      pause.setAttribute('aria-pressed', String(mode === 'pause'));
+    }
+  }
+
+  async function put(updates: Record<string, unknown>): Promise<boolean> {
+    try {
+      const res = await fetch('/api/dm-screen', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        alert(body.error || 'Could not update the player display');
+        return false;
+      }
+      document.dispatchEvent(new CustomEvent(STATE_EVENT, { detail: await res.json() }));
+      return true;
+    } catch (error) {
+      console.error('Error updating screen mode:', error);
+      alert('Could not update the player display');
+      return false;
+    }
+  }
+
+  const localToday = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  function fill(s: StartScreen) {
+    $<HTMLInputElement>('startFormSession')!.value = s.session == null ? '' : String(s.session);
+    $<HTMLInputElement>('startFormTitle')!.value = s.title;
+    $<HTMLInputElement>('startFormDate')!.value = s.date;
+    $<HTMLTextAreaElement>('startFormRecap')!.value = s.recap;
+    const layout = s.showRecap ? 'recap' : 'title';
+    document.querySelector<HTMLInputElement>(`input[name="startLayout"][value="${layout}"]`)!.checked = true;
+  }
+
+  // Today's start screen again if there is one, else the next session from the diary
+  async function openStartDialog() {
+    const dialog = $<HTMLDialogElement>('startSessionDialog');
+    if (!dialog) return;
+    const saved = state?.startScreen;
+    if (saved && saved.date === localToday()) {
+      fill(saved);
+    } else {
+      try {
+        const res = await fetch('/api/dm-screen/start-defaults');
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const d = await res.json();
+        fill({ title: '', session: d.session, date: d.date, recap: d.recap, showRecap: !!d.recap });
+      } catch (error) {
+        console.error('Error loading start defaults:', error);
+        fill({ title: '', session: null, date: localToday(), recap: '', showRecap: false });
+      }
+    }
+    dialog.showModal();
+    $('startFormTitle')?.focus();
+  }
+
+  // Delegated once on document: survives client-side navigation without piling up
+  document.addEventListener(STATE_EVENT, (e) => {
+    state = (e as CustomEvent).detail;
+    render();
+  });
+
+  document.addEventListener('click', async (e) => {
+    const btn = (e.target as Element | null)?.closest?.('#startSessionBtn, #pauseBtn');
+    if (!btn || !state) return;
+    const mode = modeOf(state);
+    if (btn.id === 'pauseBtn') await put({ screenMode: mode === 'pause' ? 'live' : 'pause' });
+    else if (mode === 'start') await put({ screenMode: 'live' });
+    else await openStartDialog();
+  });
+
+  document.addEventListener('submit', async (e) => {
+    const form = e.target as HTMLFormElement;
+    if (form.id !== 'startSessionForm' || (e as SubmitEvent).submitter?.id !== 'startShowBtn') return;
+    e.preventDefault();
+    const session = $<HTMLInputElement>('startFormSession')!.value.trim();
+    const startScreen: StartScreen = {
+      title: $<HTMLInputElement>('startFormTitle')!.value.trim(),
+      session: session ? Number(session) : null,
+      date: $<HTMLInputElement>('startFormDate')!.value,
+      recap: $<HTMLTextAreaElement>('startFormRecap')!.value,
+      showRecap: form.querySelector<HTMLInputElement>('input[name="startLayout"]:checked')?.value === 'recap',
+    };
+    const show = $<HTMLButtonElement>('startShowBtn')!;
+    show.disabled = true;
+    try {
+      if (await put({ screenMode: 'start', startScreen })) $<HTMLDialogElement>('startSessionDialog')?.close();
+    } finally {
+      show.disabled = false;
+    }
+  });
+</script>

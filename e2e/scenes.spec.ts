@@ -318,3 +318,95 @@ test.describe('Start screen', () => {
     await expect(page.locator('#startScreen')).toBeHidden();
   });
 });
+
+// Quick actions on the DM screen, with the player display open in a second page.
+test.describe('DM screen', () => {
+  test.skip(!DM || !DM_PASSWORD, 'Needs E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'Changes the shared DM screen state, once is enough');
+  test.describe.configure({ mode: 'serial' });
+
+  let dm: import('@playwright/test').BrowserContext;
+  test.beforeAll(async ({ browser }) => {
+    dm = await browser.newContext();
+    const res = await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } });
+    expect(res.ok(), 'login as dm').toBe(true);
+    // A location, so live mode is the stage; no wallpaper, so pause is the "Short break" card
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', currentLocationId: '1', placeholderImageUrl: null } });
+  });
+  test.afterAll(async () => {
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', currentLocationId: null } });
+    await dm.close();
+  });
+
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  test('start session flow', async () => {
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+
+    await page.locator('#startSessionBtn').click();
+    const dialog = page.locator('#startSessionDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#startFormDate')).toHaveValue(today());
+    await page.locator('#startFormTitle').fill('E2E The Frozen Gate');
+    await page.locator('#startFormRecap').fill('They fled the keep.');
+    await page.locator('input[name="startLayout"][value="recap"]').check();
+    await page.locator('#startShowBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    await expect(page.locator('#startSessionBtn')).toHaveText('Go live');
+
+    await expect(display.locator('#startTitle')).toHaveText('E2E The Frozen Gate');
+    await expect(display.locator('#startRecapText')).toHaveText('They fled the keep.');
+
+    // Reopening after a reload keeps today's start screen
+    await page.reload();
+    await expect(page.locator('#startSessionBtn')).toHaveText('Go live');
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(page.locator('#startSessionBtn')).toHaveText('Start session');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#startFormTitle')).toHaveValue('E2E The Frozen Gate');
+    await expect(page.locator('input[name="startLayout"][value="recap"]')).toBeChecked();
+    await page.locator('#startSessionDialog button[value="cancel"]').click();
+    await expect(page.locator('#startSessionDialog')).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
+    await display.close();
+  });
+
+  test('pause flow', async () => {
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await expect(page.locator('#pauseBtn')).toHaveText('Resume');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'idle');
+    await expect(display.locator('#idleTitle')).toHaveText('Short break');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await page.close();
+    await display.close();
+  });
+
+  test('old hide button gone', async () => {
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#toggleScreenBtn')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Pause screen' })).toBeVisible();
+    await expect(page.locator('#scenesHalf')).toBeVisible();
+    await page.close();
+  });
+});
