@@ -35,3 +35,13 @@ export async function syncCombatantLinks(creatureId: string, npcIds: string[], p
       .where(and(eq(InitiativeTracker.creatureId, creatureId), inArray(InitiativeTracker.name, removeNames)));
   }
 }
+
+/** The average HP of the stat block each NPC uses (NPC id → HP), for NPCs without their own. */
+export async function statBlockHpByNpc(): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  for (const c of await db.select({ hp: Creature.hp, npcIds: Creature.npcIds }).from(Creature)) {
+    if (c.hp === null) continue;
+    for (const id of c.npcIds as string[]) if (!out.has(id)) out.set(id, c.hp);
+  }
+  return out;
+}

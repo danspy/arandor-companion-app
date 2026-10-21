@@ -1,0 +1,246 @@
+---
+// Floating live preview of the player display on the DM screen (picture-in-picture). Embeds
+// /display?preview at a fixed 1920×1080 and scales it down, so it looks exactly like the TV; it
+// updates through the display's own polling. Drag it to any corner (it snaps to the nearest
+// one) or minimise it to a small pill; while minimised the frame is blank, so nothing polls.
+// Corner and minimised state are remembered per browser (default: bottom right above the dice
+// button; minimised on phones).
+---
+
+<div id="displayPreview" class="dm-pip" data-state="auto" data-corner="br">
+  <section id="displayPreviewWindow" class="dm-pip-window" aria-label="Player display preview" title="Drag to another corner">
+    <div class="dm-pip-bar">
+      <span class="dm-pip-dot" aria-hidden="true"></span>
+      <span class="dm-pip-label">Live</span>
+      <button type="button" id="displayPreviewMin" class="dm-pip-min" aria-label="Minimise the display preview" title="Minimise">
+        <svg class="w-4 h-4 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-width="2" d="M6 12h12"></path>
+        </svg>
+      </button>
+    </div>
+    <div id="displayPreviewBody" class="dm-pip-body">
+      <iframe
+        id="displayPreviewFrame"
+        class="dm-pip-frame"
+        title="Player display preview"
+        src="about:blank"
+        width="1920"
+        height="1080"
+        tabindex="-1"
+        scrolling="no"
+      ></iframe>
+    </div>
+  </section>
+  <button type="button" id="displayPreviewPill" class="dm-pip-pill" aria-expanded="false" aria-controls="displayPreviewWindow" title="Show what the players see">
+    <span class="dm-pip-dot" aria-hidden="true"></span>
+    Live display
+  </button>
+</div>
+
+<style>
+  .dm-pip {
+    --pip-w: 320px;
+    --pip-m: 16px;
+    /* Below the sticky nav (height set by the script) */
+    --pip-top: calc(var(--pip-header, 0px) + 12px + env(safe-area-inset-top, 0px));
+    /* Bottom right: above the dice button (56px, 16px from the edge) */
+    --pip-bottom: calc(16px + 56px + 12px + env(safe-area-inset-bottom, 0px));
+    /* Bottom left: above the music mini bar while it shows */
+    --pip-bottom-left: max(calc(16px + env(safe-area-inset-bottom, 0px)), calc(var(--music-bar-top, 0px) + 8px));
+    position: fixed;
+    /* Above the music player, below the dice button and its panel, side panels and dialogs */
+    z-index: 9985;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .dm-pip[data-state="auto"] { visibility: hidden; }
+  .dm-pip[data-corner$="r"] { right: calc(var(--pip-m) + env(safe-area-inset-right, 0px)); }
+  .dm-pip[data-corner$="l"] { left: calc(var(--pip-m) + env(safe-area-inset-left, 0px)); }
+  .dm-pip[data-corner^="t"] { top: var(--pip-top); }
+  .dm-pip[data-corner="br"] { bottom: var(--pip-bottom); }
+  .dm-pip[data-corner="bl"] { bottom: var(--pip-bottom-left); }
+  @media (max-width: 1023px) { .dm-pip { --pip-w: 240px; } }
+  @media (max-width: 639px) { .dm-pip { --pip-w: 200px; } }
+
+  /* Installed app: the dice seal sits in the bottom bar's notch; stay above bar and seal */
+  @media (display-mode: standalone) and (max-width: 1024px) {
+    .dm-pip {
+      --pip-bottom: calc(var(--pwa-dock-height) + 30px + env(safe-area-inset-bottom, 0px));
+      --pip-bottom-left: max(var(--pip-bottom), calc(var(--music-bar-top, 0px) + 8px));
+      transition: bottom 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    :global(html.pwa-dock-tucked) .dm-pip { --pip-bottom: calc(66px + env(safe-area-inset-bottom, 0px)); }
+  }
+  /* The dice panel opens over this corner: step aside like the music player */
+  :global(html:has(#dice-fab[aria-expanded='true'])) .dm-pip { visibility: hidden; }
+
+  .dm-pip-window, .dm-pip-pill {
+    background: #0c0906;
+    border: 1px solid var(--border-gold);
+    border-radius: 2px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    cursor: grab;
+    touch-action: none;
+  }
+  .dm-pip.is-dragging :is(.dm-pip-window, .dm-pip-pill) { cursor: grabbing; }
+  .dm-pip-window { width: var(--pip-w); overflow: hidden; }
+  .dm-pip-bar {
+    display: flex; align-items: center; gap: 0.45rem;
+    padding: 2px 2px 2px 10px;
+    font-size: 0.68rem; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .dm-pip-label { flex: 1; }
+  .dm-pip-min {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 26px;
+    color: var(--text-muted); background: none; border: 0; border-radius: 2px; cursor: pointer;
+  }
+  .dm-pip-min:hover, .dm-pip-min:focus-visible { color: var(--gold); background: rgba(201, 144, 50, 0.12); }
+  @media (pointer: coarse) { .dm-pip-min { width: 36px; height: 32px; } }
+  .dm-pip-dot {
+    width: 0.45rem; height: 0.45rem; border-radius: 50%; flex: none;
+    background: var(--gold);
+    box-shadow: 0 0 0.45rem var(--gold);
+  }
+  .dm-pip-body {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border-top: 1px solid var(--border-gold);
+    background: #0c0906;
+  }
+  /* The display at TV size, scaled to the window (--preview-scale is set from its width) */
+  .dm-pip-frame {
+    position: absolute; top: 0; left: 0;
+    width: 1920px; height: 1080px;
+    border: 0;
+    transform-origin: 0 0;
+    transform: scale(var(--preview-scale, 0.16));
+    pointer-events: none;
+  }
+  .dm-pip-pill {
+    display: none; align-items: center; gap: 0.5rem;
+    min-height: 36px; padding: 0 0.85rem;
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--text-body);
+  }
+  .dm-pip-pill:hover, .dm-pip-pill:focus-visible { border-color: var(--gold); }
+  .dm-pip[data-state="min"] .dm-pip-window { display: none; }
+  .dm-pip[data-state="min"] .dm-pip-pill { display: inline-flex; }
+</style>
+
+<script>
+  const STORAGE_KEY = 'arandor:dm-display-preview';
+  const PREVIEW_URL = '/display?preview';
+  const CORNERS = ['tl', 'tr', 'bl', 'br'];
+
+  function setupPreview() {
+    const root = document.getElementById('displayPreview');
+    const win = document.getElementById('displayPreviewWindow');
+    const body = document.getElementById('displayPreviewBody');
+    const frame = document.getElementById('displayPreviewFrame') as HTMLIFrameElement | null;
+    const minBtn = document.getElementById('displayPreviewMin');
+    const pill = document.getElementById('displayPreviewPill');
+    if (!root || !win || !body || !frame || !minBtn || !pill || root.dataset.ready) return;
+    root.dataset.ready = '1';
+
+    let saved: { corner?: string; min?: boolean } = {};
+    try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') ?? {}; } catch { /* storage blocked */ }
+    let corner = CORNERS.includes(saved.corner ?? '') ? saved.corner! : 'br';
+    let min = typeof saved.min === 'boolean' ? saved.min : matchMedia('(max-width: 639px)').matches;
+    const save = () => { try { localStorage.setItem(STORAGE_KEY, JSON.stringify({ corner, min })); } catch { /* storage blocked */ } };
+
+    // Scale the 1920-wide display to the window; keep the top corners below the sticky nav
+    const fit = () => { if (body.clientWidth) frame.style.setProperty('--preview-scale', String(body.clientWidth / 1920)); };
+    const nav = document.querySelector<HTMLElement>('.app-nav');
+    const header = () => root.style.setProperty('--pip-header', `${nav && getComputedStyle(nav).display !== 'none' ? nav.offsetHeight : 0}px`);
+    const ro = new ResizeObserver(() => { fit(); header(); });
+    ro.observe(body);
+    if (nav) ro.observe(nav);
+    document.addEventListener('astro:before-swap', () => ro.disconnect(), { once: true });
+    header();
+
+    const apply = () => {
+      root.dataset.state = min ? 'min' : 'open';
+      root.dataset.corner = corner;
+      pill.setAttribute('aria-expanded', String(!min));
+      // A blank frame doesn't poll the server
+      const src = min ? 'about:blank' : PREVIEW_URL;
+      if (frame.getAttribute('src') !== src) frame.setAttribute('src', src);
+      if (!min) fit();
+    };
+    apply();
+
+    // Drag anywhere on the window or the pill; on release it snaps to the nearest corner
+    let dragged = false;
+    let dragEndedAt = 0;
+    const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+    function draggable(handle: HTMLElement) {
+      let start: { x: number; y: number; rect: DOMRect; id: number } | null = null;
+      handle.addEventListener('pointerdown', (e) => {
+        if (e.button > 0 || (e.target as Element).closest('.dm-pip-min')) return;
+        start = { x: e.clientX, y: e.clientY, rect: root!.getBoundingClientRect(), id: e.pointerId };
+        dragged = false;
+        // Keep the moves coming even when a quick flick leaves the small pill at once
+        handle.setPointerCapture(e.pointerId);
+      });
+      handle.addEventListener('pointermove', (e) => {
+        if (!start || e.pointerId !== start.id) return;
+        let dx = e.clientX - start.x, dy = e.clientY - start.y;
+        if (!dragged) {
+          if (Math.hypot(dx, dy) < 6) return;
+          dragged = true;
+          root!.classList.add('is-dragging');
+          root!.style.transition = 'none';
+        }
+        const r = start.rect;
+        dx = Math.max(-r.left, Math.min(innerWidth - r.right, dx));
+        dy = Math.max(-r.top, Math.min(innerHeight - r.bottom, dy));
+        root!.style.transform = `translate(${dx}px, ${dy}px)`;
+      });
+      const end = (e: PointerEvent) => {
+        if (!start || e.pointerId !== start.id) return;
+        start = null;
+        if (!dragged) return;
+        dragged = false;
+        dragEndedAt = performance.now();
+        root!.classList.remove('is-dragging');
+        const before = root!.getBoundingClientRect();
+        const cx = before.left + before.width / 2, cy = before.top + before.height / 2;
+        corner = (cy < innerHeight / 2 ? 't' : 'b') + (cx < innerWidth / 2 ? 'l' : 'r');
+        root!.style.transform = '';
+        root!.dataset.corner = corner;
+        save();
+        if (reduceMotion.matches) { root!.style.transition = ''; return; }
+        // Glide from where it was let go into the corner
+        const after = root!.getBoundingClientRect();
+        root!.style.transform = `translate(${before.left - after.left}px, ${before.top - after.top}px)`;
+        root!.offsetWidth; // apply that start position before animating
+        root!.style.transition = 'transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1)';
+        root!.style.transform = '';
+        root!.addEventListener('transitionend', () => { root!.style.transition = ''; }, { once: true });
+      };
+      handle.addEventListener('pointerup', end);
+      handle.addEventListener('pointercancel', (e) => {
+        if (!start || e.pointerId !== start.id) return;
+        start = null;
+        dragged = false;
+        root!.classList.remove('is-dragging');
+        root!.style.transition = '';
+        root!.style.transform = '';
+      });
+    }
+    draggable(win);
+    draggable(pill);
+
+    minBtn.addEventListener('click', () => { min = true; apply(); save(); pill.focus(); });
+    pill.addEventListener('click', () => {
+      // The click that ends a drag is not a tap
+      if (performance.now() - dragEndedAt < 400) return;
+      min = false; apply(); save();
+    });
+  }
+
+  document.addEventListener('astro:page-load', setupPreview);
+</script>

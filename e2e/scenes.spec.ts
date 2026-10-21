@@ -1,0 +1,912 @@
+import { test, expect, type Page } from '@playwright/test';
+import {
+  matchesSetup,
+  normalizeSetup,
+  setupToStateUpdate,
+  snapshotSetup,
+  diaryExcerpt,
+  diaryImage,
+  startDefaults,
+  validateScene,
+  validateStartScreen,
+  type SceneSetup,
+} from '../src/lib/scenes';
+import { nextSession } from '../src/lib/next-session';
+
+// Saved display scenes and the start screen: pure logic only.
+
+test.describe('Scenes logic', () => {
+  test.skip(({ isMobile }) => isMobile, 'Pure functions, once is enough');
+
+  const base: SceneSetup = {
+    locationId: null,
+    locationHidden: false,
+    spotlightIds: [],
+    hiddenIds: [],
+    focusIds: [],
+    npcsHidden: false,
+  };
+  const none = { npcIds: new Set<string>(), characterIds: new Set<string>(), locationIds: new Set<string>() };
+
+  test('normalizes marks', () => {
+    const s = normalizeSetup({ ...base, spotlightIds: ['a', 'a', 'b'], hiddenIds: ['b', 'x'], focusIds: ['x'] });
+    expect(s.spotlightIds).toEqual(['a', 'b']);
+    expect(s.hiddenIds).toEqual(['b']);
+    expect(s.focusIds).toEqual([]);
+  });
+
+  test('snapshot then match', () => {
+    const row: any = {
+      currentLocationId: 'loc1',
+      locationHidden: false,
+      spotlightNpcIds: ['a', 'character:c1'],
+      hiddenNpcIds: ['a'],
+      focusNpcIds: [],
+      npcsHidden: false,
+    };
+    const setup = snapshotSetup(row);
+    expect(matchesSetup(row, setup)).toBe(true);
+    expect(matchesSetup({ ...row, spotlightNpcIds: ['character:c1', 'a'] }, setup)).toBe(false);
+    expect(matchesSetup({ ...row, npcsHidden: true }, setup)).toBe(false);
+  });
+
+  test('apply replaces setup, not the screen mode', () => {
+    const u = setupToStateUpdate({ ...base, spotlightIds: ['n1'] }, { ...none, npcIds: new Set(['n1']) });
+    expect(Object.keys(u).sort()).toEqual(
+      ['currentLocationId', 'focusNpcIds', 'hiddenNpcIds', 'locationHidden', 'npcsHidden', 'spotlightNpcIds'],
+    );
+  });
+
+  test('apply drops missing references', () => {
+    const u = setupToStateUpdate(
+      { ...base, locationId: 'loc-gone', spotlightIds: ['n1', 'character:c1', 'n-gone', 'character:c-gone'], hiddenIds: ['n-gone'] },
+      { npcIds: new Set(['n1']), characterIds: new Set(['c1']), locationIds: new Set() },
+    );
+    expect(u.spotlightNpcIds).toEqual(['n1', 'character:c1']);
+    expect(u.hiddenNpcIds).toEqual([]);
+    expect(u.currentLocationId).toBeNull();
+  });
+
+  test('validates a scene', () => {
+    const setup = { ...base, spotlightIds: ['a', 'a'], hiddenIds: ['zz'] };
+    expect(validateScene({ name: '  ', setup }).ok).toBe(false);
+    expect(validateScene({ name: 'x'.repeat(81), setup }).ok).toBe(false);
+    const r = validateScene({ name: ' Tavern ', setup });
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.name).toBe('Tavern');
+      expect(r.setup.spotlightIds).toEqual(['a']);
+      expect(r.setup.hiddenIds).toEqual([]);
+    }
+  });
+
+  test('scene needs a setup object', () => {
+    const r = validateScene({ name: 'X', setup: { spotlightIds: ['a'] } });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.setup.spotlightIds).toEqual(['a']);
+    expect(validateScene({ name: 'X' }).ok).toBe(false);
+    expect(validateScene({ name: 'X', setup: { spotlightIds: [1] } }).ok).toBe(false);
+  });
+
+  test('validates a start screen', () => {
+    const ok = { title: 'Return', session: 3, date: '2026-10-21', recap: 'r', showRecap: true };
+    expect(validateStartScreen({ ...ok, session: 0 }).ok).toBe(false);
+    expect(validateStartScreen({ ...ok, session: null }).ok).toBe(true);
+    expect(validateStartScreen({ ...ok, recap: 'x'.repeat(5001) }).ok).toBe(false);
+    expect(validateStartScreen({ ...ok, title: 'x'.repeat(121) }).ok).toBe(false);
+    expect(validateStartScreen(ok).ok).toBe(true);
+    expect(validateStartScreen({ ...ok, diaryEntryId: 'abc' })).toMatchObject({ ok: true, value: { diaryEntryId: 'abc' } });
+    expect(validateStartScreen({ ...ok, diaryEntryId: 7 }).ok).toBe(false);
+    expect(validateStartScreen({ ...ok, diaryEntryId: 'x'.repeat(65) }).ok).toBe(false);
+    expect(validateStartScreen(ok)).toMatchObject({ ok: true, value: { diaryEntryId: null } });
+  });
+
+  test('diary excerpt and picture', () => {
+    expect(diaryExcerpt({ summary: '  They fled.  ', content: 'Long text' })).toBe('They fled.');
+    const md = '## Day one\n- **Belmont** waits at the [gate](/locations/1).\n- ![map](/m.png) Volrak _laughs_.';
+    expect(diaryExcerpt({ summary: null, content: md })).toBe('Day one Belmont waits at the gate. Volrak laughs.');
+    const long = diaryExcerpt({ summary: null, content: 'word '.repeat(200) }, 50);
+    expect(long.length).toBeLessThanOrEqual(51);
+    expect(long).toMatch(/word…$/);
+    expect(diaryImage({ coverImageUrl: '/c.png', galleryUrls: ['/g.png'] })).toBe('/c.png');
+    expect(diaryImage({ coverImageUrl: null, galleryUrls: ['/g.png'] })).toBe('/g.png');
+    expect(diaryImage({ coverImageUrl: null, galleryUrls: [] })).toBeNull();
+  });
+
+  test('next session from the calendar', () => {
+    const now = new Date(2026, 9, 21, 18, 0); // local time, like the server
+    expect(nextSession([], now)).toBeNull();
+    expect(nextSession([{ date: '2026-10-01', time: '19:00' }, { date: '2026-10-20', time: '23:00' }], now)).toBeNull();
+    // The earlier of two future events, only date and time
+    const events = [
+      { date: '2026-11-07', time: '18:30', title: 'One-shot' },
+      { date: '2026-10-24', time: '19:00', title: 'Session' },
+    ];
+    expect(nextSession(events, now)).toEqual({ date: '2026-10-24', time: '19:00' });
+    // Today: later than now counts, earlier is over
+    expect(nextSession([{ date: '2026-10-24', time: '19:00' }, { date: '2026-10-21', time: '19:30' }], now))
+      .toEqual({ date: '2026-10-21', time: '19:30' });
+    expect(nextSession([{ date: '2026-10-21', time: '17:00' }, { date: '2026-10-28', time: '19:00' }], now))
+      .toEqual({ date: '2026-10-28', time: '19:00' });
+    // Same day: sorted by time
+    expect(nextSession([{ date: '2026-10-24', time: '20:00' }, { date: '2026-10-24', time: '09:00' }], now))
+      .toEqual({ date: '2026-10-24', time: '09:00' });
+  });
+
+  test('start defaults from the diary', () => {
+    expect(startDefaults([], '2026-10-21')).toEqual({ session: null, date: '2026-10-21', recap: '' });
+    const d = startDefaults([{ session: 7, summary: 'B' }, { session: 3, summary: 'A' }], '2026-10-21');
+    expect(d).toEqual({ session: 8, date: '2026-10-21', recap: 'B' });
+    expect(startDefaults([{ session: 3, summary: 'A' }, { session: 7, summary: null }], 'd').recap).toBe('');
+  });
+});
+
+// ── Against a test server ────────────────────────────────────────────────────
+// Logged-in tests change the DM screen, so they only run against a test server with a copy of
+// the data (never dev, preview or live data): E2E_BASE_URL and E2E_DM / E2E_DM_PASSWORD (dungeonmaster).
+
+const DM = process.env.E2E_DM, DM_PASSWORD = process.env.E2E_DM_PASSWORD;
+// Without an explicit E2E_BASE_URL the default is the dev server, which must never be changed
+const TEST_SERVER = !!(DM && DM_PASSWORD && process.env.E2E_BASE_URL);
+
+test.describe('Scenes API', () => {
+  test.skip(!TEST_SERVER, 'Needs E2E_BASE_URL and E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'API only, once is enough');
+  test.describe.configure({ mode: 'serial' });
+
+  let dm: import('@playwright/test').BrowserContext;
+  test.beforeAll(async ({ browser }) => {
+    dm = await browser.newContext();
+    const res = await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } });
+    expect(res.ok(), 'login as dm').toBe(true);
+  });
+  test.afterAll(async () => {
+    const list = await (await dm.request.get('/api/scenes')).json();
+    for (const s of list) if (String(s.name).startsWith('E2E ')) await dm.request.delete(`/api/scenes/${s.id}`);
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', spotlightNpcIds: [], showTimer: false } });
+    await dm.close();
+  });
+
+  const put = (data: object) => dm.request.put('/api/dm-screen', { data });
+  const state = async () => (await dm.request.get('/api/dm-screen')).json();
+  const display = async () => (await dm.request.get('/api/display')).json();
+
+  test('save current and apply', async () => {
+    expect((await put({ currentLocationId: '1', spotlightNpcIds: ['2', 'character:1'], showTimer: false, screenMode: 'live' })).ok()).toBe(true);
+    const made = await dm.request.post('/api/scenes', { data: { name: 'E2E scene', fromCurrent: true } });
+    expect(made.status()).toBe(201);
+    const card = await made.json();
+    expect(card.setup).toMatchObject({ locationId: '1', spotlightIds: ['2', 'character:1'] });
+    expect(card.location).toMatchObject({ id: '1' });
+    expect(card.locationMissing).toBe(false);
+    expect(card.portraits.map((p: any) => p.key)).toEqual(['2', 'character:1']);
+
+    await put({ spotlightNpcIds: [], currentLocationId: null, showTimer: true });
+    const applied = await dm.request.post(`/api/scenes/${card.id}/apply`);
+    expect(applied.status()).toBe(200);
+    const s = await state();
+    expect(s.spotlightNpcIds).toEqual(['2', 'character:1']);
+    expect(s.currentLocationId).toBe('1');
+    expect(s.screenMode).toBe('live');
+    expect(s.showTimer).toBe(true);
+    expect((await applied.json()).spotlightNpcIds).toEqual(['2', 'character:1']);
+  });
+
+  test('rename, reorder, validation, delete', async () => {
+    const a = await (await dm.request.post('/api/scenes', { data: { name: 'E2E a', setup: { locationId: null, spotlightIds: ['3'] } } })).json();
+    const b = await (await dm.request.post('/api/scenes', { data: { name: 'E2E b', setup: {} } })).json();
+    expect(b.sortOrder).toBe(a.sortOrder + 1);
+    expect((await dm.request.post('/api/scenes', { data: { name: '', setup: {} } })).status()).toBe(400);
+    const renamed = await dm.request.put(`/api/scenes/${a.id}`, { data: { name: 'E2E a2', setup: a.setup } });
+    expect((await renamed.json()).name).toBe('E2E a2');
+    expect((await dm.request.put('/api/scenes/nope', { data: { name: 'E2E x', setup: {} } })).status()).toBe(404);
+    expect((await dm.request.put('/api/scenes/order', { data: { ids: [b.id, 'nope'] } })).status()).toBe(400);
+    expect((await dm.request.put('/api/scenes/order', { data: { ids: [b.id, a.id] } })).status()).toBe(204);
+    const names = (await (await dm.request.get('/api/scenes')).json()).map((s: any) => s.name).filter((n: string) => n.startsWith('E2E '));
+    expect(names.indexOf('E2E b')).toBeLessThan(names.indexOf('E2E a2'));
+    expect((await dm.request.delete(`/api/scenes/${a.id}`)).status()).toBe(204);
+    expect((await dm.request.delete(`/api/scenes/${b.id}`)).status()).toBe(204);
+  });
+
+  test('apply drops deleted NPC', async () => {
+    const npc = await (await dm.request.post('/api/npcs', { data: { name: 'E2E Ghost', race: 'Human', occupation: 'Test', relationship: 'neutral', description: 'x' } })).json();
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E ghost scene', setup: { spotlightIds: [npc.id, '2'], locationId: '1' } } })).json();
+    expect((await dm.request.delete(`/api/npcs/${npc.id}`)).ok()).toBe(true);
+    await dm.request.post(`/api/scenes/${card.id}/apply`);
+    expect((await state()).spotlightNpcIds).toEqual(['2']);
+    const list = await (await dm.request.get('/api/scenes')).json();
+    const got = list.find((s: any) => s.id === card.id);
+    expect(got.portraits.find((p: any) => p.key === npc.id).missing).toBe(true);
+    expect(got.portraits.find((p: any) => p.key === '2').missing).toBe(false);
+  });
+
+  test('start mode on display', async () => {
+    const startScreen = { title: 'The Frozen Pass', session: 12, date: '2026-10-21', recap: 'They fled.', showRecap: true };
+    expect((await put({ screenMode: 'start', startScreen })).ok()).toBe(true);
+    const d = await display();
+    expect(d.mode).toBe('start');
+    expect(d.startScreen).toEqual({ ...startScreen, diaryEntryId: null, lastSession: null });
+    await put({ screenMode: 'live' });
+    const live = await display();
+    expect(live.mode).toBe('live');
+    expect(live.startScreen).toBeNull();
+    expect((await put({ startScreen: { ...startScreen, date: '21.10.2026' } })).status()).toBe(400);
+    expect((await put({ screenMode: 'party' })).status()).toBe(400);
+    expect((await put({ screenMode: 'bogus' })).status()).toBe(400);
+  });
+
+  test('apply keeps the screen mode', async () => {
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E mode scene', setup: { spotlightIds: ['2'] } } })).json();
+    for (const mode of ['off', 'pause', 'start']) {
+      await put({ screenMode: mode, spotlightNpcIds: [] });
+      expect((await dm.request.post(`/api/scenes/${card.id}/apply`)).status()).toBe(200);
+      const s = await state();
+      expect(s.screenMode).toBe(mode);
+      expect(s.spotlightNpcIds).toEqual(['2']);
+    }
+  });
+
+  test('off mode on display', async () => {
+    // A game night later today (or tomorrow just after midnight), so there is a next session
+    const at = new Date(Date.now() + 2 * 60_000);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const date = `${at.getFullYear()}-${pad(at.getMonth() + 1)}-${pad(at.getDate())}`;
+    const time = `${pad(at.getHours())}:${pad(at.getMinutes())}`;
+    const event = await (await dm.request.post('/api/events', { data: { title: 'E2E secret plans', description: 'not for players', date, time } })).json();
+    try {
+      expect((await put({ screenMode: 'start', startScreen: { title: 'E2E', session: null, date, recap: '', showRecap: false } })).ok()).toBe(true);
+      expect((await display()).screenVisible).toBe(true);
+      expect((await put({ screenMode: 'off' })).ok()).toBe(true);
+      const d = await display();
+      expect(d.mode).toBe('off');
+      expect(d.screenVisible).toBe(false);
+      expect(d.startScreen).toBeNull();
+      // Only date and time, and nothing later than our event
+      expect(Object.keys(d.nextSession).sort()).toEqual(['date', 'time']);
+      expect(`${d.nextSession.date} ${d.nextSession.time}` <= `${date} ${time}`).toBe(true);
+      expect(JSON.stringify(d)).not.toContain('secret');
+      expect((await state()).screenMode).toBe('off');
+      await put({ screenMode: 'live' });
+      expect((await display()).nextSession).toBeNull();
+    } finally {
+      expect((await dm.request.delete(`/api/events/${event.id}`)).ok()).toBe(true);
+    }
+  });
+
+  test('stage only when live', async () => {
+    const card = await (await dm.request.post('/api/scenes', { data: { name: 'E2E stage scene', setup: { spotlightIds: ['2'], locationId: '1' } } })).json();
+    expect((await put({ screenMode: 'off', showTimer: true, showInitiativeTracker: true })).ok()).toBe(true);
+    expect((await dm.request.post(`/api/scenes/${card.id}/apply`)).status()).toBe(200);
+    for (const mode of ['off', 'start', 'pause']) {
+      await put({ screenMode: mode });
+      const d = await display();
+      expect(d.mode).toBe(mode);
+      expect(d.npcs).toEqual([]);
+      expect(d.location).toBeNull();
+      expect(d.initiative).toBeNull();
+      expect(d.timer).toBeNull();
+    }
+    await put({ screenMode: 'live' });
+    const live = await display();
+    expect(live.npcs.map((n: any) => n.id)).toEqual(['2']);
+    expect(live.location).not.toBeNull();
+    expect(live.initiative).not.toBeNull();
+    expect(live.timer).not.toBeNull();
+    await put({ showTimer: false, showInitiativeTracker: false });
+  });
+
+  test('start defaults', async () => {
+    const res = await dm.request.get('/api/dm-screen/start-defaults');
+    expect(res.status()).toBe(200);
+    const d = await res.json();
+    expect(d.date).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    expect(d).toHaveProperty('session');
+    expect(typeof d.recap).toBe('string');
+    expect(Array.isArray(d.diary)).toBe(true);
+    if (d.diary.length) {
+      expect(d.diaryEntryId).toBe(d.diary[0].id);
+      expect(d.diary[0]).toEqual(expect.objectContaining({ id: expect.any(String), session: expect.any(Number), excerpt: expect.any(String) }));
+      expect(d.diary.map((e: any) => e.session)).toEqual([...d.diary.map((e: any) => e.session)].sort((a, b) => b - a));
+    }
+  });
+
+  test('last session on display', async () => {
+    const { diary } = await (await dm.request.get('/api/dm-screen/start-defaults')).json();
+    test.skip(!diary.length, 'Needs a diary entry');
+    const entry = diary[diary.length - 1];
+    const startScreen = { title: 'E2E Last', session: 12, date: '2026-10-21', recap: '', showRecap: false, diaryEntryId: entry.id };
+    expect((await put({ screenMode: 'start', startScreen })).ok()).toBe(true);
+    const d = await display();
+    expect(d.startScreen.lastSession).toEqual({ session: entry.session, title: entry.title, excerpt: entry.excerpt, imageUrl: entry.imageUrl });
+    // A deleted (unknown) entry is left out
+    await put({ startScreen: { ...startScreen, diaryEntryId: 'no-such-entry' } });
+    expect((await display()).startScreen.lastSession).toBeNull();
+    await put({ screenMode: 'live' });
+  });
+
+  test('display keeps screenVisible', async () => {
+    await put({ screenMode: 'pause' });
+    let d = await display();
+    expect(d.screenVisible).toBe(false);
+    expect(d.mode).toBe('pause');
+    await put({ screenVisible: true });
+    d = await display();
+    expect(d.mode).toBe('live');
+    expect(d.screenVisible).toBe(true);
+    await put({ screenVisible: false });
+    expect((await display()).mode).toBe('pause');
+  });
+
+  test('players cannot', async ({ playwright }) => {
+    const anon = await playwright.request.newContext({ baseURL: test.info().project.use.baseURL });
+    expect([401, 403]).toContain((await anon.post('/api/scenes', { data: { name: 'E2E nope', setup: {} } })).status());
+    expect([401, 403]).toContain((await anon.get('/api/scenes')).status());
+    await anon.dispose();
+  });
+});
+
+// Start screen and no-session screen on the player display. /api/display is mocked like in
+// display.spec.ts.
+test.describe('Display modes', () => {
+  const start = (over: Record<string, unknown> = {}) => ({
+    screenVisible: true,
+    mode: 'start',
+    wallpaperUrl: null,
+    backdropUrl: null,
+    location: null,
+    npcs: [],
+    initiative: null,
+    timer: null,
+    startScreen: { title: 'The Frozen Gate', session: 12, date: '2026-10-21', recap: '', showRecap: false, ...over },
+  });
+  const live = {
+    screenVisible: true, mode: 'live', wallpaperUrl: null, backdropUrl: null, npcs: [], initiative: null, timer: null,
+    location: { name: 'Frostheim', type: 'city', region: 'Rulik', imageUrl: null }, startScreen: null,
+  };
+  const off = (nextSession: { date: string; time: string } | null) => ({
+    ...live, mode: 'off', screenVisible: false, nextSession,
+  });
+
+  async function open(page: Page, first: unknown) {
+    let current = first;
+    await page.route('**/api/display', (route) => route.fulfill({ json: current }));
+    await page.goto('/display');
+    return async (next: unknown) => {
+      current = next;
+      await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
+    };
+  }
+
+  test('title card', async ({ page }) => {
+    await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await expect(page.locator('#startTitle')).toHaveText('The Frozen Gate');
+    await expect(page.locator('#startCampaign')).toHaveText('Arandor');
+    await expect(page.locator('#startSession')).toHaveText('Session 12');
+    await expect(page.locator('#startDate')).toHaveText('21 October 2026');
+    await expect(page.locator('#startRecap')).toBeHidden();
+  });
+
+  test('title and recap', async ({ page }) => {
+    const recap = 'The party fled the keep.\nThalia was wounded.';
+    await open(page, start({ recap, showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecapText')).toHaveText(recap);
+    await expect(page.locator('#startRecapText')).toHaveCSS('white-space', 'pre-line');
+  });
+
+  test('last session with picture', async ({ page }) => {
+    await page.route('**/e2e-diary.png', (route) => route.fulfill({
+      contentType: 'image/png',
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=', 'base64'),
+    }));
+    const lastSession = { session: 11, title: 'The Keep', excerpt: 'They fled the keep.', imageUrl: '/e2e-diary.png' };
+    const next = await open(page, start({ recap: 'typed recap', showRecap: true, diaryEntryId: 'd1', lastSession }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecapEntry')).toHaveText('Session 11 · The Keep');
+    await expect(page.locator('#startRecapText')).toHaveText('They fled the keep.');
+    await expect(page.locator('body')).toHaveAttribute('data-start-image', '1');
+    await expect(page.locator('.dsp-start-image')).toBeVisible();
+    // Without a picture: the blurred campaign backdrop as before
+    await next(start({ diaryEntryId: 'd1', lastSession: { ...lastSession, imageUrl: null } }));
+    await expect(page.locator('body')).not.toHaveAttribute('data-start-image', '1');
+    await expect(page.locator('#startRecapText')).toHaveText('They fled the keep.');
+    // Back to a plain title card
+    await next(start());
+    await expect(page.locator('#startRecap')).toBeHidden();
+    await expect(page.locator('#startRecapEntry')).toBeHidden();
+  });
+
+  test('no session number', async ({ page }) => {
+    await open(page, start({ session: null }));
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await expect(page.locator('#startSession')).toBeHidden();
+  });
+
+  test('long recap fits', async ({ page }) => {
+    const recap = Array.from({ length: 40 }, (_, i) => `${i}: ` + 'lorem ipsum '.repeat(8)).join('\n').slice(0, 4000);
+    await open(page, start({ recap, showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await page.waitForTimeout(1000); // fade-in
+    // The recap panel clamps to the screen and scrolls inside itself; title stays in view
+    const fit = await page.evaluate(() => {
+      const within = (id: string) => {
+        const r = document.getElementById(id)!.getBoundingClientRect();
+        return r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1;
+      };
+      const text = document.getElementById('startRecapText')!;
+      return { title: within('startTitle'), recap: within('startRecap'), scrolls: text.scrollHeight > text.clientHeight };
+    });
+    expect(fit).toEqual({ title: true, recap: true, scrolls: true });
+  });
+
+  test('recap is text', async ({ page }) => {
+    await open(page, start({ recap: '<img src=x onerror=alert(1)>', showRecap: true }));
+    await expect(page.locator('#startRecap')).toBeVisible();
+    await expect(page.locator('#startRecap img')).toHaveCount(0);
+    await expect(page.locator('#startRecapText')).toHaveText('<img src=x onerror=alert(1)>');
+  });
+
+  test('back to live', async ({ page }) => {
+    const set = await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await set(live);
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await expect(page.locator('#startScreen')).toBeHidden();
+  });
+
+  test('start to pause', async ({ page }) => {
+    const set = await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await set({ ...live, mode: 'pause', screenVisible: false, location: null });
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'idle');
+    await expect(page.locator('#idleTitle')).toHaveText('Short break');
+    await expect(page.locator('#startScreen')).toBeHidden();
+  });
+
+  test('no session, next session', async ({ page }) => {
+    await open(page, off({ date: '2026-10-23', time: '19:00' }));
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'off');
+    await expect(page.locator('#offScreen')).toBeVisible();
+    await expect(page.locator('#offCampaign')).toHaveText('Arandor');
+    await expect(page.locator('#offTitle')).toHaveText('No session running');
+    await expect(page.locator('#offNext')).toHaveText('Next session: Friday, 23 October · 19:00');
+    await expect(page.locator('#stage')).toBeHidden();
+  });
+
+  test('no session, nothing planned', async ({ page }) => {
+    await open(page, off(null));
+    await expect(page.locator('#offTitle')).toHaveText('No session running');
+    await expect(page.locator('#offNext')).toBeHidden();
+  });
+
+  test('no session to live', async ({ page }) => {
+    const set = await open(page, off({ date: '2026-10-24', time: '19:00' }));
+    await expect(page.locator('#offScreen')).toBeVisible();
+    await set({ ...live, nextSession: null });
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await expect(page.locator('#offScreen')).toBeHidden();
+  });
+});
+
+// Quick actions on the DM screen, with the player display open in a second page.
+test.describe('DM screen', () => {
+  test.skip(!TEST_SERVER, 'Needs E2E_BASE_URL and E2E_DM/E2E_DM_PASSWORD (test server only)');
+  test.skip(({ isMobile }) => isMobile, 'Changes the shared DM screen state, once is enough');
+  test.describe.configure({ mode: 'serial' });
+
+  let dm: import('@playwright/test').BrowserContext;
+  test.beforeAll(async ({ browser }) => {
+    dm = await browser.newContext();
+    const res = await dm.request.post('/api/auth/login', { data: { username: DM, password: DM_PASSWORD } });
+    expect(res.ok(), 'login as dm').toBe(true);
+    // A location, so live mode is the stage; no wallpaper, so pause is the "Short break" card
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'off', currentLocationId: '1', placeholderImageUrl: null } });
+  });
+  test.afterAll(async () => {
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'live', currentLocationId: null } });
+    await dm.close();
+  });
+
+  const setMode = (screenMode: string) => dm.request.put('/api/dm-screen', { data: { screenMode } });
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  };
+
+  // Which quick action buttons show: [Start session / Go live, Pause / Resume, End session]
+  async function expectButtons(page: Page, start: string | null, pause: string | null, end: boolean) {
+    for (const [id, label] of [['#startSessionBtn', start], ['#pauseBtn', pause]] as const) {
+      if (label) await expect(page.locator(id)).toHaveText(label);
+      else await expect(page.locator(id)).toBeHidden();
+    }
+    if (end) await expect(page.locator('#endSessionBtn')).toHaveText('End session');
+    else await expect(page.locator('#endSessionBtn')).toBeHidden();
+  }
+
+  test('start session flow', async () => {
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
+    await expectButtons(page, 'Start session', null, false);
+    await expect(display.locator('#offScreen')).toBeVisible();
+
+    await page.locator('#startSessionBtn').click();
+    const dialog = page.locator('#startSessionDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#startFormDate')).toHaveValue(today());
+    await page.locator('#startFormTitle').fill('E2E The Frozen Gate');
+    await page.locator('input[name="startLayout"][value="recap"]').check();
+    await page.locator('#startFormRecap').fill('They fled the keep.');
+    await page.locator('#startShowBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    await expectButtons(page, 'Go live', null, true);
+
+    await expect(display.locator('#startTitle')).toHaveText('E2E The Frozen Gate');
+    await expect(display.locator('#startRecapText')).toHaveText('They fled the keep.');
+
+    await page.reload();
+    await expect(page.locator('#startSessionBtn')).toHaveText('Go live');
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expectButtons(page, null, 'Pause', true);
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+
+    // Starting again on the same day keeps today's start screen
+    await setMode('off');
+    await page.reload();
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#startFormTitle')).toHaveValue('E2E The Frozen Gate');
+    await expect(page.locator('input[name="startLayout"][value="recap"]')).toBeChecked();
+    await page.locator('#startCancelBtn').click();
+    await expect(page.locator('#startSessionDialog')).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
+    await page.close();
+    await display.close();
+  });
+
+  test('pause flow', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expectButtons(page, null, 'Pause', true);
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await expectButtons(page, null, 'Resume', true);
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'idle');
+    await expect(display.locator('#idleTitle')).toHaveText('Short break');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await page.close();
+    await display.close();
+  });
+
+  test('double click pauses once', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#pauseBtn')).toHaveText('Pause');
+    await page.locator('#pauseBtn').dblclick();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await page.waitForTimeout(500);
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    // A double click whose second click lands after the server answered (button now "Resume")
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    const box = (await page.locator('#pauseBtn').boundingBox())!;
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await page.mouse.down({ clickCount: 2 });
+    await page.mouse.up({ clickCount: 2 });
+    await page.waitForTimeout(500);
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    expect((await (await dm.request.get('/api/dm-screen')).json()).screenMode).toBe('pause');
+    await page.close();
+  });
+
+  test('end session', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    const confirm = page.locator('#arandor-confirm');
+
+    // Cancelled: stays live
+    await page.locator('#endSessionBtn').click();
+    await expect(confirm).toBeVisible();
+    await confirm.locator('[data-cancel]').click();
+    await expect(confirm).toBeHidden();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await expect(display.locator('body')).toHaveAttribute('data-mode', 'stage');
+
+    await page.locator('#endSessionBtn').click();
+    await expect(confirm.locator('[data-confirm]')).toHaveText('End session');
+    await confirm.locator('[data-confirm]').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('No session');
+    await expectButtons(page, 'Start session', null, false);
+    await expect(display.locator('#offScreen')).toBeVisible();
+    await expect(display.locator('#offTitle')).toHaveText('No session running');
+    // The table stays set up for next time
+    expect((await (await dm.request.get('/api/dm-screen')).json()).currentLocationId).toBe('1');
+    await page.close();
+    await display.close();
+  });
+
+  test('enter shows, unsaved inputs stay', async () => {
+    await setMode('live');
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.locator('#placeholderImageUrl').fill('https://example.com/e2e-unsaved.png');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Paused');
+    await expect(page.locator('#placeholderImageUrl')).toHaveValue('https://example.com/e2e-unsaved.png');
+    await page.locator('#pauseBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+
+    await setMode('off');
+    await page.reload();
+    await page.locator('#startSessionBtn').dblclick();
+    await expect(page.locator('#startSessionDialog')).toBeVisible();
+    await page.locator('#startFormTitle').fill('E2E Enter');
+    await page.locator('#startFormTitle').press('Enter');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    await expect(page.locator('#startSessionDialog')).toBeHidden();
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
+  });
+
+  test('start with the last session', async () => {
+    const { diary } = await (await dm.request.get('/api/dm-screen/start-defaults')).json();
+    test.skip(diary.length < 2, 'Needs two diary entries');
+    // Yesterday's start screen (older tests showed one today), so the dialog starts from the defaults
+    const old = { title: '', session: null, date: '2000-01-01', recap: '', showRecap: false };
+    await dm.request.put('/api/dm-screen', { data: { screenMode: 'off', startScreen: old } });
+    const page = await dm.newPage();
+    await page.setViewportSize({ width: 390, height: 844 }); // the dialog on a phone
+    await page.goto('/tools/dm-screen');
+    await page.locator('#startSessionBtn').click();
+    // A new start screen defaults to the newest entry
+    await expect(page.locator('input[name="startLayout"][value="diary"]')).toBeChecked();
+    await expect(page.locator('#startRecapField')).toBeHidden();
+    await expect(page.locator('#startFormDiary')).toHaveValue(diary[0].id);
+    await page.locator('#startFormDiary').selectOption(diary[1].id);
+    await expect(page.locator('#startDiaryExcerpt')).toHaveText(diary[1].excerpt || 'No text in this entry yet.');
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+    await page.locator('#startFormTitle').fill('E2E Diary');
+    await page.locator('#startShowBtn').click();
+    await expect(page.locator('#screenModeBadge')).toHaveText('Start screen');
+    const d = await (await dm.request.get('/api/display')).json();
+    expect(d.startScreen.diaryEntryId).toBe(diary[1].id);
+    expect(d.startScreen.lastSession.title).toBe(diary[1].title);
+    // Reopened the same day: the chosen entry again; "Title + recap" brings the recap field back
+    await page.locator('#endSessionBtn').waitFor();
+    await setMode('off');
+    await page.reload();
+    await page.locator('#startSessionBtn').click();
+    await expect(page.locator('#startFormDiary')).toHaveValue(diary[1].id);
+    await page.locator('input[name="startLayout"][value="recap"]').check();
+    await expect(page.locator('#startRecapField')).toBeVisible();
+    await expect(page.locator('#startDiaryField')).toBeHidden();
+    await page.locator('#startCancelBtn').click();
+    await page.close();
+  });
+
+  test('old hide button gone', async () => {
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#toggleScreenBtn')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Pause screen' })).toBeVisible();
+    await expect(page.locator('#scenesHalf')).toBeVisible();
+    await page.close();
+  });
+
+  // Saved scenes in the strip. Every test starts without scenes and with the session live, so
+  // /display shows what a scene puts on the screen (applying never changes the mode).
+  async function noScenes() {
+    for (const s of await (await dm.request.get('/api/scenes')).json()) await dm.request.delete(`/api/scenes/${s.id}`);
+  }
+  const resetTable = () =>
+    dm.request.put('/api/dm-screen', {
+      data: { screenMode: 'live', currentLocationId: null, spotlightNpcIds: [], hiddenNpcIds: [], focusNpcIds: [], npcsHidden: false, locationHidden: false },
+    });
+  const card = (page: Page, name: string) => page.locator('#scenesList [data-scene-id]', { hasText: name });
+  const sceneNames = (page: Page) => page.locator('#scenesList [data-scene-id] .scene-name').allTextContents();
+  const createScene = async (name: string, setup: Record<string, unknown>) => {
+    const res = await dm.request.post('/api/scenes', { data: { name, setup } });
+    expect(res.status()).toBe(201);
+    return (await res.json()).id as string;
+  };
+
+  test('scenes empty state', async () => {
+    await noScenes();
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#scenesEmpty')).toBeVisible();
+    await expect(page.locator('#saveCurrentSceneBtn')).toBeVisible();
+    await expect(page.locator('#newSceneBtn')).toBeVisible();
+    await expect(page.locator('#scenesList [data-scene-id]')).toHaveCount(0);
+    await page.close();
+  });
+
+  test('save current and apply from the strip', async () => {
+    await noScenes();
+    await resetTable();
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+
+    await page.locator('#locationSelect').selectOption('4');
+    for (const key of ['2', 'character:1']) {
+      await page.locator('#npcSelect').selectOption(key);
+      await page.locator('#addNpcBtn').click();
+    }
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(2);
+
+    await page.locator('#saveCurrentSceneBtn').click();
+    const dialog = page.locator('#sceneDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#sceneName')).toHaveValue('');
+    await expect(page.locator('#sceneName')).toBeFocused();
+    await expect(page.locator('#sceneLocation')).toHaveValue('4');
+    await expect(page.locator('#sceneSpotlightList [data-key]')).toHaveCount(2);
+    await page.locator('#sceneName').fill('E2E Tavern');
+    await page.locator('#sceneSaveBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(card(page, 'E2E Tavern')).toHaveClass(/is-active/);
+    await expect(card(page, 'E2E Tavern').locator('.scene-portrait')).toHaveCount(2);
+    await expect(page.locator('#scenesEmpty')).toBeHidden();
+
+    await page.locator('#clearNpcsBtn').click();
+    await page.locator('#arandor-confirm [data-confirm]').click();
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(0);
+    await expect(card(page, 'E2E Tavern')).not.toHaveClass(/is-active/);
+
+    await card(page, 'E2E Tavern').locator('[data-action=apply]').click();
+    await expect(card(page, 'E2E Tavern')).toHaveClass(/is-active/);
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(2);
+    await expect(page.locator('#spotlightNpcList')).toContainText('Durnan');
+    await expect(page.locator('#spotlightNpcList')).toContainText('Thorin Ironforge');
+    await expect(page.locator('#locationSelect')).toHaveValue('4');
+    await expect(display.locator('#cast .dsp-portrait-name')).toHaveText(['Durnan', 'Thorin Ironforge']);
+    // Still live: applying a scene never changes the mode
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
+    await display.close();
+  });
+
+  test('edit scene', async () => {
+    await noScenes();
+    await resetTable();
+    await createScene('E2E Docks', { locationId: '1', spotlightIds: ['2', 'character:1'] });
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await card(page, 'E2E Docks').locator('[data-action=edit]').click();
+    const dialog = page.locator('#sceneDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#sceneName')).toHaveValue('E2E Docks');
+    await expect(page.locator('#sceneLocation')).toHaveValue('1');
+    // Entries already in the scene can't be added twice
+    await expect(page.locator('#sceneSpotlightSelect option[value="2"]')).toBeDisabled();
+    await page.locator('#sceneSpotlightSelect').selectOption('4');
+    await page.locator('#sceneSpotlightAdd').click();
+    const rows = page.locator('#sceneSpotlightList [data-key]');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(2)).toContainText('Xanathar');
+    await rows.nth(2).locator('[data-mark=hidden]').click();
+    await expect(rows.nth(2).locator('[data-mark=hidden]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#sceneName').fill('E2E Docks at night');
+    await page.locator('#sceneSaveBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(card(page, 'E2E Docks at night').locator('.scene-portrait')).toHaveCount(3);
+
+    await card(page, 'E2E Docks at night').locator('[data-action=apply]').click();
+    await expect(card(page, 'E2E Docks at night')).toHaveClass(/is-active/);
+    const shown = await (await dm.request.get('/api/display')).json();
+    expect(shown.npcs.map((n: { name: string }) => n.name)).toEqual(['Durnan', 'Thorin Ironforge']);
+
+    // Cancel keeps the scene as it was
+    await card(page, 'E2E Docks at night').locator('[data-action=edit]').click();
+    await page.locator('#sceneName').fill('E2E Changed');
+    await page.locator('#sceneCancelBtn').click();
+    await expect(dialog).toBeHidden();
+    await page.reload();
+    await expect(card(page, 'E2E Docks at night')).toHaveCount(1);
+    await page.close();
+  });
+
+  test('reorder and delete', async ({ browser }) => {
+    await noScenes();
+    await createScene('E2E A', { spotlightIds: [] });
+    await createScene('E2E B', { spotlightIds: ['3'] });
+    await createScene('E2E C', { locationId: '2', spotlightIds: [] });
+
+    // Phones: up/down buttons
+    const phoneContext = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await dm.storageState() });
+    const phone = await phoneContext.newPage();
+    await phone.goto('/tools/dm-screen');
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E A', 'E2E B', 'E2E C']);
+    await expect(card(phone, 'E2E B').locator('[data-action=up]')).toBeVisible();
+    await card(phone, 'E2E B').locator('[data-action=up]').click();
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await phone.reload();
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await phoneContext.close();
+
+    // Desktop: drag and drop (C onto B puts it first)
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await expect(card(page, 'E2E B').locator('[data-action=up]')).toBeHidden();
+    await card(page, 'E2E C').dragTo(card(page, 'E2E B'));
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B', 'E2E A']);
+    await page.reload();
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B', 'E2E A']);
+
+    const confirm = page.locator('#arandor-confirm');
+    await card(page, 'E2E A').locator('[data-action=delete]').click();
+    await confirm.locator('[data-cancel]').click();
+    await expect(card(page, 'E2E A')).toHaveCount(1);
+    await card(page, 'E2E A').locator('[data-action=delete]').click();
+    await expect(confirm.locator('[data-confirm]')).toHaveText('Delete');
+    await confirm.locator('[data-confirm]').click();
+    await expect(card(page, 'E2E A')).toHaveCount(0);
+    await page.reload();
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B']);
+    await page.close();
+  });
+
+  test('missing references and new scene', async () => {
+    await noScenes();
+    await createScene('E2E Ghosts', { locationId: 'gone-location', spotlightIds: ['2', 'gone-npc', '1', '3', '4', '5', '6', '7'] });
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    const ghosts = card(page, 'E2E Ghosts');
+    await expect(ghosts.locator('.scene-thumb')).toHaveAttribute('title', 'Deleted');
+    await expect(ghosts.locator('.scene-portrait')).toHaveCount(5);
+    await expect(ghosts.locator('.scene-portrait.is-missing')).toHaveAttribute('title', 'Deleted');
+    await expect(ghosts.locator('.scene-more')).toHaveText('+3');
+
+    // Applied without the deleted ones, and still the current scene
+    await expect(ghosts).not.toHaveClass(/is-active/);
+    await ghosts.locator('[data-action=apply]').click();
+    await expect(ghosts).toHaveClass(/is-active/);
+    expect((await setMode('live')).ok()).toBe(true);
+    const shown = await (await dm.request.get('/api/display')).json();
+    expect(shown.npcs.map((n: { id: string }) => n.id)).toEqual(['2', '1', '3', '4', '5', '6', '7']);
+    expect(shown.location).toBeNull();
+    await page.reload();
+    await expect(card(page, 'E2E Ghosts')).toHaveClass(/is-active/);
+
+    await page.locator('#newSceneBtn').click();
+    await expect(page.locator('#sceneDialogTitle')).toHaveText('New scene');
+    await expect(page.locator('#sceneLocation')).toHaveValue('');
+    await expect(page.locator('#sceneSpotlightList [data-key]')).toHaveCount(0);
+    await page.locator('#sceneName').fill('E2E Forest');
+    await page.locator('#sceneLocation').selectOption('3');
+    await page.locator('#sceneLocationHidden').check();
+    await page.locator('#sceneSpotlightSelect').selectOption('character:2');
+    await page.locator('#sceneSpotlightAdd').click();
+    await page.locator('#sceneSpotlightList [data-key] [data-mark=focus]').click();
+    await page.locator('#sceneSaveBtn').click();
+    await expect(card(page, 'E2E Forest')).toHaveCount(1);
+    const saved = (await (await dm.request.get('/api/scenes')).json()).find((s: { name: string }) => s.name === 'E2E Forest');
+    expect(saved.setup).toEqual({ locationId: '3', locationHidden: true, spotlightIds: ['character:2'], hiddenIds: [], focusIds: ['character:2'], npcsHidden: false });
+    await noScenes();
+    await page.close();
+  });
+});

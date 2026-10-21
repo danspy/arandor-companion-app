@@ -34,7 +34,7 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 | `/api/diary`, `/api/diary/[id]` | public | player+ |
 | `/api/diary/[id]/summary` (DELETE only: remove an entry's summary) | – | DM |
 | `/api/diary-notes/[diaryEntryId]` | login, own note only | login, own note only |
-| `/api/npcs`, `/api/npcs/[id]` | public | player+ |
+| `/api/npcs`, `/api/npcs/[id]` | public (`hp`, `maxHp`, `conditions` only for DM/admin) | player+ |
 | `/api/locations`, `/api/locations/[id]` (incl. map pin `mapX`, `mapY`, `visibleOnMap`) | public | player+ |
 | `/api/library`, `/api/library/[id]` | public | player+ |
 | `/api/timeline`, `/api/timeline/[id]` | public | player+ |
@@ -64,6 +64,7 @@ Ranking and matching: `src/lib/search/index.ts`; sources: `src/lib/search/source
 | `/api/characters/dndbeyond` | POST `{url}` | Read a D&D Beyond character (auto-fill in the form) | player+ |
 | `/api/characters/sync` | POST `{characterId}` | Full sync from D&D Beyond (the truth): level, HP, ability scores, `sheet` | player+ and owner |
 | `/api/characters/sync-hp` | POST `{characterId}` | HP and death saves only | player+ and owner |
+| `/api/characters/sync-all` | POST | Full sync of every active party character with a D&D Beyond link (3 at a time, no throttle) and the HP of their tracker entries; answers `{synced, failed: [{id, name, error}], results, syncedAt}` | DM |
 | `/api/characters/auto-sync` | POST `{characterId}` | The same full sync, at most once per 15 min per character; answers only `{success, updated}` | public |
 
 See [D&D Beyond sync](DnD-Beyond-Sync.md).
@@ -83,8 +84,15 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 | `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
 | `/api/initiative/reset-combat` | POST | Keep player characters (initiative 10), remove everyone else, round 1 | DM |
 | `/api/combat-state` | GET / PUT, POST | Round, turn, status / set them, or move the turn with `{ action: 'start' \| 'next' \| 'prev' \| 'new-fight' }` (only `new-fight` resets the round) | public / DM |
-| `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`, `npcsHidden`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock | DM |
-| `/api/display` | GET | Everything `/display` shows in one small response (health bands, no HP/AC, nothing hidden on the DM screen); supports ETag / 304 | public |
+| `/api/npcs/[id]` | PATCH | An NPC's status on the DM screen: `hp`, `maxHp` (0–10000 or null), `conditions` (checked like a combatant's). Only the fields sent change; HP stays within max HP | DM |
+| `/api/npcs/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }` for an NPC outside the fight; without HP of its own it starts from its stat block's | DM |
+| `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`, `npcsHidden`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock; `screenMode: 'off' \| 'start' \| 'live' \| 'pause'` and `startScreen: { title, session, date (YYYY-MM-DD), recap, showRecap, diaryEntryId }` (checked, readable `error` on 400). The legacy `screenVisible` still works (`true` = live, `false` = pause) and always follows the mode | DM |
+| `/api/dm-screen/start-defaults` | GET | Pre-filled start screen: `{ session, date, recap, diaryEntryId, diary }` (next session number, last recap and newest entry from the diary, today); `diary` lists every entry newest first as `{ id, session, title, excerpt, imageUrl }` | DM |
+| `/api/scenes` | GET / POST | Saved scenes in the DM's order, as cards with `setup`, `location`, `locationMissing` and `portraits` (`missing` for deleted references) / save one: `{ name, setup }` or `{ name, fromCurrent: true }` (snapshot of the DM screen), 201 | DM |
+| `/api/scenes/[id]` | PUT, DELETE | Rename or change a scene `{ name, setup }` / delete it (204) | DM |
+| `/api/scenes/[id]/apply` | POST | Put a scene on the DM screen: replaces location and spotlight only (timer, initiative, wallpaper and screen mode stay); deleted references are dropped. Answers the new DM screen state | DM |
+| `/api/scenes/order` | PUT | `{ ids }` front to back; unknown or duplicate ids are a 400; 204 | DM |
+| `/api/display` | GET | Everything `/display` shows in one small response (health bands, no HP/AC, nothing hidden on the DM screen); supports ETag / 304. `mode` (`off`/`start`/`live`/`pause`), `startScreen` (only in `start`; with `lastSession: { session, title, excerpt, imageUrl }` when it shows a diary entry, `null` if that entry was deleted), `nextSession` (`{ date, time }` from the calendar, only in `off`). The stage fields `location`, `npcs`, `initiative` and `timer` are empty (`null` / `[]`) unless the mode is `live` | public |
 | `/api/display/wallpaper` | GET | A wallpaper stored inline as a `data:` URL, served as a cacheable image | public |
 
 The public reads exist for the player display (`/display`), which runs without a login. They

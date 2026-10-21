@@ -6,7 +6,10 @@ import { isAuthenticated, getUserRole, getCurrentUser } from '../../lib/auth';
 import { db, Character, Location, NPC, PageSettings, eq } from '@/db';
 import { characterKey, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
 import PartyPanel from '../../components/PartyPanel.astro';
+import DisplayPreview from '../../components/DisplayPreview.astro';
+import SceneStrip from '../../components/SceneStrip.astro';
 import { partyOverview } from '../../lib/party';
+import { statBlockHpByNpc } from '../../lib/creature-links';
 import '../../styles/statblock.css';
 import '../../styles/character-sheet.css';
 
@@ -28,6 +31,11 @@ const characters = (await db.select().from(Character)).sort(byName);
 const party = characters.filter((c) => c.isActive);
 const formerParty = characters.filter((c) => !c.isActive);
 const partyRows = partyOverview(characters);
+const partySynced = party.filter((c) => c.dndbeyondUrl);
+const partySyncedAt = partySynced.some((c) => !c.lastSyncedAt) ? null
+  : partySynced.reduce<Date | null>((oldest, c) => (!oldest || c.lastSyncedAt! < oldest ? c.lastSyncedAt : oldest), null);
+// HP of the stat block each NPC uses, for spotlight NPCs without HP of their own (lib/npc-status)
+const npcStatBlockHp = Object.fromEntries(await statBlockHpByNpc());
 
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dm-screen'));
@@ -84,7 +92,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     </div>
   </div>
 
-  <PartyPanel rows={partyRows} />
+  <PartyPanel rows={partyRows} syncIds={partySynced.map((c) => c.id)} syncedAt={partySyncedAt} />
+  <SceneStrip locations={locations} party={party} formerParty={formerParty} npcs={npcs} />
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Location Control -->
@@ -201,7 +210,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           </div>
         </div>
 
-        <div id="spotlightNpcList" class="space-y-2">
+        <div id="spotlightNpcList" class="space-y-2" data-stat-block-hp={JSON.stringify(npcStatBlockHp)}>
           <p class="t-faint text-sm" id="noNpcsMessage">Nobody in the spotlight</p>
         </div>
       </div>
@@ -387,35 +396,16 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       </div>
     </div>
 
-    <!-- Quick Actions -->
+    <!-- Pause screen (what the display shows while paused) -->
     <div class="t-panel p-6">
       <h2 class="t-section-h text-xl mb-4 flex items-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
         </svg>
-        Quick Actions
+        Pause screen
       </h2>
 
       <div class="space-y-4">
-        <!-- Show/Hide Screen Toggle -->
-        <div class="t-inset p-4 rounded-xs">
-          <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-2 mb-2">
-            <label class="t-body-text text-sm font-medium">Screen Visibility</label>
-            <div class="flex items-center gap-2">
-              <span id="screenStatusText" class="t-muted text-sm">Visible</span>
-              <button 
-                id="toggleScreenBtn"
-                class="t-btn-primary text-sm"
-              >
-                Hide screen
-              </button>
-            </div>
-          </div>
-          <p class="t-faint text-xs">
-            Hide the screen to show placeholder image while keeping your data intact.
-          </p>
-        </div>
-        
         <!-- Placeholder Image Upload -->
         <div class="t-inset p-4 rounded-xs">
           <label class="t-label block mb-2">
@@ -450,7 +440,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             </div>
           </div>
           <p class="t-faint text-xs mt-2">
-            Upload an image file or enter an image URL. This appears when the screen is hidden.
+            Upload an image file or enter an image URL. This appears while the screen is paused.
           </p>
         </div>
         
@@ -478,6 +468,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       <div id="dm-music-host" class="space-y-3" data-me={musicMe}></div>
     </div>
   </div>
+
+  <!-- Floating live preview of the player display -->
+  <DisplayPreview />
 
   <style>
     /* Loading spinner animation */
@@ -511,7 +504,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     import { wireCharacterRolls } from '../../lib/character-rolls';
     import { tagKind } from '../../lib/conditions';
     import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
-    import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle } from '../../lib/spotlight';
+    import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../lib/spotlight';
+    import { conditionEditor } from '../../lib/condition-editor';
+    import { effectiveNpcHp, spotlightCombatant } from '../../lib/npc-status';
     // Store current state
     let currentState = {
       currentLocationId: null,
@@ -581,57 +576,46 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       try {
         const response = await fetch('/api/dm-screen');
         if (response.ok) {
-          const state = await response.json();
-          currentState = state;
-          
-          // Update UI
-          updateLocationPreview(state.currentLocationId);
-          updateNpcList(state.spotlightNpcIds);
-          
-          const locationSelect = document.getElementById('locationSelect');
-          const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
-          const placeholderImageInput = document.getElementById('placeholderImageUrl');
-          const showTimerCheckbox = document.getElementById('showTimer');
-          const timerMinutesInput = document.getElementById('timerMinutes');
-          
-          if (locationSelect) locationSelect.value = state.currentLocationId || '';
-          if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
-
-          if (placeholderImageInput) placeholderImageInput.value = state.placeholderImageUrl || '';
-          if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
-          if (timerMinutesInput && state.timerDuration !== undefined) {
-            timerMinutesInput.value = Math.floor(state.timerDuration / 60);
-          }
-          
-          // Update screen visibility UI
-          updateScreenVisibilityUI(state.screenVisible !== false); // Default to true if undefined
-          
-          // Update timer display
-          updateTimerDisplay();
+          renderState(await response.json());
+          announceState();
         }
       } catch (error) {
         console.error('Error loading state:', error);
       }
     }
-    
-    // Update screen visibility UI
-    function updateScreenVisibilityUI(isVisible) {
-      const toggleBtn = document.getElementById('toggleScreenBtn');
-      const statusText = document.getElementById('screenStatusText');
+
+    // Tell the scene strip (SceneStrip.astro) about the state; it answers with the same event
+    // after its own changes, and renderState() picks those up
+    function announceState() {
+      document.dispatchEvent(new CustomEvent('dm-screen:state', { detail: currentState }));
+    }
+
+    // Show a state from the server in the whole page. Changes from the scene strip never touch
+    // the wallpaper or the timer, so its redraws keep what the DM is typing in those inputs.
+    function renderState(state, { fromStrip = false } = {}) {
+      currentState = state;
+
+      // Update UI
+      updateLocationPreview(state.currentLocationId);
+      updateNpcList(state.spotlightNpcIds);
       
-      if (isVisible) {
-        if (toggleBtn) {
-          toggleBtn.textContent = 'Hide screen';
-          toggleBtn.className = 't-btn-primary text-sm';
-        }
-        if (statusText) statusText.textContent = 'Visible';
-      } else {
-        if (toggleBtn) {
-          toggleBtn.textContent = 'Show screen';
-          toggleBtn.className = 't-btn-gold text-sm';
-        }
-        if (statusText) statusText.textContent = 'Hidden';
+      const locationSelect = document.getElementById('locationSelect');
+      const showInitiativeCheckbox = document.getElementById('showInitiativeTracker');
+      const placeholderImageInput = document.getElementById('placeholderImageUrl');
+      const showTimerCheckbox = document.getElementById('showTimer');
+      const timerMinutesInput = document.getElementById('timerMinutes');
+      
+      if (locationSelect) locationSelect.value = state.currentLocationId || '';
+      if (showInitiativeCheckbox) showInitiativeCheckbox.checked = state.showInitiativeTracker;
+
+      if (placeholderImageInput && !fromStrip) placeholderImageInput.value = state.placeholderImageUrl || '';
+      if (showTimerCheckbox) showTimerCheckbox.checked = state.showTimer || false;
+      if (timerMinutesInput && !fromStrip && state.timerDuration !== undefined) {
+        timerMinutesInput.value = Math.floor(state.timerDuration / 60);
       }
+
+      // Update timer display
+      updateTimerDisplay();
     }
     
     // Timer utility functions
@@ -796,8 +780,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         // Dimmed = not on the display right now
         const dimmed = isHidden || currentState.npcsHidden || (focus.length > 0 && !isFocused);
         const npcItem = document.createElement('div');
-        npcItem.className = 'npc-item t-row p-3 flex items-center justify-between gap-2';
+        npcItem.className = 'npc-item t-row p-3';
+        npcItem.dataset.key = npcId;
         npcItem.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
           <div class="min-w-0" style="${dimmed ? 'opacity:.45' : ''}">
             <p class="t-body-text font-medium">${escapeHtml(entry.name)}${isCharacter ? ' <span class="t-badge ml-1">Party</span>' : ''}${isFocused ? ' <span class="t-badge ml-1" style="color:var(--gold);border-color:var(--border-gold)">Focus</span>' : ''}${isHidden ? ' <span class="t-badge ml-1">Hidden</span>' : ''}</p>
             <p class="t-muted text-sm">${escapeHtml(subtitle)}</p>
@@ -815,8 +801,13 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
             </svg>
           </button>
           </div>
+          </div>
+          <div class="npc-status"></div>
+          <div class="npc-edit-host"></div>
         `;
         list.appendChild(npcItem);
+        renderSpotlightStatus(npcItem);
+        if (openEditors.has(npcId) && !combatantOf(npcId)) toggleNpcEditor(npcId, true);
       });
 
       document.querySelectorAll('.toggle-focus-btn').forEach(btn => {
@@ -834,6 +825,136 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           removeNpcFromSpotlight(npcId);
         });
       });
+    }
+
+    // ── HP and conditions on the spotlight rows (DM only; see lib/npc-status) ──
+    // NPCs: their own HP (or their stat block's until the first change) and conditions, changed
+    // right on the row and kept between sessions. Party characters: HP from D&D Beyond. Whoever
+    // is in a running fight shows the combatant instead, changed like in the turn preview.
+    const openEditors = new Set();
+    const EDIT_ICON = '<svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>';
+    const statBlockHp = (npcId) => {
+      try {
+        return JSON.parse(document.getElementById('spotlightNpcList')?.dataset.statBlockHp || '{}')[npcId] ?? null;
+      } catch {
+        return null;
+      }
+    };
+    const spotlightEntry = (key) => {
+      const { kind, id } = parseSpotlightKey(key);
+      return { kind, id, who: kind === 'character' ? charactersData.get(id) : npcsData.get(id) };
+    };
+    const combatantOf = (key) => {
+      const { kind, who } = spotlightEntry(key);
+      return who ? spotlightCombatant(initiatives, combatState.status, kind, who) : null;
+    };
+
+    function spotlightStatusHtml(key) {
+      const { kind, id, who } = spotlightEntry(key);
+      if (!who) return '';
+      const hpValue = (entryId, entry) => `<span class="t-faint text-xs">HP</span> <b class="t-body-text text-sm"${entryId ? ` data-hp-of="${escapeHtml(entryId)}"` : ''}>${escapeHtml(formatHp(entry))}</b>`;
+      const c = combatantOf(key);
+      if (c) {
+        return `<div class="npc-status-line"><span class="t-badge" title="HP and conditions from the initiative tracker">In combat</span>`
+          + (c.hp === null || c.hp === undefined ? '' : ` ${hpValue(c.id, c)} ${hpControlHtml(c.id, c.name)}`)
+          + `<button type="button" class="statblock-btn t-icon-btn" data-creature-id="${escapeHtml(c.creatureId || '')}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}" title="Edit the combatant" aria-label="Edit the combatant ${escapeHtml(c.name)}">${EDIT_ICON}</button></div>`
+          + conditionChips(c);
+      }
+      if (kind === 'character') {
+        return who.hp === null || who.hp === undefined ? '' : `<div class="npc-status-line">${hpValue(null, who)} <span class="t-faint text-xs">D&amp;D Beyond</span></div>`;
+      }
+      const hp = { id, tempHp: null, ...effectiveNpcHp(who, statBlockHp(id)) };
+      return `<div class="npc-status-line">`
+        + (hp.hp === null ? '<span class="t-faint text-xs">No HP set</span>' : `${hpValue(id, hp)} ${hpControlHtml(id, who.name, `/api/npcs/${encodeURIComponent(id)}/hp`)}`)
+        + `<button type="button" class="npc-edit-btn t-icon-btn" data-key="${escapeHtml(key)}" aria-expanded="${openEditors.has(key)}" title="HP and conditions" aria-label="HP and conditions of ${escapeHtml(who.name)}">${EDIT_ICON}</button></div>`
+        + conditionChips(who);
+    }
+
+    function renderSpotlightStatus(item) {
+      const status = item.querySelector('.npc-status');
+      if (status) setPreview(status, spotlightStatusHtml(item.dataset.key));
+    }
+
+    // After every combat poll: the fight may have started, ended or changed someone's HP
+    function refreshSpotlightStatus() {
+      document.querySelectorAll('#spotlightNpcList .npc-item').forEach((item) => {
+        // In a running fight the combatant is changed instead (its panel)
+        if (openEditors.has(item.dataset.key) && combatantOf(item.dataset.key)) toggleNpcEditor(item.dataset.key, false);
+        renderSpotlightStatus(item);
+      });
+    }
+
+    function toggleNpcEditor(key, open = !openEditors.has(key)) {
+      const item = [...document.querySelectorAll('#spotlightNpcList .npc-item')].find((el) => el.dataset.key === key);
+      const host = item?.querySelector('.npc-edit-host');
+      if (!host || !npcsData.has(key)) return;
+      if (open) openEditors.add(key);
+      else openEditors.delete(key);
+      host.replaceChildren(...(open ? [npcEditor(key)] : []));
+      renderSpotlightStatus(item);
+    }
+
+    // HP, max HP and conditions of one NPC, saved as soon as a field is left (PATCH /api/npcs/[id])
+    function npcEditor(key) {
+      const npc = npcsData.get(key);
+      const box = document.createElement('section');
+      box.className = 'npc-edit';
+      box.setAttribute('aria-label', `HP and conditions: ${npc.name}`);
+      const status = document.createElement('p');
+      status.className = 'cp-status text-xs';
+      status.setAttribute('role', 'status');
+
+      const grid = document.createElement('div');
+      grid.className = 'cp-grid';
+      const fromStatBlock = statBlockHp(key);
+      const inputs = {};
+      const showValues = () => {
+        for (const [field, input] of Object.entries(inputs)) {
+          if (document.activeElement !== input) input.value = npc[field] ?? '';
+        }
+      };
+      async function save(change) {
+        status.textContent = 'Saving…';
+        status.dataset.state = '';
+        try {
+          const res = await fetch(`/api/npcs/${encodeURIComponent(key)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(change) });
+          const body = await res.json();
+          if (!res.ok) throw new Error(body.error ?? 'Could not save');
+          Object.assign(npc, body);
+          status.textContent = 'Saved';
+          status.dataset.state = 'ok';
+          showValues();
+          refreshSpotlightStatus();
+          return true;
+        } catch (err) {
+          status.textContent = err instanceof Error ? err.message : 'Could not save';
+          status.dataset.state = 'error';
+          showValues();
+          return false;
+        }
+      }
+      for (const [field, label] of [['hp', 'HP'], ['maxHp', 'Max HP']]) {
+        const wrap = document.createElement('label');
+        wrap.className = 'cp-field';
+        const caption = document.createElement('span');
+        caption.className = 't-label';
+        caption.textContent = label;
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = '10000';
+        input.inputMode = 'numeric';
+        input.className = 't-input cp-input';
+        // Empty: the stat block's HP stand in
+        if (fromStatBlock !== null) input.placeholder = String(fromStatBlock);
+        input.addEventListener('change', () => save({ [field]: input.value.trim() === '' ? null : Number(input.value) }));
+        inputs[field] = input;
+        wrap.append(caption, input);
+        grid.append(wrap);
+      }
+      showValues();
+      box.append(grid, conditionEditor(() => npc.conditions || [], (next) => save({ conditions: next })), status);
+      return box;
     }
 
     // The picker only offers characters and NPCs that are not in the spotlight yet. All options
@@ -874,6 +995,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         if (response.ok) {
           const newState = await response.json();
           currentState = newState;
+          announceState();
           return true;
         }
         return false;
@@ -1055,6 +1177,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           initiatives = await initiativeResponse.json();
           updateInitiativePreview();
         }
+        refreshSpotlightStatus();
       } catch (error) {
         console.error('Error loading combat data:', error);
       }
@@ -1322,19 +1445,6 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       clearAllBtn?.addEventListener('click', clearAllHandler);
       eventHandlers.set('clearAllBtn', clearAllHandler);
       
-      // Toggle screen visibility
-      const toggleScreenBtn = document.getElementById('toggleScreenBtn');
-      const toggleScreenHandler = async () => {
-        const newVisibility = !currentState.screenVisible;
-        const success = await updateState({ screenVisible: newVisibility });
-        
-        if (success) {
-          updateScreenVisibilityUI(newVisibility);
-        }
-      };
-      toggleScreenBtn?.addEventListener('click', toggleScreenHandler);
-      eventHandlers.set('toggleScreenBtn', toggleScreenHandler);
-      
       // Save placeholder image
       const savePlaceholderBtn = document.getElementById('savePlaceholderBtn');
       const savePlaceholderHandler = async () => {
@@ -1540,6 +1650,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       cleanup();
 
       // Clear old data
+      openEditors.clear();
       locationsData.clear();
       npcsData.clear();
       charactersData.clear();
@@ -1615,6 +1726,10 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
 
     // Runs on the first load and after every client-side navigation (ClientRouter)
     document.addEventListener('astro:page-load', initialize);
+    // State changed by the scene strip (our own announcements carry currentState itself)
+    document.addEventListener('dm-screen:state', (e) => {
+      if (e.detail !== currentState && document.getElementById('locationSelect')) renderState(e.detail, { fromStrip: true });
+    });
     // Stat block buttons in the turn preview (redrawn every few seconds, so delegated)
     document.addEventListener('click', (e) => {
       const btn = e.target.closest?.('.statblock-btn');
@@ -1630,6 +1745,18 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       e.preventDefault();
       toggleCharacterSheet(link.dataset.partySheet, link.textContent.trim(), template.content.cloneNode(true));
     }, true);
+    // The HP and conditions editor of spotlight NPCs (rows are redrawn, so delegated)
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest?.('.npc-edit-btn');
+      if (btn && document.getElementById('spotlightNpcList')) toggleNpcEditor(btn.dataset.key);
+    });
+    // Damage or healing of a spotlight NPC outside the fight: keep its data and editor current
+    window.addEventListener(HP_CHANGED_EVENT, (e) => {
+      const npc = npcsData.get(e.detail.entry.id);
+      if (!npc) return;
+      Object.assign(npc, { hp: e.detail.entry.hp, maxHp: e.detail.entry.maxHp });
+      if (openEditors.has(npc.id)) toggleNpcEditor(npc.id, true);
+    });
     wireCharacterRolls();
     wireHpControls();
     // After damage/healing (preview or panel): refresh, so a combatant at 0 shows right away

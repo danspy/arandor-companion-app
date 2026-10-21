@@ -142,3 +142,19 @@ input.cp-input { text-align: center; }
 /* Spells/effects and own tags in another colour than the official conditions */
 .cp-chip.is-effect[aria-pressed='true'], .cp-chip.is-custom { color: #f3e9ff; background: #5b3f8c; border-color: #8b6cc4; }
 .cond-chip.is-effect, .cond-chip.is-custom { color: #d9c6ff; border-color: #8b6cc4; }
+
+/* ── HP and conditions on the DM screen spotlight rows ── */
+.npc-status { display: grid; gap: 0.35rem; margin-top: 0.5rem; }
+.npc-status:empty { display: none; }
+.npc-status-line { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.5rem; }
+/* The controls sit at the right end, wrapping under the HP on narrow rows */
+.npc-status-line > :is(.hp-change, .t-icon-btn) { margin-left: auto; }
+.npc-status-line > .hp-change ~ .t-icon-btn { margin-left: 0; }
+.npc-edit { display: grid; gap: 0.75rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border); }
+.npc-edit .cp-grid { grid-template-columns: repeat(2, minmax(0, 7rem)); }
+/* Touch screens and narrow windows: every control on the rows at least 40px high */
+@media (pointer: coarse), (max-width: 1023px) {
+  #spotlightNpcList .t-icon-btn { width: 2.5rem; height: 2.5rem; }
+  #spotlightNpcList :is(.hp-amount, .cp-input, .cp-own, select) { min-height: 2.5rem; }
+  #spotlightNpcList .cp-chip { min-height: 2.5rem; padding-inline: 0.65rem; }
+}

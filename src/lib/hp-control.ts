@@ -2,6 +2,7 @@
 // screen's turn preview and the stat block panel. One delegated handler serves every field on
 // the page; after a change it announces the updated entry (HP_CHANGED_EVENT) so each place can
 // update what it shows, and every element marked data-hp-of="<entry id>" gets the new HP.
+// The DM screen spotlight uses the same field for NPCs outside the fight (/api/npcs/[id]/hp).
 
 export const HP_CHANGED_EVENT = 'arandor:hp-changed';
 
@@ -14,10 +15,10 @@ export interface HpEntry {
 
 const escape = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
-/** The field as HTML (for places that render with innerHTML). */
-export function hpControlHtml(entryId: string, name: string): string {
+/** The field as HTML (for places that render with innerHTML). Changes go to `endpoint`. */
+export function hpControlHtml(entryId: string, name: string, endpoint = `/api/initiative/${encodeURIComponent(entryId)}/hp`): string {
   const n = escape(name);
-  return `<span class="hp-change inline-flex items-center gap-1" data-entry-id="${escape(entryId)}">` +
+  return `<span class="hp-change inline-flex items-center gap-1" data-entry-id="${escape(entryId)}" data-endpoint="${escape(endpoint)}">` +
     `<input type="number" min="0" max="10000" inputmode="numeric" class="t-input hp-amount" placeholder="0" aria-label="Damage or healing for ${n}" />` +
     `<button type="button" class="t-icon-btn hp-change-btn" data-kind="damage" title="Damage ${n} (Enter)" aria-label="Damage ${n}">−</button>` +
     `<button type="button" class="t-icon-btn hp-change-btn" data-kind="heal" title="Heal ${n}" aria-label="Heal ${n}">+</button>` +
@@ -40,7 +41,7 @@ async function change(box: HTMLElement, kind: 'damage' | 'heal') {
   const buttons = box.querySelectorAll('button');
   buttons.forEach((b) => (b.disabled = true));
   try {
-    const res = await fetch(`/api/initiative/${box.dataset.entryId}/hp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, amount }) });
+    const res = await fetch(box.dataset.endpoint ?? `/api/initiative/${box.dataset.entryId}/hp`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind, amount }) });
     const entry = await res.json();
     if (!res.ok) throw new Error(entry.error ?? 'Could not change HP');
     input.value = '';
