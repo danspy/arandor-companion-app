@@ -9,10 +9,26 @@ A tour of the app, page by page. What you may change depends on your role; see
   logged in. The key icon opens log in, or Profile / Users / Log out.
 - On phones the links move into the ☰ menu. In the [installed app](Installed-App.md) a bottom
   bar replaces the top bar: your favourite pages, the dice in the middle and Menu.
+- **Search** (magnifier in the top bar, ⌘K on a Mac, Ctrl+K elsewhere, or `/`): see [Search](#search).
 - The **dice button** (bottom right; in the installed app the gold hexagon in the bottom bar) is
   on every page; see [Dice](#dice).
 - Most pages have a large header image. DMs and admins can change it with the image button in
   the header.
+
+## Search
+
+Press **⌘K** (Mac) or **Ctrl+K** anywhere, or **/** when you are not typing in a field. On a
+phone tap the magnifier in the top bar; in the installed app it is under **Menu → Search**.
+
+- Finds NPCs, locations, quests, characters, factions, diary entries, timeline events, library
+  documents and pages, by name and by the text inside them. Upper/lower case and accents do not
+  matter ("ulfgar" finds "Úlfgar"); with several words, all of them must appear.
+- Logged in, it also finds calendar events. DMs and admins also find their bestiary and the SRD
+  creatures. Private notes (on characters and diary entries) are never searched.
+- Type a roll such as `2d6+3` to roll it with the dice button.
+- ↑/↓ choose, Enter opens, ⌘/Ctrl+Enter opens in a new tab, Esc closes. With nothing typed
+  it shows the pages you can open and the last results you opened (kept in this browser only).
+- Not on the display screen (`/display`).
 
 ## Dashboard (`/`)
 

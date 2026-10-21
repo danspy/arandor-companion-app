@@ -6,6 +6,7 @@ import PWADock from '../components/PWADock.astro';
 import ConfirmDialog from '../components/ConfirmDialog.astro';
 import DiceFab from '../components/DiceFab.astro';
 import MusicPlayer from '../components/MusicPlayer.astro';
+import SearchPalette from '../components/SearchPalette.astro';
 
 interface Props {
   title: string;
@@ -106,7 +107,19 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             data-testid="nav-brand"
           >Arandor</a>
 
-          <!-- Mobile toggle -->
+          <!-- Search + mobile toggle -->
+          <div class="lg:hidden flex items-center gap-1">
+          <button
+            type="button"
+            class="p-2 rounded-sm transition-colors"
+            style="color: rgba(242,232,213,0.75);"
+            aria-label="Search"
+            aria-keyshortcuts="Meta+K Control+K"
+            data-search-open
+            data-testid="search-btn-mobile"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M20 20l-3.5-3.5"/></svg>
+          </button>
           <button
             id="mobileMenuBtn"
             class="lg:hidden p-2 -mr-1 rounded-sm transition-colors"
@@ -121,6 +134,7 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
+          </div>
 
           <!-- Desktop nav links -->
           <div class="hidden lg:flex items-center gap-0.5" data-testid="desktop-nav">
@@ -152,6 +166,18 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
             )}
 
             <span class="w-px h-4 mx-2 shrink-0" style="background: rgba(201,144,50,0.18);"></span>
+
+            <button
+              type="button"
+              class="search-btn flex items-center gap-2 px-2.5 py-1.5 mr-1 text-sm rounded-md transition-colors"
+              aria-label="Search"
+              aria-keyshortcuts="Meta+K Control+K"
+              data-search-open
+              data-testid="search-btn"
+            >
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke-width="1.5"/><path stroke-linecap="round" stroke-width="1.5" d="M20 20l-3.5-3.5"/></svg>
+              <kbd class="search-btn-kbd" data-search-kbd>Ctrl K</kbd>
+            </button>
 
 
             <!-- User dropdown -->
@@ -284,6 +310,8 @@ const canEditContent = userRole === 'player' || userRole === 'dungeonmaster' || 
     <DiceFab />
     <!-- Music mini bar + audio element (persists across page changes) -->
     <MusicPlayer />
+    <!-- Global search, ⌘K / Ctrl+K (not on /display, which has its own layout) -->
+    <SearchPalette />
     
     <script>
       import '../lib/soft-reload';

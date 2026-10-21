@@ -335,6 +335,19 @@ html.hero-nav .app-nav:has(#mobileMenu:not(.hidden)) { background: var(--nav-bg)
   color: #f2e8d5;
   background: rgba(201, 144, 50, 0.06);
 }
+
+/* Search button in the nav (opens the ⌘K palette) */
+.search-btn {
+  color: rgba(242, 232, 213, 0.75);
+  border: 1px solid rgba(201, 144, 50, 0.18);
+}
+.search-btn:hover { color: #f2e8d5; border-color: rgba(201, 144, 50, 0.4); }
+.search-btn-kbd {
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  color: rgba(242, 232, 213, 0.55);
+}
 .nav-link-active {
   color: var(--gold);
   background: var(--gold-dim);

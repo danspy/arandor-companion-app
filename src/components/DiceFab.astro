@@ -473,6 +473,12 @@ const DICE = ['d4', 'd6', 'd8', 'd10', 'd12', 'd20', 'd100'];
     }
   }
 
+  // Rolls asked for elsewhere (the search palette's "Roll 2d6+3"), as if typed here
+  window.addEventListener('dice:roll', (e) => {
+    const parsed = parseRoll(String((e as CustomEvent<string>).detail ?? ''));
+    if (parsed.ok) void doRollParts([{ label: '', expr: formatRoll(parsed.roll) }]);
+  });
+
   // ── Typed roll ──
   function checkTyped() {
     const text = exprInput.value.trim();
