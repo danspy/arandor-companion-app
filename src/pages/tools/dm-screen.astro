@@ -28,6 +28,9 @@ const characters = (await db.select().from(Character)).sort(byName);
 const party = characters.filter((c) => c.isActive);
 const formerParty = characters.filter((c) => !c.isActive);
 const partyRows = partyOverview(characters);
+const partySynced = party.filter((c) => c.dndbeyondUrl);
+const partySyncedAt = partySynced.some((c) => !c.lastSyncedAt) ? null
+  : partySynced.reduce<Date | null>((oldest, c) => (!oldest || c.lastSyncedAt! < oldest ? c.lastSyncedAt : oldest), null);
 
 // Get page settings for hero image
 const pageSettings = await db.select().from(PageSettings).where(eq(PageSettings.pageName, 'dm-screen'));
@@ -84,7 +87,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     </div>
   </div>
 
-  <PartyPanel rows={partyRows} />
+  <PartyPanel rows={partyRows} syncIds={partySynced.map((c) => c.id)} syncedAt={partySyncedAt} />
 
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Location Control -->
