@@ -64,6 +64,7 @@ Ranking and matching: `src/lib/search/index.ts`; sources: `src/lib/search/source
 | `/api/characters/dndbeyond` | POST `{url}` | Read a D&D Beyond character (auto-fill in the form) | player+ |
 | `/api/characters/sync` | POST `{characterId}` | Full sync from D&D Beyond (the truth): level, HP, ability scores, `sheet` | player+ and owner |
 | `/api/characters/sync-hp` | POST `{characterId}` | HP and death saves only | player+ and owner |
+| `/api/characters/sync-all` | POST | Full sync of every active party character with a D&D Beyond link (3 at a time, no throttle) and the HP of their tracker entries; answers `{synced, failed: [{id, name, error}], results, syncedAt}` | DM |
 | `/api/characters/auto-sync` | POST `{characterId}` | The same full sync, at most once per 15 min per character; answers only `{success, updated}` | public |
 
 See [D&D Beyond sync](DnD-Beyond-Sync.md).
