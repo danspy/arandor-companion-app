@@ -613,7 +613,8 @@ import '../styles/global.css';
       function render(s: DisplayState) {
         setBackdrop(s.backdropUrl);
 
-        const mode = s.mode ?? (s.screenVisible === false ? 'pause' : 'live');
+        const fallback = s.screenVisible === false ? 'pause' : 'live';
+        const mode = s.mode === 'start' && !s.startScreen ? fallback : (s.mode ?? fallback);
         if (mode === 'start' && s.startScreen) {
           showStart(s.startScreen);
           return;

@@ -282,14 +282,16 @@ test.describe('Start screen', () => {
     await open(page, start({ recap, showRecap: true }));
     await expect(page.locator('#startRecap')).toBeVisible();
     await page.waitForTimeout(1000); // fade-in
+    // The recap panel clamps to the screen and scrolls inside itself; title stays in view
     const fit = await page.evaluate(() => {
-      const r = document.getElementById('startScreen')!.getBoundingClientRect();
-      return {
-        inside: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1,
-        scroll: document.scrollingElement!.scrollHeight <= innerHeight,
+      const within = (id: string) => {
+        const r = document.getElementById(id)!.getBoundingClientRect();
+        return r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight + 1 && r.right <= innerWidth + 1;
       };
+      const text = document.getElementById('startRecapText')!;
+      return { title: within('startTitle'), recap: within('startRecap'), scrolls: text.scrollHeight > text.clientHeight };
     });
-    expect(fit).toEqual({ inside: true, scroll: true });
+    expect(fit).toEqual({ title: true, recap: true, scrolls: true });
   });
 
   test('recap is text', async ({ page }) => {
@@ -304,5 +306,15 @@ test.describe('Start screen', () => {
     await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
     await set(live);
     await expect(page.locator('body')).toHaveAttribute('data-mode', 'stage');
+    await expect(page.locator('#startScreen')).toBeHidden();
+  });
+
+  test('start to pause', async ({ page }) => {
+    const set = await open(page, start());
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'start');
+    await set({ ...live, mode: 'pause', screenVisible: false, location: null });
+    await expect(page.locator('body')).toHaveAttribute('data-mode', 'idle');
+    await expect(page.locator('#idleTitle')).toHaveText('Short break');
+    await expect(page.locator('#startScreen')).toBeHidden();
   });
 });
