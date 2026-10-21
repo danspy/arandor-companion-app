@@ -34,7 +34,7 @@ Reading campaign content is public on purpose; see [Roles and permissions](Roles
 | `/api/diary`, `/api/diary/[id]` | public | player+ |
 | `/api/diary/[id]/summary` (DELETE only: remove an entry's summary) | – | DM |
 | `/api/diary-notes/[diaryEntryId]` | login, own note only | login, own note only |
-| `/api/npcs`, `/api/npcs/[id]` | public | player+ |
+| `/api/npcs`, `/api/npcs/[id]` | public (`hp`, `maxHp`, `conditions` only for DM/admin) | player+ |
 | `/api/locations`, `/api/locations/[id]` (incl. map pin `mapX`, `mapY`, `visibleOnMap`) | public | player+ |
 | `/api/library`, `/api/library/[id]` | public | player+ |
 | `/api/timeline`, `/api/timeline/[id]` | public | player+ |
@@ -83,6 +83,8 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 | `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
 | `/api/initiative/reset-combat` | POST | Keep player characters (initiative 10), remove everyone else, round 1 | DM |
 | `/api/combat-state` | GET / PUT, POST | Round, turn, status / set them, or move the turn with `{ action: 'start' \| 'next' \| 'prev' \| 'new-fight' }` (only `new-fight` resets the round) | public / DM |
+| `/api/npcs/[id]` | PATCH | An NPC's status on the DM screen: `hp`, `maxHp` (0–10000 or null), `conditions` (checked like a combatant's). Only the fields sent change; HP stays within max HP | DM |
+| `/api/npcs/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }` for an NPC outside the fight; without HP of its own it starts from its stat block's | DM |
 | `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`, `npcsHidden`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock | DM |
 | `/api/display` | GET | Everything `/display` shows in one small response (health bands, no HP/AC, nothing hidden on the DM screen); supports ETag / 304 | public |
 | `/api/display/wallpaper` | GET | A wallpaper stored inline as a `data:` URL, served as a cacheable image | public |
