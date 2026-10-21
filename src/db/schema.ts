@@ -312,7 +312,7 @@ export const Playlist = sqliteTable('Playlist', {
   name: text('name').notNull(),
   visibility: text('visibility').notNull().default('private'), // 'public' | 'private'
   isSiteDefault: bool('isSiteDefault').notNull().default(false), // the one site playlist ("Tavern music")
-  showOnDashboard: bool('showOnDashboard').notNull().default(true), // site playlist only: show the dashboard panel
+  showOnDashboard: bool('showOnDashboard').notNull().default(true), // unused since the dashboard panel was removed (column kept, no migration)
   createdAt: now('createdAt'),
   updatedAt: now('updatedAt'),
 }, (t) => [

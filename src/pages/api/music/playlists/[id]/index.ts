@@ -33,7 +33,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     } catch {
       return json({ error: 'Invalid JSON' }, 400);
     }
-    const changes: { name?: string; visibility?: string; showOnDashboard?: boolean } = {};
+    const changes: { name?: string; visibility?: string } = {};
     if (body?.name !== undefined) {
       const name = cleanName(body.name);
       if (!name) return json({ error: 'Name must be 1-80 characters' }, 400);
@@ -43,11 +43,6 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
       if (!isVisibility(body.visibility)) return json({ error: 'Visibility must be public or private' }, 400);
       if (playlist.isSiteDefault && body.visibility === 'private') return json({ error: 'The site playlist must stay public' }, 400);
       changes.visibility = body.visibility;
-    }
-    if (body?.showOnDashboard !== undefined) {
-      if (typeof body.showOnDashboard !== 'boolean') return json({ error: 'showOnDashboard must be true or false' }, 400);
-      if (!playlist.isSiteDefault) return json({ error: 'Only the site playlist is shown on the dashboard' }, 400);
-      changes.showOnDashboard = body.showOnDashboard;
     }
     if (!Object.keys(changes).length) return json({ error: 'Nothing to change' }, 400);
     const [updated] = await db.update(Playlist).set({ ...changes, updatedAt: new Date() }).where(eq(Playlist.id, playlist.id)).returning();

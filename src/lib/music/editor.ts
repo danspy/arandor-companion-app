@@ -11,7 +11,7 @@ type Summary = {
   ownerId: string; ownerName: string; trackCount: number; canEdit: boolean;
 };
 type Track = QueueTrack & { position: number };
-type Detail = { id: string; name: string; visibility: string; isSiteDefault: boolean; showOnDashboard: boolean; ownerId: string; canEdit: boolean; tracks: Track[] };
+type Detail = { id: string; name: string; visibility: string; isSiteDefault: boolean; ownerId: string; canEdit: boolean; tracks: Track[] };
 
 type Ctx = { root: HTMLElement; me: string; admin: boolean; list: Summary[]; current: Detail | null; uploads: Promise<void> };
 let ctx: Ctx | null = null;
@@ -137,8 +137,6 @@ function renderDetail(message?: string) {
   pub.checked = p.visibility === 'public';
   pub.disabled = p.isSiteDefault;
   $('mp-site-note').hidden = !p.isSiteDefault;
-  $('mp-dashboard-row').hidden = !p.isSiteDefault;
-  $<HTMLInputElement>('mp-dashboard').checked = p.showOnDashboard;
   $('mp-site').hidden = !ctx!.admin || p.isSiteDefault;
   $('mp-delete').hidden = p.isSiteDefault;
   $('mp-uploads').replaceChildren();
@@ -186,7 +184,7 @@ function markCurrent() {
   const p = ctx?.current;
   if (!p) return;
   const s = music.getState();
-  const currentId = s.source?.playlistId === p.id ? s.queue[s.index]?.id : undefined;
+  const currentId = s.source?.playlistId === p.id && !s.cued ? s.queue[s.index]?.id : undefined;
   $('mp-tracks').querySelectorAll<HTMLLIElement>('li.mp-track').forEach((li) => {
     const on = li.dataset.id === currentId;
     if (on) li.setAttribute('aria-current', 'true'); else li.removeAttribute('aria-current');
@@ -446,14 +444,6 @@ async function setPublic(input: HTMLInputElement) {
   renderMeta();
 }
 
-async function setDashboard(input: HTMLInputElement) {
-  const p = ctx?.current;
-  if (!p) return;
-  const r = await api(`/api/music/playlists/${p.id}`, 'PATCH', { showOnDashboard: input.checked });
-  if (!r.ok) { input.checked = !input.checked; return fail(r); }
-  p.showOnDashboard = input.checked;
-}
-
 async function deletePlaylist() {
   const p = ctx?.current;
   if (!p) return;
@@ -551,7 +541,6 @@ export function initMusicEditor() {
     else $('mp-yt-choice').hidden = true;
   });
   $('mp-public').addEventListener('change', (e) => setPublic(e.target as HTMLInputElement));
-  $('mp-dashboard').addEventListener('change', (e) => setDashboard(e.target as HTMLInputElement));
   $('mp-delete').addEventListener('click', deletePlaylist);
   $('mp-site').addEventListener('click', makeSite);
 
