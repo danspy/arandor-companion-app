@@ -126,6 +126,11 @@ about 2 seconds.
 
 - **Player display link** with *Copy* and *Open* buttons. Open it on the screen your players
   see.
+- **Live on the display:** a small 16:9 preview next to the link shows exactly what the TV
+  shows (the real display page at 1920×1080, scaled down), updating within about 2 seconds.
+  *Hide preview* collapses it; while collapsed it loads nothing and stops checking the server.
+  Each browser remembers the choice; it starts open on tablets and computers and closed on
+  phones.
 - **Party:** the active characters in one table: HP, AC, initiative, speed, passive
   Perception, Investigation and Insight, and the six saves. The highest passive in each column is
   highlighted. The numbers are from the last D&D Beyond sync, and only the DM screen shows them
@@ -257,6 +262,10 @@ The display checks `/api/display` every 2 seconds. That one response holds every
 and is about 1–2 KB, or an empty *304 Not Modified* when nothing changed, so a display can run
 all evening on a phone hotspot. If the server can't be reached it retries with growing pauses
 and picks up again on its own.
+
+`/display?preview` is the variant the DM screen's preview uses: it never asks to keep
+the screen awake, goes full screen (F, double-click) or hides the cursor, and shows no *Press F*
+hint.
 
 ## Tips
 
