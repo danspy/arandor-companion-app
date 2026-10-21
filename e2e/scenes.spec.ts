@@ -592,4 +592,190 @@ test.describe('DM screen', () => {
     await expect(page.locator('#scenesHalf')).toBeVisible();
     await page.close();
   });
+
+  // Saved scenes in the strip. Every test starts without scenes and with the session live, so
+  // /display shows what a scene puts on the screen (applying never changes the mode).
+  async function noScenes() {
+    for (const s of await (await dm.request.get('/api/scenes')).json()) await dm.request.delete(`/api/scenes/${s.id}`);
+  }
+  const resetTable = () =>
+    dm.request.put('/api/dm-screen', {
+      data: { screenMode: 'live', currentLocationId: null, spotlightNpcIds: [], hiddenNpcIds: [], focusNpcIds: [], npcsHidden: false, locationHidden: false },
+    });
+  const card = (page: Page, name: string) => page.locator('#scenesList [data-scene-id]', { hasText: name });
+  const sceneNames = (page: Page) => page.locator('#scenesList [data-scene-id] .scene-name').allTextContents();
+  const createScene = async (name: string, setup: Record<string, unknown>) => {
+    const res = await dm.request.post('/api/scenes', { data: { name, setup } });
+    expect(res.status()).toBe(201);
+    return (await res.json()).id as string;
+  };
+
+  test('scenes empty state', async () => {
+    await noScenes();
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect(page.locator('#scenesEmpty')).toBeVisible();
+    await expect(page.locator('#saveCurrentSceneBtn')).toBeVisible();
+    await expect(page.locator('#newSceneBtn')).toBeVisible();
+    await expect(page.locator('#scenesList [data-scene-id]')).toHaveCount(0);
+    await page.close();
+  });
+
+  test('save current and apply from the strip', async () => {
+    await noScenes();
+    await resetTable();
+    const page = await dm.newPage();
+    const display = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await display.goto('/display');
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+
+    await page.locator('#locationSelect').selectOption('4');
+    for (const key of ['2', 'character:1']) {
+      await page.locator('#npcSelect').selectOption(key);
+      await page.locator('#addNpcBtn').click();
+    }
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(2);
+
+    await page.locator('#saveCurrentSceneBtn').click();
+    const dialog = page.locator('#sceneDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#sceneName')).toHaveValue('');
+    await expect(page.locator('#sceneName')).toBeFocused();
+    await expect(page.locator('#sceneLocation')).toHaveValue('4');
+    await expect(page.locator('#sceneSpotlightList [data-key]')).toHaveCount(2);
+    await page.locator('#sceneName').fill('E2E Tavern');
+    await page.locator('#sceneSaveBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(card(page, 'E2E Tavern')).toHaveClass(/is-active/);
+    await expect(card(page, 'E2E Tavern').locator('.scene-portrait')).toHaveCount(2);
+    await expect(page.locator('#scenesEmpty')).toBeHidden();
+
+    await page.locator('#clearNpcsBtn').click();
+    await page.locator('#arandor-confirm [data-confirm]').click();
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(0);
+    await expect(card(page, 'E2E Tavern')).not.toHaveClass(/is-active/);
+
+    await card(page, 'E2E Tavern').locator('[data-action=apply]').click();
+    await expect(card(page, 'E2E Tavern')).toHaveClass(/is-active/);
+    await expect(page.locator('#spotlightNpcList .npc-item')).toHaveCount(2);
+    await expect(page.locator('#spotlightNpcList')).toContainText('Durnan');
+    await expect(page.locator('#spotlightNpcList')).toContainText('Thorin Ironforge');
+    await expect(page.locator('#locationSelect')).toHaveValue('4');
+    await expect(display.locator('#cast .dsp-portrait-name')).toHaveText(['Durnan', 'Thorin Ironforge']);
+    // Still live: applying a scene never changes the mode
+    await expect(page.locator('#screenModeBadge')).toHaveText('Live');
+    await page.close();
+    await display.close();
+  });
+
+  test('edit scene', async () => {
+    await noScenes();
+    await resetTable();
+    await createScene('E2E Docks', { locationId: '1', spotlightIds: ['2', 'character:1'] });
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await card(page, 'E2E Docks').locator('[data-action=edit]').click();
+    const dialog = page.locator('#sceneDialog');
+    await expect(dialog).toBeVisible();
+    await expect(page.locator('#sceneName')).toHaveValue('E2E Docks');
+    await expect(page.locator('#sceneLocation')).toHaveValue('1');
+    // Entries already in the scene can't be added twice
+    await expect(page.locator('#sceneSpotlightSelect option[value="2"]')).toBeDisabled();
+    await page.locator('#sceneSpotlightSelect').selectOption('4');
+    await page.locator('#sceneSpotlightAdd').click();
+    const rows = page.locator('#sceneSpotlightList [data-key]');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(2)).toContainText('Xanathar');
+    await rows.nth(2).locator('[data-mark=hidden]').click();
+    await expect(rows.nth(2).locator('[data-mark=hidden]')).toHaveAttribute('aria-pressed', 'true');
+    await page.locator('#sceneName').fill('E2E Docks at night');
+    await page.locator('#sceneSaveBtn').click();
+    await expect(dialog).toBeHidden();
+    await expect(card(page, 'E2E Docks at night').locator('.scene-portrait')).toHaveCount(3);
+
+    await card(page, 'E2E Docks at night').locator('[data-action=apply]').click();
+    await expect(card(page, 'E2E Docks at night')).toHaveClass(/is-active/);
+    const shown = await (await dm.request.get('/api/display')).json();
+    expect(shown.npcs.map((n: { name: string }) => n.name)).toEqual(['Durnan', 'Thorin Ironforge']);
+
+    // Cancel keeps the scene as it was
+    await card(page, 'E2E Docks at night').locator('[data-action=edit]').click();
+    await page.locator('#sceneName').fill('E2E Changed');
+    await page.locator('#sceneCancelBtn').click();
+    await expect(dialog).toBeHidden();
+    await page.reload();
+    await expect(card(page, 'E2E Docks at night')).toHaveCount(1);
+    await page.close();
+  });
+
+  test('reorder and delete', async ({ browser }) => {
+    await noScenes();
+    await createScene('E2E A', { spotlightIds: [] });
+    await createScene('E2E B', { spotlightIds: ['3'] });
+    await createScene('E2E C', { locationId: '2', spotlightIds: [] });
+
+    // Phones: up/down buttons
+    const phoneContext = await browser.newContext({ viewport: { width: 390, height: 844 }, storageState: await dm.storageState() });
+    const phone = await phoneContext.newPage();
+    await phone.goto('/tools/dm-screen');
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E A', 'E2E B', 'E2E C']);
+    await expect(card(phone, 'E2E B').locator('[data-action=up]')).toBeVisible();
+    await card(phone, 'E2E B').locator('[data-action=up]').click();
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await phone.reload();
+    await expect.poll(() => sceneNames(phone)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await phoneContext.close();
+
+    // Desktop: drag and drop (C onto B puts it first)
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E B', 'E2E A', 'E2E C']);
+    await expect(card(page, 'E2E B').locator('[data-action=up]')).toBeHidden();
+    await card(page, 'E2E C').dragTo(card(page, 'E2E B'));
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B', 'E2E A']);
+    await page.reload();
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B', 'E2E A']);
+
+    const confirm = page.locator('#arandor-confirm');
+    await card(page, 'E2E A').locator('[data-action=delete]').click();
+    await confirm.locator('[data-cancel]').click();
+    await expect(card(page, 'E2E A')).toHaveCount(1);
+    await card(page, 'E2E A').locator('[data-action=delete]').click();
+    await expect(confirm.locator('[data-confirm]')).toHaveText('Delete');
+    await confirm.locator('[data-confirm]').click();
+    await expect(card(page, 'E2E A')).toHaveCount(0);
+    await page.reload();
+    await expect.poll(() => sceneNames(page)).toEqual(['E2E C', 'E2E B']);
+    await page.close();
+  });
+
+  test('missing references and new scene', async () => {
+    await noScenes();
+    await createScene('E2E Ghosts', { locationId: 'gone-location', spotlightIds: ['2', 'gone-npc', '1', '3', '4', '5', '6', '7'] });
+    const page = await dm.newPage();
+    await page.goto('/tools/dm-screen');
+    const ghosts = card(page, 'E2E Ghosts');
+    await expect(ghosts.locator('.scene-thumb')).toHaveAttribute('title', 'Deleted');
+    await expect(ghosts.locator('.scene-portrait')).toHaveCount(5);
+    await expect(ghosts.locator('.scene-portrait.is-missing')).toHaveAttribute('title', 'Deleted');
+    await expect(ghosts.locator('.scene-more')).toHaveText('+3');
+
+    await page.locator('#newSceneBtn').click();
+    await expect(page.locator('#sceneDialogTitle')).toHaveText('New scene');
+    await expect(page.locator('#sceneLocation')).toHaveValue('');
+    await expect(page.locator('#sceneSpotlightList [data-key]')).toHaveCount(0);
+    await page.locator('#sceneName').fill('E2E Forest');
+    await page.locator('#sceneLocation').selectOption('3');
+    await page.locator('#sceneLocationHidden').check();
+    await page.locator('#sceneSpotlightSelect').selectOption('character:2');
+    await page.locator('#sceneSpotlightAdd').click();
+    await page.locator('#sceneSpotlightList [data-key] [data-mark=focus]').click();
+    await page.locator('#sceneSaveBtn').click();
+    await expect(card(page, 'E2E Forest')).toHaveCount(1);
+    const saved = (await (await dm.request.get('/api/scenes')).json()).find((s: { name: string }) => s.name === 'E2E Forest');
+    expect(saved.setup).toEqual({ locationId: '3', locationHidden: true, spotlightIds: ['character:2'], hiddenIds: [], focusIds: ['character:2'], npcsHidden: false });
+    await noScenes();
+    await page.close();
+  });
 });
