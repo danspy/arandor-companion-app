@@ -92,13 +92,22 @@ export function validateScene(
   const b = (body ?? {}) as Record<string, unknown>;
   const name = typeof b.name === 'string' ? b.name.trim() : '';
   if (name.length < 1 || name.length > 80) return { ok: false, error: 'Name must be 1 to 80 characters' };
+  const raw = b.setup;
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return { ok: false, error: 'Setup is required' };
+  const r = raw as Record<string, unknown>;
+  for (const k of ['spotlightIds', 'hiddenIds', 'focusIds']) {
+    if (r[k] !== undefined && !(Array.isArray(r[k]) && (r[k] as unknown[]).every((x) => typeof x === 'string'))) {
+      return { ok: false, error: `${k} must be a list of ids` };
+    }
+  }
+  if (r.locationId != null && typeof r.locationId !== 'string') return { ok: false, error: 'locationId must be text or null' };
   const setup = normalizeSetup({
-    locationId: typeof b.locationId === 'string' && b.locationId ? b.locationId : null,
-    locationHidden: b.locationHidden === true,
-    spotlightIds: strings(b.spotlightIds),
-    hiddenIds: strings(b.hiddenIds),
-    focusIds: strings(b.focusIds),
-    npcsHidden: b.npcsHidden === true,
+    locationId: typeof r.locationId === 'string' && r.locationId ? r.locationId : null,
+    locationHidden: r.locationHidden === true,
+    spotlightIds: strings(r.spotlightIds),
+    hiddenIds: strings(r.hiddenIds),
+    focusIds: strings(r.focusIds),
+    npcsHidden: r.npcsHidden === true,
   });
   return { ok: true, name, setup };
 }

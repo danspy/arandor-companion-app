@@ -68,15 +68,23 @@ test.describe('Scenes logic', () => {
 
   test('validates a scene', () => {
     const setup = { ...base, spotlightIds: ['a', 'a'], hiddenIds: ['zz'] };
-    expect(validateScene({ name: '  ', ...setup }).ok).toBe(false);
-    expect(validateScene({ name: 'x'.repeat(81), ...setup }).ok).toBe(false);
-    const r = validateScene({ name: ' Tavern ', ...setup });
+    expect(validateScene({ name: '  ', setup }).ok).toBe(false);
+    expect(validateScene({ name: 'x'.repeat(81), setup }).ok).toBe(false);
+    const r = validateScene({ name: ' Tavern ', setup });
     expect(r.ok).toBe(true);
     if (r.ok) {
       expect(r.name).toBe('Tavern');
       expect(r.setup.spotlightIds).toEqual(['a']);
       expect(r.setup.hiddenIds).toEqual([]);
     }
+  });
+
+  test('scene needs a setup object', () => {
+    const r = validateScene({ name: 'X', setup: { spotlightIds: ['a'] } });
+    expect(r.ok).toBe(true);
+    if (r.ok) expect(r.setup.spotlightIds).toEqual(['a']);
+    expect(validateScene({ name: 'X' }).ok).toBe(false);
+    expect(validateScene({ name: 'X', setup: { spotlightIds: [1] } }).ok).toBe(false);
   });
 
   test('validates a start screen', () => {
