@@ -113,28 +113,54 @@ import '../styles/global.css';
         --ease: cubic-bezier(.2, .7, .2, 1);
         /* Portraits and the place name gliding to a new layout: starts and ends gently */
         --ease-move: cubic-bezier(.45, 0, .2, 1);
+        /* Switching views and scenes: a soft dissolve */
+        --view-fade: 1s;
+        --ease-fade: cubic-bezier(.4, 0, .2, 1);
+        --ease-in-view: cubic-bezier(.2, .6, .3, 1);
         --side-w: clamp(22rem, 32vw, 42rem);
       }
       body.dsp.cursor-idle, body.dsp.cursor-idle * { cursor: none !important; }
 
-      /* Mode switching: idle | start | off | wallpaper | stage */
+      /* Mode switching: idle | start | off | wallpaper | stage. A soft dissolve over
+         --view-fade, never dipping through dark: layers both views share (the backdrop) stay
+         put, the outgoing ones lie above them and only fade in the second half, the incoming
+         ones come in on top (the script marks both for one fade, see markSwitch). Under the
+         stage the blurred backdrop is always there, so a location dissolves into it. */
       .dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-stage, .dsp-backdrop, .dsp-idle-sparks, .dsp-start-image {
         position: fixed; inset: 0;
-        opacity: 0; visibility: hidden;
-        transition: opacity .8s var(--ease), visibility 0s linear .8s;
+        opacity: 0; visibility: hidden; z-index: var(--z);
+        transition: opacity 0s linear var(--view-fade), visibility 0s linear var(--view-fade), transform 0s linear var(--view-fade);
       }
       body[data-mode="idle"] :is(.dsp-idle, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="start"] :is(#startScreen, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="start"][data-start-image="1"] .dsp-start-image,
       body[data-mode="off"] :is(#offScreen, .dsp-backdrop, .dsp-idle-sparks),
       body[data-mode="wallpaper"] .dsp-wallpaper,
-      body[data-mode="stage"] .dsp-stage,
-      body[data-mode="stage"]:is([data-scene="cast"], [data-scene="none"]) .dsp-backdrop {
-        opacity: 1; visibility: visible; transition-delay: 0s;
+      body[data-mode="stage"] :is(.dsp-stage, .dsp-backdrop) {
+        opacity: 1; visibility: visible; z-index: calc(var(--z) + 10);
+        transition: opacity var(--view-fade) var(--ease-in-view), transform var(--view-fade) var(--ease-fade);
       }
+      body .is-view-leaving {
+        z-index: calc(var(--z) + 20) !important;
+        transition: opacity calc(var(--view-fade) / 2) ease-in calc(var(--view-fade) / 2),
+          visibility 0s linear var(--view-fade), transform 0s linear var(--view-fade);
+      }
+      /* Both views on the blurred backdrop (live ↔ pause card, start, no session): nothing to dip
+         through, the outgoing one fades the whole time */
+      body .is-view-leaving.is-view-over-backdrop {
+        transition: opacity var(--view-fade) var(--ease-fade), visibility 0s linear var(--view-fade), transform 0s linear var(--view-fade);
+      }
+      body .is-view-entering { z-index: calc(var(--z) + 30) !important; }
+      /* The incoming view settles from a very slight zoom (not the stage itself: portraits and
+         the place name measure their glides there; its pictures zoom instead) */
+      :is(.dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-start-image) { transform: scale(1.02); }
+      body[data-mode="idle"] .dsp-idle,
+      body[data-mode="start"] :is(#startScreen, .dsp-start-image),
+      body[data-mode="off"] #offScreen,
+      body[data-mode="wallpaper"] .dsp-wallpaper { transform: none; }
 
       /* ── Backdrop (campaign image, blurred) ─────────────────────────── */
-      .dsp-backdrop { overflow: hidden; z-index: 0; }
+      .dsp-backdrop { overflow: hidden; --z: 0; }
       .dsp-backdrop img {
         width: 100%; height: 100%; object-fit: cover;
         filter: blur(36px) saturate(1.15) brightness(.55);
@@ -144,11 +170,11 @@ import '../styles/global.css';
         content: ''; position: absolute; inset: 0;
         background: radial-gradient(ellipse 80% 70% at 50% 45%, transparent 0%, rgba(12, 9, 6, .85) 100%);
       }
-      .dsp-idle-sparks { z-index: 1; width: 100%; height: 100%; pointer-events: none; }
+      .dsp-idle-sparks { --z: 1; width: 100%; height: 100%; pointer-events: none; }
 
       /* ── Idle ─────────────────────────────────────────────────────── */
       .dsp-idle {
-        z-index: 2;
+        --z: 2;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         text-align: center; padding: 2rem;
       }
@@ -173,7 +199,7 @@ import '../styles/global.css';
 
       /* ── Start screen (and the no-session screen, same look) ──────── */
       .dsp-start {
-        z-index: 2;
+        --z: 2;
         display: flex; flex-direction: column; align-items: center; justify-content: center;
         text-align: center; padding: 2rem; gap: .6rem;
       }
@@ -214,7 +240,7 @@ import '../styles/global.css';
       .dsp-start-mark { margin-bottom: 1.2rem; }
       /* The diary entry's picture: sharp, darkened towards the edges and the bottom so the text
          stays readable, drifting slowly */
-      .dsp-start-image { z-index: 0; overflow: hidden; }
+      .dsp-start-image { --z: 0; overflow: hidden; }
       .dsp-start-image img {
         width: 100%; height: 100%; object-fit: cover;
         filter: brightness(.62) saturate(1.05);
@@ -284,15 +310,20 @@ import '../styles/global.css';
       body[data-mode="start"] .dsp-start-recap { box-shadow: 0 0 4rem rgba(0, 0, 0, .5), 0 0 2rem rgba(201, 144, 50, .08); }
 
       /* ── Wallpaper ─────────────────────────────────────────────────── */
-      .dsp-wallpaper { z-index: 3; background: #000; }
+      .dsp-wallpaper { --z: 3; background: #000; }
       .dsp-wallpaper img { width: 100%; height: 100%; object-fit: cover; }
 
       /* ── Stage layout ──────────────────────────────────────────────── */
       /* The scene (location, portraits) always fills the screen. Timer and turn order float
          over its right side, so a lone timer leaves no empty column. */
-      .dsp-stage { z-index: 2; display: grid; grid-template-columns: minmax(0, 1fr); }
-      body[data-scene="none"] .dsp-scene { display: none; }
-      body[data-side="0"] .dsp-side { display: none; }
+      .dsp-stage { --z: 2; display: grid; grid-template-columns: minmax(0, 1fr); }
+      /* Parts of the stage fade out and in rather than vanish (upright screens, where they take
+         up room in the page, switch them off instead, see below) */
+      .dsp-scene, .dsp-side {
+        transition: opacity .7s var(--ease-fade), visibility 0s linear .7s;
+      }
+      body[data-scene="none"] .dsp-scene, body[data-side="0"] .dsp-side { opacity: 0; visibility: hidden; }
+      body:not([data-scene="none"]) .dsp-scene, body[data-side="1"] .dsp-side { transition-delay: 0s; }
 
       .dsp-scene { position: absolute; inset: 0; overflow: hidden; }
       /* Darken the right edge under the floating panels */
@@ -304,14 +335,25 @@ import '../styles/global.css';
 
 
       /* Location: full-bleed art with a slow drift */
-      .dsp-location { position: absolute; inset: 0; display: none; }
-      body[data-location="1"] .dsp-location { display: block; }
-      .dsp-loc-layers { position: absolute; inset: 0; overflow: hidden; }
+      /* Coming or going, the location dissolves into the blurred backdrop under the stage */
+      .dsp-location {
+        position: absolute; inset: 0;
+        opacity: 0; visibility: hidden;
+        transition: opacity var(--view-fade) var(--ease-fade), visibility 0s linear var(--view-fade);
+      }
+      body[data-location="1"] .dsp-location { opacity: 1; visibility: visible; transition-delay: 0s; }
+      .dsp-loc-layers {
+        position: absolute; inset: 0; overflow: hidden;
+        transition: transform var(--view-fade) var(--ease-fade);
+      }
+      body:not([data-mode="stage"]) .dsp-loc-layers { transform: scale(1.02); transition-delay: var(--view-fade); }
       .dsp-loc-layer {
         position: absolute; inset: 0;
-        opacity: 0; transition: opacity 1.4s var(--ease);
+        opacity: 0; transition: opacity 1.2s var(--ease-fade);
       }
       .dsp-loc-layer.is-in { opacity: 1; }
+      /* Shown straight away: the stage was hidden, so there is nothing to crossfade from */
+      .dsp-loc-layer.is-instant { transition: none; }
       .dsp-loc-layer img {
         width: 100%; height: 100%; object-fit: cover;
         animation: dsp-drift 60s ease-in-out infinite alternate;
@@ -342,6 +384,10 @@ import '../styles/global.css';
       .dsp-loc-caption {
         position: absolute; left: 3.5rem; bottom: 3rem; right: 3.5rem;
       }
+      /* A new place: the name fades out and back in with the new picture (on the lines, as the
+         caption itself carries the glide transition) */
+      .dsp-loc-caption > * { transition: opacity .5s var(--ease-fade); }
+      .dsp-loc-caption.is-swapping > * { opacity: 0; transition-duration: .4s; }
       /* With portraits along the bottom, the place name moves to the top */
       body[data-cast="1"] .dsp-loc-caption { bottom: auto; top: 2.75rem; }
       body[data-side="1"] .dsp-loc-caption { right: calc(var(--side-w) + 1.5rem); }
@@ -598,6 +644,8 @@ import '../styles/global.css';
         body[data-side="1"] .dsp-location::after { display: none; }
         body[data-side="1"] .dsp-loc-caption { right: 1rem; }
         body[data-location="0"] .dsp-scene { min-height: 0; }
+        /* Here they take up room in the page, so they go rather than fade */
+        body[data-scene="none"] .dsp-scene, body[data-side="0"] .dsp-side { display: none; }
         /* Portraits in the page flow; over a location they start below the place name */
         body[data-cast="1"] .dsp-cast, body[data-side="1"] .dsp-cast {
           position: relative; inset: auto; margin: 0 auto;
@@ -627,6 +675,9 @@ import '../styles/global.css';
         .dsp-loc-layer img, .dsp-portrait, .dsp-cast > li, .dsp-now-name.is-new, .dsp-health, .dsp-timer-time { animation: none !important; }
         .dsp-cast > li, .dsp-loc-caption { transition: none !important; }
         .dsp-start > *, .dsp-start-title, .dsp-backdrop img, .dsp-start-image img { animation: none !important; }
+        /* Views still fade, a little quicker, without the zoom */
+        body.dsp { --view-fade: .5s; }
+        :is(.dsp-idle, .dsp-start, .dsp-wallpaper, .dsp-start-image), .dsp-loc-layers { transform: none !important; }
       }
     </style>
 
@@ -747,43 +798,120 @@ import '../styles/global.css';
         setSparks($<HTMLCanvasElement>('nowSparks'), false);
       }
 
+      // Which view a state shows (older servers only send screenVisible)
+      function modeOf(s: DisplayState): 'off' | 'start' | 'live' | 'pause' {
+        const fallback = s.screenVisible === false ? 'pause' : 'live';
+        return s.mode === 'start' && !s.startScreen ? fallback : (s.mode ?? fallback);
+      }
+
+      // ── Pictures first ──────────────────────────────────────────────────
+      // A new state is shown once the pictures it needs are decoded, so a view never fades in
+      // empty and pops later, and a new place's name and picture arrive together. A slow
+      // picture holds the change back for PRELOAD_MS at most.
+      const PRELOAD_MS = 1500;
+      const decoded = new Map<string, Promise<void>>();
+      function preload(url: string | null | undefined): Promise<void> {
+        if (!url) return Promise.resolve();
+        let ready = decoded.get(url);
+        if (!ready) {
+          const img = new Image();
+          img.decoding = 'async';
+          img.src = url;
+          ready = img.decode().catch(() => {}); // a broken picture must not block the display
+          decoded.set(url, ready);
+          if (decoded.size > 80) decoded.delete(decoded.keys().next().value!);
+        }
+        return ready;
+      }
+      function picturesOf(s: DisplayState): (string | null | undefined)[] {
+        switch (modeOf(s)) {
+          case 'pause': return [s.wallpaperUrl];
+          case 'start': return [s.backdropUrl, s.startScreen?.lastSession?.imageUrl];
+          case 'off': return [s.backdropUrl];
+          default: return [s.backdropUrl, s.location?.imageUrl, ...s.npcs.map((n) => n.avatarUrl)];
+        }
+      }
+      const whenPicturesReady = (s: DisplayState) => Promise.race([
+        Promise.all(picturesOf(s).map(preload)),
+        new Promise((resolve) => setTimeout(resolve, PRELOAD_MS)),
+      ]);
+
+      // ── Switching views ────────────────────────────────────────────────
+      // The view a state shows, and the full-screen layers each view consists of (as in the
+      // CSS mode rules). A switch marks, for one fade and before anything changes on the page,
+      // the layers that go (kept above the rest, fading late) and the ones that come (on top).
+      type View = 'idle' | 'start' | 'off' | 'wallpaper' | 'stage';
+      function viewOf(s: DisplayState): View {
+        const mode = modeOf(s);
+        if (mode === 'start' && s.startScreen) return 'start';
+        if (mode === 'off') return 'off';
+        if (mode === 'pause') return s.wallpaperUrl ? 'wallpaper' : 'idle';
+        return s.location || s.npcs.length || s.initiative || s.timer ? 'stage' : 'idle';
+      }
+      const layer = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+      const backdrop = layer('.dsp-backdrop'), sparksLayer = layer('.dsp-idle-sparks');
+      const VIEW_LAYERS: Record<View, HTMLElement[]> = {
+        idle: [backdrop, sparksLayer, layer('#idle')],
+        start: [backdrop, sparksLayer, layer('#startScreen'), layer('.dsp-start-image')],
+        off: [backdrop, sparksLayer, layer('#offScreen')],
+        wallpaper: [layer('#wallpaper')],
+        stage: [backdrop, layer('#stage')],
+      };
+      const ALL_LAYERS = [...new Set(Object.values(VIEW_LAYERS).flat())];
+      let currentView: View = 'idle'; // "Connecting…"
+      let viewTimer = 0;
+      function markSwitch(from: View, to: View) {
+        clearTimeout(viewTimer);
+        const was = new Set(VIEW_LAYERS[from]), will = new Set(VIEW_LAYERS[to]);
+        const overBackdrop = was.has(backdrop) && will.has(backdrop);
+        for (const el of ALL_LAYERS) {
+          el.classList.remove('is-view-leaving', 'is-view-entering', 'is-view-over-backdrop');
+          if (was.has(el) && !will.has(el)) el.classList.add('is-view-leaving', ...(overBackdrop ? ['is-view-over-backdrop'] : []));
+          else if (!was.has(el) && will.has(el)) el.classList.add('is-view-entering');
+        }
+        const ms = parseFloat(getComputedStyle(body).getPropertyValue('--view-fade')) * 1000 || 1000;
+        viewTimer = window.setTimeout(() => {
+          ALL_LAYERS.forEach((el) => el.classList.remove('is-view-leaving', 'is-view-entering', 'is-view-over-backdrop'));
+        }, ms + 50);
+      }
+
       function render(s: DisplayState) {
+        const view = viewOf(s);
+        if (view !== currentView) markSwitch(currentView, view);
+        currentView = view;
+        renderView(s, view);
+      }
+
+      function renderView(s: DisplayState, view: View) {
         setBackdrop(s.backdropUrl);
 
-        const fallback = s.screenVisible === false ? 'pause' : 'live';
-        const mode = s.mode === 'start' && !s.startScreen ? fallback : (s.mode ?? fallback);
-        if (mode === 'start' && s.startScreen) {
-          showStart(s.startScreen);
+        if (view === 'start') return showStart(s.startScreen!);
+        if (view === 'off') return showOff(s.nextSession ?? null);
+        if (view === 'wallpaper') {
+          const img = $<HTMLImageElement>('wallpaperImg');
+          if (img.getAttribute('src') !== s.wallpaperUrl) img.src = s.wallpaperUrl!;
+          body.dataset.mode = 'wallpaper';
+          setSparks($<HTMLCanvasElement>('idleSparks'), false);
+          setSparks($<HTMLCanvasElement>('nowSparks'), false);
           return;
         }
-        if (mode === 'off') {
-          showOff(s.nextSession ?? null);
-          return;
-        }
-
-        if (mode === 'pause') {
-          if (s.wallpaperUrl) {
-            const img = $<HTMLImageElement>('wallpaperImg');
-            if (img.getAttribute('src') !== s.wallpaperUrl) img.src = s.wallpaperUrl;
-            body.dataset.mode = 'wallpaper';
-            setSparks($<HTMLCanvasElement>('idleSparks'), false);
-            setSparks($<HTMLCanvasElement>('nowSparks'), false);
-          } else {
-            showIdle('Short break', 'The DM has paused the screen. Back in a moment.');
-          }
-          return;
+        // The stage is left as it was while it fades out; it is brought up to date (at once)
+        // when it comes back
+        if (view === 'idle') {
+          if (modeOf(s) === 'pause') return showIdle('Short break', 'The DM has paused the screen. Back in a moment.');
+          return showIdle('Waiting for the DM', 'Scenes, characters and the turn order appear here when the DM shares them.');
         }
 
         const hasLocation = !!s.location;
+        // Coming back to the stage (from a pause, the start screen …): it is set straight to
+        // the new state while it fades in, never via what it showed before it was hidden
+        const wasStage = body.dataset.mode === 'stage';
+        const hadLocation = wasStage && body.dataset.location === '1';
         const before = snapshot();
-        const cast = renderCast(s.npcs);
+        const cast = renderCast(s.npcs, !wasStage);
         // Keep the cast area while removed portraits are still fading out
         const hasCast = s.npcs.length > 0 || cast.leaving.length > 0 || !!$('cast').querySelector('.is-leaving');
         const hasSide = !!(s.initiative || s.timer);
-        if (!hasLocation && !hasCast && !hasSide) {
-          showIdle('Waiting for the DM', 'Scenes, characters and the turn order appear here when the DM shares them.');
-          return;
-        }
 
         body.dataset.mode = 'stage';
         body.dataset.scene = hasLocation ? 'location' : hasCast ? 'cast' : 'none';
@@ -793,11 +921,11 @@ import '../styles/global.css';
         body.dataset.turns = s.initiative ? '1' : '0';
         setSparks($<HTMLCanvasElement>('idleSparks'), false);
 
-        renderLocation(s.location);
+        const newPlace = renderLocation(s.location, !hadLocation);
         renderTurns(s.initiative);
         renderTimer();
         fitLayout();
-        play(before, cast);
+        if (wasStage) play(before, cast, newPlace);
       }
 
       // ── Fit to the screen (any size, from phone to 32:9) ──────────────────
@@ -911,24 +1039,51 @@ import '../styles/global.css';
       }).observe(document.documentElement);
 
       // ── Location: crossfade to the new picture once it has loaded ─────
+      // The place name changes with the picture: out, swap, back in (or at once if instant)
+      let captionTimer = 0;
+      function setCaption(name: string, kind: string, animate: boolean) {
+        const cap = $('locCaption'), nameEl = $('locName'), kindEl = $('locKind');
+        clearTimeout(captionTimer);
+        const swap = () => {
+          nameEl.textContent = name;
+          kindEl.textContent = kind;
+          cap.classList.remove('is-swapping');
+        };
+        if (!animate || reduceMotion || (nameEl.textContent === name && kindEl.textContent === kind)) return swap();
+        cap.classList.add('is-swapping');
+        captionTimer = window.setTimeout(swap, 500); // back in as the new picture is half there
+      }
+
+      // instant: the location was not on screen (stage hidden, or no place before), so the new
+      // picture replaces the old one at once instead of crossfading from a stale picture.
+      // Returns whether a new place is coming in.
       let locationKey = '';
-      function renderLocation(loc: DisplayState['location']) {
+      function renderLocation(loc: DisplayState['location'], instant: boolean): boolean {
         const key = loc ? `${loc.name}|${loc.imageUrl ?? ''}|${loc.type}` : '';
-        if (key === locationKey) return;
+        if (key === locationKey) return false;
         locationKey = key;
-        if (!loc) return;
+        if (!loc) return false;
 
-        $('locName').textContent = loc.name;
-        $('locKind').textContent = [PLACE_LABEL[loc.type] ?? loc.type, loc.region].filter(Boolean).join(' in ');
-
+        const name = loc.name;
+        const kind = [PLACE_LABEL[loc.type] ?? loc.type, loc.region].filter(Boolean).join(' in ');
         const layers = $('locLayers');
+        if (instant) {
+          layers.replaceChildren(); // the backdrop shows until the new picture is in
+          setCaption(name, kind, false);
+        }
         const layer = document.createElement('div');
         layer.className = 'dsp-loc-layer';
         const reveal = () => {
+          if (instant) {
+            layer.classList.add('is-instant', 'is-in');
+            layers.replaceChildren(layer);
+            return;
+          }
           layers.appendChild(layer);
           requestAnimationFrame(() => requestAnimationFrame(() => layer.classList.add('is-in')));
+          setCaption(name, kind, true);
           // Drop the previous picture after the crossfade
-          setTimeout(() => { while (layers.firstChild && layers.firstChild !== layer) layers.firstChild.remove(); }, 1600);
+          setTimeout(() => { while (layers.firstChild && layers.firstChild !== layer) layers.firstChild.remove(); }, 1400);
         };
         if (loc.imageUrl) {
           const fill = new Image();
@@ -948,6 +1103,7 @@ import '../styles/global.css';
           layer.classList.add('is-painted', `place-bg-${loc.type}`);
           reveal();
         }
+        return true;
       }
 
       // ── Gliding between layouts (FLIP) ──────────────────────────────────
@@ -992,7 +1148,7 @@ import '../styles/global.css';
         });
       }
 
-      function play(before: Map<HTMLElement, DOMRect>, { leaving, entering }: CastChange) {
+      function play(before: Map<HTMLElement, DOMRect>, { leaving, entering }: CastChange, newPlace = false) {
         const cast = $('cast');
         const castRect = cast.getBoundingClientRect();
         leaving.forEach((li) => {
@@ -1006,7 +1162,9 @@ import '../styles/global.css';
         castItems.forEach((li) => { if (!entering.includes(li)) moved = glide(li, before.get(li), delay, true) || moved; });
         // Scaled too: the place name is set smaller while the side panel is shown
         glide($('locCaption'), before.get($('locCaption')), delay, true);
-        if (moved || leaving.length) entering.forEach((li) => li.style.setProperty('--enter-delay', `${delay + 280}ms`));
+        // New ones rise once the others made room, and with a new place once its picture is in
+        const enterDelay = newPlace ? 450 : moved || leaving.length ? delay + 280 : 0;
+        if (enterDelay) entering.forEach((li) => li.style.setProperty('--enter-delay', `${enterDelay}ms`));
       }
 
       // ── NPC portraits ─────────────────────────────────────────────────
@@ -1049,7 +1207,8 @@ import '../styles/global.css';
 
       // Brings the portraits in line with the spotlight. Leaving ones are taken out of the flow
       // right away (so the new layout is measured without them) and placed by play().
-      function renderCast(npcs: DisplayState['npcs']): CastChange {
+      // instant: the stage is hidden, leaving portraits go at once (nobody would see them fade)
+      function renderCast(npcs: DisplayState['npcs'], instant = false): CastChange {
         const change: CastChange = { leaving: [], entering: [] };
         const key = npcs.map((n) => `${n.id}|${n.avatarUrl ?? ''}|${n.name}|${n.subtitle}`).join(',');
         if (key === castKey) return change;
@@ -1061,7 +1220,7 @@ import '../styles/global.css';
           if (wanted.has(id)) return;
           castItems.delete(id);
           const r = li.getBoundingClientRect();
-          if (reduceMotion || !r.width) { li.remove(); return; }
+          if (reduceMotion || instant || !r.width) { li.remove(); return; }
           // Freeze it at its current (possibly mid-glide) size, out of the flow
           Object.assign(li.style, { transition: '', transform: '', transformOrigin: '', position: 'absolute' });
           li.style.setProperty('--ph', `${r.height}px`);
@@ -1221,6 +1380,7 @@ import '../styles/global.css';
 
       // ── Polling ────────────────────────────────────────────────────────
       let pollTimer: number | null = null;
+      let renderSeq = 0;
       async function poll() {
         if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
         try {
@@ -1229,9 +1389,15 @@ import '../styles/global.css';
           if (serverTime) clockOffset = serverTime - Date.now();
           if (res.status !== 304) {
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            state = (await res.json()) as DisplayState;
+            const next = (await res.json()) as DisplayState;
             etag = res.headers.get('ETag');
-            render(state);
+            // Polls can overlap (a visibility change starts one): only the newest is shown
+            const seq = ++renderSeq;
+            await whenPicturesReady(next);
+            if (seq === renderSeq) {
+              state = next;
+              render(state);
+            }
           }
           failures = 0;
           body.classList.remove('is-offline');

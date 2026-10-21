@@ -161,6 +161,15 @@ about 2 seconds.
   timer back as they were. Hidden entries stay hidden even when focused. On the display, removed or hidden portraits fade out, the others glide to their
   new place and size, and new ones rise in last. Portraits and the place name also glide (never
   jump) when the location, timer or turn order appears or goes.
+- **Transitions on the display:** switching views (live, pause, start screen, no session) is a
+  soft dissolve of about a second: the new view fades in over the old one, which stays until it
+  is covered, so the screen never dips to dark. Pictures (location, wallpaper, diary picture,
+  portraits) are loaded before a switch, so nothing fades in empty; a slow picture holds the
+  switch back for 1.5 seconds at most. A new place's name changes together with its picture, a
+  location that goes dissolves into the blurred campaign image, and the timer and turn order
+  fade in and out. After a pause or the start screen the stage comes back straight with the
+  current place and spotlight, never via what it showed before. With reduced motion switched
+  on the views still fade, quicker and without the slight zoom.
 - **HP and conditions in the spotlight** (DM screen only, never on the player display): each
   NPC row shows its HP with the same **damage / heal** field as the combatants, and its
   conditions as chips. The pencil button opens HP, max HP and the condition chips (conditions,
