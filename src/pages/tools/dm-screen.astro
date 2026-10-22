@@ -506,7 +506,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     import { HP_CHANGED_EVENT, formatHp, hpControlHtml, wireHpControls } from '../../lib/hp-control';
     import { CHARACTER_KEY_PREFIX, characterSubtitle, npcSubtitle, parseSpotlightKey } from '../../lib/spotlight';
     import { conditionEditor } from '../../lib/condition-editor';
-    import { effectiveNpcHp, spotlightCombatant } from '../../lib/npc-status';
+    import { combatantOfNpc, effectiveNpcHp, spotlightCombatant } from '../../lib/npc-status';
     // Store current state
     let currentState = {
       currentLocationId: null,
@@ -830,7 +830,9 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     // ── HP and conditions on the spotlight rows (DM only; see lib/npc-status) ──
     // NPCs: their own HP (or their stat block's until the first change) and conditions, changed
     // right on the row and kept between sessions. Party characters: HP from D&D Beyond. Whoever
-    // is in a running fight shows the combatant instead, changed like in the turn preview.
+    // is in a running fight shows the combatant instead, changed like in the turn preview. An
+    // NPC and its combatant have the same HP and conditions (the server writes both, see
+    // lib/npc-combatants), so the row stays right when the fight starts or ends.
     const openEditors = new Set();
     const EDIT_ICON = '<svg class="w-5 h-5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>';
     const statBlockHp = (npcId) => {
@@ -855,7 +857,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
       const hpValue = (entryId, entry) => `<span class="t-faint text-xs">HP</span> <b class="t-body-text text-sm"${entryId ? ` data-hp-of="${escapeHtml(entryId)}"` : ''}>${escapeHtml(formatHp(entry))}</b>`;
       const c = combatantOf(key);
       if (c) {
-        return `<div class="npc-status-line"><span class="t-badge" title="HP and conditions from the initiative tracker">In combat</span>`
+        return `<div class="npc-status-line"><span class="t-badge" title="In the fight: the same HP and conditions as in the initiative tracker">In combat</span>`
           + (c.hp === null || c.hp === undefined ? '' : ` ${hpValue(c.id, c)} ${hpControlHtml(c.id, c.name)}`)
           + `<button type="button" class="statblock-btn t-icon-btn" data-creature-id="${escapeHtml(c.creatureId || '')}" data-name="${escapeHtml(c.name)}" data-entry-id="${escapeHtml(c.id)}" title="Edit the combatant" aria-label="Edit the combatant ${escapeHtml(c.name)}">${EDIT_ICON}</button></div>`
           + conditionChips(c);
@@ -868,6 +870,20 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         + (hp.hp === null ? '<span class="t-faint text-xs">No HP set</span>' : `${hpValue(id, hp)} ${hpControlHtml(id, who.name, `/api/npcs/${encodeURIComponent(id)}/hp`)}`)
         + `<button type="button" class="npc-edit-btn t-icon-btn" data-key="${escapeHtml(key)}" aria-expanded="${openEditors.has(key)}" title="HP and conditions" aria-label="HP and conditions of ${escapeHtml(who.name)}">${EDIT_ICON}</button></div>`
         + conditionChips(who);
+    }
+
+    // After a fresh combat poll: NPCs in the tracker take over their combatant's HP and conditions
+    // (already saved on the NPC by the server); an open editor shows them unless it is in use
+    function takeOverCombatantStatus() {
+      for (const [key, npc] of npcsData) {
+        const c = combatantOfNpc(initiatives, npc.name);
+        if (!c) continue;
+        const next = { hp: c.hp ?? null, maxHp: c.maxHp ?? null, conditions: c.conditions || [] };
+        if (npc.hp === next.hp && npc.maxHp === next.maxHp && JSON.stringify(npc.conditions || []) === JSON.stringify(next.conditions)) continue;
+        Object.assign(npc, next);
+        const host = [...document.querySelectorAll('#spotlightNpcList .npc-item')].find((el) => el.dataset.key === key)?.querySelector('.npc-edit-host');
+        if (openEditors.has(key) && !host?.contains(document.activeElement)) toggleNpcEditor(key, true);
+      }
     }
 
     function renderSpotlightStatus(item) {
@@ -921,6 +937,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
           const body = await res.json();
           if (!res.ok) throw new Error(body.error ?? 'Could not save');
           Object.assign(npc, body);
+          hpChangedAt = Date.now(); // a combat poll from before this must not bring the old status back
           status.textContent = 'Saved';
           status.dataset.state = 'ok';
           showValues();
@@ -1156,7 +1173,8 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
     let initiatives = [];
     
     // Fetch combat state and initiatives
-    // A refresh that started before a damage/heal here must not show the old HP again
+    // A refresh that started before a damage/heal or an NPC status change here must not show the
+    // old HP or conditions again
     let hpChangedAt = 0;
     async function loadCombatData() {
       const startedAt = Date.now();
@@ -1175,6 +1193,7 @@ const playerDisplayUrl = `${Astro.url.origin}/display`;
         
         if (initiativeResponse.ok && startedAt >= hpChangedAt) {
           initiatives = await initiativeResponse.json();
+          takeOverCombatantStatus();
           updateInitiativePreview();
         }
         refreshSpotlightStatus();

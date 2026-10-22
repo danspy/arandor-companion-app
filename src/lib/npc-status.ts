@@ -1,7 +1,8 @@
 // HP and conditions of NPCs for the DM screen spotlight (NPC.hp, maxHp, conditions). They are
 // the DM's: only DM/admin see or change them, every other NPC response leaves them out. An NPC
 // whose HP was never set uses the HP of the stat block it is linked to (Creature.npcIds) until
-// the first change, which writes it to the NPC. Pure (server and browser).
+// the first change, which writes it to the NPC. An NPC in the initiative tracker has the same HP
+// and conditions there (lib/npc-combatants). Pure (server and browser).
 
 import { cleanConditions } from './conditions';
 
@@ -73,4 +74,29 @@ export function spotlightCombatant<T extends TrackerRow>(
   return entries.find((e) => e.isActive && (kind === 'character'
     ? e.type === 'character' && (e.characterId ? e.characterId === who.id : e.name.trim() === name)
     : e.type !== 'character' && e.name.trim() === name)) ?? null;
+}
+
+/**
+ * HP and conditions of a combatant joining the fight as a named NPC: what the request sends wins
+ * (the NPC then follows), the rest is the NPC as it is now. Without an NPC, just what was sent.
+ */
+export function joiningStatus(
+  sent: { hp: number | null; maxHp: number | null; conditions: string[] | null },
+  npc: { hp: number | null; maxHp: number | null; conditions: string[] } | null,
+): { hp: number | null; maxHp: number | null; conditions: string[] } {
+  if (!npc) return { hp: sent.hp, maxHp: sent.maxHp, conditions: sent.conditions ?? [] };
+  let hp = sent.hp ?? npc.hp;
+  let maxHp = sent.maxHp ?? npc.maxHp;
+  // More HP than the max: a typed-in max HP holds, the NPC's own grows with them
+  if (hp !== null && maxHp !== null && hp > maxHp) {
+    if (sent.maxHp !== null) hp = maxHp;
+    else maxHp = hp;
+  }
+  return { hp, maxHp, conditions: sent.conditions ?? npc.conditions };
+}
+
+/** The combatant that is this NPC (by name, never a party character), in a running fight or not. */
+export function combatantOfNpc<T extends TrackerRow>(entries: T[], name: string): T | null {
+  const n = name.trim();
+  return entries.find((e) => e.type !== 'character' && e.name.trim() === n) ?? null;
 }

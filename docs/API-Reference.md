@@ -73,10 +73,10 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 
 | Endpoint | Method | Purpose | Access |
 |---|---|---|---|
-| `/api/initiative` | GET / POST, DELETE | Combatants in turn order / add one, clear all (also stops combat). Non-DMs get a `health` band instead of HP, and exact HP only for their own characters | public / DM |
+| `/api/initiative` | GET / POST, DELETE | Combatants in turn order / add one, clear all (also stops combat). Non-DMs get a `health` band instead of HP, and exact HP only for their own characters. A named NPC (same name, not type `character`) joins with its own HP and conditions unless they are sent | public / DM |
 | `/api/initiative/[id]` | GET / PUT, DELETE | One combatant (redacted the same way for non-DMs) | login / DM |
 | `/api/initiative/[id]` | PATCH | Quick edit: only the fields sent change (`initiative`, `hp`, `maxHp`, `tempHp`, `ac`, `notes`, `isActive`, `conditions` (conditions, effects and own tags, see `lib/conditions.ts`), `creatureId`); checked, readable `error` on 400; a new initiative or in-combat flag keeps the turn | DM |
-| `/api/initiative/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }`: damage (temp HP first, down to 0) or heal (up to max HP, clears death saves); a character's record follows | DM, or login and owner |
+| `/api/initiative/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }`: damage (temp HP first, down to 0) or heal (up to max HP, clears death saves); a character's record follows, so does a named NPC's | DM, or login and owner |
 | `/api/creatures` | GET / POST | Bestiary: summaries by name (`?full=1`: whole stat blocks) / new creature (checked, readable `error` on 400) | DM |
 | `/api/creatures/from-srd` | POST | `{ key }`: the DM's own copy of an SRD 5.2 creature (existing or new) | DM |
 | `/api/creatures/[id]` | GET / PUT, DELETE | One stat block / replace, delete (combatants keep their place, without the link) | DM |
@@ -84,7 +84,7 @@ See [D&D Beyond sync](DnD-Beyond-Sync.md).
 | `/api/initiative/sync-hp` | POST | Sync HP from D&D Beyond for every character in the tracker. Calls within 8 s share one sync; `?force=1` always fetches | DM |
 | `/api/initiative/reset-combat` | POST | Keep player characters (initiative 10), remove everyone else, round 1 | DM |
 | `/api/combat-state` | GET / PUT, POST | Round, turn, status / set them, or move the turn with `{ action: 'start' \| 'next' \| 'prev' \| 'new-fight' }` (only `new-fight` resets the round) | public / DM |
-| `/api/npcs/[id]` | PATCH | An NPC's status on the DM screen: `hp`, `maxHp` (0–10000 or null), `conditions` (checked like a combatant's). Only the fields sent change; HP stays within max HP | DM |
+| `/api/npcs/[id]` | PATCH | An NPC's status on the DM screen: `hp`, `maxHp` (0–10000 or null), `conditions` (checked like a combatant's). Only the fields sent change; HP stays within max HP. Its combatants in the tracker follow; changes to them (POST, PUT, PATCH, `/hp` of `/api/initiative`) are saved on the NPC too | DM |
 | `/api/npcs/[id]/hp` | POST | `{ kind: 'damage' \| 'heal', amount }` for an NPC outside the fight; without HP of its own it starts from its stat block's | DM |
 | `/api/dm-screen` | GET / PUT | DM screen settings, including hidden items (`locationHidden`, `hiddenNpcIds`, `npcsHidden`). PUT takes `timerAction: 'start' \| 'pause' \| 'resume' \| 'reset'`, stamped with the server clock; `screenMode: 'off' \| 'start' \| 'live' \| 'pause'` and `startScreen: { title, session, date (YYYY-MM-DD), recap, showRecap, diaryEntryId }` (checked, readable `error` on 400). The legacy `screenVisible` still works (`true` = live, `false` = pause) and always follows the mode | DM |
 | `/api/dm-screen/start-defaults` | GET | Pre-filled start screen: `{ session, date, recap, diaryEntryId, diary }` (next session number, last recap and newest entry from the diary, today); `diary` lists every entry newest first as `{ id, session, title, excerpt, imageUrl }` | DM |

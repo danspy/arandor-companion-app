@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro';
 import { db, InitiativeTracker, eq } from '@/db';
 import { TAG_LIMITS, cleanConditions } from '../../../lib/conditions';
+import { shareFromCombatant } from '../../../lib/npc-combatants';
 import { requireDungeonmasterOrAdmin, requireAuth } from '../../../lib/middleware';
 import { getCurrentUser } from '../../../lib/auth';
 import { ownedCharacters, preserveTurn, redactEntry } from '../../../lib/combat';
@@ -130,6 +131,7 @@ export const PUT: APIRoute = async ({ params, request, cookies }) => {
     await preserveTurn(() => db.update(InitiativeTracker)
       .set(updateData)
       .where(eq(InitiativeTracker.id, id)));
+    await shareFromCombatant(id);
 
     const updatedEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id));
     
@@ -221,6 +223,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     const reorders = update.initiative !== undefined || update.isActive !== undefined;
     const apply = () => db.update(InitiativeTracker).set(update).where(eq(InitiativeTracker.id, existing.id));
     await (reorders ? preserveTurn(apply) : apply());
+    if ('hp' in update || 'maxHp' in update || 'conditions' in update) await shareFromCombatant(existing.id);
     return json(await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, existing.id)).get());
   } catch (error) {
     console.error('Error updating initiative entry:', error);

@@ -1,8 +1,8 @@
 import { test, expect, type Browser, type BrowserContext, type Page } from '@playwright/test';
-import { effectiveNpcHp, npcStatusUpdate, publicNpc, spotlightCombatant } from '../src/lib/npc-status';
+import { combatantOfNpc, effectiveNpcHp, joiningStatus, npcStatusUpdate, publicNpc, spotlightCombatant } from '../src/lib/npc-status';
 
 // NPC status on the DM screen spotlight: HP and conditions per NPC, kept between sessions, for
-// the DM only. The logged-in tests create their own NPCs, stat block and combatants and change
+// the DM only, and the same as those of the NPC's combatants in the initiative tracker. The logged-in tests create their own NPCs, stat block and combatants and change
 // the spotlight and the fight, so they only run against a test server with a copy of the data
 // (never dev, preview or live data):
 //   E2E_DM / E2E_DM_PASSWORD (dungeonmaster)   E2E_PLAYER / E2E_PLAYER_PASSWORD (player)
@@ -46,6 +46,27 @@ test.describe('NPC status rules', () => {
     expect(spotlightCombatant(entries, 'stopped', 'npc', { id: 'n1', name: 'Runara' })).toBeNull();
     expect(spotlightCombatant(entries, 'active', 'npc', { id: 'n2', name: 'Borin' })).toBeNull(); // not in combat
     expect(spotlightCombatant(entries, 'active', 'npc', { id: 'n3', name: 'Thalia' })).toBeNull(); // a character's name
+  });
+
+  test('an NPC joins the fight as it is, unless HP are typed in', () => {
+    const npc = { hp: 4, maxHp: 7, conditions: ['Poisoned'] };
+    const none = { hp: null, maxHp: null, conditions: null };
+    expect(joiningStatus(none, npc)).toEqual({ hp: 4, maxHp: 7, conditions: ['Poisoned'] });
+    expect(joiningStatus({ hp: 2, maxHp: 7, conditions: null }, npc)).toEqual({ hp: 2, maxHp: 7, conditions: ['Poisoned'] });
+    expect(joiningStatus({ ...none, conditions: ['Prone'] }, npc)).toEqual({ hp: 4, maxHp: 7, conditions: ['Prone'] });
+    expect(joiningStatus({ hp: 30, maxHp: null, conditions: null }, npc)).toMatchObject({ hp: 30, maxHp: 30 }); // more than max
+    expect(joiningStatus({ hp: 30, maxHp: 20, conditions: null }, npc)).toMatchObject({ hp: 20, maxHp: 20 });
+    expect(joiningStatus({ hp: 5, maxHp: null, conditions: null }, null)).toEqual({ hp: 5, maxHp: null, conditions: [] }); // no NPC
+  });
+
+  test('an NPC\'s combatant is found by name, in a fight or not', () => {
+    const entries = [
+      { id: 'a', name: 'Runara', type: 'character', characterId: 'c1', isActive: true },
+      { id: 'b', name: ' Runara ', type: 'npc', characterId: null, isActive: false },
+    ];
+    expect(combatantOfNpc(entries, 'Runara')?.id).toBe('b');
+    expect(combatantOfNpc(entries, 'Borin')).toBeNull();
+    expect(combatantOfNpc(entries.slice(0, 1), 'Runara')).toBeNull(); // a character is never an NPC
   });
 });
 
@@ -191,30 +212,108 @@ test.describe('NPC status on a test server', () => {
     await dm.close();
   });
 
-  test('in a running fight the row shows the combatant', async ({ browser, isMobile }) => {
+  test('one status: the NPC and its combatants always match', async ({ browser, isMobile }) => {
+    test.skip(isMobile, 'API, once is enough');
+    const dm = await dmContext(browser);
+    const npcNow = async () => (await dm.request.get(`/api/npcs/${linked.id}`)).json();
+    const join = async (data: Record<string, unknown>) => {
+      const res = await dm.request.post('/api/initiative', { data: { name: linkedName, initiative: 30, type: 'npc', ...data } });
+      expect(res.status()).toBe(201);
+      return res.json();
+    };
+    await dm.request.patch(`/api/npcs/${linked.id}`, { data: { hp: 4, maxHp: 7, conditions: ['Poisoned'] } });
+    const other = await (await dm.request.post('/api/initiative', { data: { name: `Status Wolf ${suffix}`, initiative: 3, type: 'monster', hp: 11, maxHp: 11 } })).json();
+    const entry = await join({});
+    try {
+      // Joining without HP: as the NPC is now
+      expect(entry).toMatchObject({ hp: 4, maxHp: 7, conditions: ['Poisoned'] });
+      // Changed in the fight: the NPC follows
+      await dm.request.post(`/api/initiative/${entry.id}/hp`, { data: { kind: 'damage', amount: 1 } });
+      await dm.request.patch(`/api/initiative/${entry.id}`, { data: { conditions: ['Prone', 'Poisoned'] } });
+      expect(await npcNow()).toMatchObject({ hp: 3, maxHp: 7, conditions: ['Poisoned', 'Prone'] });
+      // Changed on the NPC (the DM screen row): the combatant follows
+      await dm.request.post(`/api/npcs/${linked.id}/hp`, { data: { kind: 'heal', amount: 2 } });
+      await dm.request.patch(`/api/npcs/${linked.id}`, { data: { conditions: ['Prone'] } });
+      expect(await (await dm.request.get(`/api/initiative/${entry.id}`)).json()).toMatchObject({ hp: 5, maxHp: 7, conditions: ['Prone'] });
+      // The tracker's edit form too
+      await dm.request.put(`/api/initiative/${entry.id}`, { data: { name: linkedName, initiative: 30, type: 'npc', hp: 6, maxHp: 7 } });
+      expect(await npcNow()).toMatchObject({ hp: 6, maxHp: 7, conditions: ['Prone'] });
+      // Someone else in the fight keeps their own
+      expect(await (await dm.request.get(`/api/initiative/${other.id}`)).json()).toMatchObject({ hp: 11, conditions: [] });
+    } finally {
+      await dm.request.delete(`/api/initiative/${entry.id}`);
+      await dm.request.delete(`/api/initiative/${other.id}`);
+    }
+    // Out of the fight it keeps where the fight left it
+    expect(await npcNow()).toMatchObject({ hp: 6, maxHp: 7, conditions: ['Prone'] });
+    // HP typed in when joining win, and the NPC follows
+    const typed = await join({ hp: 2, maxHp: 7 });
+    try {
+      expect(typed).toMatchObject({ hp: 2, conditions: ['Prone'] });
+      expect(await npcNow()).toMatchObject({ hp: 2, maxHp: 7 });
+    } finally {
+      await dm.request.delete(`/api/initiative/${typed.id}`);
+    }
+    await dm.close();
+  });
+
+  test('in a running fight the row shows the combatant, with the NPC\'s own status', async ({ browser, isMobile }) => {
     test.skip(isMobile, 'Desktop flow');
     const dm = await dmContext(browser);
-    const combatant = await (await dm.request.post('/api/initiative', { data: { name: linkedName, initiative: 30, type: 'npc', hp: 2, maxHp: 7, conditions: ['Stunned'] } })).json();
+    await dm.request.patch(`/api/npcs/${linked.id}`, { data: { hp: 4, maxHp: 7, conditions: ['Stunned'] } });
+    const combatant = await (await dm.request.post('/api/initiative', { data: { name: linkedName, initiative: 30, type: 'npc' } })).json();
     try {
       await dm.request.put('/api/combat-state', { data: { status: 'paused' } });
       const page = await dm.newPage();
       await page.goto('/tools/dm-screen');
       const goblin = row(page, linkedName);
       await expect(goblin.getByText('In combat')).toBeVisible();
-      await expect(goblin.locator(`[data-hp-of="${combatant.id}"]`)).toHaveText('2/7');
+      await expect(goblin.locator(`[data-hp-of="${combatant.id}"]`)).toHaveText('4/7');
       await expect(goblin.locator('.npc-status .cond-chip')).toHaveText(['Stunned']);
-      // Damage here goes to the combatant, not to the NPC's own HP
+      // Damage here goes to the combatant, and the NPC with it
       await goblin.locator('.hp-amount').fill('1');
       await goblin.getByRole('button', { name: `Damage ${linkedName}` }).click();
-      await expect(goblin.locator(`[data-hp-of="${combatant.id}"]`)).toHaveText('1/7');
-      expect((await (await dm.request.get(`/api/npcs/${linked.id}`)).json()).hp).toBe(4);
-      // The fight ends: the NPC's own status is back
+      await expect(goblin.locator(`[data-hp-of="${combatant.id}"]`)).toHaveText('3/7');
+      expect((await (await dm.request.get(`/api/npcs/${linked.id}`)).json()).hp).toBe(3);
+      // A condition added in the tracker shows on the row
+      await dm.request.patch(`/api/initiative/${combatant.id}`, { data: { conditions: ['Stunned', 'Prone'] } });
+      await expect(goblin.locator('.npc-status .cond-chip')).toHaveText(['Prone', 'Stunned'], { timeout: 10_000 });
+      // The fight ends: the row shows the same status, without a reload
       await dm.request.put('/api/combat-state', { data: { status: 'stopped' } });
+      await expect(goblin.getByText('In combat')).toHaveCount(0, { timeout: 10_000 });
+      await expect(goblin.locator(`[data-hp-of="${linked.id}"]`)).toHaveText('3/7');
+      await expect(goblin.locator('.npc-status .cond-chip')).toHaveText(['Prone', 'Stunned']);
+      // Out of the fight a change on the row reaches the combatant
+      await goblin.getByRole('button', { name: `HP and conditions of ${linkedName}` }).click();
+      await goblin.locator('.npc-edit').getByRole('button', { name: 'Stunned' }).click();
+      await expect(goblin.locator('.npc-status .cond-chip')).toHaveText(['Prone']);
+      await expect.poll(async () => (await (await dm.request.get(`/api/initiative/${combatant.id}`)).json()).conditions).toEqual(['Prone']);
       await page.reload();
-      await expect(goblin.locator(`[data-hp-of="${linked.id}"]`)).toHaveText('4/7');
-      await expect(goblin.getByText('In combat')).toHaveCount(0);
+      await expect(goblin.locator(`[data-hp-of="${linked.id}"]`)).toHaveText('3/7');
+      await expect(goblin.locator('.npc-status .cond-chip')).toHaveText(['Prone']);
     } finally {
       await dm.request.delete(`/api/initiative/${combatant.id}`);
+      await dm.close();
+    }
+  });
+
+  test('stat block page: an NPC joins the fight as it is', async ({ browser, isMobile }) => {
+    test.skip(isMobile, 'Desktop flow');
+    const dm = await dmContext(browser);
+    await dm.request.patch(`/api/npcs/${linked.id}`, { data: { hp: 5, maxHp: 7, conditions: ['Prone'] } });
+    const page = await dm.newPage();
+    await page.goto(`/tools/bestiary/${creatureId}`);
+    await page.locator('.npc-add').click();
+    const dialog = page.getByRole('dialog', { name: `Add ${linkedName} to initiative` });
+    await expect(dialog.getByLabel('HP each')).toHaveValue('5');
+    await expect(dialog.getByText(`${linkedName} has 5/7 now`)).toBeVisible();
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(page.locator('#addedStatus')).toContainText(`${linkedName} added to the fight`);
+    const entry = (await (await dm.request.get('/api/initiative')).json()).find((e: { name: string }) => e.name === linkedName);
+    try {
+      expect(entry).toMatchObject({ hp: 5, maxHp: 7, conditions: ['Prone'] });
+    } finally {
+      if (entry) await dm.request.delete(`/api/initiative/${entry.id}`);
       await dm.close();
     }
   });

@@ -3,12 +3,14 @@ import { db, Character, InitiativeTracker, eq } from '@/db';
 import { getCurrentUser } from '../../../../lib/auth';
 import { requireAuth } from '../../../../lib/middleware';
 import { applyHpChange, isOwnEntry, ownedCharacters, redactEntry } from '../../../../lib/combat';
+import { shareFromCombatant } from '../../../../lib/npc-combatants';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 // POST { kind: 'damage' | 'heal', amount } - Damage or heal one combatant.
 // DM/admin: anyone. Players: their own characters only. A character's own record follows
-// (like /api/initiative/update-hp), so its HP is right outside the fight too.
+// (like /api/initiative/update-hp), so its HP is right outside the fight too; so does a named
+// NPC's (lib/npc-combatants).
 export const POST: APIRoute = async ({ params, request, cookies }) => {
   const authError = requireAuth(cookies);
   if (authError) return authError;
@@ -47,6 +49,8 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
         if (update.deathSaveSuccesses === 0) Object.assign(charUpdate, { deathSaveSuccesses: 0, deathSaveFailures: 0, isStable: false });
         await db.update(Character).set(charUpdate).where(eq(Character.id, character.id));
       }
+    } else {
+      await shareFromCombatant(entry.id);
     }
 
     const updated = (await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, entry.id)).get())!;

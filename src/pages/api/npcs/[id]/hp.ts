@@ -4,13 +4,15 @@ import { requireDungeonmasterOrAdmin } from '../../../../lib/middleware';
 import { statBlockHpByNpc } from '../../../../lib/creature-links';
 import { applyHpChange } from '../../../../lib/hp';
 import { effectiveNpcHp, MAX_NPC_HP } from '../../../../lib/npc-status';
+import { shareFromNpc } from '../../../../lib/npc-combatants';
 
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 // POST { kind: 'damage' | 'heal', amount } - Damage or heal an NPC outside the fight (the DM
 // screen spotlight; DM/admin). An NPC without HP of its own starts from its stat block's, and
-// keeps them from then on. Answers like /api/initiative/[id]/hp (with tempHp), so the same HP
-// field (lib/hp-control) works for both.
+// keeps them from then on. Its combatants in the initiative tracker follow (lib/npc-combatants).
+// Answers like /api/initiative/[id]/hp (with tempHp), so the same HP field (lib/hp-control)
+// works for both.
 export const POST: APIRoute = async ({ params, request, cookies }) => {
   const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
@@ -26,6 +28,7 @@ export const POST: APIRoute = async ({ params, request, cookies }) => {
     if (current.hp === null && current.maxHp === null) return json({ error: 'This NPC has no hit points set' }, 400);
     const { hp } = applyHpChange({ ...current, tempHp: null }, body.kind, amount);
     await db.update(NPC).set({ hp, maxHp: current.maxHp, updatedAt: new Date() }).where(eq(NPC.id, npc.id));
+    await shareFromNpc(npc.id);
 
     const updated = (await db.select().from(NPC).where(eq(NPC.id, npc.id)).get())!;
     return json({ ...updated, tempHp: null });
