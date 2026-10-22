@@ -180,6 +180,14 @@ about 2 seconds.
   name, a character by its link), the row shows the combatant instead, marked *In combat*:
   damage and healing go to the combatant, and the pencil opens its side panel. On phones and
   tablets every control on the rows is at least 40 px high.
+- **One HP and one set of conditions per NPC:** an NPC and its combatant in the initiative
+  tracker (same name, not a party character) always have the same HP, max HP and conditions.
+  An NPC joins the fight as it is: with its HP (or its stat block's while it has none) and its
+  conditions, unless HP are typed in when adding it (the stat block page's *Add to fight* next
+  to the NPC starts with its current HP). Every change in the fight (damage, healing, quick
+  edit, conditions in the side panel or the tracker) is saved on the NPC as well, and every
+  change on the spotlight row reaches the combatant, so the row shows the same before, during
+  and after the fight. Temp HP and death saves stay with the combatant.
 - **Turn preview:** the current and next combatant show their HP with a **damage / heal**
   field and their conditions, and a link to their side panel (*Stat block*, or *Edit* without one)
   with the same quick edit as in the tracker.

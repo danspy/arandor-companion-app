@@ -3,6 +3,8 @@
 import Layout from '../../../layouts/Layout.astro';
 import { getUserRole, isAuthenticated } from '../../../lib/auth';
 import { db, Creature, NPC, eq, inArray } from '@/db';
+import { statBlockHpByNpc } from '../../../lib/creature-links';
+import { effectiveNpcHp } from '../../../lib/npc-status';
 import '../../../styles/statblock.css';
 
 const userRole = await getUserRole(Astro.cookies);
@@ -12,7 +14,10 @@ if (!isAuthenticated(Astro.cookies) || !canEdit) return Astro.redirect('/login')
 const creature = await db.select().from(Creature).where(eq(Creature.id, Astro.params.id!)).get();
 if (!creature) return Astro.redirect('/tools/bestiary');
 const npcIds = creature.npcIds as string[];
-const npcs = npcIds.length ? await db.select({ id: NPC.id, name: NPC.name }).from(NPC).where(inArray(NPC.id, npcIds)) : [];
+const npcRows = npcIds.length ? await db.select({ id: NPC.id, name: NPC.name, hp: NPC.hp, maxHp: NPC.maxHp }).from(NPC).where(inArray(NPC.id, npcIds)) : [];
+// An NPC joins the fight with the HP it has now (lib/npc-combatants)
+const statBlockHp = await statBlockHpByNpc();
+const npcs = npcRows.map((n) => ({ ...n, now: effectiveNpcHp(n, statBlockHp.get(n.id)) }));
 const quick = { id: creature.id, name: creature.name, ac: creature.ac, hp: creature.hp, hpFormula: creature.hpFormula, initiative: creature.initiative };
 ---
 
@@ -38,7 +43,7 @@ const quick = { id: creature.id, name: creature.name, ac: creature.ac, hp: creat
           {npcs.map((n) => (
             <li class="t-row px-3 py-2 flex items-center gap-3">
               <a href={`/npcs/${n.id}`} class="t-link">{n.name}</a>
-              <button type="button" class="t-link text-sm npc-add" data-npc={n.name}>Add to fight</button>
+              <button type="button" class="t-link text-sm npc-add" data-npc={n.name} data-hp={JSON.stringify(n.now)}>Add to fight</button>
             </li>
           ))}
         </ul>
@@ -71,7 +76,7 @@ const quick = { id: creature.id, name: creature.name, ac: creature.ac, hp: creat
     };
     addButton.addEventListener('click', () => openQuickAdd(creature, { onAdded: (n) => showAdded(n, creature.name) }));
     document.querySelectorAll<HTMLButtonElement>('.npc-add').forEach((b) =>
-      b.addEventListener('click', () => openQuickAdd(creature, { npcName: b.dataset.npc, onAdded: () => showAdded(1, b.dataset.npc!) }))
+      b.addEventListener('click', () => openQuickAdd(creature, { npcName: b.dataset.npc, npcHp: JSON.parse(b.dataset.hp!), onAdded: () => showAdded(1, b.dataset.npc!) }))
     );
 
     const del = document.getElementById('deleteCreature') as HTMLButtonElement;

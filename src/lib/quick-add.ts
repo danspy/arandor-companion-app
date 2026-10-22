@@ -16,6 +16,8 @@ export interface QuickAddCreature {
 export interface QuickAddOptions {
   /** A named NPC that uses this stat block: one copy under the NPC's name, type NPC. */
   npcName?: string;
+  /** That NPC's HP now (its own, else the stat block's): it joins with them and its conditions. */
+  npcHp?: { hp: number | null; maxHp: number | null };
   onAdded?: (count: number) => void;
 }
 
@@ -62,8 +64,12 @@ export function openQuickAdd(creature: QuickAddCreature, options: QuickAddOption
 
   const nameInput = input('text', npc ?? creature.name, { maxlength: '60', 'aria-label': 'Name' });
   const countInput = input('number', '1', { min: '1', max: '20', 'aria-label': 'How many' });
-  const hpInput = input('number', creature.hp !== null ? String(creature.hp) : '', { min: '0', max: '10000', 'aria-label': 'HP each' });
-  const hpHint = creature.hp !== null ? `Average ${creature.hp}${creature.hpFormula ? ` (${creature.hpFormula})` : ''}; change it to override` : 'No HP in the stat block';
+  const npcHp = npc ? options.npcHp : undefined;
+  const startHp = npcHp?.hp ?? creature.hp;
+  const hpInput = input('number', startHp !== null ? String(startHp) : '', { min: '0', max: '10000', 'aria-label': 'HP each' });
+  const hpHint = npcHp?.hp != null
+    ? `${npc} has ${npcHp.hp}${npcHp.maxHp !== null ? `/${npcHp.maxHp}` : ''} now; change it to override`
+    : creature.hp !== null ? `Average ${creature.hp}${creature.hpFormula ? ` (${creature.hpFormula})` : ''}; change it to override` : 'No HP in the stat block';
 
   const grid = el('div', 'qa-grid');
   grid.append(field('Name', nameInput));
@@ -132,6 +138,8 @@ export function openQuickAdd(creature: QuickAddCreature, options: QuickAddOption
     const hp = hpInput.value.trim() === '' ? null : parseInt(hpInput.value, 10);
     if (hp !== null && (!Number.isInteger(hp) || hp < 0)) return showError('HP must be a whole number');
     if (rolls.some((r) => !Number.isInteger(r))) return showError('Every initiative needs a number');
+    // An NPC keeps its max HP (more HP than that raise it)
+    const maxHp = hp !== null && npcHp?.maxHp != null ? Math.max(npcHp.maxHp, hp) : hp;
     addButton.disabled = true;
     const ns = names();
     try {
@@ -139,7 +147,7 @@ export function openQuickAdd(creature: QuickAddCreature, options: QuickAddOption
         const res = await fetch('/api/initiative', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, initiative: rolls[i], type: npc ? 'npc' : 'monster', hp, maxHp: hp, ac: creature.ac, creatureId: creature.id, isActive: true }),
+          body: JSON.stringify({ name, initiative: rolls[i], type: npc ? 'npc' : 'monster', hp, maxHp, ac: creature.ac, creatureId: creature.id, isActive: true }),
         });
         if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? `Could not add ${name}`);
       }

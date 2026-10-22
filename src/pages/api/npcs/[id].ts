@@ -3,6 +3,7 @@ import { db, Creature, NPC, eq } from '@/db';
 import { isDungeonmasterOrAdmin, requireDungeonmasterOrAdmin, requirePlayerOrAbove } from '../../../lib/middleware';
 import { statBlockHpByNpc } from '../../../lib/creature-links';
 import { effectiveNpcHp, npcStatusUpdate, publicNpc } from '../../../lib/npc-status';
+import { shareFromNpc } from '../../../lib/npc-combatants';
 
 // HP and conditions (lib/npc-status) only reach the DM and admins
 export const GET: APIRoute = async ({ params, cookies }) => {
@@ -92,6 +93,7 @@ export const DELETE: APIRoute = async ({ params, cookies }) => {
 
 // PATCH { hp?, maxHp?, conditions? } - The NPC's status on the DM screen (DM/admin). Only the
 // fields sent change; HP stays within 0 and max HP (the linked stat block's while it has none).
+// Its combatants in the initiative tracker follow (lib/npc-combatants).
 export const PATCH: APIRoute = async ({ params, request, cookies }) => {
   const authError = await requireDungeonmasterOrAdmin(cookies);
   if (authError) return authError;
@@ -106,6 +108,7 @@ export const PATCH: APIRoute = async ({ params, request, cookies }) => {
     if ('error' in result) return json({ error: result.error }, 400);
     if (Object.keys(result.update).length) {
       await db.update(NPC).set({ ...result.update, updatedAt: new Date() }).where(eq(NPC.id, npc.id));
+      await shareFromNpc(npc.id);
     }
     return json((await db.select().from(NPC).where(eq(NPC.id, npc.id)).get())!);
   } catch (error) {

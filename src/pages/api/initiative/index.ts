@@ -5,6 +5,8 @@ import { getCurrentUser } from '../../../lib/auth';
 import { getEntries, ownedCharacters, preserveTurn, redactEntry, setCombatState } from '../../../lib/combat';
 import { creatureIdForNpcName } from '../../../lib/creature-links';
 import { cleanConditions } from '../../../lib/conditions';
+import { joiningStatus } from '../../../lib/npc-status';
+import { npcStatusFor, shareFromCombatant } from '../../../lib/npc-combatants';
 
 const VALID_TYPES = ['character', 'npc', 'monster', 'other'];
 
@@ -67,6 +69,12 @@ export const POST: APIRoute = async ({ request, cookies }) => {
     const creatureId = typeof body.creatureId === 'string' && body.creatureId
       ? body.creatureId
       : type === 'npc' ? await creatureIdForNpcName(body.name) : null;
+    // A named NPC joins with its own HP and conditions, unless they are sent (lib/npc-combatants)
+    const status = joiningStatus({
+      hp: body.hp !== undefined && body.hp !== null ? body.hp : null,
+      maxHp: body.maxHp !== undefined && body.maxHp !== null ? body.maxHp : null,
+      conditions: body.conditions !== undefined ? cleanConditions(body.conditions) : null,
+    }, await npcStatusFor(body.name, type));
     
     await preserveTurn(() => db.insert(InitiativeTracker).values({
       id,
@@ -74,13 +82,13 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       initiative: body.initiative,
       type,
       characterId: body.characterId || null,
-      hp: body.hp !== undefined && body.hp !== null ? body.hp : null,
-      maxHp: body.maxHp !== undefined && body.maxHp !== null ? body.maxHp : null,
+      hp: status.hp,
+      maxHp: status.maxHp,
       tempHp: body.tempHp !== undefined ? (body.tempHp || 0) : null,
       ac: body.ac || null,
       notes: body.notes?.trim() || null,
       creatureId,
-      conditions: cleanConditions(body.conditions) ?? [],
+      conditions: status.conditions,
       isActive: body.isActive !== undefined ? body.isActive : true,
       deathSaveSuccesses: 0,
       deathSaveFailures: 0,
@@ -88,6 +96,7 @@ export const POST: APIRoute = async ({ request, cookies }) => {
       createdAt: now,
       updatedAt: now,
     }));
+    await shareFromCombatant(id);
 
     const newEntry = await db.select().from(InitiativeTracker).where(eq(InitiativeTracker.id, id));
     
